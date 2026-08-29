@@ -55,8 +55,11 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
     const shape = def.shape;
     // `for...in` skips symbols, so a cycle through a declared symbol key would read as non-recursive
     if (shape) for (const key of Reflect.ownKeys(shape)) check(shape[key]);
+    // reading an accessor can run user code: `.default(fn)` exposes `defaultValue` as a getter that calls `fn`
     for (const key in def) {
-      const value = def[key];
+      const desc = Object.getOwnPropertyDescriptor(def, key);
+      if (!desc || desc.get) continue;
+      const value = desc.value;
       if (!value || typeof value !== "object") continue;
       if (value._zod) check(value);
       else if (Array.isArray(value)) for (const el of value) check(el);

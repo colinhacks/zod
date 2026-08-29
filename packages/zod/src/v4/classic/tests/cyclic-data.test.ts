@@ -676,3 +676,62 @@ test("guards a transform built before any container", () => {
 
   expect(() => Wrapped.parse(input)).toThrow(/reference cycle/);
 });
+
+test("detects a cycle reachable only through a merged catchall", () => {
+  const Cyclic: any = z.object({
+    id: z.string(),
+    get next() {
+      return z.optional(Root);
+    },
+  });
+  const Root: any = z.object({ tag: z.string() }).merge(z.object({}).catchall(Cyclic));
+
+  const input: any = { tag: "root" };
+  input.child = { id: "1", next: input };
+
+  const out: any = Root.parse(input);
+  expect(out.child.next).toBe(out);
+});
+
+// the cycle walk skips accessors so it cannot fire `defaultValue`, which is only sound while defs keep child schemas in data properties — `shape` is the exception the walk reads explicitly
+test("no def exposes a child schema behind an enumerable accessor", () => {
+  const s = z.string();
+  const n = z.number();
+  const plain = z.object({ a: s });
+  const withCatchall = z.object({ a: s }).catchall(n);
+
+  const defs: Array<[string, any]> = [
+    ["object", plain],
+    ["catchall", withCatchall],
+    ["strict", z.strictObject({ a: s })],
+    ["loose", z.looseObject({ a: s })],
+    ["extend", withCatchall.extend({ b: s })],
+    ["pick", withCatchall.pick({ a: true })],
+    ["omit", withCatchall.omit({ a: true })],
+    ["partial", withCatchall.partial()],
+    ["required", withCatchall.partial().required()],
+    ["merge", plain.merge(z.object({ b: s }).catchall(n))],
+    ["merge+partial", plain.merge(z.object({ b: s }).catchall(n)).partial()],
+    ["merge+extend", plain.merge(z.object({ b: s }).catchall(n)).extend({ c: s })],
+    ["array", z.array(s)],
+    ["record", z.record(s, s)],
+    ["union", z.union([s, n])],
+    ["intersection", z.intersection(plain, z.object({ b: s }))],
+    ["tuple", z.tuple([s])],
+    ["pipe", s.pipe(s)],
+    ["optional", s.optional()],
+    ["catch", s.catch("c")],
+    ["readonly", s.readonly()],
+  ];
+
+  const accessors: string[] = [];
+  for (const [name, schema] of defs) {
+    const def = (schema as any)._zod.def;
+    for (const key of Object.keys(def)) {
+      if (key === "shape") continue;
+      if (Object.getOwnPropertyDescriptor(def, key)?.get) accessors.push(`${name}.${key}`);
+    }
+  }
+
+  expect(accessors).toEqual([]);
+});
