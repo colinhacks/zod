@@ -25,6 +25,21 @@ export const blog = loader({
   source: createMDXSource(blogPosts),
 });
 
+export type PostSummary = { url: string; title: string; description: string; date: Date };
+
+export function latestPosts(count: number): PostSummary[] {
+  return (blog.getPages() as any[])
+    .filter((post) => !post.data?.draft)
+    .sort((a, b) => new Date(b.data?.date ?? 0).getTime() - new Date(a.data?.date ?? 0).getTime())
+    .slice(0, count)
+    .map((post) => ({
+      url: post.url,
+      title: post.data?.title ?? post.slugs.join("/"),
+      description: post.data?.description ?? "",
+      date: new Date(post.data?.date ?? 0),
+    }));
+}
+
 export function formatDate(value: string | Date, style: "short" | "long" = "short"): string {
   return new Date(value).toLocaleDateString("en-US", {
     month: style === "long" ? "long" : "short",

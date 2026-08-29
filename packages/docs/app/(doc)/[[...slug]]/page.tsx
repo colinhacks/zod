@@ -5,6 +5,7 @@ import { getLLMText } from "@/loaders/get-llm-text";
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
+import { findNeighbour } from "fumadocs-core/server";
 import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { Github } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -31,7 +32,13 @@ export default async function Page(props: {
     });
 
   return (
-    <DocsPage toc={toc} tableOfContent={{ style: "clerk", single: false }} full={false}>
+    <DocsPage
+      toc={toc}
+      tableOfContent={{ style: "clerk", single: false }}
+      full={false}
+      // neighbours from the docs tree alone, so the sidebar's blog section never becomes a "next" page
+      footer={{ items: findNeighbour(source.pageTree, page.url) }}
+    >
       {title && title !== "Intro" && (
         <div className="mb-6">
           <DocsTitle>{title}</DocsTitle>

@@ -1,6 +1,7 @@
 import { baseOptions } from "@/app/layout.config";
-import { source } from "@/loaders/source";
+import { latestPosts, source } from "@/loaders/source";
 import { DocsLayout, type DocsLayoutProps } from "fumadocs-ui/layouts/docs";
+import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { SidebarItem, SidebarSeparator } from "@/components/sidebar-item";
@@ -8,9 +9,29 @@ import { SidebarLogo } from "@/components/sidebar-logo";
 
 export const dynamic = "force-static";
 
+// the newest posts as a sidebar section after the page tree
+const tree: typeof source.pageTree = {
+  ...source.pageTree,
+  children: [
+    ...source.pageTree.children,
+    { type: "separator", name: "Blog" },
+    ...latestPosts(3).map((post) => ({ type: "page" as const, name: post.title, url: post.url })),
+    {
+      type: "page",
+      url: "/blog",
+      name: (
+        <span className="inline-flex items-center gap-1">
+          View all
+          <ArrowRight className="size-3.5" />
+        </span>
+      ),
+    },
+  ],
+};
+
 export const layoutProps: DocsLayoutProps = {
   ...baseOptions,
-  tree: source.pageTree,
+  tree,
 
   sidebar: {
     hideSearch: false,
