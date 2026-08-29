@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import * as z from "zod";
-import { INVALID, ZodCompileUnsupportedError, compile, compileFn } from "zod/v4/core";
+import { ZodCompileUnsupportedError, compile } from "zod/v4/core";
+import { INVALID, compileFn } from "../zod/src/v4/core/compile.js";
 
 // Broad compiled-vs-runtime sweep across schema categories.
 //

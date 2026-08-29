@@ -1,6 +1,7 @@
 import * as z from "zod/v4";
 import * as zcore from "zod/v4/core";
 import { isValidBase64 } from "zod/v4/core";
+import * as zcompile from "../zod/src/v4/core/compile.js";
 import { metabench } from "./metabench.js";
 
 const INVALID = Symbol("invalid");
@@ -10,7 +11,7 @@ const INVALID_WHITESPACE = "SGVsbG8gV29ybGQ= ";
 
 const base64 = z.base64();
 const compiled = zcore.compile(base64);
-const compiledFn = zcore.compileFn(base64);
+const compiledFn = zcompile.compileFn(base64);
 
 const F = Function;
 
@@ -63,7 +64,7 @@ for (const value of [VALID, INVALID_LENGTH, INVALID_WHITESPACE]) {
   console.log(value, {
     runtime: base64.safeParse(value).success,
     helper: isValidBase64(value),
-    compiledFn: compiledFn(value) !== zcore.INVALID,
+    compiledFn: compiledFn(value) !== zcompile.INVALID,
     hoisted: manualHoisted(value) !== INVALID,
     inline: manualInline(value) !== INVALID,
     inlineHoistedRegex: manualInlineHoistedRegex(value) !== INVALID,
