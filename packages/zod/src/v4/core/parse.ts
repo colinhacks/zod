@@ -38,6 +38,23 @@ export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => {
 
 export const parse: $Parse = /* @__PURE__*/ _parse(errors.$ZodRealError);
 
+// the async entry points walk synchronously first, which keeps the object fastpass and compiled shims live; a schema that hits async work is flagged in its bag and skips the attempt from then on
+function trySync(
+  schema: schemas.$ZodType,
+  value: unknown,
+  ctx: schemas.ParseContextInternal
+): schemas.ParsePayload | undefined {
+  if (schema._zod.bag.async) return undefined;
+  try {
+    const result = schema._zod.run({ value, issues: [] }, ctx);
+    if (!(result instanceof Promise)) return result;
+  } catch (e) {
+    if (!(e instanceof core.$ZodAsyncError)) throw e;
+  }
+  schema._zod.bag.async = true;
+  return undefined;
+}
+
 export type $ParseAsync = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
@@ -47,9 +64,12 @@ export type $ParseAsync = <T extends schemas.$ZodType>(
 
 export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => {
   const fn: $ParseAsync = async (schema, value, _ctx, params) => {
-    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
-    let result = schema._zod.run({ value, issues: [] }, ctx);
-    if (result instanceof Promise) result = await result;
+    let ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+    let result = trySync(schema, value, ctx);
+    if (!result) {
+      ctx = _ctx ? { ..._ctx, async: true } : { async: true };
+      result = await schema._zod.run({ value, issues: [] }, ctx);
+    }
     if (result.issues.length) {
       const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
       util.captureStackTrace(e, params?.callee ?? fn);
@@ -91,9 +111,12 @@ export type $SafeParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<util.SafeParseResult<core.output<T>>>;
 
 export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err) => async (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
-  if (result instanceof Promise) result = await result;
+  let ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  let result = trySync(schema, value, ctx);
+  if (!result) {
+    ctx = _ctx ? { ..._ctx, async: true } : { async: true };
+    result = await schema._zod.run({ value, issues: [] }, ctx);
+  }
 
   return result.issues.length
     ? {

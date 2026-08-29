@@ -79,3 +79,7 @@ test("resolves", () => {
   const res = z.promise(foo);
   expect(res.unwrap()).toEqual(foo);
 });
+
+test("sync parse throws before the promise settles", () => {
+  expect(() => promSchema.safeParse(Promise.resolve({ name: "Bobby", age: 10 }))).toThrow(z.core.$ZodAsyncError);
+});

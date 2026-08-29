@@ -725,8 +725,8 @@ test("a thenable predicate throws rather than rejecting", () => {
   differential(z.string().refine((() => Promise.resolve(true)) as never), ["x", 1]);
   differential(z.string().superRefine(((_v: any, _c: any) => Promise.resolve(true)) as never), ["x", 1]);
 
-  // A transform is the other way round: the interpreter's own union also falls through to the next branch, so INVALID there is parity rather than a bail-out.
-  differential(z.string().transform((() => Promise.resolve(1)) as never), ["x"], { fallbackOk: true });
+  // a transform handing back a thenable throws the same way
+  differential(z.string().transform((() => Promise.resolve(1)) as never), ["x"]);
 
   // A real async predicate is still refused at codegen, and an ordinary one still compiles.
   expect(() =>

@@ -379,3 +379,32 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
   //   expect(count).toBe(2);
   // });
 });
+
+test("async entry points walk synchronously until a schema hits async work", async () => {
+  const sync = z.object({ a: z.string() });
+  expect(await sync.safeParseAsync({ a: "x" })).toEqual({ success: true, data: { a: "x" } });
+  expect(sync._zod.bag.async).toBeUndefined();
+
+  let runs = 0;
+  const schema = z.object({
+    a: z
+      .string()
+      .transform((v) => {
+        runs++;
+        return v;
+      })
+      .refine(async () => true),
+  });
+  expect(await schema.parseAsync({ a: "x" })).toEqual({ a: "x" });
+  // the first call re-runs the sync prefix once; the flag keeps every later call on the async walk
+  expect(schema._zod.bag.async).toBe(true);
+  expect(runs).toBe(2);
+  await schema.parseAsync({ a: "x" });
+  expect(runs).toBe(3);
+});
+
+test("a sync parse of an object with an async transform throws $ZodAsyncError", () => {
+  const schema = z.object({ a: z.string().transform(async (v) => v) });
+  expect(() => schema.safeParse({ a: "x" })).toThrow(z.core.$ZodAsyncError);
+  expect(() => schema.parse({ a: "x" })).toThrow(z.core.$ZodAsyncError);
+});

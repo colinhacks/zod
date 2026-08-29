@@ -2174,7 +2174,8 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
       const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
       // As in the pipe helper: a throw propagates, because the interpreter lets it out of the whole parse rather than treating it as a failed branch.
       const result = transformFn(value, fakePayload);
-      if (result instanceof Promise) return INVALID;
+      // the interpreter throws for a thenable here too; INVALID inside a union would just hand the parse to the next branch
+      if (result instanceof Promise) throw new $ZodAsyncError();
       return fakePayload.issues.length === 0 ? result : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);

@@ -338,9 +338,11 @@ const toStandardResult = (r: util.SafeParseResult<unknown>) =>
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
   return {
     validate: (value: unknown) => {
+      if (inst._zod.bag.async) return safeParseAsync(inst, value).then(toStandardResult);
       try {
         return toStandardResult(safeParse(inst, value));
-      } catch (_) {
+      } catch (e) {
+        if (e instanceof core.$ZodAsyncError) inst._zod.bag.async = true;
         return safeParseAsync(inst, value).then(toStandardResult);
       }
     },
@@ -4838,6 +4840,8 @@ export const $ZodPromise: core.$constructor<$ZodPromise> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     inst._zod.parse = (payload, ctx) => {
+      // throw here rather than from inside the then, which would reject a promise nobody awaits
+      if (ctx.async === false) throw new core.$ZodAsyncError();
       return Promise.resolve(payload.value).then((inner) => def.innerType._zod.run({ value: inner, issues: [] }, ctx));
     };
   }

@@ -2224,6 +2224,8 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 
       const output = def.transform(payload.value, payload);
       if (output instanceof Promise) {
+        // a check-less schema aliases run to parse, so the sync guard has to live here
+        if (_ctx.async === false) throw new core.$ZodAsyncError();
         return output.then((output) => {
           payload.value = output;
           return payload;

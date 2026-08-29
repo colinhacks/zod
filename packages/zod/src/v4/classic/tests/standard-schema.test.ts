@@ -132,3 +132,14 @@ test("z.toJSONSchema() returns StandardJSONSchemaV1", async () => {
 		}
 	`);
 });
+
+test("validate stays synchronous for a sync schema and remembers an async one", async () => {
+  const sync = z.object({ a: z.string() });
+  expect(sync["~standard"].validate({ a: "x" })).toEqual({ value: { a: "x" } });
+
+  const schema = z.string().refine(async () => true);
+  const first = schema["~standard"].validate("x");
+  expect(first).toBeInstanceOf(Promise);
+  expect(schema._zod.bag.async).toBe(true);
+  expect(await first).toEqual({ value: "x" });
+});
