@@ -518,6 +518,14 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       }
 
+      // counted on the parsed object, so a key synthesized by a property `default` counts and a dropped `__proto__` does not
+      if (typeof schema.minProperties === "number") {
+        zodSchema = zodSchema.check(z.minProperties(schema.minProperties));
+      }
+      if (typeof schema.maxProperties === "number") {
+        zodSchema = zodSchema.check(z.maxProperties(schema.maxProperties));
+      }
+
       // propertyNames constrains key *names* only, and says nothing about which keys are required or how their values validate. Layering it on top of the result keeps properties/patternProperties/additionalProperties composing underneath. `true` allows every name, so it needs no guard.
       if (schema.propertyNames !== undefined && schema.propertyNames !== true) {
         // Keys are always strings, so a propertyNames subschema that omits `type` still constrains them — without this it would convert to z.any().

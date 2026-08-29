@@ -4403,3 +4403,11 @@ describe("intersection folding declines", () => {
     expect(allOf(schema)).toHaveLength(3);
   });
 });
+
+test("minProperties / maxProperties", () => {
+  const rec = z.record(z.string(), z.number()).check(z.minProperties(1), z.maxProperties(3));
+  expect(z.toJSONSchema(rec)).toMatchObject({ type: "object", minProperties: 1, maxProperties: 3 });
+  const obj = z.object({ a: z.string() }).check(z.minProperties(1));
+  expect(z.toJSONSchema(obj)).toMatchObject({ type: "object", minProperties: 1 });
+  expect(z.toJSONSchema(obj)).not.toHaveProperty("maxProperties");
+});

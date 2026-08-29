@@ -991,6 +991,32 @@ export function _minSize(
   });
 }
 
+export type $ZodCheckMaxPropertiesParams = CheckParams<checks.$ZodCheckMaxProperties, "maximum" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _maxProperties(
+  maximum: number,
+  params?: string | $ZodCheckMaxPropertiesParams
+): checks.$ZodCheckMaxProperties<object> {
+  return new checks.$ZodCheckMaxProperties({
+    check: "max_properties",
+    ...util.normalizeParams(params),
+    maximum,
+  });
+}
+
+export type $ZodCheckMinPropertiesParams = CheckParams<checks.$ZodCheckMinProperties, "minimum" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _minProperties(
+  minimum: number,
+  params?: string | $ZodCheckMinPropertiesParams
+): checks.$ZodCheckMinProperties<object> {
+  return new checks.$ZodCheckMinProperties({
+    check: "min_properties",
+    ...util.normalizeParams(params),
+    minimum,
+  });
+}
+
 export type $ZodCheckSizeEqualsParams = CheckParams<checks.$ZodCheckSizeEquals, "size" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _size(

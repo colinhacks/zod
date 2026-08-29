@@ -322,6 +322,10 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   json.type = "object";
   json.properties = {};
 
+  const { minimum, maximum } = schema._zod.bag;
+  if (typeof minimum === "number") json.minProperties = minimum;
+  if (typeof maximum === "number") json.maxProperties = maximum;
+
   for (const key in shape) {
     // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
     assignProp(
@@ -479,6 +483,10 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
+
+  const { minimum, maximum } = schema._zod.bag;
+  if (typeof minimum === "number") json.minProperties = minimum;
+  if (typeof maximum === "number") json.maxProperties = maximum;
 
   // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;

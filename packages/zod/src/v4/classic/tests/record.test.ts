@@ -883,3 +883,24 @@ test("a finite __proto__ key is ignored whether present or missing", () => {
   expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
   expect(schema.parse(Object.fromEntries([["__proto__", 123]]))).toEqual({});
 });
+
+test("minProperties / maxProperties checks", () => {
+  const rec = z.record(z.string(), z.number()).check(z.minProperties(1), z.maxProperties(2));
+  expect(rec.safeParse({ a: 1 }).success).toBe(true);
+  expect(rec.safeParse({ a: 1, b: 2 }).success).toBe(true);
+  expect(rec.safeParse({}).error!.issues[0]).toMatchObject({
+    code: "too_small",
+    origin: "object",
+    minimum: 1,
+    message: "Too small: expected object to have >=1 properties",
+  });
+  expect(rec.safeParse({ a: 1, b: 2, c: 3 }).error!.issues[0]).toMatchObject({
+    code: "too_big",
+    origin: "object",
+    maximum: 2,
+    message: "Too big: expected object to have <=2 properties",
+  });
+  // counted on the parsed value, so a strip object drops unknown keys before the check runs
+  expect(z.object({ a: z.number() }).check(z.maxProperties(1)).safeParse({ a: 1, b: 2 }).success).toBe(true);
+  expect(z.looseObject({ a: z.number() }).check(z.maxProperties(1)).safeParse({ a: 1, b: 2 }).success).toBe(false);
+});

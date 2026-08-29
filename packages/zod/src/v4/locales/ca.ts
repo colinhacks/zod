@@ -9,6 +9,7 @@ const error: () => errors.$ZodErrorMap = () => {
     array: { unit: "elements", verb: "contenir" },
     set: { unit: "elements", verb: "contenir" },
     map: { unit: "elements", verb: "contenir" },
+    object: { unit: "propietats", verb: "contenir" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {

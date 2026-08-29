@@ -50,6 +50,9 @@ const _whenHasLength = (payload: schemas.ParsePayload): boolean => {
   return !util.nullish(val) && (val as any).length !== undefined;
 };
 
+/** Default `when` for property-count checks: run only on non-array objects. */
+const _whenIsObject = (payload: schemas.ParsePayload): boolean => util.isObject(payload.value);
+
 ///////////////////////////////////////
 /////      $ZodCheckLessThan      /////
 ///////////////////////////////////////
@@ -587,6 +590,96 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
         inclusive: true,
         exact: true,
         input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+/////////////////////////////////////
+/////    $ZodCheckMaxProperties    /////
+/////////////////////////////////////
+export interface $ZodCheckMaxPropertiesDef extends $ZodCheckDef {
+  check: "max_properties";
+  maximum: number;
+}
+
+export interface $ZodCheckMaxPropertiesInternals<T extends object = object> extends $ZodCheckInternals<T> {
+  def: $ZodCheckMaxPropertiesDef;
+  issc: errors.$ZodIssueTooBig<T>;
+}
+
+export interface $ZodCheckMaxProperties<T extends object = object> extends $ZodCheck<T> {
+  _zod: $ZodCheckMaxPropertiesInternals<T>;
+}
+
+export const $ZodCheckMaxProperties: core.$constructor<$ZodCheckMaxProperties> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckMaxProperties",
+  (inst, def) => {
+    $ZodCheck.init(inst, def);
+
+    inst._zod.def.when ??= _whenIsObject;
+
+    inst._zod.onattach.push((inst) => {
+      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
+    });
+
+    inst._zod.check = (payload) => {
+      const input = payload.value;
+      if (Object.keys(input).length <= def.maximum) return;
+      payload.issues.push({
+        origin: "object",
+        code: "too_big",
+        maximum: def.maximum,
+        inclusive: true,
+        input,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+/////////////////////////////////////
+/////    $ZodCheckMinProperties    /////
+/////////////////////////////////////
+export interface $ZodCheckMinPropertiesDef extends $ZodCheckDef {
+  check: "min_properties";
+  minimum: number;
+}
+
+export interface $ZodCheckMinPropertiesInternals<T extends object = object> extends $ZodCheckInternals<T> {
+  def: $ZodCheckMinPropertiesDef;
+  issc: errors.$ZodIssueTooSmall<T>;
+}
+
+export interface $ZodCheckMinProperties<T extends object = object> extends $ZodCheck<T> {
+  _zod: $ZodCheckMinPropertiesInternals<T>;
+}
+
+export const $ZodCheckMinProperties: core.$constructor<$ZodCheckMinProperties> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckMinProperties",
+  (inst, def) => {
+    $ZodCheck.init(inst, def);
+
+    inst._zod.def.when ??= _whenIsObject;
+
+    inst._zod.onattach.push((inst) => {
+      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
+    });
+
+    inst._zod.check = (payload) => {
+      const input = payload.value;
+      if (Object.keys(input).length >= def.minimum) return;
+      payload.issues.push({
+        origin: "object",
+        code: "too_small",
+        minimum: def.minimum,
+        inclusive: true,
+        input,
         inst,
         continue: !def.abort,
       });
@@ -1288,6 +1381,8 @@ export type $ZodChecks =
   | $ZodCheckMaxSize
   | $ZodCheckMinSize
   | $ZodCheckSizeEquals
+  | $ZodCheckMaxProperties
+  | $ZodCheckMinProperties
   | $ZodCheckMaxLength
   | $ZodCheckMinLength
   | $ZodCheckLengthEquals

@@ -64,6 +64,14 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "мець",
     },
+    object: {
+      unit: {
+        one: "уласцівасць",
+        few: "уласцівасці",
+        many: "уласцівасцей",
+      },
+      verb: "мець",
+    },
     file: {
       unit: {
         one: "байт",

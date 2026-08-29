@@ -76,6 +76,8 @@ type SupportedCheck =
   | checks.$ZodCheckMaxSize
   | checks.$ZodCheckMinSize
   | checks.$ZodCheckSizeEquals
+  | checks.$ZodCheckMaxProperties
+  | checks.$ZodCheckMinProperties
   | checks.$ZodCheckMaxLength
   | checks.$ZodCheckMinLength
   | checks.$ZodCheckLengthEquals
@@ -335,6 +337,8 @@ const WHEN_DEFAULTED_CHECKS = new Set([
   "max_size",
   "min_size",
   "size_equals",
+  "max_properties",
+  "min_properties",
   "max_length",
   "min_length",
   "length_equals",
@@ -402,6 +406,16 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         break;
       case "size_equals":
         doc.write(`if (${currentAccessor}.size !== ${numericOperand(def.size, "size_equals")}) return INVALID;`);
+        break;
+      case "min_properties":
+        doc.write(
+          `if (Object.keys(${currentAccessor}).length < ${numericOperand(def.minimum, "min_properties")}) return INVALID;`
+        );
+        break;
+      case "max_properties":
+        doc.write(
+          `if (Object.keys(${currentAccessor}).length > ${numericOperand(def.maximum, "max_properties")}) return INVALID;`
+        );
         break;
       case "string_format":
         currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);

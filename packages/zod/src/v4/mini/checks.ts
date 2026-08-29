@@ -13,6 +13,8 @@ export {
   _maxSize as maxSize,
   _minSize as minSize,
   _size as size,
+  _maxProperties as maxProperties,
+  _minProperties as minProperties,
   _maxLength as maxLength,
   _minLength as minLength,
   _length as length,

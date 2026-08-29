@@ -71,6 +71,14 @@ test("z.minLength", () => {
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
 });
 
+// minProperties / maxProperties;
+test("z.minProperties / z.maxProperties", () => {
+  const a = z.record(z.string(), z.number()).check(z.minProperties(1), z.maxProperties(2));
+  expect(z.safeParse(a, {}).success).toEqual(false);
+  expect(z.safeParse(a, { a: 1 }).success).toEqual(true);
+  expect(z.safeParse(a, { a: 1, b: 2, c: 3 }).success).toEqual(false);
+});
+
 // size;
 test("z.length", () => {
   const a = z.array(z.string()).check(z.length(3));

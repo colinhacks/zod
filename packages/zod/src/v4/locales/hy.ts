@@ -58,6 +58,13 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "ունենալ",
     },
+    object: {
+      unit: {
+        one: "հատկություն",
+        many: "հատկություններ",
+      },
+      verb: "ունենալ",
+    },
   };
 
   function getSizing(origin: string): ArmenianSizable | null {

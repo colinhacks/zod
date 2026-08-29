@@ -2065,6 +2065,13 @@ type Input = z.input<typeof Person>; // { id?: string; name?: string }
 type Output = z.output<typeof Person>; // { id: string; name: string }
 ```
 
+To constrain the number of keys, use the `z.minProperties()` and `z.maxProperties()` checks. They count the keys of the parsed value, so they also work on `z.object()` schemas.
+
+```ts
+z.record(z.string(), z.number()).check(z.minProperties(1)); // must have 1 or more keys
+z.record(z.string(), z.number()).check(z.maxProperties(5)); // must have 5 or fewer keys
+```
+
 ### `z.partialRecord`
 
 

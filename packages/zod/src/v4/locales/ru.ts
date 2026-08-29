@@ -72,6 +72,14 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "иметь",
     },
+    object: {
+      unit: {
+        one: "свойство",
+        few: "свойства",
+        many: "свойств",
+      },
+      verb: "иметь",
+    },
   };
 
   function getSizing(origin: string): RussianSizable | null {

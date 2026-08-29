@@ -1308,3 +1308,35 @@ test("__proto__ annotation key reaches the registry", () => {
   expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
   expect(meta.__proto__).toEqual({ custom: 1 });
 });
+
+test("minProperties and maxProperties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    minProperties: 1,
+    maxProperties: 2,
+  });
+  expect(schema.safeParse({ a: "x" }).success).toBe(true);
+  expect(schema.safeParse({}).error!.issues[0]).toMatchObject({ code: "too_small", origin: "object", minimum: 1 });
+  expect(schema.safeParse({ a: "x", b: 1, c: 2 }).error!.issues[0]).toMatchObject({
+    code: "too_big",
+    origin: "object",
+    maximum: 2,
+  });
+  expect(z.toJSONSchema(schema)).toMatchObject({ minProperties: 1, maxProperties: 2 });
+  // counted on the parsed object, so a defaulted property satisfies the minimum
+  const defaulted = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string", default: "x" } },
+    minProperties: 1,
+  });
+  expect(defaulted.safeParse({}).success).toBe(true);
+});
+
+test("minProperties composes with propertyNames", () => {
+  const schema = fromJSONSchema({ type: "object", propertyNames: { pattern: "^a" }, minProperties: 1 });
+  expect(schema.safeParse({}).error!.issues[0]!.code).toBe("too_small");
+  expect(schema.safeParse({ b: 1 }).error!.issues[0]!.code).toBe("invalid_key");
+  expect(schema.safeParse({ a: 1 }).success).toBe(true);
+  expect(z.toJSONSchema(schema)).toMatchObject({ propertyNames: { pattern: "^a" }, minProperties: 1 });
+});
