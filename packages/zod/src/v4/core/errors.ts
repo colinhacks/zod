@@ -213,7 +213,7 @@ type RawIssue<T extends $ZodIssueBase> = T extends any
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = $ZodInternalIssue<T>;
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
-  // biome-ignore lint:
+  // biome-ignore lint/style/useShorthandFunctionType: public type, the interface form is part of the API surface
   (issue: $ZodRawIssue<T>): { message: string } | string | undefined | null;
 }
 
