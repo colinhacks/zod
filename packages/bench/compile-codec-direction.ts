@@ -1,6 +1,5 @@
 import * as z from "zod/v4";
 import * as zcore from "zod/v4/core";
-import * as zcompile from "../zod/src/v4/core/compile.js";
 import { metabench } from "./metabench.js";
 
 const INVALID = Symbol("invalid");
@@ -37,7 +36,7 @@ const codec = z.codec(inputSchema, outputSchema, {
 });
 
 const compiled = zcore.compile(codec);
-const forward = zcompile.compileFn(codec);
+const forward = zcore.compileFn(codec);
 
 const input = {
   id: "abc",

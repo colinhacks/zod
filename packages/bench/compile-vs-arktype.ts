@@ -1,7 +1,6 @@
 import { type } from "arktype";
 import * as z from "zod/v4";
 import * as zcore from "zod/v4/core";
-import * as zcompile from "../zod/src/v4/core/compile.js";
 import { metabench } from "./metabench.js";
 
 const caseOrder = ["simple", "nested", "array", "array-objects", "du", "intersection", "xor"] as const;
@@ -211,15 +210,15 @@ const zodXorCompiled = (() => {
   }
 })();
 
-const zodSimpleFn = zcompile.compileFn(zodSimple);
-const zodNestedFn = zcompile.compileFn(zodNested);
-const zodArrayFn = zcompile.compileFn(zodArray);
-const zodArrayOfObjectsFn = zcompile.compileFn(zodArrayOfObjects);
-const zodDiscriminatedFn = zcompile.compileFn(zodDiscriminated);
-const zodIntersectionFn = zcompile.compileFn(zodIntersection);
+const zodSimpleFn = zcore.compileFn(zodSimple);
+const zodNestedFn = zcore.compileFn(zodNested);
+const zodArrayFn = zcore.compileFn(zodArray);
+const zodArrayOfObjectsFn = zcore.compileFn(zodArrayOfObjects);
+const zodDiscriminatedFn = zcore.compileFn(zodDiscriminated);
+const zodIntersectionFn = zcore.compileFn(zodIntersection);
 const zodXorFn = (() => {
   try {
-    return zcompile.compileFn(zodXor);
+    return zcore.compileFn(zodXor);
   } catch {
     return (d: unknown) => zodXor.safeParse(d);
   }
@@ -311,7 +310,7 @@ if (selectedCaseSet.has("simple") || selectedCaseSet.has("nested")) {
   if (selectedCaseSet.has("simple")) {
     console.log("Zod safeParse simple:", zodSimple.safeParse(simpleData).success);
     console.log("z.compile() simple:", zodSimpleCompiled.safeParse(simpleData).success);
-    console.log("z.compileFn() simple:", zodSimpleFn(simpleData) !== zcompile.INVALID);
+    console.log("z.compileFn() simple:", zodSimpleFn(simpleData) !== zcore.INVALID);
     console.log("Arktype simple:", !(arktypeSimple(simpleData) instanceof type.errors));
     console.log("Handwritten simple:", handwrittenSimple(simpleData) !== INVALID);
     console.log("");
@@ -319,7 +318,7 @@ if (selectedCaseSet.has("simple") || selectedCaseSet.has("nested")) {
   if (selectedCaseSet.has("nested")) {
     console.log("Zod safeParse nested:", zodNested.safeParse(nestedData).success);
     console.log("z.compile() nested:", zodNestedCompiled.safeParse(nestedData).success);
-    console.log("z.compileFn() nested:", zodNestedFn(nestedData) !== zcompile.INVALID);
+    console.log("z.compileFn() nested:", zodNestedFn(nestedData) !== zcore.INVALID);
     console.log("Arktype nested:", !(arktypeNested(nestedData) instanceof type.errors));
     console.log("Handwritten nested:", handwrittenNested(nestedData) !== INVALID);
     console.log("");
