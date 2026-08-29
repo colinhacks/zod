@@ -1263,6 +1263,18 @@ describe("toJSONSchema", () => {
     ).toEqual({ $ref: "#/$defs/Keys" });
   });
 
+  test("record with a heterogeneous key stringifies only its numeric members", () => {
+    // a mixed key carries no `type`, so the numeric members are caught by value rather than by type
+    expect(z.toJSONSchema(z.record(z.literal(["a", 1]), z.boolean()))).toMatchObject({
+      propertyNames: { enum: ["a", "1"] },
+      required: ["a", "1"],
+    });
+    // a member no key can spell is left as it was, since the parser only ever retries a key as a number
+    expect(z.toJSONSchema(z.record(z.literal(["a", true]) as any, z.boolean())).propertyNames).toEqual({
+      enum: ["a", true],
+    });
+  });
+
   test("record stringifies required for every target", () => {
     const schema = z.record(z.literal([1, 2]), z.boolean());
     for (const target of ["draft-2020-12", "draft-7", "draft-4", "openapi-3.0"] as const) {
@@ -3112,6 +3124,28 @@ test("large registry converts in linear time", () => {
   const folded = convert(true);
   expect(folded.schemas.Inter).toMatchObject({ type: "object", properties: { a: {}, b: {} } });
   expect(folded.elapsed).toBeLessThan(plain.elapsed * 4 + 100);
+});
+
+test("a registry of records with numeric keys converts in linear time", () => {
+  const count = 2000;
+  const convert = (key: () => z.core.$ZodType) => {
+    const registry = z.registry<{ id: string }>();
+    for (let i = 0; i < count; i++) {
+      registry.add(z.object({ m: z.record(key() as z.core.$ZodRecordKey, z.boolean()) }), { id: `Type${i}` });
+    }
+    const start = performance.now();
+    const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+    return { schemas, elapsed: performance.now() - start };
+  };
+
+  // The key rewrite has to find every carrier the flatten copied `propertyNames` onto, which means a pass over the whole seen map. Running that once per record rather than once per conversion cost ~10x at this size. The string key needs no rewrite at all, so comparing against it keeps this independent of how fast the machine is.
+  const numeric = convert(() => z.number());
+  expect(numeric.schemas.Type0).toMatchObject({
+    properties: { m: { propertyNames: { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" } } },
+  });
+
+  const string = convert(() => z.string());
+  expect(numeric.elapsed).toBeLessThan(string.elapsed * 4 + 100);
 });
 
 test("registry extracts unregistered subschemas into __shared", () => {

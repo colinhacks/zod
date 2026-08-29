@@ -505,16 +505,44 @@ function stringifyKeyNames(
     if (mapped.some((branch, i) => branch !== branches[i])) json = { ...json, [keyword]: mapped };
   }
 
-  // a member that already admits a string leaves the key unconstrained, so there is nothing to re-express
+  // a member that already admits a string leaves the key unconstrained, so the node's own type re-expresses only when every member is numeric
   const types = Array.isArray(json.type) ? json.type : [json.type];
-  if (types.includes("string") || !types.some((t) => t === "number" || t === "integer")) return json;
+  const numericType = !types.includes("string") && types.some((t) => t === "number" || t === "integer");
+  // a heterogeneous key carries no type at all, so its numeric members are caught here instead
+  const values = json.enum ?? (json.const !== undefined ? [json.const] : undefined);
+  if (!numericType && !values?.some((v) => typeof v === "number")) return json;
 
   const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json;
+  if (rest.enum) rest.enum = rest.enum.map((v) => (typeof v === "number" ? String(v) : v));
+  else if (typeof rest.const === "number") rest.const = String(rest.const);
+  // a heterogeneous key keeps its absent type: the stringified members already say what a key may be
+  if (!numericType) return rest;
   rest.type = "string";
-  if (rest.enum) rest.enum = rest.enum.map(String);
-  else if (rest.const !== undefined) rest.const = String(rest.const);
-  else rest.pattern = (types.includes("number") ? regexes.number : regexes.integer).source;
+  if (!values) rest.pattern = (types.includes("number") ? regexes.number : regexes.integer).source;
   return rest;
+}
+
+/** Every record of one conversion, so the carriers are found in a single pass rather than once per record. */
+const pendingRecords = new WeakMap<ToJSONSchemaContext, schemas.$ZodType[]>();
+
+function rewriteKeyNames(ctx: ToJSONSchemaContext): void {
+  const rewrites = new Map<JSONSchema.BaseSchema, JSONSchema.BaseSchema>();
+  for (const record of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record);
+    const names = (seen?.def ?? seen?.schema)?.propertyNames;
+    if (!names || names === true || rewrites.has(names)) continue;
+    const rewritten = stringifyKeyNames(ctx, names, new Set());
+    if (rewritten !== names) rewrites.set(names, rewritten);
+  }
+  if (!rewrites.size) return;
+
+  // the flatten has already copied each record's own properties onto every wrapper by reference, and an extracted body is another such copy, so every carrier holding a rewritten key is updated together
+  for (const entry of ctx.seen.values()) {
+    for (const carrier of [entry.schema, entry.def]) {
+      const rewritten = carrier && rewrites.get(carrier.propertyNames as JSONSchema.BaseSchema);
+      if (rewritten) carrier!.propertyNames = rewritten;
+    }
+  }
 }
 
 export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _json, params) => {
@@ -544,19 +572,13 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
         ...params,
         path: [...params.path, "propertyNames"],
       });
-      ctx.deferred.push(() => {
-        const seen = ctx.seen.get(schema)!;
-        const names = (seen.def ?? seen.schema).propertyNames;
-        if (!names || names === true) return;
-        const rewritten = stringifyKeyNames(ctx, names, new Set());
-        if (rewritten === names) return;
-        // the flatten has already copied this record's own properties onto every wrapper by reference, and its extracted body is another such copy, so every carrier holding the key needs the rewrite
-        for (const entry of ctx.seen.values()) {
-          for (const carrier of [entry.schema, entry.def]) {
-            if (carrier?.propertyNames === names) carrier.propertyNames = rewritten;
-          }
-        }
-      });
+      let pending = pendingRecords.get(ctx);
+      if (!pending) {
+        pending = [];
+        pendingRecords.set(ctx, pending);
+        ctx.deferred.push(() => rewriteKeyNames(ctx));
+      }
+      pending.push(schema);
     }
     json.additionalProperties = process(def.valueType, ctx as any, {
       ...params,
