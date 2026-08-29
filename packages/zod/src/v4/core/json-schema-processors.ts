@@ -531,9 +531,11 @@ function stringifyKeyNames(
 const pendingRecords = new WeakMap<ToJSONSchemaContext, schemas.$ZodType[]>();
 
 function rewriteKeyNames(ctx: ToJSONSchemaContext): void {
-  // an extracted key is resolved by the object `extractToDef` left in its place, so the map is built once rather than searched per reference
+  // an extracted key is resolved by the object `extractToDef` left in its place, so the map is built once rather than searched per reference. `_zod.toJSONSchema` can hand the same object to two schemas, so the first entry carrying a body wins, as a search would have found it.
   const bySchema = new Map<JSONSchema.BaseSchema, Seen>();
-  for (const entry of ctx.seen.values()) bySchema.set(entry.schema, entry);
+  for (const entry of ctx.seen.values()) {
+    if (entry.def && !bySchema.has(entry.schema)) bySchema.set(entry.schema, entry);
+  }
 
   const rewrites = new Map<JSONSchema.BaseSchema, JSONSchema.BaseSchema>();
   for (const record of pendingRecords.get(ctx) ?? []) {
