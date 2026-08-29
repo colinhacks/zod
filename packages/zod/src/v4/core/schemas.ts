@@ -5,7 +5,7 @@ import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
-import { _safeParse, _safeParseAsync, parse, parseAsync } from "./parse.js";
+import { parse, parseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
@@ -332,24 +332,20 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 );
 
 /** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
-const toStandardResult = (r: util.SafeParseResult<unknown>) =>
-  r.success ? { value: r.data } : { issues: r.error?.issues };
-
-// a Standard Schema result only reports issues, so a failure skips the ZodError and its construction cost: the bag holds the finalized issues and nothing else
-function IssueBag(this: { issues: errors.$ZodIssue[] }, issues: errors.$ZodIssue[]) {
-  this.issues = issues;
-}
-const standardParse = /* @__PURE__ */ _safeParse(IssueBag as any);
-const standardParseAsync = /* @__PURE__ */ _safeParseAsync(IssueBag as any);
+// a Standard Schema result only reports issues, so a failure finalizes them straight off the raw payload: no ZodError, and no lazy result to read through
+const toStandardResult = (r: ParsePayload, ctx: ParseContextInternal) =>
+  r.issues.length ? { issues: r.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())) } : { value: r.value };
 
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
   return {
     validate: (value: unknown) => {
-      try {
-        return toStandardResult(standardParse(inst, value));
-      } catch (_) {
-        return standardParseAsync(inst, value).then(toStandardResult);
-      }
+      const ctx: ParseContextInternal = { async: false };
+      const r = inst._zod.run({ value, issues: [] }, ctx);
+      if (!(r instanceof Promise)) return toStandardResult(r, ctx);
+      const actx: ParseContextInternal = { async: true };
+      return (inst._zod.run({ value, issues: [] }, actx) as Promise<ParsePayload>).then((r) =>
+        toStandardResult(r, actx)
+      );
     },
     vendor: "zod",
     version: 1 as const,
