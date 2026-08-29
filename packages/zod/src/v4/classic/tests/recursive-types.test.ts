@@ -556,7 +556,7 @@ test("recursive object with .check()", () => {
   expect(() => Category.parse(invalidData)).toThrow();
 });
 
-// biome-ignore lint/suspicious/noExportsInTest: type-level fixture, the export is what satisfies noUnusedLocals
+// biome-ignore lint/suspicious/noExportsInTest: unexported it trips noUnusedVariables instead
 export type RecursiveA = z.ZodUnion<
   [
     z.ZodObject<{
