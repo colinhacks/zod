@@ -226,7 +226,7 @@ jobs:
         working-directory: ./packages/mini
         run: |
           VERSION=$(node -p 'require("./jsr.json").version')
-          if curl -sf "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
+          if curl -sfL "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
             echo "@zod/mini@$VERSION is already on JSR"
           else
             pnpm jsr publish --allow-slow-types
@@ -320,7 +320,7 @@ jobs:
         env:
           VERSION: ${{ inputs.mini_version }}
         run: |
-          if curl -sf "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
+          if curl -sfL "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
             echo "@zod/mini@$VERSION is already on JSR"
           else
             pnpm jsr publish --allow-slow-types --allow-dirty

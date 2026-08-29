@@ -12,6 +12,7 @@
     "include": [
       "src",
       "LICENSE",
+      "package.json",
       "README.md"
     ],
     "exclude": [
