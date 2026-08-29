@@ -201,6 +201,9 @@ jobs:
           echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
           exit 1
 
+      # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two publishes above ran
+      - run: pnpm check:lockstep --wait
+
   backpublish_mini:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -234,14 +237,24 @@ jobs:
           cat package.json
       - run: pnpm build
 
-      # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design. npm refuses a bare publish of a version below latest, so it goes out under a throwaway dist-tag that leaves latest alone; remove it afterwards with `npm dist-tag rm @zod/mini backfill`
+      # npm refuses a bare publish of a version below latest, so an older version goes out under a throwaway dist-tag that leaves latest alone (remove it afterwards with `npm dist-tag rm @zod/mini backfill`); the version that IS zod's latest takes latest, so the lockstep check can pass
+      - id: tag
+        name: Pick the dist-tag
+        env:
+          VERSION: ${{ inputs.mini_version }}
+        run: |
+          ZOD_LATEST=$(curl -sf https://registry.npmjs.org/zod/latest | node -e 'process.stdin.on("data", d => console.log(JSON.parse(d).version))')
+          if [ "$VERSION" = "$ZOD_LATEST" ]; then echo "tag=latest" >> "$GITHUB_OUTPUT"; else echo "tag=backfill" >> "$GITHUB_OUTPUT"; fi
+          echo "zod latest is $ZOD_LATEST; publishing @zod/mini@$VERSION under $([ "$VERSION" = "$ZOD_LATEST" ] && echo latest || echo backfill)"
+
+      # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design
       - id: publish_mini
         name: Publish @zod/mini to NPM
         uses: JS-DevTools/npm-publish@v4
         with:
           provenance: true
           ignore-scripts: true
-          tag: backfill
+          tag: ${{ steps.tag.outputs.tag }}
           package: ./packages/mini
 
       - name: Verify @zod/mini is live on npm
@@ -258,3 +271,5 @@ jobs:
           done
           echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
           exit 1
+
+      - run: pnpm check:lockstep --wait
