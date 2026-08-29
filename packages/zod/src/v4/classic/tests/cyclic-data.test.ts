@@ -692,3 +692,29 @@ test("detects a cycle reachable only through a merged catchall", () => {
   const out: any = Root.parse(input);
   expect(out.child.next).toBe(out);
 });
+
+// the per-type switch can only enumerate kinds Zod ships, so an unknown `def.type` falls back to scanning the def; without it a cycle through a third-party container overflows the stack
+test("detects a cycle through a user-defined container type", () => {
+  const MyBox: any = z.core.$constructor("MyBox", (inst: any, def: any) => {
+    z.core.$ZodType.init(inst, def);
+    inst._zod.parse = (payload: any, ctx: any) => {
+      if (payload.value === null || typeof payload.value !== "object") return payload;
+      const inner = def.inner._zod.run({ value: payload.value.v, issues: [] }, ctx);
+      payload.value = { v: inner.value };
+      return payload;
+    };
+  });
+
+  const Node: any = z.object({
+    id: z.string(),
+    get boxed() {
+      return z.optional(new MyBox({ type: "mybox", inner: z.lazy(() => Node) }));
+    },
+  });
+
+  const input: any = { id: "1" };
+  input.boxed = { v: input };
+
+  const out: any = Node.parse(input);
+  expect(out.boxed.v).toBe(out);
+});

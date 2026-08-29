@@ -124,9 +124,19 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
     case "transform":
     case "custom":
       break;
-    default:
-      // a new built-in kind becomes a compile error here; unknown user kinds are treated as leaves
+    default: {
+      // a new built-in kind becomes a compile error here
       kind satisfies never;
+      // a user-defined kind can still hold children, and only its author knows where, so fall back to scanning the def — skipping accessors, since reading one can run user code
+      for (const key in def) {
+        const desc = Object.getOwnPropertyDescriptor(def, key);
+        if (!desc || desc.get) continue;
+        const value = desc.value;
+        if (!value || typeof value !== "object") continue;
+        if (value._zod) check(value);
+        else if (Array.isArray(value)) for (const el of value) check(el);
+      }
+    }
   }
 
   stack.delete(inst);
