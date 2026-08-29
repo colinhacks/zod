@@ -1,0 +1,19 @@
+# .github/workflows/lockstep.yml
+
+name: Check zod and @zod/mini lockstep on npm
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "latest"
+      - uses: pnpm/action-setup@v6
+      - run: pnpm install
+      - run: pnpm check:lockstep
