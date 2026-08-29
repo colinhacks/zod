@@ -556,7 +556,7 @@ test("recursive object with .check()", () => {
   expect(() => Category.parse(invalidData)).toThrow();
 });
 
-// biome-ignore lint: sadf
+// biome-ignore lint/suspicious/noExportsInTest: unexported it trips noUnusedVariables instead
 export type RecursiveA = z.ZodUnion<
   [
     z.ZodObject<{

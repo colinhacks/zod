@@ -353,7 +353,7 @@ for (let r = 0; r < ROUNDS && failures.length < 5; r++) {
     let got: any;
     try {
       expected = built.schema.safeParse(input);
-    } catch (e) {
+    } catch {
       continue; // runtime itself throws (e.g. cyclic); not a compiled-path question
     }
     try {

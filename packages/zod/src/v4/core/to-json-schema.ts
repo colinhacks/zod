@@ -429,8 +429,6 @@ export function extractDefs<T extends schemas.$ZodType>(
     if (seen.count > 1) {
       if (ctx.reused === "ref") {
         extractToDef(entry);
-        // biome-ignore lint:
-        continue;
       }
     }
   }
