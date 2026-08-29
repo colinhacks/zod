@@ -221,6 +221,17 @@ jobs:
           echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
           exit 1
 
+      # JSR refuses a version that already exists, so the step checks first; this also lets the first JSR publish of a version already on npm ride on a merge that publishes nothing to npm
+      - name: Publish @zod/mini to JSR
+        working-directory: ./packages/mini
+        run: |
+          VERSION=$(node -p 'require("./jsr.json").version')
+          if curl -sfL "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
+            echo "@zod/mini@$VERSION is already on JSR"
+          else
+            pnpm jsr publish --allow-slow-types
+          fi
+
       # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two publishes above ran
       - run: pnpm check:lockstep --wait
 
@@ -254,8 +265,16 @@ jobs:
             echo "zod@$VERSION is not on npm; @zod/mini only ships versions zod shipped"
             exit 1
           fi
-          npm pkg set version="$VERSION" peerDependencies.zod="^${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.0"
-          cat package.json
+          export MAJOR="${BASH_REMATCH[1]}" MINOR="${BASH_REMATCH[2]}"
+          npm pkg set version="$VERSION" peerDependencies.zod="^${MAJOR}.${MINOR}.0"
+          node -e '
+            const fs = require("fs");
+            const jsr = JSON.parse(fs.readFileSync("jsr.json", "utf8"));
+            jsr.version = process.env.VERSION;
+            jsr.imports["zod/mini"] = `jsr:@zod/zod@^${process.env.MAJOR}.${process.env.MINOR}.0/mini`;
+            fs.writeFileSync("jsr.json", JSON.stringify(jsr, null, 2) + "\n");
+          '
+          cat package.json jsr.json
       - run: pnpm build
 
       # npm refuses a bare publish of a version below latest, so an older version goes out under a throwaway dist-tag that leaves latest alone (remove it afterwards with `npm dist-tag rm @zod/mini backfill`); the version that IS zod's latest takes latest, so the lockstep check can pass
@@ -294,5 +313,17 @@ jobs:
           done
           echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
           exit 1
+
+      # the version edit above leaves the tree dirty by design
+      - name: Publish @zod/mini to JSR
+        working-directory: ./packages/mini
+        env:
+          VERSION: ${{ inputs.mini_version }}
+        run: |
+          if curl -sfL "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
+            echo "@zod/mini@$VERSION is already on JSR"
+          else
+            pnpm jsr publish --allow-slow-types --allow-dirty
+          fi
 
       - run: pnpm check:lockstep --wait

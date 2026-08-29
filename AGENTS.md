@@ -84,12 +84,13 @@ If you touch that machinery, three things bite:
 
 Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
 
-Four files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
+Five files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
 
 - `packages/zod/package.json` — `version`
 - `packages/zod/jsr.json` — `version`
 - `packages/zod/src/v4/core/versions.ts` — `major` / `minor` / `patch`
 - `packages/mini/package.json` — `version` (same x.y.z; `@zod/mini` ships in lockstep) and `peerDependencies.zod` (`^x.y.0`, the minor being released — bump it on every minor)
+- `packages/mini/jsr.json` — `version` and the `imports["zod/mini"]` range (`jsr:@zod/zod@^x.y.0/mini`, same rule)
 
 Procedure:
 
@@ -97,13 +98,13 @@ Procedure:
 # Make sure main is clean and up to date first.
 git checkout main && git pull
 
-# Bump all four files to the new x.y.z (and the @zod/mini peer floor on a minor), then:
-git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json
+# Bump all five files to the new x.y.z (and the @zod/mini peer floor + JSR import range on a minor), then:
+git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json packages/mini/jsr.json
 git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
 ```
 
-The release workflow only fires on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, so the bump must include `package.json`. It publishes `zod`, then tags and releases it, then publishes `@zod/mini` last. Watch the Actions tab to confirm `build_and_publish` succeeds.
+The release workflow only fires on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, so the bump must include `package.json`. It publishes `zod`, then tags and releases it, then publishes `@zod/mini` to npm and JSR last. Watch the Actions tab to confirm `build_and_publish` succeeds.
 
 To publish `@zod/mini` at a version zod already shipped without it, dispatch the same workflow; it publishes only the scoped package, with the peer floor set to that minor:
 
@@ -113,7 +114,7 @@ gh workflow run release.yml -f mini_version=4.5.2
 
 A back-published version below `latest` goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one; remove the tag once the backfill is done: `npm dist-tag rm @zod/mini backfill`. A version that is zod's `latest` is published under `latest` instead. Dispatch one version at a time and let each run finish — concurrent publishes to one package fail with npm `E409` while the previous packument write is still processing.
 
-Both release paths end with `pnpm check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin, when a `@zod/mini` version has no `zod` twin, or when the two `latest` tags differ. Run `pnpm check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
+Both release paths end with `pnpm check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and JSR and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin on either registry, when a `@zod/mini` version has no `zod` twin, or when the `latest` tags differ. A `zod` version present on npm but missing on JSR is only warned about, since that publish is recovered by hand and must not hold a release red. Run `pnpm check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
 
 ## Format validators: spec compliance is not the bar
 
