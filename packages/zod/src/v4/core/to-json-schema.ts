@@ -142,6 +142,8 @@ export interface ToJSONSchemaContext {
   reused: "ref" | "inline";
   /** The `allOf` array of each intersection encountered during traversal, innermost first. `finalize` folds every emitted object holding one; see `foldIntersection`. */
   intersections: JSONSchema.BaseSchema[][];
+  /** Rewrites a processor deferred to `finalize`, where the flatten has resolved every ref and the union branches are in place. */
+  deferred: (() => void)[];
   external?:
     | {
         registry: $ZodRegistry<{ id?: string | undefined }>;
@@ -180,6 +182,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     cycles: params?.cycles ?? "ref",
     reused: params?.reused ?? "inline",
     intersections: [],
+    deferred: [],
     external: params?.external ?? undefined,
   };
 }
@@ -659,6 +662,8 @@ export function finalize<T extends schemas.$ZodType>(
         compactTypeUnion(entry[1].def ?? entry[1].schema);
       }
     }
+
+    for (const rewrite of ctx.deferred) rewrite();
 
     // After flattening, every member that was extracted is a `$ref`, so the fold sees the final shape. A schema that inherits an intersection — through `z.lazy`, or any `ref` chain — holds the same `allOf` array, so fold by array identity to catch every copy.
     if (ctx.intersections.length) {

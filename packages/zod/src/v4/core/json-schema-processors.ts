@@ -47,11 +47,11 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
-    const regexes = [...patterns];
-    if (regexes.length === 1) json.pattern = regexes[0]!.source;
-    else if (regexes.length > 1) {
+    const patternList = [...patterns];
+    if (patternList.length === 1) json.pattern = patternList[0]!.source;
+    else if (patternList.length > 1) {
       json.allOf = [
-        ...regexes.map((regex) => ({
+        ...patternList.map((regex) => ({
           ...(ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0"
             ? ({ type: "string" } as const)
             : {}),
@@ -476,15 +476,35 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 };
 
-// JSON object keys are always strings, so a numeric key schema is re-expressed over the numeric-string form the record parser matches
-function keyNameSchema(json: JSONSchema.BaseSchema): JSONSchema.BaseSchema {
-  if (json.type !== "number" && json.type !== "integer") return json;
-  // the copy escapes the `$defs` extraction that would otherwise wipe `id` off the original
+/** JSON object keys are always strings, so a numeric record key schema is re-expressed over the
+ * numeric-string form the record parser matches. Deferred to `finalize`, after the flatten: a key
+ * behind a wrapper only carries its own `type` before then, and a union key only has its branches. */
+function stringifyKeyNames(ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema): JSONSchema.BaseSchema {
+  // an extracted key that rewrites cannot go on sharing its definition — the string form a key position needs is not the number form every other reference wants — so it inlines. One that does not rewrite keeps the `$ref`.
+  if (json.$ref) {
+    for (const seen of ctx.seen.values()) {
+      if (seen.schema !== json || !seen.def) continue;
+      const inlined = stringifyKeyNames(ctx, seen.def);
+      return inlined === seen.def ? json : inlined;
+    }
+    return json;
+  }
+
+  for (const keyword of ["anyOf", "oneOf"] as const) {
+    const branches = json[keyword];
+    if (!Array.isArray(branches)) continue;
+    json = { ...json, [keyword]: branches.map((branch) => stringifyKeyNames(ctx, branch)) };
+  }
+
+  // a member that already admits a string leaves the key unconstrained, so there is nothing to re-express
+  const types = Array.isArray(json.type) ? json.type : [json.type];
+  if (types.includes("string") || !types.some((t) => t === "number" || t === "integer")) return json;
+
   const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json;
   rest.type = "string";
   if (rest.enum) rest.enum = rest.enum.map(String);
   else if (rest.const !== undefined) rest.const = String(rest.const);
-  else rest.pattern = (json.type === "integer" ? regexes.integer : regexes.number).source;
+  else rest.pattern = (types.includes("number") ? regexes.number : regexes.integer).source;
   return rest;
 }
 
@@ -511,12 +531,18 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   } else {
     // Default behavior: use propertyNames + additionalProperties
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json.propertyNames = keyNameSchema(
-        process(def.keyType, ctx as any, {
-          ...params,
-          path: [...params.path, "propertyNames"],
-        })
-      );
+      json.propertyNames = process(def.keyType, ctx as any, {
+        ...params,
+        path: [...params.path, "propertyNames"],
+      });
+      ctx.deferred.push(() => {
+        const seen = ctx.seen.get(schema)!;
+        // the extracted body is a copy taken before the rewrite runs, so both carriers need it
+        for (const carrier of [seen.schema, seen.def]) {
+          const names = carrier?.propertyNames;
+          if (names && names !== true) carrier!.propertyNames = stringifyKeyNames(ctx, names);
+        }
+      });
     }
     json.additionalProperties = process(def.valueType, ctx as any, {
       ...params,

@@ -1198,6 +1198,53 @@ describe("toJSONSchema", () => {
     });
   });
 
+  test("record key rewrite reaches through wrappers and union branches", () => {
+    const numericString = { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" };
+    // a wrapper only carries its inner type once the refs are flattened, so this is decided after the record itself is emitted
+    expect(
+      z.toJSONSchema(
+        z.record(
+          z.lazy(() => z.number()),
+          z.boolean()
+        )
+      ).propertyNames
+    ).toEqual(numericString);
+    expect(z.toJSONSchema(z.record(z.number().pipe(z.number()), z.boolean())).propertyNames).toEqual(numericString);
+    expect(z.toJSONSchema(z.record(z.number().readonly(), z.boolean())).propertyNames).toMatchObject(numericString);
+    expect(z.toJSONSchema(z.record(z.union([z.literal("Tuna"), z.literal(21)]), z.string()))).toMatchObject({
+      propertyNames: {
+        anyOf: [
+          { type: "string", const: "Tuna" },
+          { type: "string", const: "21" },
+        ],
+      },
+      required: ["Tuna", "21"],
+    });
+  });
+
+  test("record with a numeric key inlines an extracted key, and leaves a string one referenced", () => {
+    expect(z.toJSONSchema(z.record(z.number().meta({ id: "Num" }), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+(?:\\.\\d+)?$",
+    });
+    expect(z.toJSONSchema(z.record(z.string().meta({ id: "Str" }), z.boolean())).propertyNames).toEqual({
+      $ref: "#/$defs/Str",
+    });
+    // the value position still wants the number form, so the two cannot share one def
+    const key = z.number().meta({ id: "Shared" });
+    expect(z.toJSONSchema(z.object({ a: key, b: z.record(key, z.string()) }))).toMatchObject({
+      properties: { a: { $ref: "#/$defs/Shared" }, b: { propertyNames: { type: "string" } } },
+      $defs: { Shared: { type: "number" } },
+    });
+  });
+
+  test("record stringifies required for every target", () => {
+    const schema = z.record(z.literal([1, 2]), z.boolean());
+    for (const target of ["draft-2020-12", "draft-7", "draft-4", "openapi-3.0"] as const) {
+      expect(z.toJSONSchema(schema, { target }).required).toEqual(["1", "2"]);
+    }
+  });
+
   test("strict record with regex key uses propertyNames", () => {
     const schema = z.record(z.string().regex(/^label:[a-z]{2}$/), z.string());
 
