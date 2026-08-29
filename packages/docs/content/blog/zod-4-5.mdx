@@ -134,7 +134,7 @@ The multi-property counterpart to `z.property()`. ([#5912](https://github.com/co
 ```ts
 const httpsUrl = z.instanceof(URL).check(
   ...z.properties({
-    protocol: z.literal("https:" as string),
+    protocol: z.literal("https:"),
     hostname: z.string().regex(z.regexes.domain),
   })
 );

@@ -129,6 +129,17 @@ export type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
 export type Whatever = {} | undefined | null;
+// literal inputs widen to their primitive so a property check over `"https:"` accepts a `string` property
+export type Widen<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends bigint
+        ? bigint
+        : T;
+
 export type LoosePartial<T extends object> = InexactPartial<T> & {
   [k: string]: unknown;
 };

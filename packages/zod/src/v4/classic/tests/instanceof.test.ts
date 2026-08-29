@@ -62,7 +62,7 @@ test("instanceof respects customError", () => {
 test("z.properties", () => {
   const httpsUrl = z.instanceof(URL).check(
     ...z.properties({
-      protocol: z.literal("https:" as string),
+      protocol: z.literal("https:"),
       hostname: z.string().regex(z.regexes.domain),
     })
   );
@@ -99,6 +99,13 @@ test("z.properties", () => {
       .safeParse({ a: "ok" })
       .error!.issues.map((i) => [i.code, i.path])
   ).toEqual([["invalid_value", ["b"]]]);
+
+  // literal and enum inputs widen to their primitive, so a `string`/`boolean` property accepts them without a cast, while a genuine type mismatch or an unknown key still fails to compile
+  z.instanceof(Request).check(...z.properties({ method: z.enum(["POST", "PUT"]), bodyUsed: z.literal(false) }));
+  // @ts-expect-error length is a number
+  z.string().check(z.property("length", z.string()));
+  // @ts-expect-error no such key
+  z.instanceof(URL).check(z.property("nope", z.string()));
 
   // Plain property checks carry no `when`, so the schema stays on the compiled fast path.
   const compiled = z.compile(httpsUrl);
