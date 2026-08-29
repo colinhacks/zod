@@ -340,8 +340,10 @@ export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> 
   return {
     validate: (value: unknown) => {
       const ctx: ParseContextInternal = { async: false };
-      const r = inst._zod.run({ value, issues: [] }, ctx);
-      if (!(r instanceof Promise)) return toStandardResult(r, ctx);
+      try {
+        const r = inst._zod.run({ value, issues: [] }, ctx);
+        if (!(r instanceof Promise)) return toStandardResult(r, ctx);
+      } catch (_) {}
       const actx: ParseContextInternal = { async: true };
       return (inst._zod.run({ value, issues: [] }, actx) as Promise<ParsePayload>).then((r) =>
         toStandardResult(r, actx)
