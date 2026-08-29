@@ -553,6 +553,18 @@ test("emoji validations", () => {
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
   expect(() => emoji.parse("😀stuff")).toThrow();
   expect(() => emoji.parse("stuff😀")).toThrow();
+
+  emoji.parse("1\u{FE0F}\u{20E3}"); // keycap sequences stay valid
+  emoji.parse("#\u{FE0F}\u{20E3}");
+
+  // `\p{Emoji_Component}` alone covers ASCII digits, "#", "*", ZWJ, variation selectors and skin tone modifiers; none is an emoji without a base, so a component-only string is not one either
+  expect(() => emoji.parse("123")).toThrow();
+  expect(() => emoji.parse("#")).toThrow();
+  expect(() => emoji.parse("*")).toThrow();
+  expect(() => emoji.parse("\u{200D}")).toThrow();
+  expect(() => emoji.parse("\u{FE0F}")).toThrow();
+  expect(() => emoji.parse("\u{1F3FD}")).toThrow();
+  expect(() => emoji.parse("1\u{FE0F}")).toThrow();
 });
 
 test("nanoid", () => {

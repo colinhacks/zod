@@ -240,7 +240,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "emoji",
-        "pattern": "^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
+        "pattern": "^(?=[\\s\\S]*[\\p{Extended_Pictographic}\\p{Regional_Indicator}\\u20E3])[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
         "type": "string",
       }
     `);
