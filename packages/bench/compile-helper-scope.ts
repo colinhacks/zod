@@ -1,6 +1,7 @@
 import * as z from "zod/v4";
 import * as zcore from "zod/v4/core";
-import { isValidBase64URL, isValidJWT, parseValidURL } from "zod/v4/core";
+import { isValidBase64URL, isValidJWT, parseURLObject, urlHostnameOk, urlProtocolOk } from "zod/v4/core";
+import * as zcompile from "../zod/src/v4/core/compile.js";
 import { metabench } from "./metabench.js";
 
 const DATA = Array.from({ length: 1000 }, () => "SGVsbG8gV29ybGQ");
@@ -9,15 +10,15 @@ const URL_DATA = Array.from({ length: 1000 }, () => "  https://example.com/path?
 
 const base64url = z.string().base64url();
 const compiledBase64url = zcore.compile(base64url);
-const fastBase64url = zcore.compileFn(base64url);
+const fastBase64url = zcompile.compileFn(base64url);
 
 const jwt = z.jwt();
 const compiledJwt = zcore.compile(jwt);
-const fastJwt = zcore.compileFn(jwt);
+const fastJwt = zcompile.compileFn(jwt);
 
 const url = z.url();
 const compiledUrl = zcore.compile(url);
-const fastUrl = zcore.compileFn(url);
+const fastUrl = zcompile.compileFn(url);
 
 function makeScopedValidator(extraConstants: number) {
   const names = ["helper"];
@@ -38,7 +39,7 @@ const scoped50 = makeScopedValidator(50);
 console.log("=== Correctness ===");
 console.log("base64url runtime:", base64url.safeParse(DATA[0]).success);
 console.log("base64url compiled:", compiledBase64url.safeParse(DATA[0]).success);
-console.log("base64url fast:", fastBase64url(DATA[0]) !== zcore.INVALID);
+console.log("base64url fast:", fastBase64url(DATA[0]) !== zcompile.INVALID);
 console.log("jwt runtime:", jwt.safeParse(JWT_DATA[0]).success);
 console.log("jwt compiled:", compiledJwt.safeParse(JWT_DATA[0]).success);
 console.log("url runtime:", url.safeParse(URL_DATA[0]).success);
@@ -71,7 +72,14 @@ await metabench("compiled string-format helpers", {
     for (const d of JWT_DATA) jwt.safeParse(d);
   },
   "url direct helper"() {
-    for (const d of URL_DATA) parseValidURL(d, url._zod.def as any);
+    // the runtime's own sequence: trim, parse, then the hostname and protocol predicates
+    const def = url._zod.def;
+    for (const d of URL_DATA) {
+      const u = parseURLObject(d.trim(), def);
+      if (typeof u !== "object") continue;
+      if (def.hostname) urlHostnameOk(u, def.hostname);
+      if (def.protocol) urlProtocolOk(u, def.protocol);
+    }
   },
   "url compileFn"() {
     for (const d of URL_DATA) fastUrl(d);

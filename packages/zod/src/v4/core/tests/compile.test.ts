@@ -34,6 +34,11 @@ function invalid(schema: z.ZodType, value: unknown) {
 
 // === Primitives ===
 
+test("parser contract stays off the core namespace", () => {
+  expect("compileFn" in z.core).toBe(false);
+  expect("INVALID" in z.core).toBe(false);
+});
+
 test("string", () => {
   const aot = compile(z.string());
   expect(valid(aot, "hello")).toBe("hello");

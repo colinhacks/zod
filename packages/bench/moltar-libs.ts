@@ -4,8 +4,8 @@ import { Schema } from "effect";
 import * as v from "valibot";
 import * as yup from "yup";
 import * as z from "zod";
-import { INVALID, compileFn } from "zod/v4/core";
 import * as z3 from "zod3";
+import { INVALID, compileFn } from "../zod/src/v4/core/compile.js";
 
 // Cross-library throughput on the fixture and the categories from moltar/typescript-runtime-type-benchmarks.
 //
