@@ -80,6 +80,28 @@ Match the contracts and compiled zod is ahead everywhere except one case:
 
 The older figures in this wiki compared `z.strictObject()` — which pays an undeclared-key scan — against arktype's *default*, which does no such scan and returns its input. That is two handicaps at once, and it is why compiled zod looked level with arktype rather than ahead of it. Prefer the contract-matched rows above.
 
+### Against zod-compiler
+
+`pnpm dev packages/bench/compile-vs-zod-compiler.ts` runs the same method against [zod-compiler](https://github.com/gajus/zod-compiler) 1.28.0, the third-party AOT compiler for zod 4. Its `jit()` entry evaluates the same validator its build plugin would emit, in-process through `new Function`, so both compilers see the same schema object and the same zod internals. 37 schemas, every engine measured on its own schema instance (`jit()` mutates the one it is given), correctness gated across all three before timing, all cases sharing one process. `--isolate` runs one process per schema.
+
+zod-compiler is faster on every schema both compile: median **1.75x** over `z.compile()`, range 1.11x–24x (valid input, `safeParse`, result consumed; `z.compile()` itself is a median 3.35x over the runtime on this set, zod-compiler 7.0x). One process per schema shrinks every ratio the way the matrix section describes — `z.compile()` 2.63x, zod-compiler 4.99x, the gap between them **1.49x** — without changing the ordering of a single row. The gap has four distinct causes, and they are worth keeping apart because only one of them is codegen quality:
+
+| cause | rows | zod-compiler / `z.compile()` |
+| --- | --- | --- |
+| Validates in place — returns the input container by reference | `z.record` x20 **24x**, `z.set` x20 **8.6x**, `z.map` x20 **5.6x**, tuple 2.1x, strict object 2.3x | zod, compiled or not, rebuilds every container; zod-compiler hands back the caller's own array, tuple, set, map, record or strict object (a stripping `z.object()` is rebuilt). This is the arktype "returns input" contract again: no allocation, no copy, and the caller can no longer treat the output as fresh. |
+| Splits oversized functions | 243-leaf nested object **13x** | Our generated function for that schema is 262 KB and ~5000 lines; TurboFan will not optimize past its bytecode budget, so it runs unoptimized and `z.compile()` measures 0.8–1.2x over the runtime. Raising V8's limit (`--max-optimized-bytecode-size=2000000`) takes the same function to 7.2x, which pins the cause: we do not split, zod-compiler does. Everyday schemas are nowhere near the budget — the 100-item API response at 22x is fine. |
+| Compiles recursive schemas | tree, 7 and 121 nodes, **13–16x** | We refuse cycles (see Scope cuts) and fall through at 1.0x. zod-compiler emits a self-calling validator. |
+| Collapses a disjoint object intersection | 3.9x | We run both sides and merge; zod-compiler validates the merged shape in one pass when the keys do not overlap, and keeps our runtime for the error. |
+
+Take those rows out and the residual is **1.4–2.0x** on plain objects, unions, refinements, string checks and pipes — schemas where both engines build the same fresh output. That is the real codegen gap, and the shape of it is consistent: zod-compiler compiles to a boolean `&&` chain and only builds output where a schema mutates, hoists constants per file, and orders checks cheapest-first. Ours still enters through zod's own `safeParse` → `_zod.run` chain, which allocates a parse payload and context per call before the wrapper reaches the generated function, and it builds the output for every schema whether or not anything mutated. The one row near parity is `z.array(z.object())` x50 at 1.11x, where per-element object construction dominates whatever either compiler does around it.
+
+Two places `z.compile()` comes out ahead:
+
+- **Compile cost.** Median 0.024 ms per schema against 0.069 ms, 5.8 ms against 7.7 ms on the 243-leaf schema; and the compiler ships inside `zod/v4/core` where zod-compiler's runtime entry imports ~570 KB of codegen plus a parser (~10 ms of module load, by its own README) or needs a build plugin.
+- **Nothing to relearn.** Output identity, key iteration order (`Reflect.ownKeys` vs own enumerable string keys), and per-call `safeParse` params all match the runtime under `z.compile()`; zod-compiler documents deviations on each.
+
+**Invalid input** is a different story and the table splits it in two. Reading only `.success`, zod-compiler is a median **35x** over the runtime (168x on the intersection) because it defers building the `ZodError` until `.error` is read; `z.compile()` is 0.98x by design, since it falls back to the runtime to produce the canonical error. Force the `.error` read and zod-compiler drops to a median **1.29x** shared, **1.11x** isolated — its cold path is a compiled issue walk, not free — with 7–15x surviving only on the large API responses where the runtime re-walks a big payload to report one leaf. That is the same conclusion as "Why the failure path is not worth compiling" below, with one new data point: `z.url()` on invalid input is **0.57x** compiled, the only row where the run-twice bound has a visible price, because `new URL()` is expensive enough that running it in the fast path and again in the fallback costs more than the dispatch it saves.
+
 ## Output construction
 
 Generated code always builds new objects and arrays; it never mutates input or `payload.value`. Justified by `packages/bench/compile-passthrough.ts` and `packages/bench/compile-output.ts`: build-new wins or ties mutate-in-place across every benchmarked shape, and produces predictable semantics (callers can mutate the returned value freely).
