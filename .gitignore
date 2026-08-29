@@ -31,7 +31,7 @@ tmp/
 research/
 
 # maintainer-only plans, comparisons and investigations; wiki/ is the public half
-internal/
+/internal/
 
 .repos/
 
