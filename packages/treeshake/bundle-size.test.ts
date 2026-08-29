@@ -39,14 +39,14 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  */
 const CEILINGS: Record<string, number> = {
   // raised from 2903 / 3366 / 4437 by the commit that caused it: installing a trait's members from `$constructor` rather than from its initializer costs mini +70 / +83 / +95, and every bundle carries `core.ts`; measured 2946 / 3420 / 4503 plus 28 headroom, and the per-fixture notes below record what each already carried. About half of it is the guard that keeps the install off a user subclass's prototype; the rest is writing the members as `this`-methods, since `this` is not renameable and a block body cannot collapse to an arrow.
-  // raised from 2974 / 3448 / 4561 by the commit that caused it: `parseAsync`/`safeParseAsync` walk synchronously first and remember a schema that hit async work, `~standard.validate` shares that flag, and a declared-async callback throws before it runs — the predicate, the check flag and the guarded run land in every bundle. Measured 3136 / 3608 / 4678 plus 28 headroom.
-  "zod-mini-boolean": 3164,
+  // raised from 2974 / 3448 / 4561 by the commit that caused it: `parseAsync`/`safeParseAsync` walk synchronously first and remember a schema that hit async work, `~standard.validate` shares that flag, and a declared-async callback throws before it runs — the predicate, the check flag and the guarded run land in every bundle. Measured 3129 / 3601 / 4682 plus 28 headroom.
+  "zod-mini-boolean": 3157,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
-  "zod-mini-string": 3636,
+  "zod-mini-string": 3629,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
   // Also carries the memoizer seam from #6482: each container init reads `globalConfig.memoizer` and calls `attach`, which is what lets `zod/mini` opt into cycle support. Measured 4512 locally but 4533 on CI — the gzip stream differs across zlib builds — so the headroom rides on the CI number.
-  "zod-mini-object": 4706,
+  "zod-mini-object": 4710,
 };
 
 /**

@@ -1,5 +1,6 @@
 import * as checks from "./checks.js";
 import type * as core from "./core.js";
+import { $ZodAsyncError } from "./core.js";
 import type * as errors from "./errors.js";
 import * as registries from "./registries.js";
 import * as schemas from "./schemas.js";
@@ -1693,7 +1694,9 @@ export function _superRefine<T>(
   fn: (arg: T, payload: $RefinementCtx<T>) => void | Promise<void>,
   params?: $ZodSuperRefineParams
 ): checks.$ZodCheck<T> {
-  const ch = _check<T>((payload) => {
+  const asyncFn = util.isAsyncFunction(fn);
+  const ch = _check<T>((payload: schemas.ParsePayload<T>, ctx?: schemas.ParseContextInternal) => {
+    if (asyncFn && ctx?.async === false) throw new $ZodAsyncError();
     (payload as $RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
         payload.issues.push(util.issue(issue, payload.value, ch._zod.def));
@@ -1711,7 +1714,6 @@ export function _superRefine<T>(
 
     return fn(payload.value, payload as $RefinementCtx<T>);
   }, params);
-  ch._zod.async = util.isAsyncFunction(fn);
   return ch;
 }
 
@@ -1722,8 +1724,7 @@ export function _check<O = unknown>(fn: schemas.CheckFn<O>, params?: string | $Z
     ...util.normalizeParams(params),
   });
 
-  ch._zod.check = fn;
-  ch._zod.async = util.isAsyncFunction(fn);
+  ch._zod.check = util.guardAsync(fn);
   return ch;
 }
 

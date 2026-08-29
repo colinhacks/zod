@@ -187,7 +187,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
             ...(def.checks ?? []),
             ...chks.map((ch) =>
               typeof ch === "function"
-                ? { _zod: { check: ch, def: { check: "custom" }, onattach: [], async: util.isAsyncFunction(ch) } }
+                ? { _zod: { check: util.guardAsync(ch), def: { check: "custom" }, onattach: [] } }
                 : ch
             ),
           ],
@@ -2229,7 +2229,10 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
       const output = def.transform(payload.value, payload);
       if (output instanceof Promise) {
         // a check-less schema aliases run to parse, so the sync guard has to live here
-        if (_ctx.async === false) throw new core.$ZodAsyncError();
+        if (_ctx.async === false) {
+          output.catch(() => {});
+          throw new core.$ZodAsyncError();
+        }
         return output.then((output) => {
           payload.value = output;
           return payload;

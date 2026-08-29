@@ -478,3 +478,42 @@ test("each codec direction learns its async-ness on its own", async () => {
   expect(await codec.decodeAsync("world")).toBe("WORLD");
   expect(codec._zod.bag.async).toBeUndefined();
 });
+
+test("a declared-async callback only refuses a sync parse where it would have run", () => {
+  const refined = () => z.string().refine(async () => true);
+  expect(z.union([refined(), z.number()]).parse(5)).toBe(5);
+  expect(z.object({ a: refined() }).safeParse({ a: 123 }).success).toBe(false);
+  expect(refined().catch("d").safeParse(123).data).toBe("d");
+  expect(
+    z
+      .string()
+      .refine(async () => true, { when: () => false })
+      .parse("x")
+  ).toBe("x");
+  expect(() => refined().safeParse("x")).toThrow(z.core.$ZodAsyncError);
+  expect(() =>
+    z
+      .string()
+      .superRefine(async () => {})
+      .safeParse("x")
+  ).toThrow(z.core.$ZodAsyncError);
+  expect(() =>
+    z
+      .string()
+      .check(async () => {})
+      .safeParse("x")
+  ).toThrow(z.core.$ZodAsyncError);
+
+  const codec = z.codec(z.string(), z.number(), { decode: async (s) => s.length, encode: (n) => "x".repeat(n) });
+  expect(z.object({ a: codec }).safeParse({ a: 1 }).success).toBe(false);
+  expect(codec.catch(0).safeParse(1).data).toBe(0);
+  expect(() => codec.safeParse("x")).toThrow(z.core.$ZodAsyncError);
+});
+
+test("a plain function that hands back a rejected promise does not orphan it", async () => {
+  const transform = z.object({ a: z.string().transform(() => Promise.reject(new Error("boom"))) });
+  await expect(transform.parseAsync({ a: "x" })).rejects.toThrow("boom");
+  const refine = z.string().refine(() => Promise.reject(new Error("boom")));
+  await expect(refine.parseAsync("x")).rejects.toThrow("boom");
+  expect(() => refine.safeParse("x")).toThrow(z.core.$ZodAsyncError);
+});

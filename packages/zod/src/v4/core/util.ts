@@ -1,5 +1,5 @@
 import type * as checks from "./checks.js";
-import { globalConfig } from "./core.js";
+import { $ZodAsyncError, globalConfig } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
@@ -396,6 +396,15 @@ export function slugify(input: string): string {
 // syntactic: a plain function that hands back a promise is not seen here
 export function isAsyncFunction(fn: unknown): boolean {
   return Object.prototype.toString.call(fn) === "[object AsyncFunction]";
+}
+
+// a declared-async check throws under a sync walk instead of being started and abandoned
+export function guardAsync<F extends (payload: any, ctx?: schemas.ParseContextInternal) => unknown>(fn: F): F {
+  if (!isAsyncFunction(fn)) return fn;
+  return ((payload: any, ctx?: schemas.ParseContextInternal) => {
+    if (ctx?.async === false) throw new $ZodAsyncError();
+    return fn(payload, ctx);
+  }) as F;
 }
 
 export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (

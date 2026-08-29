@@ -609,7 +609,9 @@ type CustomCheck = {
   _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown };
 };
 /** A predicate that hands back a thenable is an async check reached synchronously, and the interpreter throws `$ZodAsyncError` for it. Returning INVALID instead would be a bail-out, and a union reads a bail-out as a rejected branch and answers with a later one — so the throw has to survive into generated code. */
-function throwAsync(): never {
+// parks the promise the sync walk abandons, so a rejection has nowhere to surface
+function throwAsync(p: Promise<unknown>): never {
+  p.catch(() => {});
   throw new $ZodAsyncError();
 }
 
@@ -631,7 +633,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
     // A thenable is truthy, so it would otherwise read as a pass. It is not a rejection either: the interpreter throws, and INVALID inside a union would just hand the parse to the next branch.
-    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
+    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}(${resVar});`);
     doc.write(`if (!${resVar}) return INVALID;`);
     // A `.refine()` predicate only answers yes or no; it cannot rewrite the value.
     return accessor;
@@ -650,7 +652,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
       const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
       const result = checkFn(fakePayload);
       // Throw rather than return INVALID: the interpreter throws here, and a union would read INVALID as a rejected branch.
-      if (result instanceof Promise) throwAsync();
+      if (result instanceof Promise) throwAsync(result);
       return fakePayload.issues.length === 0 ? fakePayload.value : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);
@@ -2097,7 +2099,7 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
-    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
+    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}(${resVar});`);
     doc.write(`if (!${resVar}) return INVALID;`);
   } else {
     throw new ZodCompileUnsupportedError("custom schema without a predicate function");
@@ -2167,7 +2169,7 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
       // As in the pipe helper: a throw propagates, because the interpreter lets it out of the whole parse rather than treating it as a failed branch.
       const result = transformFn(value, fakePayload);
       // the interpreter throws for a thenable here too; INVALID inside a union would just hand the parse to the next branch
-      if (result instanceof Promise) throw new $ZodAsyncError();
+      if (result instanceof Promise) throwAsync(result);
       return fakePayload.issues.length === 0 ? result : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);

@@ -215,7 +215,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
         ? [...defChecks]
         : [];
 
-    const asyncCheck = checks.some((ch) => ch._zod.async);
     for (const ch of checks) {
       for (const fn of ch._zod.onattach) {
         fn(inst);
@@ -248,9 +247,11 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
             continue;
           }
           const currLen = payload.issues.length;
-          const _ = ch._zod.check(payload as any) as any as ParsePayload;
+          const _ = ch._zod.check(payload as any, ctx) as any as ParsePayload;
 
           if (_ instanceof Promise && ctx?.async === false) {
+            // the discarded attempt owns this promise, and a rejection has nowhere else to go
+            (_ as unknown as Promise<unknown>).catch(() => {});
             throw new core.$ZodAsyncError();
           }
           if (asyncResult || _ instanceof Promise) {
@@ -319,14 +320,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
         return runChecks(result, checks, ctx);
       };
-      // a declared-async check throws before any check runs; wrapping here keeps the branch out of runChecks, where it cost the object fastpass 16%
-      if (asyncCheck) {
-        const base = inst._zod.run;
-        inst._zod.run = (payload, ctx) => {
-          if (ctx.async === false) throw new core.$ZodAsyncError();
-          return base(payload, ctx);
-        };
-      }
     }
   },
   {
@@ -3742,6 +3735,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       if (_out instanceof Promise) {
+        _out.catch(() => {});
         throw new core.$ZodAsyncError();
       }
 
@@ -4379,18 +4373,20 @@ export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$const
 
   inst._zod.parse = (payload, ctx) => {
     const direction = ctx.direction || "forward";
-    if (ctx.async === false && (direction === "forward" ? asyncFwd : asyncBack)) throw new core.$ZodAsyncError();
     if (direction === "forward") {
       const left = def.in._zod.run(payload, ctx);
       if (left instanceof Promise) {
         return left.then((left) => handleCodecAResult(left, def, ctx));
       }
+      // the transform is only reached on a clean input, so a rejected input still answers a sync parse
+      if (ctx.async === false && asyncFwd && !left.issues.length) throw new core.$ZodAsyncError();
       return handleCodecAResult(left, def, ctx);
     } else {
       const right = def.out._zod.run(payload, ctx);
       if (right instanceof Promise) {
         return right.then((right) => handleCodecAResult(right, def, ctx));
       }
+      if (ctx.async === false && asyncBack && !right.issues.length) throw new core.$ZodAsyncError();
       return handleCodecAResult(right, def, ctx);
     }
   };
@@ -4408,14 +4404,20 @@ function handleCodecAResult(result: ParsePayload, def: $ZodCodecDef, ctx: ParseC
   if (direction === "forward") {
     const transformed = def.transform(result.value, result);
     if (transformed instanceof Promise) {
-      if (ctx.async === false) throw new core.$ZodAsyncError();
+      if (ctx.async === false) {
+        transformed.catch(() => {});
+        throw new core.$ZodAsyncError();
+      }
       return transformed.then((value) => handleCodecTxResult(result, value, def.out, ctx));
     }
     return handleCodecTxResult(result, transformed, def.out, ctx);
   } else {
     const transformed = def.reverseTransform(result.value, result);
     if (transformed instanceof Promise) {
-      if (ctx.async === false) throw new core.$ZodAsyncError();
+      if (ctx.async === false) {
+        transformed.catch(() => {});
+        throw new core.$ZodAsyncError();
+      }
       return transformed.then((value) => handleCodecTxResult(result, value, def.in, ctx));
     }
     return handleCodecTxResult(result, transformed, def.in, ctx);
@@ -4944,15 +4946,15 @@ export interface $ZodCustom<O = unknown, I = unknown> extends $ZodType {
 
 export const $ZodCustom: core.$constructor<$ZodCustom> = /*@__PURE__*/ core.$constructor("$ZodCustom", (inst, def) => {
   checks.$ZodCheck.init(inst, def);
-  // before $ZodType.init, which reads it to pick a run
-  inst._zod.async = util.isAsyncFunction(def.fn);
   $ZodType.init(inst, def);
 
   inst._zod.parse = (payload, _) => {
     return payload;
   };
 
-  inst._zod.check = (payload) => {
+  const asyncFn = util.isAsyncFunction(def.fn);
+  inst._zod.check = (payload, ctx) => {
+    if (asyncFn && ctx?.async === false) throw new core.$ZodAsyncError();
     const input = payload.value;
     const r = def.fn(input as any);
     if (r instanceof Promise) {
