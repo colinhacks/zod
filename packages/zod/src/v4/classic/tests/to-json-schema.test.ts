@@ -1149,7 +1149,7 @@ describe("toJSONSchema", () => {
     ]);
   });
 
-  test("record filters enum values to strings and numbers for required", () => {
+  test("record stringifies numeric enum keys for propertyNames and required", () => {
     enum NumberEnum {
       Zero = 0,
       One = 1,
@@ -1164,18 +1164,38 @@ describe("toJSONSchema", () => {
         },
         "propertyNames": {
           "enum": [
-            0,
-            1,
+            "0",
+            "1",
           ],
-          "type": "number",
+          "type": "string",
         },
         "required": [
-          0,
-          1,
+          "0",
+          "1",
         ],
         "type": "object",
       }
     `);
+  });
+
+  test("record with a numeric key emits propertyNames over the numeric-string form", () => {
+    expect(z.toJSONSchema(z.record(z.number(), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+(?:\\.\\d+)?$",
+    });
+    // range checks can't apply to a key, so only the integer shape survives
+    expect(z.toJSONSchema(z.record(z.int32(), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+$",
+    });
+    expect(z.toJSONSchema(z.record(z.literal([1, 2]), z.boolean()))).toMatchObject({
+      propertyNames: { type: "string", enum: ["1", "2"] },
+      required: ["1", "2"],
+    });
+    expect(z.toJSONSchema(z.record(z.literal(1), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      const: "1",
+    });
   });
 
   test("strict record with regex key uses propertyNames", () => {

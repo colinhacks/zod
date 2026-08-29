@@ -1,5 +1,6 @@
 import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
+import * as regexes from "./regexes.js";
 import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
@@ -475,6 +476,18 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 };
 
+// JSON object keys are always strings, so a numeric key schema is re-expressed over the numeric-string form the record parser matches
+function keyNameSchema(json: JSONSchema.BaseSchema): JSONSchema.BaseSchema {
+  if (json.type !== "number" && json.type !== "integer") return json;
+  // the copy escapes the `$defs` extraction that would otherwise wipe `id` off the original
+  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json;
+  rest.type = "string";
+  if (rest.enum) rest.enum = rest.enum.map(String);
+  else if (rest.const !== undefined) rest.const = String(rest.const);
+  else rest.pattern = (json.type === "integer" ? regexes.integer : regexes.number).source;
+  return rest;
+}
+
 export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodRecordDef;
@@ -498,10 +511,12 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   } else {
     // Default behavior: use propertyNames + additionalProperties
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json.propertyNames = process(def.keyType, ctx as any, {
-        ...params,
-        path: [...params.path, "propertyNames"],
-      });
+      json.propertyNames = keyNameSchema(
+        process(def.keyType, ctx as any, {
+          ...params,
+          path: [...params.path, "propertyNames"],
+        })
+      );
     }
     json.additionalProperties = process(def.valueType, ctx as any, {
       ...params,
@@ -519,7 +534,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     );
 
     if (validKeyValues.length > 0) {
-      json.required = validKeyValues as string[];
+      json.required = validKeyValues.map(String);
     }
   }
 };
