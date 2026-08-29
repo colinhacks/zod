@@ -186,7 +186,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
           checks: [
             ...(def.checks ?? []),
             ...chks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? { _zod: { check: ch, def: { check: "custom" }, onattach: [], async: util.isAsyncFunction(ch) } }
+                : ch
             ),
           ],
         }),
@@ -2200,11 +2202,13 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
     core.$ZodTransform.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.transformProcessor(inst, ctx, json, params);
+    const asyncTx = util.isAsyncFunction(def.transform);
 
     inst._zod.parse = (payload, _ctx) => {
       if (_ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
+      if (_ctx.async === false && asyncTx) throw new core.$ZodAsyncError();
 
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {

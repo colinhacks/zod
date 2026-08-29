@@ -79,7 +79,9 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? { _zod: { check: ch, def: { check: "custom" }, onattach: [], async: util.isAsyncFunction(ch) } }
+                : ch
             ),
           ],
         },

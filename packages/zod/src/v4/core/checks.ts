@@ -23,6 +23,8 @@ export interface $ZodCheckInternals<T> {
   issc?: errors.$ZodIssueBase;
   check(payload: schemas.ParsePayload<T>): util.MaybeAsync<void>;
   onattach: ((schema: schemas.$ZodType) => void)[];
+  // set when the user's callback is declared async, so a sync walk throws before it runs
+  async?: boolean | undefined;
 }
 
 export interface $ZodCheck<in T = never> {

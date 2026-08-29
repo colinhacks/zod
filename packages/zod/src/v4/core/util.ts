@@ -393,6 +393,11 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// syntactic: a plain function that hands back a promise is not seen here
+export function isAsyncFunction(fn: unknown): boolean {
+  return Object.prototype.toString.call(fn) === "[object AsyncFunction]";
+}
+
 export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
   "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
 ) as any;

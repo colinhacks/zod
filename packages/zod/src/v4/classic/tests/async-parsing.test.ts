@@ -387,19 +387,17 @@ test("async entry points walk synchronously until a schema hits async work", asy
 
   let runs = 0;
   const schema = z.object({
-    a: z
-      .string()
-      .transform((v) => {
-        runs++;
-        return v;
-      })
-      .refine(async () => true),
+    a: z.string().transform((v) => {
+      runs++;
+      return v;
+    }),
+    b: z.string().refine(async () => true),
   });
-  expect(await schema.parseAsync({ a: "x" })).toEqual({ a: "x" });
-  // the first call re-runs the sync prefix once; the flag keeps every later call on the async walk
+  expect(await schema.parseAsync({ a: "x", b: "x" })).toEqual({ a: "x", b: "x" });
+  // sync work ahead of the async leaf runs once in the discarded attempt; the flag keeps every later call on the async walk
   expect(schema._zod.bag.async).toBe(true);
   expect(runs).toBe(2);
-  await schema.parseAsync({ a: "x" });
+  await schema.parseAsync({ a: "x", b: "x" });
   expect(runs).toBe(3);
 });
 
@@ -407,4 +405,76 @@ test("a sync parse of an object with an async transform throws $ZodAsyncError", 
   const schema = z.object({ a: z.string().transform(async (v) => v) });
   expect(() => schema.safeParse({ a: "x" })).toThrow(z.core.$ZodAsyncError);
   expect(() => schema.parse({ a: "x" })).toThrow(z.core.$ZodAsyncError);
+});
+
+test("async leaves resolve through the async entry points in every container position", async () => {
+  const leaves: Record<string, [z.ZodType, unknown, unknown]> = {
+    transform: [z.string().transform(async (v) => v.toUpperCase()), "a", "A"],
+    "core transform": [
+      z.pipe(
+        z.string(),
+        z.transform(async (v: string) => v.toUpperCase())
+      ),
+      "a",
+      "A",
+    ],
+    refine: [z.string().refine(async (v) => v.length > 0), "a", "a"],
+    superRefine: [z.string().superRefine(async () => {}), "a", "a"],
+    check: [z.string().check(async () => {}), "a", "a"],
+    codec: [z.codec(z.string(), z.number(), { decode: async (s) => s.length, encode: (n) => "x".repeat(n) }), "abc", 3],
+    promise: [z.promise(z.string()), Promise.resolve("a"), "a"],
+  };
+  for (const [name, [leaf, input, output]] of Object.entries(leaves)) {
+    const positions: [z.ZodType, unknown, unknown][] = [
+      [leaf, input, output],
+      [z.object({ a: leaf }), { a: input }, { a: output }],
+      [z.array(leaf), [input], [output]],
+    ];
+    for (const [schema, i, o] of positions) {
+      expect(await schema.parseAsync(i), name).toEqual(o);
+      expect((await schema.safeParseAsync(i)).data, name).toEqual(o);
+    }
+  }
+});
+
+test("a declared-async callback is not invoked by the discarded sync attempt", async () => {
+  const calls: string[] = [];
+  const schema = z.object({
+    t: z.string().transform(async (v) => {
+      calls.push("transform");
+      return v;
+    }),
+    r: z.string().refine(async () => {
+      calls.push("refine");
+      return true;
+    }),
+    s: z.string().superRefine(async () => {
+      calls.push("superRefine");
+    }),
+    c: z.codec(z.string(), z.string(), {
+      decode: async (v) => {
+        calls.push("decode");
+        return v;
+      },
+      encode: (v) => v,
+    }),
+  });
+  await schema.parseAsync({ t: "a", r: "a", s: "a", c: "a" });
+  expect(calls).toEqual(["transform", "refine", "superRefine", "decode"]);
+
+  // a rejecting callback rejects the parse once and leaves no orphaned promise behind
+  const rejecting = z.object({ a: z.string().transform(async () => Promise.reject(new Error("boom"))) });
+  await expect(rejecting.parseAsync({ a: "x" })).rejects.toThrow("boom");
+});
+
+test("each codec direction learns its async-ness on its own", async () => {
+  const codec = z.codec(z.string(), z.string(), {
+    decode: (v) => v.toUpperCase(),
+    encode: async (v) => v.toLowerCase(),
+  });
+  expect(await codec.encodeAsync("HELLO")).toBe("hello");
+  expect(codec._zod.bag.asyncBackward).toBe(true);
+  expect(codec._zod.bag.async).toBeUndefined();
+  expect(await codec.decodeAsync("world")).toBe("WORLD");
+  expect(codec._zod.bag.async).toBeUndefined();
 });

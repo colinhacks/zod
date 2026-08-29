@@ -596,7 +596,7 @@ function generateOverwriteCheck(
   }
 
   // Check for async transform
-  if (isAsyncFunction(tx)) {
+  if (util.isAsyncFunction(tx)) {
     throw new ZodCompileAsyncError("z.compile: async overwrite transforms are not supported");
   }
 
@@ -623,7 +623,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
 
   if (def.fn) {
     // Simple predicate function (from .refine())
-    if (isAsyncFunction(def.fn)) {
+    if (util.isAsyncFunction(def.fn)) {
       throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
     }
     const fnConst = addConstant(ctx, def.fn);
@@ -637,7 +637,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     return accessor;
   }
   if (check._zod.check) {
-    if (isAsyncFunction(check._zod.check)) {
+    if (util.isAsyncFunction(check._zod.check)) {
       throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
     }
     // SuperRefine or other check function - need to spoof context Create a helper that runs the check and returns true if no issues
@@ -776,7 +776,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   // A custom string format carries the predicate the runtime actually calls. Hoist and call it instead of testing `def.pattern`: the two only coincide when the format was built from a RegExp, and relying on that coupling is how supplemental validation gets dropped.
   const customFn = (def as unknown as { fn?: (input: string) => unknown }).fn;
   if (customFn) {
-    if (isAsyncFunction(customFn)) throw new ZodCompileUnsupportedError(`async string format ${fmt}`);
+    if (util.isAsyncFunction(customFn)) throw new ZodCompileUnsupportedError(`async string format ${fmt}`);
     const fnConst = addConstant(ctx, customFn);
     doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
     return accessor;
@@ -2061,7 +2061,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
 
   if (def.transform) {
     // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime.
-    if (isAsyncFunction(def.transform)) {
+    if (util.isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
     const transformFn = def.transform;
@@ -2084,20 +2084,12 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   }
 }
 
-function isAsyncFunction(fn: unknown): boolean {
-  return (
-    typeof fn === "function" &&
-    (fn.constructor.name === "AsyncFunction" ||
-      (fn as { [Symbol.toStringTag]?: string })[Symbol.toStringTag] === "AsyncFunction")
-  );
-}
-
 function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { fn?: (value: unknown) => boolean };
 
   if (def.fn) {
     // Check for async function
-    if (isAsyncFunction(def.fn)) {
+    if (util.isAsyncFunction(def.fn)) {
       throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
     }
     // Custom schema with a predicate function (e.g. z.instanceof). `isAsyncFunction` above is syntactic, so a plain function returning a promise reaches here, and a promise is truthy — it would read as a pass where the interpreter throws.
@@ -2164,7 +2156,7 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
 
   if (def.transform) {
     // Check for async transform
-    if (isAsyncFunction(def.transform)) {
+    if (util.isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms are not supported");
     }
 

@@ -44,14 +44,16 @@ function trySync(
   value: unknown,
   ctx: schemas.ParseContextInternal
 ): schemas.ParsePayload | undefined {
-  if (schema._zod.bag.async) return undefined;
+  // a codec shares one bag across both directions, so each direction learns on its own
+  const flag = ctx.direction === "backward" ? "asyncBackward" : "async";
+  if (schema._zod.bag[flag]) return undefined;
   try {
     const result = schema._zod.run({ value, issues: [] }, ctx);
     if (!(result instanceof Promise)) return result;
   } catch (e) {
     if (!(e instanceof core.$ZodAsyncError)) throw e;
   }
-  schema._zod.bag.async = true;
+  schema._zod.bag[flag] = true;
   return undefined;
 }
 
