@@ -276,7 +276,7 @@ In Zod 4.4 a bare `z.string()` retained 7.5kb of heap. In Zod 4.5 it retains 784
 <ThemedImage
   lightSrc="/blog/memory-light.svg"
   darkSrc="/blog/memory-dark.svg"
-  alt="Bar chart of heap retained by one schema instance, zod 4.4.3 versus 4.5: a 10-key object 82.0kb to 11.0kb, a union 17.5kb to 2.13kb, z.string().min(1) 16.7kb to 3.37kb, a record 16.4kb to 2.64kb, z.string().optional() 12.6kb to 1.50kb, an array of strings 11.2kb to 1.93kb, z.string() 7.53kb to 784b, z.number() 4.44kb to 706b. Up to 9.8x smaller than 4.4.3."
+  alt="Heap retained by one schema instance on a shared kilobyte axis, zod 4.4.3 as a gray bar with the 4.5 size as a blue bar inside it: a 10-key object 82.0kb to 11.0kb (7.4x), a union 17.5kb to 2.13kb (8.3x), z.string().min(1) 16.7kb to 3.37kb (5.0x), a record 16.4kb to 2.64kb (6.2x), z.string().optional() 12.6kb to 1.50kb (8.4x), an array of strings 11.2kb to 1.93kb (5.8x), z.string() 7.53kb to 784b (9.8x), z.number() 4.44kb to 706b (6.4x); up to 9.8x smaller than 4.4.3"
   caption={<>Retained heap per schema instance, Zod 4.4.3 vs 4.5 (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts">benchmark</a>)</>}
 />
 
