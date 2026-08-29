@@ -234,13 +234,14 @@ jobs:
           cat package.json
       - run: pnpm build
 
-      # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design
+      # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design. npm refuses a bare publish of a version below latest, so it goes out under a throwaway dist-tag that leaves latest alone; remove it afterwards with `npm dist-tag rm @zod/mini backfill`
       - id: publish_mini
         name: Publish @zod/mini to NPM
         uses: JS-DevTools/npm-publish@v4
         with:
           provenance: true
           ignore-scripts: true
+          tag: backfill
           package: ./packages/mini
 
       - name: Verify @zod/mini is live on npm

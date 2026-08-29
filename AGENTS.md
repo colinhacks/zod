@@ -111,6 +111,8 @@ To publish `@zod/mini` at a version zod already shipped without it, dispatch the
 gh workflow run release.yml -f mini_version=4.5.2
 ```
 
+The back-published version goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one. Remove the tag once the backfill is done: `npm dist-tag rm @zod/mini backfill`.
+
 ## Format validators: spec compliance is not the bar
 
 Zod's format validators — `z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, and the rest — are named after specs but do not implement them. Each one matches the profile that real producers emit and real consumers accept, which is almost always far narrower than what the grammar permits. That narrowness is the product, not a gap in it.
