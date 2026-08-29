@@ -1,6 +1,6 @@
 # Optionality in Zod v4
 
-Internal reference for how Zod's parsing handles "missing" / "undefined" input. Reflects the current state of `main`.
+Reference for how Zod's parsing handles "missing" / "undefined" input. Reflects the current state of `main`.
 
 The system has accumulated a few orthogonal mechanisms. This doc names them, says which schema sets what, and walks through the gnarly interactions.
 

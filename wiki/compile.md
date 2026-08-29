@@ -1,6 +1,6 @@
 # z.compile
 
-AOT compiler for v4 schemas. Lives on the `z.compile` branch.
+AOT compiler for v4 schemas.
 
 ## Surface
 
@@ -33,52 +33,6 @@ Consequences:
 - **No async.** The compiler eagerly throws if it encounters an async refinement, transform, or check during the codegen walk. There is no affordance for promises anywhere in generated code. `safeParseAsync` skips the fast path.
 - **jitless.** Global mode respects `config().jitless`: the shim restores the runtime parser instead of compiling, so `import "zod/compile"` is inert in CSP/no-eval environments. Calling `z.compile(schema)` explicitly remains an explicit opt-in to `new Function`; under CSP the raw `EvalError` is converted to `ZodCompileUnsupportedError`, which the default entry point absorbs like any other refusal.
 - **No recursive schemas.** A schema whose subtree contains a cycle is refused at codegen and parses through the runtime. Input containing a reference cycle terminates because the memoizer registers each in-progress output before its children run, keyed on the parse context every schema in that call shares; a generated fast path takes an input and returns a value, so it has no context to key on and would follow the cycle until the stack ran out. A compiled node also hands back to the runtime when the value it receives is a memoizer back edge, so a transform sitting on a cycle still raises `$ZodCyclicError` from its own parse. Supporting this properly means threading the parse context and `memo.alloc` into generated containers.
-
-## Benchmarks
-
-`pnpm dev packages/bench/compile-matrix.ts` sweeps 55 schemas across every category and prints runtime, compiled and raw-fast-path throughput with the speedup. Three things about the method matter for reading the numbers:
-
-- **How many schemas share the process.** This is the single largest lever on the result, larger than anything the compiler does. With many schemas live, the `safeParse` site and zod's own internal dispatch sites go megamorphic, which taxes an interpreter walking a tree of nodes far more than it taxes one flat generated function. The same 55 schemas report a median **2.4x** measured together and **1.6x** measured one per process. The default is together, because an application holds many schemas at once and that is the number its users see; `--isolate` gives the single-schema figure, which is what to tune against.
-- **Inputs arrive through an array load.** Passed as a constant, the whole call is loop-invariant and V8 hoists it out of the timing loop — and it hoists plain interpreter code far more readily than an opaque `new Function` closure, which flattered the runtime by up to 1.9x. The values do not need to differ; an array read is enough.
-- **Results have to escape.** A discarded result lets V8 delete the parse outright (`z.string()` measured 625M ops/sec, ~1.6ns); an un-escaped one gets stack-allocated. Both are defeated before timing.
-- **Interleaved, best of 15 rounds.** Absolute ops/sec on a laptop drifts by tens of percent between runs, so every speedup is a ratio of two measurements taken microseconds apart.
-- **Correctness first.** Compiled output is checked against the runtime before anything is timed, and each row reports whether the schema compiled, fell back, or fell through — a number can't come from a fast path that silently didn't run.
-
-53 of 55 schemas compile. Median **2.4x**, range 0.66x–13.9x.
-
-| | |
-| --- | --- |
-| Biggest wins | `z.array(z.string())` x100 **13.9x**, `z.array(z.object())` x50 **9.3x**, 20-key object **8.9x**, object union **8.4x**, `.pipe()` **7.7x**, `z.number().int().min().max()` **5.8x** |
-| Typical | nested object 4.5x, tuple 4.8x, intersection 4.3x, discriminated union 4.3x, `.refine()` 4.6x, string with checks 2.8x, strict object 3.0x, flat 5-key object 2.5x |
-| Marginal | string formats 1.4–2.4x, `z.record` dynamic keys 1.3–1.7x, most bare primitives 1.2–1.7x, `.catch()` 1.2x |
-| Slower compiled | bare `z.string()` **0.70x** — the only case that is reliably negative here |
-| Forced fallbacks | recursive schema 1.00x, `z.xor` 0.94x — the wrapper's bypass checks cost nothing measurable |
-
-The win tracks how much work a schema does per parse, because what compilation removes is per-node dispatch and payload allocation, not the checks themselves. A 20-key object or an array of objects amortises that across a lot of work; a bare primitive has none to amortise.
-
-How much that matters depends heavily on the regime. Measured one schema per process, seven schemas come out slower compiled — every bare primitive plus `.default()` on an absent input, at 0.63–0.91x — because the interpreter's path for a single `typeof` is small enough for V8 to inline flat, while generated code lives in a `new Function` closure it will not inline into the caller, so the call itself exceeds the check. Measured with many schemas live, that inlining advantage largely evaporates and only bare `z.string()` stays negative. Compiling a leaf is therefore not worth special-casing on these numbers: outside a microbenchmark the loss is confined to one schema shape, and leaves nested inside a container are inlined into the parent's generated function and never pay the call at all.
-
-The last row is the one to design around. **A bare primitive is slower compiled**, and the cause is not `safeParse`: `.parse()`, which allocates no result object, is *worse* (`z.string()` 0.42x, `z.literal()` 0.45x), while both APIs agree on composites (5-key object 1.73x vs 1.72x, nested 3.59x vs 3.76x). What costs is the call itself. Generated code lives in a `new Function` closure that V8 will not inline into the caller, so every parse pays a real call, and below roughly ten nanoseconds of actual work that call exceeds the `typeof` it replaced. One check is enough to flip it — `z.string().min(1)` is 2.8–3.2x.
-
-Two consequences. Global mode makes trivial leaf schemas measurably slower while making everything composed of them faster, so it is not a free win and is worth measuring against a real schema set. And the exact primitive figures are the least trustworthy in the table: at ~8ns/op the answer moves between 0.6x and 1.0x depending on harness details, so read them as "no benefit here", not as a precise ratio. Everything at or above 2x reproduces across every measurement regime tried.
-
-### Against arktype
-
-Same method, arktype 2.1.19, all cases sharing one process. Arktype's contract is configurable, so the comparison depends entirely on which one you pick:
-
-| case | ark, returns input | ark, rejects unknown | ark, allocates | `z.object()` | `z.strictObject()` |
-| --- | --- | --- | --- | --- | --- |
-| simple 2-key object | 130.0M | 13.0M | 1.2M | **64.3M** | **44.6M** |
-| nested object (moltar) | 19.9M | 6.0M | 174k | **30.5M** | **17.6M** |
-| `z.array(z.object())` x50 | 3.9M | — | 14k | 3.5M | — |
-
-Match the contracts and compiled zod is ahead everywhere except one case:
-
-- **Both reject undeclared keys** (`z.strictObject()` against `.onUndeclaredKey("reject")`): zod is **2.9x** faster on moltar and **3.4x** on the simple object.
-- **Both build new output** (`z.object()` against `.onDeepUndeclaredKey("delete")`): zod is faster by two orders of magnitude. Arktype can produce a fresh object, but that path costs it ~20x its own fast path — steady per call, not a warm-up — so this says arktype's stripping mode is unoptimized rather than that zod is 175x faster at validating.
-- **Arktype validating in place** — its fast path, and a weaker contract than anything zod offers, since it neither allocates nor strips. Even so, `z.object()` beats it on moltar (30.5M vs 19.9M). It wins only on the flat two-key object, where there is almost nothing to amortise.
-
-The older figures in this wiki compared `z.strictObject()` — which pays an undeclared-key scan — against arktype's *default*, which does no such scan and returns its input. That is two handicaps at once, and it is why compiled zod looked level with arktype rather than ahead of it. Prefer the contract-matched rows above.
 
 ## Output construction
 
@@ -136,12 +90,3 @@ The one exception is a hoisted validator that is expensive on its own: `z.url()`
 ## Runtime islands
 
 Object, tuple, array, record (value side), intersection, and catch codegen route children through `compileChild`. A child that throws `ZodCompileUnsupportedError` is rolled back and replaced with a hoisted runtime call (`runtimeRun(schema, value)`), so one unsupported leaf doesn't abort compilation of the surrounding structure. Unions and discriminated unions deliberately do **not** island: first-match/exactly-one semantics require per-branch failures to mean "the runtime would reject", not "couldn't compile".
-
-## Open
-
-- **Array output policy.** Arktype often wins array benchmarks because it can return the input for validation-only arrays. Zod semantics return parsed output (fresh arrays/objects). Any move toward input reuse would be a deliberate semantic/performance tradeoff, not an incidental optimization.
-- **Email regex lookahead.** `regexes.email` opens with `(?!\.)(?!.*\.\.)`, and the second lookahead scans the whole string before the match starts. An equivalent grammar with no lookahead — `^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$`, the form zod-compiler emits — is 1.8–2.0x on valid addresses, agrees on 400k fuzzed strings, backtracks linearly on every adversarial input tried, and takes a compiled 7-key object with an email field from 7.9M to 11.4M ops/sec. It is the largest single lever on format-heavy schemas and it benefits the runtime as well; the differential fuzz is the test it needs.
-- **Array and tuple output shape.** Arrays are filled element by element into `new Array(n)`; validating first and then `input.slice()` is 1.49x on 100 numbers and still returns a fresh array, for any element schema that returns its input unchanged. Tuples are built by index stores into `[]`; a single array literal is 1.43x. Inlining the optional-key check instead of wrapping it in an IIFE is worth another ~8% on objects.
-- **Function splitting.** A generated function past V8's optimized-bytecode budget (~60 KB; a 243-leaf object emits 262 KB) never reaches TurboFan and runs below the uncompiled runtime on some machines. Splitting oversized containers into per-child functions, the way zod-compiler does, is the fix; raising the budget by flag takes that schema from 0.8x to 7.2x, so the codegen itself is fine.
-- **Hoisted validators run twice on invalid input.** The fallback re-runs whatever the fast path already rejected, and for `z.url()` that is a second `new URL()` — 0.57x on invalid input in a one-off measurement; no bench in the repo reproduces it. Every other hoisted format is cheap enough not to register.
-- **Registry identity.** The compiled clone inherits registry metadata through `_zod.parent` like any derived schema, which by registry design excludes `id`. `z.toJSONSchema(z.compile(s))` therefore loses a registered `id`; pass the original to `toJSONSchema` if `$defs` identity matters.
