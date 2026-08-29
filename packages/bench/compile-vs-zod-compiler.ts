@@ -408,7 +408,7 @@ function report(rows: Row[], problems: string[]): void {
     console.log("-".repeat(132));
     const both = section.filter((r) => r.zcStatus === "compiled" && r.gajusStatus === "compiled");
     console.log(
-      `${section.length} rows, ${both.length} compiled by both — median z.compile ${median(section.map((r) => r.zc / r.runtime)).toFixed(2)}x, zod-compiler ${median(section.map((r) => r.gajus / r.runtime)).toFixed(2)}x; zod-compiler/z.compile median ${median(both.map((r) => r.gajus / r.zc)).toFixed(2)}x over rows both compiled`
+      `${section.length} row${section.length === 1 ? "" : "s"}, ${both.length} compiled by both — median z.compile ${median(section.map((r) => r.zc / r.runtime)).toFixed(2)}x, zod-compiler ${median(section.map((r) => r.gajus / r.runtime)).toFixed(2)}x; zod-compiler/z.compile median ${median(both.map((r) => r.gajus / r.zc)).toFixed(2)}x over rows both compiled`
     );
   }
   const valid = rows.filter((r) => r.kind === "valid");
@@ -446,9 +446,15 @@ if (!filter && isolate) {
       encoding: "utf8",
       env: { ...process.env, ZOD_BENCH_CHILD: "1" },
     });
-    const lines = child.stdout?.split("\n").filter((l) => l.startsWith("ROW ")) ?? [];
-    if (lines.length) for (const line of lines) rows.push(JSON.parse(line.slice(4)));
-    else
+    const lines = child.stdout?.split("\n") ?? [];
+    let got = false;
+    for (const line of lines) {
+      if (line.startsWith("ROW ")) rows.push(JSON.parse(line.slice(4)));
+      else if (line.startsWith("PROBLEM ")) problems.push(line.slice(8));
+      else continue;
+      got = true;
+    }
+    if (!got)
       problems.push(
         `${id}: child produced no result${child.stderr ? ` (${child.stderr.trim().split("\n").pop()})` : ""}`
       );
@@ -530,9 +536,11 @@ for (const c of selected) {
         problems.push(`${id}: ${label} accepts an input the runtime rejects`);
         ok = false;
       } else if (got.error.issues.length !== expected.error.issues.length) {
+        // fewer issues is less work in the forced-error section, so this gates too
         problems.push(
           `${id}: ${label} reports ${got.error.issues.length} issues, runtime ${expected.error.issues.length}`
         );
+        ok = false;
       }
     }
   }
@@ -575,6 +583,7 @@ for (const c of selected) {
 
 if (process.env.ZOD_BENCH_CHILD === "1") {
   for (const r of rows) console.log(`ROW ${JSON.stringify(r)}`);
+  for (const p of problems) console.log(`PROBLEM ${p}`);
   process.exit(0);
 }
 
