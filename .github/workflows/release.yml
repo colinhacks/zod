@@ -283,7 +283,7 @@ jobs:
         env:
           VERSION: ${{ inputs.mini_version }}
         run: |
-          ZOD_LATEST=$(curl -sf https://registry.npmjs.org/zod/latest | node -e 'process.stdin.on("data", d => console.log(JSON.parse(d).version))')
+          ZOD_LATEST=$(npm view zod version)
           if [ "$VERSION" = "$ZOD_LATEST" ]; then echo "tag=latest" >> "$GITHUB_OUTPUT"; else echo "tag=backfill" >> "$GITHUB_OUTPUT"; fi
           echo "zod latest is $ZOD_LATEST; publishing @zod/mini@$VERSION under $([ "$VERSION" = "$ZOD_LATEST" ] && echo latest || echo backfill)"
 
