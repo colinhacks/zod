@@ -3,8 +3,6 @@ title: Zod
 description: "Internals and structure of the Zod library"
 ---
 
-import { ThemedImage } from "@/components/themed-image";
-
 The `zod/v4` package is the "flagship" library of the Zod ecosystem. It strikes a balance between developer experience and bundle size that's ideal for the vast majority of applications. 
 
 > If you have uncommonly strict constraints around bundle size, consider [Zod Mini](/packages/mini).
@@ -74,33 +72,3 @@ mySchema.brand<T>();
 mySchema.isOptional(); // boolean
 mySchema.isNullable(); // boolean
 ```
-
-## Bound methods
-
-All methods on Zod schemas are *auto-bound*, meaning they do not rely on implicit `this` semantics to work properly. Plucking a method off a schema works:
-
-```ts
-const { parse } = z.string();
-
-parse("some data");
-```
-
-Binding a method allocates a closure per instance, so Zod defers it. Methods are defined as *getters* on the prototype. The first time a method is accessed on an instance, the getter returns an implementation bound to that instance and assigns it as an [own property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty), so later accesses resolve directly. A method that is never used is never allocated.
-
-```ts
-const s = z.string();
-Object.getOwnPropertyNames(s);
-// => ["_zod", "def", "type", "format", "minLength", "maxLength"]
-
-s.parse; // materializes the bound method
-Object.getOwnPropertyNames(s).length; // 7
-```
-
-This is why a schema stays small. V8 sizes an object's property store in steps — 128 bytes up to 12 own properties, 848 bytes from 13, 1616 bytes from 21 — and a schema in Zod 4.4 carried 49 own properties, 40 of them bound methods.
-
-<ThemedImage
-  lightSrc="/blog/memory-light.svg"
-  darkSrc="/blog/memory-dark.svg"
-  alt="Bar chart of heap retained by one schema instance, zod 4.4.3 versus 4.5: a 10-key object 82.0kb to 11.0kb, a union 17.5kb to 2.13kb, z.string().min(1) 16.7kb to 3.37kb, a record 16.4kb to 2.64kb, z.string().optional() 12.6kb to 1.50kb, an array of strings 11.2kb to 1.93kb, z.string() 7.53kb to 784b, z.number() 4.44kb to 706b. Up to 9.8x smaller than 4.4.3."
-  caption={<>Retained heap per schema instance, Zod 4.4.3 vs 4.5 (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts">benchmark</a>)</>}
-/>
