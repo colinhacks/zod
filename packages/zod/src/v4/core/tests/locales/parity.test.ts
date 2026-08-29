@@ -47,17 +47,19 @@ test.each([
   expect(gaps).toEqual([]);
 });
 
-// The rendered-message check above cannot see a missing `Sizable` key in a locale that translates the origin name through its own dictionary, since the real and sentinel messages then differ for an unrelated reason — which is how five locales sat without `map` and rendered a bare or `undefined` unit. This reads the tables out of the source instead.
-test("every locale's Sizable table carries each key en's does", () => {
-  const required = keysOf("Sizable");
+// The rendered-message check above cannot see a missing key in a locale that renders the origin or format through its own branch, since the real and sentinel messages then differ for an unrelated reason — which is how five locales sat without `Sizable.map` and rendered a bare or `undefined` unit. This reads the tables out of the source instead.
+test.each(["FormatDictionary", "Sizable"])("every locale's %s table carries each key en's does", (block) => {
+  // a key en maps to its own name renders the same whether or not a locale defines it
+  const selfNamed = new Set([...enSource.matchAll(/^\s{4}([a-z_0-9]+): "\1"/gm)].map((m) => m[1]!));
+  const required = keysOf(block).filter((k) => !selfNamed.has(k));
   const gaps = readdirSync(localesDir)
     .filter((f) => f.endsWith(".ts") && f !== "index.ts")
     .flatMap((f) => {
       const source = readFileSync(`${localesDir}${f}`, "utf8");
-      // a deprecated alias re-exports another locale and has no table of its own
-      if (!source.includes("const Sizable")) return [];
-      const keys = keysIn(source, "Sizable");
-      if (!keys) throw new Error(`could not read Sizable out of ${f}`);
+      // a deprecated alias re-exports another locale and has no tables of its own
+      if (!source.includes(`const ${block}`)) return [];
+      const keys = keysIn(source, block);
+      if (!keys) throw new Error(`could not read ${block} out of ${f}`);
       return required.filter((k) => !keys.includes(k)).map((k) => `${f}.${k}`);
     });
   expect(gaps).toEqual([]);
