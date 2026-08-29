@@ -79,34 +79,19 @@ export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schem
 };
 export const safeParse: $SafeParse = /* @__PURE__*/ _safeParse(errors.$ZodRealError);
 
-// the error is built on the first read of `error`: finalizing the issues and constructing the instance is most of a failing parse, and a caller that only branches on `success` never pays it. `error` stays an own enumerable property so keys, spreads and clones see the same shape, and its accessor comes from one shared descriptor so every result has one map and the `.error` load sites stay monomorphic; a per-result closure pair costs as much as the work it defers and makes those sites megamorphic
-const _lazyDesc: PropertyDescriptor = { value: undefined, writable: true, configurable: true };
-const _finalize = (s: any): errors.$ZodIssue[] =>
-  s.issues.map((iss: errors.$ZodRawIssue) => util.finalizeIssue(iss, s.ctx, core.config()));
-const _errorDesc: PropertyDescriptor = {
-  get(this: any) {
-    const s = this._lazy;
-    if (!s.error) {
-      s.error = new s.Err(_finalize(s));
-      // the raw issues hold the schemas and the input; the error carries everything a later read needs
-      s.issues = s.ctx = undefined;
-    }
-    return s.error;
-  },
-  set(this: any, e: errors.$ZodError) {
-    this._lazy.error = e;
-  },
-  enumerable: true,
-  configurable: true,
-};
-
+// the error is built on the first read of `error`: finalizing the issues and constructing the instance is most of a failing parse, and a caller that only branches on `success` never pays it. a getter in the literal keeps this small; the alternative, one shared accessor descriptor plus a hidden state slot, reads ~15% faster but costs ~75 B gzipped in every bundle
 function failure(Err: $ZodErrorClass, issues: errors.$ZodRawIssue[], ctx: schemas.ParseContextInternal): any {
-  const result = { success: false };
-  _lazyDesc.value = { Err, issues, ctx, error: undefined };
-  Object.defineProperty(result, "_lazy", _lazyDesc);
-  _lazyDesc.value = undefined;
-  Object.defineProperty(result, "error", _errorDesc);
-  return result;
+  let error: errors.$ZodError | undefined;
+  return {
+    success: false,
+    get error() {
+      if (!error) error = new Err(issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+      return error;
+    },
+    set error(e: errors.$ZodError) {
+      error = e;
+    },
+  };
 }
 
 export type $SafeParseAsync = <T extends schemas.$ZodType>(
