@@ -105,6 +105,12 @@ git push origin main
 
 The release workflow only fires on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, so the bump must include `package.json`. It publishes `zod`, then tags and releases it, then publishes `@zod/mini` last. Watch the Actions tab to confirm `build_and_publish` succeeds.
 
+To publish `@zod/mini` at a version zod already shipped without it, dispatch the same workflow; it publishes only the scoped package, with the peer floor set to that minor:
+
+```bash
+gh workflow run release.yml -f mini_version=4.5.2
+```
+
 ## Format validators: spec compliance is not the bar
 
 Zod's format validators — `z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, and the rest — are named after specs but do not implement them. Each one matches the profile that real producers emit and real consumers accept, which is almost always far narrower than what the grammar permits. That narrowness is the product, not a gap in it.

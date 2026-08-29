@@ -9,9 +9,17 @@ on:
       - "packages/zod/package.json"
       - "packages/mini/package.json"
       - ".github/workflows/release.yml"
+  # back-publish @zod/mini at an x.y.z that zod already shipped without it; the peer floor becomes ^x.y.0
+  workflow_dispatch:
+    inputs:
+      mini_version:
+        description: "Publish @zod/mini at this x.y.z (must be an existing zod version)"
+        required: true
+        type: string
 
 jobs:
   test-node:
+    if: github.event_name == 'push'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -39,6 +47,7 @@ jobs:
       - run: pnpm run --filter @zod/integration test:all
 
   lint:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,6 +64,7 @@ jobs:
       - run: pnpm lint:check
 
   check-circular:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     name: Check for circular dependencies
     steps:
@@ -67,6 +77,7 @@ jobs:
       - run: pnpm check:circular
 
   build_and_publish:
+    if: github.event_name == 'push'
     needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
     permissions:
@@ -173,6 +184,63 @@ jobs:
         uses: JS-DevTools/npm-publish@v4
         with:
           provenance: true
+          package: ./packages/mini
+
+      - name: Verify @zod/mini is live on npm
+        if: ${{ steps.publish_mini.outputs.type }}
+        env:
+          VERSION: ${{ steps.publish_mini.outputs.version }}
+        run: |
+          for i in $(seq 1 40); do
+            if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
+              echo "@zod/mini@$VERSION is live"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
+          exit 1
+
+  backpublish_mini:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "latest"
+          registry-url: https://registry.npmjs.org/
+      - name: Upgrade npm to latest (required for trusted publishing >=11.5.1)
+        run: npm install -g npm@latest
+      - uses: pnpm/action-setup@v6
+      - run: pnpm install
+      - name: Set the @zod/mini version and peer floor
+        env:
+          VERSION: ${{ inputs.mini_version }}
+        working-directory: ./packages/mini
+        run: |
+          if ! [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.[0-9]+$ ]]; then
+            echo "mini_version must be x.y.z, got '$VERSION'"
+            exit 1
+          fi
+          if ! curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
+            echo "zod@$VERSION is not on npm; @zod/mini only ships versions zod shipped"
+            exit 1
+          fi
+          npm pkg set version="$VERSION" peerDependencies.zod="^${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.0"
+          cat package.json
+      - run: pnpm build
+
+      # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design
+      - id: publish_mini
+        name: Publish @zod/mini to NPM
+        uses: JS-DevTools/npm-publish@v4
+        with:
+          provenance: true
+          ignore-scripts: true
           package: ./packages/mini
 
       - name: Verify @zod/mini is live on npm
