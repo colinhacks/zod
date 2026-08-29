@@ -1149,7 +1149,7 @@ describe("toJSONSchema", () => {
     ]);
   });
 
-  test("record filters enum values to strings and numbers for required", () => {
+  test("record stringifies numeric enum keys for propertyNames and required", () => {
     enum NumberEnum {
       Zero = 0,
       One = 1,
@@ -1164,18 +1164,122 @@ describe("toJSONSchema", () => {
         },
         "propertyNames": {
           "enum": [
-            0,
-            1,
+            "0",
+            "1",
           ],
-          "type": "number",
+          "type": "string",
         },
         "required": [
-          0,
-          1,
+          "0",
+          "1",
         ],
         "type": "object",
       }
     `);
+  });
+
+  test("record with a numeric key emits propertyNames over the numeric-string form", () => {
+    expect(z.toJSONSchema(z.record(z.number(), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+(?:\\.\\d+)?$",
+    });
+    // range checks can't apply to a key, so only the integer shape survives
+    expect(z.toJSONSchema(z.record(z.int32(), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+$",
+    });
+    expect(z.toJSONSchema(z.record(z.literal([1, 2]), z.boolean()))).toMatchObject({
+      propertyNames: { type: "string", enum: ["1", "2"] },
+      required: ["1", "2"],
+    });
+    expect(z.toJSONSchema(z.record(z.literal(1), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      const: "1",
+    });
+  });
+
+  test("record key rewrite reaches through wrappers and union branches", () => {
+    const numericString = { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" };
+    // a wrapper only carries its inner type once the refs are flattened, so this is decided after the record itself is emitted
+    expect(
+      z.toJSONSchema(
+        z.record(
+          z.lazy(() => z.number()),
+          z.boolean()
+        )
+      ).propertyNames
+    ).toEqual(numericString);
+    expect(z.toJSONSchema(z.record(z.number().pipe(z.number()), z.boolean())).propertyNames).toEqual(numericString);
+    expect(z.toJSONSchema(z.record(z.number().readonly(), z.boolean())).propertyNames).toMatchObject(numericString);
+    expect(z.toJSONSchema(z.record(z.union([z.literal("Tuna"), z.literal(21)]), z.string()))).toMatchObject({
+      propertyNames: {
+        anyOf: [
+          { type: "string", const: "Tuna" },
+          { type: "string", const: "21" },
+        ],
+      },
+      required: ["Tuna", "21"],
+    });
+  });
+
+  test("record with a numeric key inlines an extracted key, and leaves a string one referenced", () => {
+    expect(z.toJSONSchema(z.record(z.number().meta({ id: "Num" }), z.boolean())).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+(?:\\.\\d+)?$",
+    });
+    expect(z.toJSONSchema(z.record(z.string().meta({ id: "Str" }), z.boolean())).propertyNames).toEqual({
+      $ref: "#/$defs/Str",
+    });
+    // the value position still wants the number form, so the two cannot share one def
+    const key = z.number().meta({ id: "Shared" });
+    expect(z.toJSONSchema(z.object({ a: key, b: z.record(key, z.string()) }))).toMatchObject({
+      properties: { a: { $ref: "#/$defs/Shared" }, b: { propertyNames: { type: "string" } } },
+      $defs: { Shared: { type: "number" } },
+    });
+  });
+
+  test("record key rewrite reaches a wrapped record", () => {
+    // the flatten copies a record's properties onto its wrapper by reference, so the rewrite has to find every copy
+    expect(z.toJSONSchema(z.record(z.number(), z.boolean()).optional()).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+(?:\\.\\d+)?$",
+    });
+    expect(z.toJSONSchema(z.object({ a: z.record(z.literal([1, 2]), z.boolean()).optional() }))).toMatchObject({
+      properties: { a: { propertyNames: { type: "string", enum: ["1", "2"] }, required: ["1", "2"] } },
+    });
+  });
+
+  test("record with a recursive key converts without looping", () => {
+    const numeric: any = z.lazy(() => z.union([z.number(), numeric]));
+    expect(z.toJSONSchema(z.record(numeric, z.boolean())).propertyNames).toMatchObject({
+      anyOf: [{ type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" }, { $ref: "#/$defs/__schema0" }],
+    });
+    // a key with nothing to re-express keeps the reference it had
+    const stringy: any = z.lazy(() => z.union([z.string(), stringy]));
+    expect(z.toJSONSchema(z.record(stringy, z.boolean())).propertyNames).toEqual({ $ref: "#/$defs/__schema0" });
+    expect(
+      z.toJSONSchema(z.record(z.union([z.literal("a"), z.literal("b")]).meta({ id: "Keys" }), z.boolean()))
+        .propertyNames
+    ).toEqual({ $ref: "#/$defs/Keys" });
+  });
+
+  test("record with a heterogeneous key stringifies only its numeric members", () => {
+    // a mixed key carries no `type`, so the numeric members are caught by value rather than by type
+    expect(z.toJSONSchema(z.record(z.literal(["a", 1]), z.boolean()))).toMatchObject({
+      propertyNames: { enum: ["a", "1"] },
+      required: ["a", "1"],
+    });
+    // a member no key can spell is left as it was, since the parser only ever retries a key as a number
+    expect(z.toJSONSchema(z.record(z.literal(["a", true]) as any, z.boolean())).propertyNames).toEqual({
+      enum: ["a", true],
+    });
+  });
+
+  test("record stringifies required for every target", () => {
+    const schema = z.record(z.literal([1, 2]), z.boolean());
+    for (const target of ["draft-2020-12", "draft-7", "draft-4", "openapi-3.0"] as const) {
+      expect(z.toJSONSchema(schema, { target }).required).toEqual(["1", "2"]);
+    }
   });
 
   test("strict record with regex key uses propertyNames", () => {
@@ -3020,6 +3124,34 @@ test("large registry converts in linear time", () => {
   const folded = convert(true);
   expect(folded.schemas.Inter).toMatchObject({ type: "object", properties: { a: {}, b: {} } });
   expect(folded.elapsed).toBeLessThan(plain.elapsed * 4 + 100);
+});
+
+test("a registry of records with numeric keys converts in linear time", () => {
+  const count = 2000;
+  const convert = (key: (i: number) => z.core.$ZodType) => {
+    const registry = z.registry<{ id: string }>();
+    for (let i = 0; i < count; i++) {
+      registry.add(z.object({ m: z.record(key(i) as z.core.$ZodRecordKey, z.boolean()) }), { id: `Type${i}` });
+    }
+    const start = performance.now();
+    const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+    return { schemas, elapsed: performance.now() - start };
+  };
+
+  const string = convert(() => z.string());
+  const numeric = convert(() => z.number());
+  expect(numeric.schemas.Type0).toMatchObject({
+    properties: { m: { propertyNames: { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" } } },
+  });
+
+  // The rewrite has to find every carrier the flatten copied `propertyNames` onto, which means a pass over the whole seen map. Running that once per record rather than once per conversion cost ~10x at this size. A string key needs no rewrite at all, so comparing against it keeps this independent of how fast the machine is.
+  expect(numeric.elapsed).toBeLessThan(string.elapsed * 2 + 50);
+
+  // An extracted key resolves through a map built once per conversion rather than a search per reference. There is no stable timing control for that — extraction has its own $defs cost, which swamps the difference — so this only pins the shape.
+  const extracted = convert((i) => z.number().meta({ id: `Key${i}` }));
+  expect(extracted.schemas.Type0).toMatchObject({
+    properties: { m: { propertyNames: { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" } } },
+  });
 });
 
 test("registry extracts unregistered subschemas into __shared", () => {

@@ -1,11 +1,13 @@
 import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
+import * as regexes from "./regexes.js";
 import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
   type ProcessParams,
   type Processor,
   type RegistryToJSONSchemaParams,
+  type Seen,
   type ToJSONSchemaContext,
   type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
@@ -46,11 +48,11 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
-    const regexes = [...patterns];
-    if (regexes.length === 1) json.pattern = regexes[0]!.source;
-    else if (regexes.length > 1) {
+    const patternList = [...patterns];
+    if (patternList.length === 1) json.pattern = patternList[0]!.source;
+    else if (patternList.length > 1) {
       json.allOf = [
-        ...regexes.map((regex) => ({
+        ...patternList.map((regex) => ({
           ...(ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0"
             ? ({ type: "string" } as const)
             : {}),
@@ -475,6 +477,85 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 };
 
+/** JSON object keys are always strings, so a numeric record key schema is re-expressed over the
+ * numeric-string form the record parser matches. Deferred to `finalize`, after the flatten: a key
+ * behind a wrapper only carries its own `type` before then, and a union key only has its branches.
+ *
+ * A numeric bound cannot apply to a property name, so `minimum` and its siblings are dropped rather
+ * than carried over: keeping them beside `type: "string"` reproduces the match-nothing schema this
+ * exists to fix. A key that carries one therefore emits wider than the record parses — `z.record(z.number().min(5), V)`
+ * accepts `"3"` — which is the deliberate trade, since throwing on it would reject an ordinary schema
+ * outright. */
+function stringifyKeyNames(
+  bySchema: Map<JSONSchema.BaseSchema, Seen>,
+  json: JSONSchema.BaseSchema,
+  visited: Set<JSONSchema.BaseSchema>
+): JSONSchema.BaseSchema {
+  // an extracted key that rewrites cannot go on sharing its definition — the string form a key position needs is not the number form every other reference wants — so it inlines. One that does not rewrite keeps the `$ref`.
+  if (json.$ref) {
+    // a recursive key holds its own reference inside its definition, so a node already on the path is left alone rather than resolved again
+    if (visited.has(json)) return json;
+    visited.add(json);
+    const def = bySchema.get(json)?.def;
+    if (!def) return json;
+    const inlined = stringifyKeyNames(bySchema, def, visited);
+    return inlined === def ? json : inlined;
+  }
+
+  for (const keyword of ["anyOf", "oneOf"] as const) {
+    const branches = json[keyword];
+    if (!Array.isArray(branches)) continue;
+    const mapped = branches.map((branch) => stringifyKeyNames(bySchema, branch, visited));
+    // rebuilding regardless would detach a key that had nothing to re-express, dropping its `$ref` and leaking the internal `id`
+    if (mapped.some((branch, i) => branch !== branches[i])) json = { ...json, [keyword]: mapped };
+  }
+
+  // a member that already admits a string leaves the key unconstrained, so the node's own type re-expresses only when every member is numeric
+  const types = Array.isArray(json.type) ? json.type : [json.type];
+  const numericType = !types.includes("string") && types.some((t) => t === "number" || t === "integer");
+  // a heterogeneous key carries no type at all, so its numeric members are caught here instead
+  const values = json.enum ?? (json.const !== undefined ? [json.const] : undefined);
+  if (!numericType && !values?.some((v) => typeof v === "number")) return json;
+
+  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json;
+  if (rest.enum) rest.enum = rest.enum.map((v) => (typeof v === "number" ? String(v) : v));
+  else if (typeof rest.const === "number") rest.const = String(rest.const);
+  // a heterogeneous key keeps its absent type: the stringified members already say what a key may be
+  if (!numericType) return rest;
+  rest.type = "string";
+  if (!values) rest.pattern = (types.includes("number") ? regexes.number : regexes.integer).source;
+  return rest;
+}
+
+/** Every record of one conversion, so the carriers are found in a single pass rather than once per record. */
+const pendingRecords = new WeakMap<ToJSONSchemaContext, schemas.$ZodType[]>();
+
+function rewriteKeyNames(ctx: ToJSONSchemaContext): void {
+  // an extracted key is resolved by the object `extractToDef` left in its place, so the map is built once rather than searched per reference. `_zod.toJSONSchema` can hand the same object to two schemas, so the first entry carrying a body wins, as a search would have found it.
+  const bySchema = new Map<JSONSchema.BaseSchema, Seen>();
+  for (const entry of ctx.seen.values()) {
+    if (entry.def && !bySchema.has(entry.schema)) bySchema.set(entry.schema, entry);
+  }
+
+  const rewrites = new Map<JSONSchema.BaseSchema, JSONSchema.BaseSchema>();
+  for (const record of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record);
+    const names = (seen?.def ?? seen?.schema)?.propertyNames;
+    if (!names || names === true || rewrites.has(names)) continue;
+    const rewritten = stringifyKeyNames(bySchema, names, new Set());
+    if (rewritten !== names) rewrites.set(names, rewritten);
+  }
+  if (!rewrites.size) return;
+
+  // the flatten has already copied each record's own properties onto every wrapper by reference, and an extracted body is another such copy, so every carrier holding a rewritten key is updated together
+  for (const entry of ctx.seen.values()) {
+    for (const carrier of [entry.schema, entry.def]) {
+      const rewritten = carrier && rewrites.get(carrier.propertyNames as JSONSchema.BaseSchema);
+      if (rewritten) carrier!.propertyNames = rewritten;
+    }
+  }
+}
+
 export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodRecordDef;
@@ -502,6 +583,13 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
         ...params,
         path: [...params.path, "propertyNames"],
       });
+      let pending = pendingRecords.get(ctx);
+      if (!pending) {
+        pending = [];
+        pendingRecords.set(ctx, pending);
+        ctx.deferred.push(() => rewriteKeyNames(ctx));
+      }
+      pending.push(schema);
     }
     json.additionalProperties = process(def.valueType, ctx as any, {
       ...params,
@@ -519,7 +607,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     );
 
     if (validKeyValues.length > 0) {
-      json.required = validKeyValues as string[];
+      json.required = validKeyValues.map(String);
     }
   }
 };
