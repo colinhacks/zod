@@ -19,7 +19,8 @@ export async function GET(request: Request) {
 
     // Get dynamic params
     const title = searchParams.get("title") || "Zod Documentation";
-    const description = searchParams.get("description");
+    // a long title wraps to three or more lines, and the description would push the footer off the canvas
+    const description = title.length > 60 ? null : searchParams.get("description");
 
     return new ImageResponse(
       <div
