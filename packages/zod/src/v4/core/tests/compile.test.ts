@@ -1253,6 +1253,21 @@ test("ZodCompileAsyncError thrown on async refinement", () => {
   expect(() => compile(schema, { strict: true })).toThrow(ZodCompileAsyncError);
 });
 
+test("ZodCompileAsyncError thrown on async check and superRefine", () => {
+  expect(() =>
+    compile(
+      z.string().check(async () => {}),
+      { strict: true }
+    )
+  ).toThrow(ZodCompileAsyncError);
+  expect(() =>
+    compile(
+      z.string().superRefine(async () => {}),
+      { strict: true }
+    )
+  ).toThrow(ZodCompileAsyncError);
+});
+
 test("ZodCompileAsyncError thrown on async transform", () => {
   const schema = z.string().transform(async (s) => s.length);
   expect(() => compile(schema, { strict: true })).toThrow(ZodCompileAsyncError);

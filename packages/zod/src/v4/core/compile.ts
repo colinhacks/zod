@@ -606,8 +606,15 @@ function generateOverwriteCheck(
 }
 
 type CustomCheck = {
-  _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown };
+  _zod: {
+    def: { check: "custom"; fn?: (value: unknown) => boolean };
+    check?: (payload: unknown, ctx?: ParseContextInternal) => unknown;
+    async?: boolean | undefined;
+  };
 };
+// what a compiled check receives as its context: the fast path is always a sync walk
+const SYNC_CTX: ParseContextInternal = { async: false };
+
 /** A predicate that hands back a thenable is an async check reached synchronously, and the interpreter throws `$ZodAsyncError` for it. Returning INVALID instead would be a bail-out, and a union reads a bail-out as a rejected branch and answers with a later one — so the throw has to survive into generated code. */
 // parks the promise the sync walk abandons, so a rejection has nowhere to surface
 function throwAsync(p: Promise<unknown>): never {
@@ -639,7 +646,8 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     return accessor;
   }
   if (check._zod.check) {
-    if (util.isAsyncFunction(check._zod.check)) {
+    // the runtime guard wraps a declared-async callback in a plain function, so ask the flag as well
+    if (check._zod.async || util.isAsyncFunction(check._zod.check)) {
       throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
     }
     // SuperRefine or other check function - need to spoof context Create a helper that runs the check and returns true if no issues
@@ -650,7 +658,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     // write and emitted the untrimmed input. Hand the value back and thread it on.
     const helperFn = (value: unknown): unknown => {
       const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
-      const result = checkFn(fakePayload);
+      const result = checkFn(fakePayload, SYNC_CTX);
       // Throw rather than return INVALID: the interpreter throws here, and a union would read INVALID as a rejected branch.
       if (result instanceof Promise) throwAsync(result);
       return fakePayload.issues.length === 0 ? fakePayload.value : INVALID;

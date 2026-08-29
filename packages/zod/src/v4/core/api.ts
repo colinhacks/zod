@@ -1714,6 +1714,7 @@ export function _superRefine<T>(
 
     return fn(payload.value, payload as $RefinementCtx<T>);
   }, params);
+  ch._zod.async = asyncFn;
   return ch;
 }
 
@@ -1725,6 +1726,7 @@ export function _check<O = unknown>(fn: schemas.CheckFn<O>, params?: string | $Z
   });
 
   ch._zod.check = util.guardAsync(fn);
+  ch._zod.async = util.isAsyncFunction(fn);
   return ch;
 }
 

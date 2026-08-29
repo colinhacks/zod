@@ -4953,6 +4953,7 @@ export const $ZodCustom: core.$constructor<$ZodCustom> = /*@__PURE__*/ core.$con
   };
 
   const asyncFn = util.isAsyncFunction(def.fn);
+  inst._zod.async = asyncFn;
   inst._zod.check = (payload, ctx) => {
     if (asyncFn && ctx?.async === false) throw new core.$ZodAsyncError();
     const input = payload.value;

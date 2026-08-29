@@ -187,7 +187,14 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
             ...(def.checks ?? []),
             ...chks.map((ch) =>
               typeof ch === "function"
-                ? { _zod: { check: util.guardAsync(ch), def: { check: "custom" }, onattach: [] } }
+                ? {
+                    _zod: {
+                      check: util.guardAsync(ch),
+                      def: { check: "custom" },
+                      onattach: [],
+                      async: util.isAsyncFunction(ch),
+                    },
+                  }
                 : ch
             ),
           ],

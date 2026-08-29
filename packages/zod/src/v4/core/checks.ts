@@ -22,6 +22,8 @@ export interface $ZodCheckInternals<T> {
   /** The set of issues this check might throw. */
   issc?: errors.$ZodIssueBase;
   check(payload: schemas.ParsePayload<T>, ctx?: schemas.ParseContextInternal | undefined): util.MaybeAsync<void>;
+  // the callback is declared async; the guard wraps it in a plain function, so the compiler reads this instead
+  async?: boolean | undefined;
   onattach: ((schema: schemas.$ZodType) => void)[];
 }
 

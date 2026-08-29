@@ -517,3 +517,25 @@ test("a plain function that hands back a rejected promise does not orphan it", a
   await expect(refine.parseAsync("x")).rejects.toThrow("boom");
   expect(() => refine.safeParse("x")).toThrow(z.core.$ZodAsyncError);
 });
+
+test("a declared-async check or superRefine alone in an object is invoked once", async () => {
+  let calls = 0;
+  const schema = z.object({
+    c: z.string().check(async () => {
+      calls++;
+    }),
+    s: z.string().superRefine(async () => {
+      calls++;
+    }),
+  });
+  await schema.parseAsync({ c: "a", s: "a" });
+  expect(calls).toBe(2);
+});
+
+test("a union with an async branch answers through the async entry points", async () => {
+  // a sync parse throws once the async branch is reached, where main happened to fall through to the next branch
+  const schema = z.union([z.promise(z.string()), z.string().transform(async (v) => v), z.number()]);
+  expect(await schema.parseAsync(5)).toBe(5);
+  expect(await schema.parseAsync("x")).toBe("x");
+  expect(() => schema.safeParse(5)).toThrow(z.core.$ZodAsyncError);
+});
