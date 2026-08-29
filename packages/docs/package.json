@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "next build --turbopack",
     "dev": "next dev",
     "start": "next start",
     "postinstall": "fumadocs-mdx"
@@ -25,7 +25,8 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-mdx": "^3.1.0",
-    "remark-stringify": "^11.0.0"
+    "remark-stringify": "^11.0.0",
+    "shiki": "^3.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.4",

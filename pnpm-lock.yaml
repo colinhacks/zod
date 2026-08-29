@@ -200,6 +200,9 @@ importers:
       remark-stringify:
         specifier: ^11.0.0
         version: 11.0.0
+      shiki:
+        specifier: ^3.8.1
+        version: 3.8.1
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.2.4
