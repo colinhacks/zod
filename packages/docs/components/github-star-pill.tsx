@@ -38,11 +38,9 @@ export async function GitHubStarPill({ repo }: { repo: string }) {
       aria-label={
         stars === undefined ? `Star ${repo} on GitHub` : `Star ${repo} on GitHub — ${formatStars(stars)} stars`
       }
-      className="group inline-flex items-center gap-2 rounded-full border border-fd-border bg-fd-card/60 p-1 pe-2.5 text-sm font-medium text-fd-muted-foreground shadow-sm transition-colors hover:border-fd-primary hover:text-fd-foreground"
+      className="group inline-flex items-center gap-2 h-9 rounded-full border border-fd-border bg-fd-card/60 ps-2.25 pe-2.5 text-sm font-medium text-fd-muted-foreground shadow-sm transition-colors hover:border-fd-primary hover:text-fd-foreground"
     >
-      <span className="flex size-6.5 items-center justify-center rounded-full bg-fd-muted text-fd-foreground ring-1 ring-fd-border">
-        <GitHubMark className="size-3.5" />
-      </span>
+      <GitHubMark className="size-4 text-fd-foreground" />
       <span className="flex items-center gap-1">
         <StarIcon className="size-3.5 shrink-0 transition-colors group-hover:text-fd-foreground" />
         {stars !== undefined && <span className="leading-none">{formatStars(stars)}</span>}
