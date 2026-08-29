@@ -1340,3 +1340,14 @@ test("minProperties composes with propertyNames", () => {
   expect(schema.safeParse({ a: 1 }).success).toBe(true);
   expect(z.toJSONSchema(schema)).toMatchObject({ propertyNames: { pattern: "^a" }, minProperties: 1 });
 });
+
+test("minProperties survives the round trip on the properties + patternProperties path", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    patternProperties: { "^b": { type: "number" } },
+    minProperties: 1,
+  });
+  expect(schema.safeParse({}).success).toBe(false);
+  expect(z.toJSONSchema(schema)).toMatchObject({ minProperties: 1 });
+});

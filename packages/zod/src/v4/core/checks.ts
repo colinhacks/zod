@@ -621,9 +621,10 @@ export const $ZodCheckMaxProperties: core.$constructor<$ZodCheckMaxProperties> =
 
     inst._zod.def.when ??= _whenIsObject;
 
+    // own bag keys, not `maximum`: that slot is a length bound on an array or string, and an intersection or wrapper can carry both
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
+      const curr = (inst._zod.bag.maxProperties ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._zod.bag.maxProperties = def.maximum;
     });
 
     inst._zod.check = (payload) => {
@@ -667,8 +668,8 @@ export const $ZodCheckMinProperties: core.$constructor<$ZodCheckMinProperties> =
     inst._zod.def.when ??= _whenIsObject;
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
+      const curr = (inst._zod.bag.minProperties ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._zod.bag.minProperties = def.minimum;
     });
 
     inst._zod.check = (payload) => {

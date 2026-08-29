@@ -305,6 +305,12 @@ function inputOptin(schema: schemas.$ZodType): "optional" | "defaulted" | undefi
   return schema._zod.optin;
 }
 
+function emitPropertyBounds(schema: schemas.$ZodType, json: JSONSchema.ObjectSchema): void {
+  const { minProperties, maxProperties } = schema._zod.bag;
+  if (typeof minProperties === "number") json.minProperties = minProperties;
+  if (typeof maxProperties === "number") json.maxProperties = maxProperties;
+}
+
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodObjectDef;
@@ -322,9 +328,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   json.type = "object";
   json.properties = {};
 
-  const { minimum, maximum } = schema._zod.bag;
-  if (typeof minimum === "number") json.minProperties = minimum;
-  if (typeof maximum === "number") json.maxProperties = maximum;
+  emitPropertyBounds(schema, json);
 
   for (const key in shape) {
     // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
@@ -404,6 +408,8 @@ export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schem
     ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
   ];
   json.allOf = allOf;
+  // a property-count check attached to the intersection itself lives on its bag, not on either branch
+  emitPropertyBounds(schema, json as JSONSchema.ObjectSchema);
   // Recorded innermost first, so a nested intersection has already folded by the time this one is considered. The array is the handle rather than the schema, because a wrapper that inherits this schema shares the same array; `finalize` folds every object holding it. See `foldIntersection`.
   ctx.intersections.push(allOf);
 };
@@ -484,9 +490,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
 
-  const { minimum, maximum } = schema._zod.bag;
-  if (typeof minimum === "number") json.minProperties = minimum;
-  if (typeof maximum === "number") json.maxProperties = maximum;
+  emitPropertyBounds(schema, json);
 
   // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;

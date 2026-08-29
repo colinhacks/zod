@@ -4410,4 +4410,10 @@ test("minProperties / maxProperties", () => {
   const obj = z.object({ a: z.string() }).check(z.minProperties(1));
   expect(z.toJSONSchema(obj)).toMatchObject({ type: "object", minProperties: 1 });
   expect(z.toJSONSchema(obj)).not.toHaveProperty("maxProperties");
+  // the bound rides on the intersection's own bag, and never on the length slot of a sibling check
+  const both = z.intersection(z.object({ a: z.string() }), z.object({ b: z.string() })).check(z.maxProperties(2));
+  expect(z.toJSONSchema(both)).toMatchObject({ maxProperties: 2 });
+  const arr = z.array(z.string()).check(z.minLength(1), z.minProperties(1));
+  expect(z.toJSONSchema(arr)).toMatchObject({ minItems: 1 });
+  expect(z.toJSONSchema(arr)).not.toHaveProperty("minProperties");
 });

@@ -31,6 +31,8 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "בייטים", shortLabel: "קטן", longLabel: "גדול" },
     array: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
     set: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
+    map: { unit: "ערכים", shortLabel: "קטן", longLabel: "גדול" },
+    object: { unit: "מאפיינים", shortLabel: "קטן", longLabel: "גדול" },
     number: { unit: "", shortLabel: "קטן", longLabel: "גדול" }, // no unit
   };
 
