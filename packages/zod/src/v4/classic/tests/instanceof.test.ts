@@ -109,19 +109,13 @@ test("z.properties", () => {
   z.instanceof(URL).check(z.property("nope", z.string()));
 
   // the check feeds the property value into its schema, so it is typed over the input side rather than the output
-  z.object({ a: z.string() }).check(
-    z.property(
-      "a",
-      z.string().transform((s) => s.length)
-    )
+  const stringToLength = z.property(
+    "a",
+    z.string().transform((s) => s.length)
   );
+  z.object({ a: z.string() }).check(stringToLength);
   // @ts-expect-error a is a number, the schema takes a string
-  z.object({ a: z.number() }).check(
-    z.property(
-      "a",
-      z.string().transform((s) => s.length)
-    )
-  );
+  z.object({ a: z.number() }).check(stringToLength);
 
   // Plain property checks carry no `when`, so the schema stays on the compiled fast path.
   const compiled = z.compile(httpsUrl);
