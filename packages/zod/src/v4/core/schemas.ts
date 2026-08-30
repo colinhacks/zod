@@ -3058,6 +3058,120 @@ function handleTupleResults(
   return final;
 }
 
+export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor(
+  "$ZodTupleJIT",
+  (inst, def) => {
+    $ZodTuple.init(inst, def);
+
+    const superParse = inst._zod.parse;
+    const memo = core.globalConfig.memoizer;
+
+    const generateFastpass = () => {
+      const items = def.items;
+      const rest = def.rest;
+      const optinStart = getTupleOptStart(items, "optin");
+      const optoutStart = getTupleOptStart(items, "optout");
+      const optouts = items.map((item) => item._zod.optout === "optional");
+      const doc = new Doc(["payload", "ctx"], { items, rest, inst, memo, optouts });
+
+      // Prefixes in place, like util.prefixIssues does for every interpreted path.
+      const prefixStr = (id: string, index: number | string) => `
+          for (let j = 0; j < ${id}.issues.length; j++) {
+            const iss = ${id}.issues[j];
+            iss.path = iss.path ? [${index}, ...iss.path] : [${index}];
+            payload.issues.push(iss);
+          }`;
+
+      doc.write(`const input = payload.value;`);
+      doc.write(`
+        if (!Array.isArray(input)) {
+          payload.issues.push({ input, inst, expected: "tuple", code: "invalid_type" });
+          return payload;
+        }`);
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, [], ctx);` : `const newResult = [];`);
+      doc.write(`payload.value = newResult;`);
+
+      if (!rest) {
+        doc.write(`
+          if (input.length < ${optinStart}) {
+            payload.issues.push({ code: "too_small", minimum: ${optinStart}, inclusive: true, input, inst, origin: "array" });
+            return payload;
+          }`);
+        doc.write(`
+          if (input.length > ${items.length}) {
+            payload.issues.push({ code: "too_big", maximum: ${items.length}, inclusive: true, input, inst, origin: "array" });
+          }`);
+      }
+
+      // Items run first, but their issues are pushed after the rest elements' — the interpreted path collects item results, pushes rest issues inside its rest loop, and only then walks the item results.
+      for (let i = 0; i < items.length; i++) {
+        doc.write(`const item_${i} = items[${i}]._zod.run({ value: input[${i}], issues: [] }, ctx);`);
+      }
+
+      if (rest) {
+        doc.write(`
+          for (let i = ${items.length}; i < input.length; i++) {
+            const r = rest._zod.run({ value: input[i], issues: [] }, ctx);
+            if (r.issues.length) {${prefixStr("r", "i")}
+            }
+            newResult[i] = r.value;
+          }`);
+      }
+
+      // handleTupleResults, unrolled: the optin/optout rungs per index are codegen-time constants, so each index emits only the branches it can take. `break` becomes a labeled-block break.
+      doc.write(`itemLoop: {`);
+      for (let i = 0; i < items.length; i++) {
+        const id = `item_${i}`;
+        const optinOptional = items[i]._zod.optin === "optional";
+        const afterOptout = i >= optoutStart;
+
+        if (afterOptout && optinOptional) {
+          // absence truncates the tail regardless of issues; when present, the interpreted inner absence check can no longer fire
+          doc.write(`
+          if (${i} >= input.length) { newResult.length = ${i}; break itemLoop; }
+          if (${id}.issues.length) {${prefixStr(id, i)}
+          }`);
+        } else if (afterOptout) {
+          doc.write(`
+          if (${id}.issues.length) {
+            if (${i} >= input.length) { newResult.length = ${i}; break itemLoop; }${prefixStr(id, i)}
+          }`);
+        } else {
+          doc.write(`
+          if (${id}.issues.length) {${prefixStr(id, i)}
+          }`);
+        }
+        doc.write(`newResult[${i}] = ${id}.value;`);
+      }
+      doc.write(`}`);
+
+      if (optouts.some((o) => o)) {
+        doc.write(`
+          for (let i = newResult.length - 1; i >= input.length; i--) {
+            if (optouts[i] && newResult[i] === undefined) newResult.length = i;
+            else break;
+          }`);
+      }
+
+      doc.write(`return payload;`);
+      return doc.compile() as (payload: ParsePayload, ctx: ParseContextInternal) => ParsePayload;
+    };
+
+    let fastpass!: ReturnType<typeof generateFastpass>;
+    const jit = !core.globalConfig.jitless;
+    const allowsEval = util.allowsEval;
+    const fastEnabled = jit && allowsEval.value;
+
+    inst._zod.parse = (payload, ctx) => {
+      if (fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+        if (!fastpass) fastpass = generateFastpass();
+        return fastpass(payload, ctx);
+      }
+      return superParse(payload, ctx);
+    };
+  }
+);
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 //////////                      //////////

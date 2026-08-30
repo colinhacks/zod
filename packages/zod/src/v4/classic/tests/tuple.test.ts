@@ -509,3 +509,55 @@ test("partial rejects a tuple carrying refinements", () => {
   const schema = z.tuple([z.string(), z.number()]).refine(([a]) => a.length > 0);
   expect(() => schema.partial()).toThrow("cannot be used on tuple schemas containing refinements");
 });
+
+test("JIT fastpass parity across jit, jitless, and z.compile", () => {
+  const schemas: Record<string, z.ZodType> = {
+    plain: z.tuple([z.string(), z.number()]),
+    empty: z.tuple([]),
+    "optional tail": z.tuple([z.string(), z.number().optional()]),
+    "all optional": z.tuple([z.string().optional(), z.number().optional()]),
+    "default mid": z.tuple([z.string(), z.number().default(42), z.boolean().optional()]),
+    "explicit undefined": z.tuple([z.string(), z.string().or(z.undefined())]),
+    catch: z.tuple([z.string().catch("fallback"), z.number()]),
+    rest: z.tuple([z.string()]).rest(z.number()),
+    "rest with optional item": z.tuple([z.string(), z.number().optional()]).rest(z.boolean()),
+    nested: z.tuple([z.tuple([z.string()]), z.object({ a: z.number() })]),
+    transform: z.tuple([z.string().transform((s) => s.length), z.number()]),
+  };
+  const inputs: unknown[] = [
+    ["a", 1],
+    ["a"],
+    [],
+    ["a", 1, true],
+    ["a", 1, true, false],
+    ["a", "b"],
+    [1, 2],
+    [undefined, undefined],
+    ["a", undefined],
+    ["a", undefined, undefined],
+    [["x"], { a: 1 }],
+    [["x"], { a: "bad" }],
+    [7, 1, "bad", "worse"],
+    "not-an-array",
+    null,
+    undefined,
+    {},
+  ];
+  for (const [name, schema] of Object.entries(schemas)) {
+    const compiled = z.compile(schema);
+    for (const input of inputs) {
+      const label = `${name} <- ${JSON.stringify(input)}`;
+      const jit = schema.safeParse(input);
+      const interp = schema.safeParse(input, { jitless: true });
+      const comp = compiled.safeParse(input);
+      expect(jit.success, label).toBe(interp.success);
+      expect(jit.data, label).toEqual(interp.data);
+      // index order and length matter: compare the arrays' own keys too, so a hole never passes as undefined
+      if (jit.success) expect(Object.keys(jit.data as object), label).toEqual(Object.keys(interp.data as object));
+      expect(jit.error?.issues, label).toEqual(interp.error?.issues);
+      expect(comp.success, label).toBe(interp.success);
+      expect(comp.data, label).toEqual(interp.data);
+      expect(comp.error?.issues, label).toEqual(interp.error?.issues);
+    }
+  }
+});

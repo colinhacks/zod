@@ -1845,7 +1845,7 @@ export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constru
   "ZodTuple",
   (inst, def) => {
     _ensureDefaultMemoizer();
-    core.$ZodTuple.init(inst, def);
+    core.$ZodTupleJIT.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
   },
