@@ -101,11 +101,27 @@ test("z.properties", () => {
   ).toEqual([["invalid_value", ["b"]]]);
 
   // literal and enum inputs widen to their primitive, so a `string`/`boolean` property accepts them without a cast, while a genuine type mismatch or an unknown key still fails to compile
+  z.instanceof(URL).check(z.property("protocol", z.literal("https:")));
   z.instanceof(Request).check(...z.properties({ method: z.enum(["POST", "PUT"]), bodyUsed: z.literal(false) }));
   // @ts-expect-error length is a number
   z.string().check(z.property("length", z.string()));
   // @ts-expect-error no such key
   z.instanceof(URL).check(z.property("nope", z.string()));
+
+  // the check feeds the property value into its schema, so it is typed over the input side rather than the output
+  z.object({ a: z.string() }).check(
+    z.property(
+      "a",
+      z.string().transform((s) => s.length)
+    )
+  );
+  // @ts-expect-error a is a number, the schema takes a string
+  z.object({ a: z.number() }).check(
+    z.property(
+      "a",
+      z.string().transform((s) => s.length)
+    )
+  );
 
   // Plain property checks carry no `when`, so the schema stays on the compiled fast path.
   const compiled = z.compile(httpsUrl);
