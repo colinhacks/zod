@@ -1,4 +1,7 @@
 import { createRequire } from "node:module";
+import { Type } from "@sinclair/typebox";
+import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { Value } from "@sinclair/typebox/value";
 import { type } from "arktype";
 import { Schema } from "effect";
 import * as v from "valibot";
@@ -157,6 +160,35 @@ const yupSchema = yup.object({
 add("yup", "parseSafe", (d) => yupSchema.validateSync(d, { recursive: true, strict: false, stripUnknown: true }));
 add("yup", "assertLoose", (d) => {
   if (!yupSchema.isValidSync(d, { recursive: true, strict: false })) throw new Error("Invalid");
+  return true;
+});
+
+// --- typebox ---
+const typeboxSchema = Type.Object({
+  number: Type.Number(),
+  negNumber: Type.Number(),
+  maxNumber: Type.Number(),
+  string: Type.String(),
+  longString: Type.String(),
+  boolean: Type.Boolean(),
+  deeplyNested: Type.Object({ foo: Type.String(), num: Type.Number(), bool: Type.Boolean() }),
+});
+const typeboxCompiled = TypeCompiler.Compile(typeboxSchema);
+// TypeCompiler generates only the check; typebox has no compiled strip, so parseSafe pays the dynamic Value module for it — on a clone, so the result is a new object like every other parseSafe entry
+add("typebox (compiled)", "parseSafe", (d) => {
+  if (!typeboxCompiled.Check(d)) throw new Error("Invalid");
+  return Value.Clean(typeboxSchema, Value.Clone(d));
+});
+add("typebox (compiled)", "assertLoose", (d) => {
+  if (!typeboxCompiled.Check(d)) throw new Error("Invalid");
+  return true;
+});
+add("typebox", "parseSafe", (d) => {
+  if (!Value.Check(typeboxSchema, d)) throw new Error("Invalid");
+  return Value.Clean(typeboxSchema, Value.Clone(d));
+});
+add("typebox", "assertLoose", (d) => {
+  if (!Value.Check(typeboxSchema, d)) throw new Error("Invalid");
   return true;
 });
 
