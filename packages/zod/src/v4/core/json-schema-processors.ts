@@ -29,6 +29,12 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 
 // ==================== SIMPLE TYPE PROCESSORS ====================
 
+// The runtime base64 regexes are linear-time and deliberately length-lax so composed parse paths cannot overflow the regex stack; the emitted JSON Schema swaps in the exact block-structured forms, which zod itself never executes.
+const exactPatterns: Map<RegExp, RegExp> = new Map([
+  [regexes.base64, /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/],
+  [regexes.base64url, /^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-]{2,3})?$/],
+]);
+
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
@@ -48,7 +54,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
-    const patternList = [...patterns];
+    const patternList = [...patterns].map((p) => exactPatterns.get(p) ?? p);
     if (patternList.length === 1) json.pattern = patternList[0]!.source;
     else if (patternList.length > 1) {
       json.allOf = [

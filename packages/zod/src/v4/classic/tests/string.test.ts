@@ -292,6 +292,12 @@ test("big base64 and base64url", () => {
   z.base64().parse(bigbase64);
   const bigbase64url = randomBytes(1024 * 1024 * 10).toString("base64url");
   z.base64url().parse(bigbase64url);
+
+  // the exported regexes and template-literal composition run raw regexes on the parse path; the quantified block forms overflowed the regex stack here (#6528 review)
+  expect(z.regexes.base64.test(bigbase64)).toBe(true);
+  expect(z.regexes.base64url.test(bigbase64url)).toBe(true);
+  expect(z.templateLiteral(["id-", z.base64()]).safeParse(`id-${bigbase64}`).success).toBe(true);
+  expect(z.templateLiteral(["id-", z.base64url()]).safeParse(`id-${bigbase64url}`).success).toBe(true);
 });
 
 function makeJwt(header: object, payload: object) {
