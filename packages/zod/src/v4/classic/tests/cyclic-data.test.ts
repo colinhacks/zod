@@ -718,3 +718,50 @@ test("detects a cycle through a user-defined container type", () => {
   const out: any = Node.parse(input);
   expect(out.boxed.v).toBe(out);
 });
+
+// #6526: a factory returns fresh instances, so the identity walk never revisits a node; without the depth cap it descends until the stack overflows
+test("parses a factory-built recursive schema", () => {
+  const Node = (): any =>
+    z.object({
+      id: z.number(),
+      get kids() {
+        return z.array(Node());
+      },
+    });
+
+  const S = z.object({ root: Node() });
+  const out = S.parse({ root: { id: 1, kids: [{ id: 2, kids: [] }] } });
+  expect(out.root.kids[0].id).toBe(2);
+  expect(S.safeParse({ root: { id: 1, kids: [{ id: "x", kids: [] }] } }).success).toBe(false);
+});
+
+test("parses a factory-built recursive discriminated union at the root and nested", () => {
+  const Geometry = (): any =>
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("Point"), coordinates: z.array(z.number()) }),
+      z.looseObject({
+        type: z.literal("GeometryCollection"),
+        get geometries() {
+          return z.array(Geometry());
+        },
+      }),
+    ]);
+
+  const collection = { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [1, 2] }] };
+  expect(Geometry().parse(collection).geometries[0].coordinates).toEqual([1, 2]);
+  expect(z.object({ g: Geometry() }).parse({ g: collection }).g.type).toBe("GeometryCollection");
+});
+
+test("the depth cap keeps the walk exact below it", () => {
+  let deep: any = z.string();
+  for (let i = 0; i < 50; i++) deep = z.object({ v: deep });
+  expect(z.core.isRecursiveSchema(deep)).toBe(false);
+
+  const Node = (): any =>
+    z.object({
+      get self() {
+        return Node();
+      },
+    });
+  expect(z.core.isRecursiveSchema(Node())).toBe(true);
+});

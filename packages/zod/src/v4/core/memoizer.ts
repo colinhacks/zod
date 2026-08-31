@@ -34,12 +34,16 @@ function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
 
+// A factory-built recursive schema mints fresh instances on every getter read, so the identity walk below never revisits a node and would descend until the stack overflows. Past this depth, assume a cycle: a false positive only leaves the memoizer attached, which is what a true cycle gets anyway.
+const MAX_DEPTH = 256;
+
 /** Whether this schema's subtree contains a cycle, so one parse can re-enter it. */
 function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   const cached = recursive.get(inst);
   if (cached !== undefined) return cached;
   // Relative to the walk in progress, so not cached.
   if (stack.has(inst)) return true;
+  if (stack.size >= MAX_DEPTH) return true;
   stack.add(inst);
 
   let result = false;
