@@ -2289,15 +2289,15 @@ blobSchema.parse("hello."); // ❌
 Use `z.properties()` to declare several property checks from an object literal. It returns an array to spread into `.check()`.
 
 ```ts
-const httpsUrl = z.instanceof(URL).check(
+const okResponse = z.instanceof(Response).check(
   ...z.properties({
-    protocol: z.literal("https:"),
-    hostname: z.string().regex(z.regexes.domain),
+    status: z.number().min(200).max(299),
+    redirected: z.literal(false),
   })
 );
 
-httpsUrl.parse(new URL("https://example.com")); // ✅
-httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
 ```
 
 ## Refinements
