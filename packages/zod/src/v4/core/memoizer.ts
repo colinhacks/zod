@@ -35,8 +35,15 @@ function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
 
-/** Whether this schema's subtree contains a cycle, so one parse can re-enter it. */
-function isRecursive(inst: $ZodType, stack: Set<object>, sources: Set<string>): boolean {
+// Set by a walk that reported a cycle it could not confirm, so the answer is not cached and the caller knows to ask again once the graph is resolved. The walk is synchronous and never re-enters, so one flag serves the whole traversal.
+let assumed = false;
+
+/**
+ * Whether this schema's subtree contains a cycle, so one parse can re-enter it.
+ *
+ * The walk resolves nothing that runs user code, and reports a cycle for every edge it therefore can't follow — a shape getter or a `z.lazy`. Identity is its only termination argument, and a deferred edge need not answer with the same schema twice: a factory-built recursive schema mints a fresh subtree per level, so a walk that resolved those would never revisit a node and would descend until the stack overflows. Erring toward a cycle costs such a schema only the memoizer it keeps attached; erring the other way is unsound.
+ */
+function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   const cached = recursive.get(inst);
   if (cached !== undefined) return cached;
   // Relative to the walk in progress, so not cached.
@@ -45,40 +52,20 @@ function isRecursive(inst: $ZodType, stack: Set<object>, sources: Set<string>): 
 
   let result = false;
   const check = (child: any) => {
-    if (!result && child?._zod && isRecursive(child, stack, sources)) result = true;
-  };
-
-  // A factory-built recursive schema mints fresh instances on every getter read, so instance identity never sees the walk revisit a node and it would descend forever. What every minted level shares is the getter itself: a path that re-enters a getter whose source it is already resolving can only have been produced by a loop in user code, so treat the repeat as a back-edge and don't resolve it.
-  const follow = (source: string, read: () => unknown) => {
-    if (result) return;
-    if (sources.has(source)) {
-      result = true;
-      return;
-    }
-    sources.add(source);
-    check(read());
-    sources.delete(source);
+    if (!result && child?._zod && isRecursive(child, stack)) result = true;
   };
 
   const def = inst._zod.def as any;
   const kind = def.type as $ZodTypeDef["type"];
   switch (kind) {
     case "object": {
-      // The first `def.shape` read resolves every user getter at once via spread, so fingerprint the raw shape's getters before triggering it; a def without a raw entry was already resolved, and its shape holds plain values.
+      // Reading the raw shape's descriptors leaves the user's getters unresolved; a def with no raw entry was already resolved and holds plain values either way.
       const sh = rawShape(def) ?? def.shape;
-      const pending: [PropertyKey, string][] = [];
       // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
       for (const key of Reflect.ownKeys(sh)) {
         const desc = Object.getOwnPropertyDescriptor(sh, key)!;
-        if (desc.get) pending.push([key, desc.get.toString()]);
+        if (desc.get) result = assumed = true;
         else check(desc.value);
-      }
-      if (pending.length) {
-        for (const [, source] of pending) if (sources.has(source)) result = true;
-        if (!result) {
-          const resolved = def.shape;
-          for (const [key, source] of pending) follow(source, () => resolved[key]);
-        }
       }
       check(def.catchall);
       break;
@@ -124,9 +111,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>, sources: Set<string>): 
       check(def.input);
       check(def.output);
       break;
-    // reading `_zod.innerType` resolves the getter once and caches it
     case "lazy":
-      follow(def.getter.toString(), () => (inst as any)._zod.innerType);
+      result = assumed = true;
       break;
     // a leaf by choice: `parts` are regex fragments, not data positions
     case "template_literal":
@@ -167,7 +153,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>, sources: Set<string>): 
   }
 
   stack.delete(inst);
-  recursive.set(inst, result);
+  // An assumed answer is only true of the graph as it stands, so it must not outlive the resolution that settles it.
+  if (!assumed) recursive.set(inst, result);
   return result;
 }
 
@@ -178,7 +165,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>, sources: Set<string>): 
  * generated fast path has no context to key on.
  */
 export function isRecursiveSchema(inst: $ZodType): boolean {
-  return isRecursive(inst, new Set(), new Set());
+  assumed = false;
+  return isRecursive(inst, new Set());
 }
 
 function bucketFor(state: State, inst: $ZodType): Map<object, Entry> {
@@ -223,6 +211,7 @@ const memo: $ZodMemoizer = {
 
   attach(inst) {
     let isRecursiveInst: boolean | undefined;
+    let rechecked = false;
     // `bucket` memoized for one parse; a recursive schema is re-entered many times and its bucket never changes
     let lastCtx: object | undefined;
     let lastBucket: Map<object, Entry> | undefined;
@@ -234,13 +223,17 @@ const memo: $ZodMemoizer = {
 
       const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload> => {
         if (isRecursiveInst === undefined) {
-          isRecursiveInst = isRecursive(inst, new Set(), new Set());
-          if (!isRecursiveInst) {
+          assumed = false;
+          const walked = isRecursive(inst, new Set());
+          if (!walked) {
             // Nothing here can ever fire, so take it back out.
             inst._zod.parse = base;
             if (inst._zod.run === wrapped) inst._zod.run = base;
             return base(payload, ctx);
           }
+          // A cold walk can only assume a cycle across an edge it won't resolve. This parse resolves the ones on its own path, so leave the question open and ask again next time; a second assumed answer means the edge is still deferred and the wrapper stays for good.
+          if (!assumed || rechecked) isRecursiveInst = true;
+          else rechecked = true;
         }
 
         const input = payload.value;

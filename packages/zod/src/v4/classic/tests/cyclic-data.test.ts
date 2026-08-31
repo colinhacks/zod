@@ -752,7 +752,7 @@ test("parses a factory-built recursive discriminated union at the root and neste
   expect(z.object({ g: Geometry() }).parse({ g: collection }).g.type).toBe("GeometryCollection");
 });
 
-test("the walk flags a generative loop without resolving it to the bottom", () => {
+test("the walk reports a cycle for a deferred edge instead of resolving it", () => {
   const Node = (): any =>
     z.object({
       get self() {
@@ -761,32 +761,43 @@ test("the walk flags a generative loop without resolving it to the bottom", () =
     });
   expect(z.core.isRecursiveSchema(Node())).toBe(true);
 
-  // mutual factories: the loop closes over two getter sources
-  const A = (): any =>
-    z.object({
-      get b() {
-        return B();
-      },
-    });
-  const B = (): any =>
-    z.object({
-      get a() {
-        return A();
-      },
-    });
-  expect(z.core.isRecursiveSchema(A())).toBe(true);
-
-  // a lone forward-reference getter is not a loop
+  // conservative by design: a getter that closes no cycle is reported too, and pays only the memoizer it keeps
   const Leaf = z.object({ id: z.string() });
   const forward: any = z.object({
     get leaf() {
       return Leaf;
     },
   });
-  expect(z.core.isRecursiveSchema(forward)).toBe(false);
+  expect(z.core.isRecursiveSchema(forward)).toBe(true);
+  expect(z.core.isRecursiveSchema(z.lazy(() => Leaf) as any)).toBe(true);
 });
 
-test("the walk stays exact on deep acyclic nesting", () => {
+test("a deferred edge stops being assumed a cycle once the graph resolves", () => {
+  const Leaf = z.object({ n: z.number() });
+  const Forward: any = z.object({
+    get a() {
+      return Leaf;
+    },
+  });
+  expect(z.core.isRecursiveSchema(Forward)).toBe(true);
+  Forward.parse({ a: { n: 1 } });
+  // the parse resolved the getter, so the walk can follow it and drop the assumption
+  expect(z.core.isRecursiveSchema(Forward)).toBe(false);
+
+  // a factory hands back a fresh subtree every time, so no parse ever resolves it into a finite graph
+  const Node = (): any =>
+    z.object({
+      get kids() {
+        return z.array(Node());
+      },
+    });
+  const Generated = Node();
+  expect(z.core.isRecursiveSchema(Generated)).toBe(true);
+  Generated.parse({ kids: [] });
+  expect(z.core.isRecursiveSchema(Generated)).toBe(true);
+});
+
+test("the walk stays exact where nothing is deferred", () => {
   let deep: any = z.string();
   for (let i = 0; i < 300; i++) deep = z.object({ v: deep });
   expect(z.core.isRecursiveSchema(deep)).toBe(false);
