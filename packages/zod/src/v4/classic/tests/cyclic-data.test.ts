@@ -769,7 +769,10 @@ test("the walk reports a cycle for a deferred edge instead of resolving it", () 
     },
   });
   expect(z.core.isRecursiveSchema(forward)).toBe(true);
-  expect(z.core.isRecursiveSchema(z.lazy(() => Leaf) as any)).toBe(true);
+
+  // a lazy is followed one hop, which is what lets z.compile see past it; past that hop it is deferred like any other edge
+  expect(z.core.isRecursiveSchema(z.lazy(() => Leaf) as any)).toBe(false);
+  expect(z.core.isRecursiveSchema(z.lazy(() => z.lazy(() => Leaf)) as any)).toBe(true);
 });
 
 // the builders answer `shape` from an accessor that resolves the source's getters, so the walk has to reach the source schema itself
@@ -870,12 +873,6 @@ test("a deferred edge stops being assumed a cycle once the graph resolves", () =
   Forward.parse({ a: { n: 1 } });
   // the parse resolved the getter, so the walk can follow it and drop the assumption
   expect(z.core.isRecursiveSchema(Forward)).toBe(false);
-
-  // same for a lazy edge, which caches its inner on the def once anything reads it
-  const Deferred: any = z.object({ a: z.lazy(() => Leaf) });
-  expect(z.core.isRecursiveSchema(Deferred)).toBe(true);
-  Deferred.parse({ a: { n: 1 } });
-  expect(z.core.isRecursiveSchema(Deferred)).toBe(false);
 
   // a factory hands back a fresh subtree every time, so no parse ever resolves it into a finite graph
   const Node = (): any =>

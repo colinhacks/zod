@@ -44,7 +44,7 @@ const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
 let assumed = false;
 
 /** Whether this schema's subtree contains a cycle, so one parse can re-enter it. */
-function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
+function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): boolean {
   const cached = recursive.get(inst);
   if (cached !== undefined) return cached;
   // Relative to the walk in progress, so not cached.
@@ -53,7 +53,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
 
   let result = false;
   const check = (child: any) => {
-    if (!result && child?._zod && isRecursive(child, stack)) result = true;
+    if (!result && child?._zod && isRecursive(child, stack, resolve)) result = true;
   };
 
   // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
@@ -130,10 +130,14 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       check(def.output);
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
-    case "lazy":
-      if (def._cachedInner) check(def._cachedInner);
-      else result = assumed = true;
+    case "lazy": {
+      const inner = def._cachedInner ?? (resolve ? (inst as any)._zod.innerType : undefined);
+      // one hop sees past the deferral; beyond it `resolve` is off, so a lazy yielding only another unresolved lazy is generative and stops here
+      if (inner) {
+        if (!result && isRecursive(inner, stack, false)) result = true;
+      } else result = assumed = true;
       break;
+    }
     // a leaf by choice: `parts` are regex fragments, not data positions
     case "template_literal":
     // leaves
@@ -186,7 +190,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
  */
 export function isRecursiveSchema(inst: $ZodType): boolean {
   assumed = false;
-  return isRecursive(inst, new Set());
+  // z.compile never parses, so nothing would ever resolve a lazy for it; it runs once and already treats a throw here as recursive
+  return isRecursive(inst, new Set(), true);
 }
 
 function bucketFor(state: State, inst: $ZodType): Map<object, Entry> {
@@ -244,7 +249,7 @@ const memo: $ZodMemoizer = {
       const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload> => {
         if (isRecursiveInst === undefined) {
           assumed = false;
-          const walked = isRecursive(inst, new Set());
+          const walked = isRecursive(inst, new Set(), false);
           if (!walked) {
             // Nothing here can ever fire, so take it back out.
             inst._zod.parse = base;
