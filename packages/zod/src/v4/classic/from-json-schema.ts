@@ -178,6 +178,7 @@ function checkObjectGuards(
           code: "too_small",
           minimum: guards.minProperties,
           inclusive: true,
+          message: `Too small: expected object to have >=${guards.minProperties} properties`,
           input: value,
           inst: objectSchema,
           continue: true,
@@ -189,6 +190,7 @@ function checkObjectGuards(
           code: "too_big",
           maximum: guards.maxProperties,
           inclusive: true,
+          message: `Too big: expected object to have <=${guards.maxProperties} properties`,
           input: value,
           inst: objectSchema,
           continue: true,
@@ -223,6 +225,72 @@ function jsonDeepEqual(a: unknown, b: unknown): boolean {
   const keys = Object.keys(a);
   if (keys.length !== Object.keys(b).length) return false;
   return keys.every((k) => Object.prototype.hasOwnProperty.call(b, k) && jsonDeepEqual((a as any)[k], (b as any)[k]));
+}
+
+function plural(n: number): string {
+  return n === 1 ? "element" : "elements";
+}
+
+/**
+ * Enforces `uniqueItems` and the `contains` family before `arraySchema` runs, for the same reason
+ * `checkObjectGuards` runs pre-pipe: an item parse can apply a nested `default`, so the parsed
+ * array is not the instance the keywords are defined over.
+ */
+function checkArrayGuards(
+  arraySchema: ZodType,
+  guards: {
+    uniqueItems?: boolean | undefined;
+    containsSchema?: ZodType | undefined;
+    minContains?: number | undefined;
+    maxContains?: number | undefined;
+  }
+): ZodType {
+  // An identity transform, not z.any(), so `toJSONSchema` reports the array on both the input and the output side of the pipe.
+  const guard = z
+    .transform((value: unknown) => value)
+    .check((payload) => {
+      const items = payload.value;
+      if (!Array.isArray(items)) return;
+      if (guards.uniqueItems === true) {
+        outer: for (let i = 1; i < items.length; i++) {
+          for (let j = 0; j < i; j++) {
+            if (!jsonDeepEqual(items[i], items[j])) continue;
+            payload.issues.push({
+              code: "custom",
+              message: `Array items must be unique: element at index ${i} duplicates the one at index ${j}`,
+              input: items,
+              path: [i],
+              continue: true,
+            });
+            continue outer;
+          }
+        }
+      }
+      if (guards.containsSchema) {
+        const minContains = guards.minContains ?? 1;
+        let matches = 0;
+        for (const item of items) {
+          if (guards.containsSchema.safeParse(item).success) matches++;
+        }
+        if (matches < minContains) {
+          payload.issues.push({
+            code: "custom",
+            message: `Array must contain at least ${minContains} matching ${plural(minContains)}; found ${matches}`,
+            input: items,
+            continue: true,
+          });
+        }
+        if (guards.maxContains !== undefined && matches > guards.maxContains) {
+          payload.issues.push({
+            code: "custom",
+            message: `Array must contain at most ${guards.maxContains} matching ${plural(guards.maxContains)}; found ${matches}`,
+            input: items,
+            continue: true,
+          });
+        }
+      }
+    });
+  return guard.pipe(arraySchema);
 }
 
 function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: ConversionContext): ZodType | undefined {
@@ -633,54 +701,17 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         zodSchema = z.array(z.any());
       }
 
-      if (schema.uniqueItems === true) {
-        zodSchema = zodSchema.check((payload) => {
-          const items = payload.value as unknown[];
-          outer: for (let i = 1; i < items.length; i++) {
-            for (let j = 0; j < i; j++) {
-              if (!jsonDeepEqual(items[i], items[j])) continue;
-              payload.issues.push({
-                code: "custom",
-                message: `Array items must be unique: element at index ${i} duplicates the one at index ${j}`,
-                input: payload.value,
-                path: [i],
-                continue: true,
-              });
-              continue outer;
-            }
-          }
+      // minContains/maxContains only constrain anything when `contains` itself is present
+      if (schema.uniqueItems === true || schema.contains !== undefined) {
+        zodSchema = checkArrayGuards(zodSchema, {
+          uniqueItems: schema.uniqueItems === true,
+          containsSchema:
+            schema.contains !== undefined ? convertSchema(schema.contains as JSONSchema.JSONSchema, ctx) : undefined,
+          minContains: typeof schema.minContains === "number" ? schema.minContains : undefined,
+          maxContains: typeof schema.maxContains === "number" ? schema.maxContains : undefined,
         });
       }
 
-      // minContains/maxContains only constrain anything when `contains` itself is present
-      if (schema.contains !== undefined) {
-        const containsSchema = convertSchema(schema.contains as JSONSchema.JSONSchema, ctx);
-        const minContains = typeof schema.minContains === "number" ? schema.minContains : 1;
-        const maxContains = typeof schema.maxContains === "number" ? schema.maxContains : undefined;
-        zodSchema = zodSchema.check((payload) => {
-          let matches = 0;
-          for (const item of payload.value as unknown[]) {
-            if (containsSchema.safeParse(item).success) matches++;
-          }
-          const plural = (n: number) => (n === 1 ? "element" : "elements");
-          if (matches < minContains) {
-            payload.issues.push({
-              code: "custom",
-              message: `Array must contain at least ${minContains} matching ${plural(minContains)}; found ${matches}`,
-              input: payload.value,
-              continue: true,
-            });
-          }
-          if (maxContains !== undefined && matches > maxContains) {
-            payload.issues.push({
-              code: "custom",
-              message: `Array must contain at most ${maxContains} matching ${plural(maxContains)}; found ${matches}`,
-              input: payload.value,
-              continue: true,
-            });
-          }
-        });
-      }
       break;
     }
 

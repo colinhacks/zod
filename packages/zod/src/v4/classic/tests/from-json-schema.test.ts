@@ -1372,3 +1372,19 @@ test("contains with minContains and maxContains", () => {
   );
   expect(z.toJSONSchema(bounded)).toMatchObject({ contains: { type: "integer" }, minContains: 2, maxContains: 3 });
 });
+
+test("uniqueItems and contains see the raw instance, not the parsed output", () => {
+  const items = { type: "object", properties: { a: { type: "string", default: "x" } } } as const;
+  // no instance item carries `a`; the default must not synthesize the match
+  const contains = fromJSONSchema({
+    type: "array",
+    items,
+    contains: { type: "object", properties: { a: { const: "x" } }, required: ["a"] },
+  });
+  expect(contains.safeParse([{}]).success).toBe(false);
+  expect(contains.safeParse([{ a: "x" }]).success).toBe(true);
+  // the instance items differ; the default must not collapse them into duplicates
+  const unique = fromJSONSchema({ type: "array", items, uniqueItems: true });
+  expect(unique.safeParse([{ a: "x" }, {}]).success).toBe(true);
+  expect(unique.safeParse([{}, {}]).error!.issues[0]).toMatchObject({ code: "custom", path: [1] });
+});
