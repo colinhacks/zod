@@ -98,11 +98,29 @@ type ToZodKeyMismatch<Expected, Received> = schemas.$ZodType & {
   "types do not match": { expected: Expected; received: Received };
 };
 
+// An enum reference and the union of exactly its members are mutually assignable but not identical, so `AssertEqual` alone rejects `z.enum(SomeEnum)` against a `SomeEnum` target. Rebuilding the string/number part of each side through a mapped type collapses that one difference and nothing else — plain literals against an enum, member subsets, brands and `any` all still fail.
+type ToZodNormalizeEnum<T> = { [K in Extract<T, EnumValue>]: K }[Extract<T, EnumValue>] | Exclude<T, EnumValue>;
+
+// Recurses only through types identical to their own homomorphic rebuild, which preserves the exactness guarantees: an intersection, a call signature and `readonly`/optional modifiers all survive or block the walk, so only enum leaves are normalized.
+type ToZodNormalize<T> = [T] extends [object]
+  ? AssertEqual<T, { [K in keyof T]: T[K] }> extends true
+    ? { [K in keyof T]: ToZodNormalize<T[K]> }
+    : T
+  : ToZodNormalizeEnum<T>;
+
+type ToZodEqual<Output, T> = AssertEqual<Output, T> extends true
+  ? true
+  : IsAny<Output> extends true
+    ? false
+    : IsAny<T> extends true
+      ? false
+      : AssertEqual<ToZodNormalize<Output>, ToZodNormalize<T>>;
+
 // Rebuilds the shape with a marker on each key that disagrees, so the diagnostic names the key instead of failing the whole schema at the top level. A key the target lacks reports `expected: never`; a key the schema lacks reports `received: never`.
 type ToZodShape<Shape, T> = {
   [K in keyof Shape]: Shape[K] extends schemas.$ZodType
     ? K extends keyof T
-      ? AssertEqual<Shape[K]["_zod"]["output"], T[K]> extends true
+      ? ToZodEqual<Shape[K]["_zod"]["output"], T[K]> extends true
         ? Shape[K]
         : ToZodKeyMismatch<T[K], Shape[K]["_zod"]["output"]>
       : ToZodKeyMismatch<never, Shape[K]["_zod"]["output"]>
@@ -232,7 +250,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 }
 
 export function toZod<T>(): <S extends schemas.$ZodType>(
-  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
+  schema: ToZodEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
 ) => S {
   return (schema) => schema as any;
 }

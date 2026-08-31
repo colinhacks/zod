@@ -1048,9 +1048,12 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
   }
 );
 
-//////////////////////////////   ZodBase64   //////////////////////////////
+//////////////////////////////   ZodBase64URL   //////////////////////////////
+// charset only — the quantified regexes.base64url overflows the regex stack on multi-MB input; isValidBase64 enforces length on the padded string
+const base64urlCharset = /^[A-Za-z0-9_-]*$/;
+
 export function isValidBase64URL(data: string): boolean {
-  if (!regexes.base64url.test(data)) return false;
+  if (!base64urlCharset.test(data)) return false;
   const base64 = data.replace(/[-_]/g, (c) => (c === "-" ? "+" : "/"));
   const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
   return isValidBase64(padded);
@@ -1109,7 +1112,7 @@ function isLuhnAlgo(digits: string): boolean {
   let bit = 1;
   let sum = 0;
   while (length) {
-    const value = +digits[--length]!;
+    const value = digits.charCodeAt(--length) - 48;
     bit ^= 1;
     sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
   }

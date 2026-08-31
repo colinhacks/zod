@@ -20,7 +20,6 @@ export const baseOptions: BaseLayoutProps = {
   nav: {
     title: <>{logo}</>,
   },
-  githubUrl: "https://github.com/colinhacks/zod",
   // links: [
   //   {
   //     text: 'Documentation',

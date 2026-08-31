@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@sinclair/typebox": "^0.34.52",
     "@types/node": "^22.10.5",
     "arktype": "^2.1.19",
     "effect": "^3.22.1",

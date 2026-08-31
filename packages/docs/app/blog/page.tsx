@@ -1,5 +1,5 @@
-import { blog, formatDate } from "@/loaders/source";
 import { InlineCodeTitle } from "@/components/inline-code-title";
+import { blog, formatDate } from "@/loaders/source";
 import Link from "next/link";
 
 export const revalidate = false;
@@ -14,7 +14,12 @@ export default function BlogIndexPage() {
       <div className="mx-auto max-w-4xl">
         <h1 className="flex items-baseline justify-between text-[11px] font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
           Blog
-          <span className="tabular-nums">{posts.length} posts</span>
+          <span className="flex items-baseline gap-4">
+            <a href="/blog/rss.xml" className="hover:text-[var(--ui-color)] transition-colors">
+              RSS
+            </a>
+            <span className="tabular-nums">{posts.length} posts</span>
+          </span>
         </h1>
         <ul>
           {posts.map((post) => {

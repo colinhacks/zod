@@ -32,6 +32,7 @@ const tree: typeof source.pageTree = {
 export const layoutProps: DocsLayoutProps = {
   ...baseOptions,
   tree,
+  githubUrl: "https://github.com/colinhacks/zod",
 
   sidebar: {
     hideSearch: false,
