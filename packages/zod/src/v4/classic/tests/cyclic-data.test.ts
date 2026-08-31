@@ -846,6 +846,27 @@ test("a builder that drops the recursive key ends up exact", () => {
   expect(z.core.isRecursiveSchema(kept)).toBe(true);
 });
 
+// resolving a lazy runs user code, which can re-enter the walk; a walk that kept its certainty outside its own frames would have the inner one clobber the outer
+test("a nested walk can't corrupt the one that resolved into it", () => {
+  const Node: any = z.object({
+    id: z.number(),
+    self: z.lazy(() => {
+      z.compile(z.string(), { strict: true });
+      return z.optional(Node);
+    }),
+  });
+
+  const omitted = Node.omit({ self: true });
+  omitted.parse({ id: 1 });
+  expect(z.core.isRecursiveSchema(omitted)).toBe(false);
+  expect(() => z.compile(omitted, { strict: true })).not.toThrow();
+
+  const shared = { id: 1 };
+  const out: any = z.object({ a: omitted, b: omitted }).parse({ a: shared, b: shared });
+  expect(out.a).not.toBe(out.b);
+  expect(z.core.isRecursiveSchema(Node)).toBe(true);
+});
+
 test("detects a cycle that closes through a builder", () => {
   const Node: any = z
     .object({
