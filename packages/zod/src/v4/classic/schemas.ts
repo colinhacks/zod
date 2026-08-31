@@ -2060,7 +2060,8 @@ export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$construct
   inst._zod.processJSONSchema = (ctx, json, params) => processors.enumProcessor(inst, ctx, json, params);
 
   inst.enum = def.entries;
-  inst.options = Object.values(def.entries);
+  // reuse the parsed value set so a numeric TS enum's reverse-mapping keys stay out
+  inst.options = [...inst._zod.values] as util.EnumValue[];
 
   const keys = new Set(Object.keys(def.entries));
 

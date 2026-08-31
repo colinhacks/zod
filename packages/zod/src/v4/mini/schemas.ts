@@ -1362,7 +1362,8 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> = /*@__PURE__*/ core.$c
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
 
-    inst.options = Object.values(def.entries);
+    // reuse the parsed value set so a numeric TS enum's reverse-mapping keys stay out
+    inst.options = [...inst._zod.values] as util.EnumValue[];
   }
 );
 
