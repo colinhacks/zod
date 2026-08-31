@@ -1388,3 +1388,20 @@ test("uniqueItems and contains see the raw instance, not the parsed output", () 
   expect(unique.safeParse([{ a: "x" }, {}]).success).toBe(true);
   expect(unique.safeParse([{}, {}]).error!.issues[0]).toMatchObject({ code: "custom", path: [1] });
 });
+
+test("a guard keyword takes precedence over the length keywords", () => {
+  const schema = fromJSONSchema({ type: "array", items: { type: "integer" }, minItems: 3, uniqueItems: true });
+  // the guard runs on the input side of the pipe, so its issue aborts before minItems is reached
+  expect(schema.safeParse([1, 1]).error!.issues.map((i) => i.code)).toEqual(["custom"]);
+  expect(schema.safeParse([1, 2]).error!.issues.map((i) => i.code)).toEqual(["too_small"]);
+});
+
+test("a guard keyword drops default and examples from the input-mode document", () => {
+  // the guard is a transform on the pipe's input side, and toJSONSchema strips annotations from a transforming schema in input mode
+  const schema = fromJSONSchema({ type: "array", uniqueItems: true, default: [], examples: [[1]] });
+  expect(z.toJSONSchema(schema, { io: "input" })).not.toHaveProperty("default");
+  expect(z.toJSONSchema(schema, { io: "output" })).toMatchObject({ default: [], examples: [[1]] });
+  // without a guard keyword both modes carry them
+  const plain = fromJSONSchema({ type: "array", default: [], examples: [[1]] });
+  expect(z.toJSONSchema(plain, { io: "input" })).toMatchObject({ default: [], examples: [[1]] });
+});

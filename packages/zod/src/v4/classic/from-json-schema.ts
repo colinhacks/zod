@@ -234,7 +234,9 @@ function plural(n: number): string {
 /**
  * Enforces `uniqueItems` and the `contains` family before `arraySchema` runs, for the same reason
  * `checkObjectGuards` runs pre-pipe: an item parse can apply a nested `default`, so the parsed
- * array is not the instance the keywords are defined over.
+ * array is not the instance the keywords are defined over. A guard issue aborts the pipe, so
+ * `minItems`/`maxItems` are not also reported on the same parse — instance correctness is worth
+ * more than co-reporting two issues.
  */
 function checkArrayGuards(
   arraySchema: ZodType,
