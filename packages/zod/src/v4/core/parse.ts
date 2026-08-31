@@ -95,6 +95,9 @@ function failure(Err: $ZodErrorClass, issues: errors.$ZodRawIssue[], ctx: schema
     },
     set error(e: errors.$ZodError) {
       error = e;
+      // a replacement makes the getter's branch unreachable, so the captures have to go here too
+      issues = undefined as any;
+      ctx = undefined as any;
     },
   };
 }

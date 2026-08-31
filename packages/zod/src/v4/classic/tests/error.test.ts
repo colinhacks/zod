@@ -1033,7 +1033,9 @@ describe("safeParse builds the error on first read", () => {
       const input = { i, blob: new Array(500).fill(i) };
       refs.push(new Weak(input));
       const result = schema.safeParse(input);
-      void result.error;
+      // half read the error, half replace it without ever reading; both have to release
+      if (i % 2) void result.error;
+      else (result as { error: z.core.$ZodError }).error = new z.ZodError([]);
       results.push(result);
     }
     // the collector decides when it runs, so give it several passes; a retained input never clears no matter how many it gets
