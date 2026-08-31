@@ -276,6 +276,9 @@ test("toZod", () => {
   // @ts-expect-error an enum schema does not match a plain literal-union target
   z.toZod<{ skill: "noob" | "pro" }>()(z.object({ skill: z.enum(SkillLevel) }));
 
+  // @ts-expect-error plain numeric literals do not match a numeric enum target either
+  z.toZod<{ rank: Rank }>()(z.object({ rank: z.union([z.literal(1), z.literal(2)]) }));
+
   z.toZod<Company>()(
     // @ts-expect-error missing optional keys still fail exact output matching
     z.object({
