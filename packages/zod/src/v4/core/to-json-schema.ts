@@ -128,7 +128,7 @@ export interface ToJSONSchemaContext {
    * covers both passes in `finalize`: the ref flattening and the `$defs` build.
    *
    * The passes are valid only while nothing they read has changed, so both are cleared in
-   * `process()` when the map grows, and in `JSONSchemaGenerator.emit()`, which can also change
+   * `processSchema()` when the map grows, and in `JSONSchemaGenerator.emit()`, which can also change
    * the `cycles` and `reused` they branch on.
    *
    * One case is deliberately not covered: an `override` callback that writes to
@@ -209,7 +209,8 @@ export function handleUnrepresentable(
   return true;
 }
 
-export function process<T extends schemas.$ZodType>(
+// never rename this back to `process`: bundler polyfills inject a top-level `const process` that a lexical declaration of the same name collides with (#6397)
+export function processSchema<T extends schemas.$ZodType>(
   schema: T,
   ctx: ToJSONSchemaContext,
   _params: ProcessParams = { path: [], schemaPath: [] }
@@ -264,7 +265,7 @@ export function process<T extends schemas.$ZodType>(
     if (parent) {
       // Also set ref if processor didn't (for inheritance)
       if (!result.ref) result.ref = parent;
-      process(parent, ctx, params);
+      processSchema(parent, ctx, params);
       ctx.seen.get(parent)!.isParent = true;
     }
   }
@@ -288,6 +289,9 @@ export function process<T extends schemas.$ZodType>(
 
   return _result.schema;
 }
+
+/** @deprecated Renamed to `processSchema`. An export alias declares no binding, so it is safe to keep. */
+export { processSchema as process };
 
 // Escape a reference token for use in a JSON Pointer fragment (RFC 6901): `~` becomes `~0` and `/` becomes `~1`. The `~` replacement must run first.
 function encodeJSONPointerSegment(segment: string): string {
@@ -832,7 +836,7 @@ export const createToJSONSchemaMethod =
   <T extends schemas.$ZodType>(schema: T, processors: Record<string, Processor> = {}) =>
   (params?: ToJSONSchemaParams): ZodStandardJSONSchemaPayload<T> => {
     const ctx = initializeContext({ ...params, processors });
-    process(schema, ctx);
+    processSchema(schema, ctx);
     extractDefs(ctx, schema);
     return finalize(ctx, schema);
   };
@@ -847,7 +851,7 @@ export const createStandardJSONSchemaMethod =
   (params?: StandardJSONSchemaMethodParams): JSONSchema.BaseSchema => {
     const { libraryOptions, target } = params ?? {};
     const ctx = initializeContext({ ...(libraryOptions ?? {}), target, io, processors });
-    process(schema, ctx);
+    processSchema(schema, ctx);
     extractDefs(ctx, schema);
     return finalize(ctx, schema);
   };

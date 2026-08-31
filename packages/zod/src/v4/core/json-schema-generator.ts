@@ -10,7 +10,7 @@ import {
   extractDefs,
   finalize,
   initializeContext,
-  process,
+  processSchema,
 } from "./to-json-schema.js";
 
 /**
@@ -102,7 +102,7 @@ export class JSONSchemaGenerator {
    * This must be called before emit().
    */
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
-    return process(schema, this.ctx, _params);
+    return processSchema(schema, this.ctx, _params);
   }
 
   /**

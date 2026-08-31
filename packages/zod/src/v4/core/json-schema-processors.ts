@@ -17,7 +17,7 @@ import {
   handleUnrepresentable,
   initializeContext,
   isTransforming,
-  process,
+  processSchema,
 } from "./to-json-schema.js";
 import { assignProp, getEnumValues } from "./util.js";
 
@@ -294,7 +294,7 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 
   json.type = "array";
-  json.items = process(def.element, ctx as any, {
+  json.items = processSchema(def.element, ctx as any, {
     ...params,
     path: [...params.path, "items"],
   });
@@ -338,7 +338,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
     assignProp(
       json.properties,
       key,
-      process(shape[key]!, ctx as any, {
+      processSchema(shape[key]!, ctx as any, {
         ...params,
         path: [...params.path, "properties", key],
       })
@@ -370,7 +370,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
     // regular
     if (ctx.io === "output") json.additionalProperties = false;
   } else if (def.catchall) {
-    json.additionalProperties = process(def.catchall, ctx as any, {
+    json.additionalProperties = processSchema(def.catchall, ctx as any, {
       ...params,
       path: [...params.path, "additionalProperties"],
     });
@@ -414,7 +414,7 @@ export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, c
     assignProp(
       json.properties,
       key,
-      process(def.shape[key]!, ctx as any, {
+      processSchema(def.shape[key]!, ctx as any, {
         ...params,
         path: [...params.path, "properties", key],
       })
@@ -430,7 +430,7 @@ export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, 
   // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
-    process(x, ctx as any, {
+    processSchema(x, ctx as any, {
       ...params,
       path: [...params.path, isExclusive ? "oneOf" : "anyOf", i],
     })
@@ -444,11 +444,11 @@ export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, 
 
 export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodIntersectionDef;
-  const a = process(def.left, ctx as any, {
+  const a = processSchema(def.left, ctx as any, {
     ...params,
     path: [...params.path, "allOf", 0],
   });
-  const b = process(def.right, ctx as any, {
+  const b = processSchema(def.right, ctx as any, {
     ...params,
     path: [...params.path, "allOf", 1],
   });
@@ -473,13 +473,13 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     ctx.target === "draft-2020-12" ? "items" : ctx.target === "openapi-3.0" ? "items" : "additionalItems";
 
   const prefixItems = def.items.map((x, i) =>
-    process(x, ctx as any, {
+    processSchema(x, ctx as any, {
       ...params,
       path: [...params.path, prefixPath, i],
     })
   );
   const rest = def.rest
-    ? process(def.rest, ctx as any, {
+    ? processSchema(def.rest, ctx as any, {
         ...params,
         path: [...params.path, restPath, ...(ctx.target === "openapi-3.0" ? [def.items.length] : [])],
       })
@@ -625,7 +625,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   if (def.mode === "loose" && patterns && patterns.size > 0) {
     // Use patternProperties for looseRecord with regex patterns
-    const valueSchema = process(def.valueType, ctx as any, {
+    const valueSchema = processSchema(def.valueType, ctx as any, {
       ...params,
       path: [...params.path, "patternProperties", "*"],
     });
@@ -636,7 +636,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   } else {
     // Default behavior: use propertyNames + additionalProperties
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json.propertyNames = process(def.keyType, ctx as any, {
+      json.propertyNames = processSchema(def.keyType, ctx as any, {
         ...params,
         path: [...params.path, "propertyNames"],
       });
@@ -648,7 +648,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
       }
       pending.push(schema);
     }
-    json.additionalProperties = process(def.valueType, ctx as any, {
+    json.additionalProperties = processSchema(def.valueType, ctx as any, {
       ...params,
       path: [...params.path, "additionalProperties"],
     });
@@ -671,7 +671,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
 export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodNullableDef;
-  const inner = process(def.innerType, ctx as any, params);
+  const inner = processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
@@ -683,7 +683,7 @@ export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, 
 
 export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodNonOptionalDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
 };
@@ -712,7 +712,7 @@ function serializeDefaultValue(
 
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
@@ -721,7 +721,7 @@ export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, js
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodPrefaultDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   if (ctx.io !== "input") return;
@@ -731,7 +731,7 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodCatchDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   let catchValue: any;
@@ -748,14 +748,14 @@ export const pipeProcessor: Processor<schemas.$ZodPipe> = (schema, ctx, _json, p
   const def = schema._zod.def as schemas.$ZodPipeDef;
   const inIsTransform = def.in._zod.traits.has("$ZodTransform");
   const innerType = ctx.io === "input" ? (inIsTransform ? def.out : def.in) : def.out;
-  process(innerType, ctx as any, params);
+  processSchema(innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = innerType;
 };
 
 export const readonlyProcessor: Processor<schemas.$ZodReadonly> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodReadonlyDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   json.readOnly = true;
@@ -763,21 +763,21 @@ export const readonlyProcessor: Processor<schemas.$ZodReadonly> = (schema, ctx, 
 
 export const promiseProcessor: Processor<schemas.$ZodPromise> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodPromiseDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
 };
 
 export const optionalProcessor: Processor<schemas.$ZodOptional> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodOptionalDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
 };
 
 export const lazyProcessor: Processor<schemas.$ZodLazy> = (schema, ctx, _json, params) => {
   const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
-  process(innerType, ctx as any, params);
+  processSchema(innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = innerType;
 };
@@ -850,7 +850,7 @@ export function toJSONSchema(
     // First pass: process all schemas to build the seen map
     for (const entry of registry._idmap.entries()) {
       const [_, schema] = entry;
-      process(schema, ctx as any);
+      processSchema(schema, ctx as any);
     }
 
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
@@ -882,7 +882,7 @@ export function toJSONSchema(
 
   // Single schema case
   const ctx = initializeContext({ ...params, processors: allProcessors });
-  process(input, ctx as any);
+  processSchema(input, ctx as any);
   extractDefs(ctx as any, input);
   return finalize(ctx as any, input);
 }
