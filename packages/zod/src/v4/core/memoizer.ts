@@ -59,8 +59,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   const kind = def.type as $ZodTypeDef["type"];
   switch (kind) {
     case "object": {
-      // Reading the raw shape's descriptors leaves the user's getters unresolved; a def with no raw entry was already resolved and holds plain values either way.
-      const sh = rawShape(def) ?? def.shape;
+      // Reading the raw shape's descriptors leaves the user's getters unresolved; a def with no raw entry answers `shape` from its own accessor (the object builders do), and resolving that is how a factory chain built through `.extend()` can still outrun the walk — see the note on `rawShape`.
+      const sh: any = rawShape(def) ?? def.shape;
       // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
       for (const key of Reflect.ownKeys(sh)) {
         const desc = Object.getOwnPropertyDescriptor(sh, key)!;
