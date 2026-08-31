@@ -218,6 +218,15 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    expect(z.toJSONSchema(z.base64url())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "contentEncoding": "base64url",
+        "format": "base64url",
+        "pattern": "^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-]{2,3})?$",
+        "type": "string",
+      }
+    `);
     expect(z.toJSONSchema(z.cuid())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -480,6 +489,15 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+  });
+
+  test("base64url pattern agrees with parse", () => {
+    const schema = z.base64url();
+    const pattern = new RegExp(z.toJSONSchema(schema).pattern!);
+    // lengths 1 (mod 4) carry no whole byte; the emitted pattern must reject them like parse does
+    for (const s of ["", "A", "AA", "AAA", "AAAA", "AAAAA"]) {
+      expect(pattern.test(s)).toBe(schema.safeParse(s).success);
+    }
   });
 
   test("string patterns", () => {
