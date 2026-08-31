@@ -104,6 +104,82 @@ test("compiled validate keeps the fallback where INVALID is not a decidable reje
   expect(() => z.validate(continuable, 1)).toThrow("Unmergable intersection");
 });
 
+test("compiled validate agrees with the interpreter, verdict and throw alike", () => {
+  // guards the `definite` flag: a new generator that answers INVALID for something the interpreter throws on must clear it, or this fails
+  const thenable = () => Promise.resolve(1) as never;
+  const schemas: z.ZodType[] = [
+    z.object({ a: z.string(), b: z.number().min(1) }),
+    z.strictObject({ a: z.string() }),
+    z.array(z.string().min(1)),
+    z.tuple([z.string()], z.number()),
+    z.record(z.string(), z.number()),
+    z.union([z.string(), z.number()]),
+    z.intersection(
+      z.number(),
+      z.number().transform((x) => x + 1)
+    ),
+    z.intersection(
+      z.number().min(10),
+      z.number().transform((x) => x + 1)
+    ),
+    z.lazy(() => z.object({ a: z.string() })),
+    z.number().catch(0),
+    z.nonoptional(z.string().optional()),
+    z.map(z.string(), z.number()),
+    z.set(z.string().min(2)),
+    z.templateLiteral(["a", z.number()]),
+    z.coerce.number(),
+    z.stringbool(),
+    z.string().transform(thenable),
+    z.union([z.string().transform(thenable), z.number()]),
+    z.array(z.string().transform(thenable)),
+    z.custom(thenable),
+    z.string().refine(thenable),
+    z.string().pipe(z.string().min(3)),
+  ];
+  const inputs = [
+    "x",
+    "ab",
+    "",
+    0,
+    1,
+    Number.NaN,
+    true,
+    null,
+    undefined,
+    {},
+    { a: "x" },
+    { a: 1 },
+    [],
+    ["x"],
+    new Map(),
+    new Set(["a"]),
+    "true",
+  ];
+  const outcome = (fn: () => unknown) => {
+    try {
+      return `ok:${fn()}`;
+    } catch (err) {
+      return `throw:${(err as Error)?.constructor?.name}`;
+    }
+  };
+
+  for (const schema of schemas) {
+    let compiled: z.ZodType;
+    try {
+      compiled = z.compile(schema, { strict: true });
+    } catch {
+      continue; // refused at codegen, so there is no fast path to disagree
+    }
+    for (const input of inputs) {
+      expect(
+        outcome(() => z.validate(compiled, input)),
+        `${JSON.stringify(input)} on ${schema._zod.def.type}`
+      ).toBe(outcome(() => z.validate(schema, input)));
+    }
+  }
+});
+
 test("validate is exported from zod/mini", () => {
   expect(zm.validate(zm.string(), "a")).toBe(true);
   expect(zm.validate(zm.string(), 1)).toBe(false);
