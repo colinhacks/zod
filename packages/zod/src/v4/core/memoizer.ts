@@ -27,6 +27,11 @@ type WithState = { [STATE]?: State };
 
 const NO_ISSUES: errors.$ZodRawIssue[] = [];
 
+// A value a cycle can close through. `z.properties()` asserts on any non-nullish value, so a callable is one too; every other container rejects a function before it gets here.
+function isRef(value: unknown): value is object {
+  return value !== null && (typeof value === "object" || typeof value === "function");
+}
+
 // Receivers prefix paths in place, so the cache and every hand-out need their own copies.
 function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => (iss.path ? { ...iss, path: iss.path.slice() } : { ...iss }));
@@ -221,7 +226,7 @@ const memo: $ZodMemoizer = {
         }
 
         const input = payload.value;
-        if (input === null || typeof input !== "object") return base(payload, ctx);
+        if (!isRef(input)) return base(payload, ctx);
 
         let state = (ctx as WithState)[STATE];
         if (!state) {
@@ -284,5 +289,5 @@ export function memoizer(): $ZodMemoizer {
 /** Whether this value is a node a back-edge resolved to before it finished. */
 export function isBackEdge(ctx: object, value: unknown): boolean {
   const backEdges = (ctx as WithState)[STATE]?.backEdges;
-  return backEdges !== undefined && value !== null && typeof value === "object" && backEdges.has(value);
+  return backEdges !== undefined && isRef(value) && backEdges.has(value);
 }

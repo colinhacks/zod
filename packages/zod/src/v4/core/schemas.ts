@@ -5036,8 +5036,14 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
     };
 
     inst._zod.parse = (payload, ctx) => {
+      // both sides declare the shape's input type, so the assertion runs forward in either direction; encoding the children backward would reject the very type this schema claims to take
+      if (ctx.direction === "backward") ctx = { ...ctx, direction: "forward" };
       // the input is its own output here, so it registers as its own memo entry: a cycle re-entering this node hits the bucket instead of recursing forever
-      if (memo && payload.value !== null && typeof payload.value === "object") {
+      if (
+        memo &&
+        payload.value !== null &&
+        (typeof payload.value === "object" || typeof payload.value === "function")
+      ) {
         memo.alloc(inst, payload, payload.value, ctx);
       }
       const result = runShape(payload, ctx);

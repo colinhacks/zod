@@ -168,3 +168,21 @@ test("z.properties parses cyclic input", () => {
   // the cycle guard must not swallow a real failure further down
   expect(Node.safeParse({ id: "a", next: { id: 1 } }).error!.issues.map((i) => i.path)).toEqual([["next", "id"]]);
 });
+
+test("z.properties asserts forward while encoding", () => {
+  // both sides declare the shape's input type, so encoding must still check the value against it; running the children backward would encode them and reject that type
+  const codec = z.codec(z.string(), z.number(), { decode: (s) => Number(s), encode: (n) => String(n) });
+  const p = z.properties({ a: codec, b: z.string().transform((s) => s.length) });
+  const value = { a: "1", b: "hi" };
+  expect(z.decode(p, value)).toBe(value);
+  expect(z.encode(p, value)).toBe(value);
+  expect(z.safeEncode(p, { a: 1, b: "hi" } as never).error!.issues.map((i) => i.path)).toEqual([["a"]]);
+});
+
+test("z.properties parses a cyclic callable", () => {
+  // property reads work on a function too, so the cycle guard has to recognize one as a reference
+  const Fn: z.ZodType<{ self?: unknown }> = z.lazy(() => z.properties({ self: Fn.optional() }));
+  const fn = (() => {}) as unknown as Record<string, unknown>;
+  fn.self = fn;
+  expect(Fn.parse(fn)).toBe(fn);
+});
