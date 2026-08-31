@@ -440,7 +440,16 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
+// public as `z.core.util.allowsEval`, so it keeps its own box rather than a Cached: the shape stays `{ value }` under Object.keys and spread, and one box per process gains nothing from the prototype accessor
+export const allowsEval: { value: boolean } = {
+  get value(): boolean {
+    const value = probeEval();
+    Object.defineProperty(this, "value", { value });
+    return value;
+  },
+};
+
+function probeEval(): boolean {
   // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
     return false;
@@ -458,7 +467,7 @@ export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
   } catch (_) {
     return false;
   }
-});
+}
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;
