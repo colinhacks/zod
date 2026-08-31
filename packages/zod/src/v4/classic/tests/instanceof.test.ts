@@ -70,9 +70,9 @@ test("z.properties", () => {
   expectTypeOf<URL>().toEqualTypeOf<z.infer<typeof httpsUrl>>();
   expect(httpsUrl.safeParse(new URL("https://example.com")).success).toBe(true);
 
-  // Checks abort on the first failure, exactly as the equivalent chain of z.property() calls does.
+  // One check iterates the whole shape, so every failing property reports — unlike the equivalent chain of z.property() calls, which aborts on the first.
   const both = httpsUrl.safeParse(new URL("http://localhost"));
-  expect(both.error!.issues.map((i) => i.path)).toEqual([["protocol"]]);
+  expect(both.error!.issues.map((i) => i.path)).toEqual([["protocol"], ["hostname"]]);
 
   // A failing base schema yields its own issue and no property issues.
   for (const input of ["not a url", null]) {
@@ -85,12 +85,12 @@ test("z.properties", () => {
     .object({ a: z.string(), b: z.string() })
     .check(...z.properties({ a: z.literal("x"), b: z.literal("y") }));
   expect(obj.safeParse({ a: "x", b: "y" }).success).toBe(true);
-  expect(obj.safeParse({ a: "!", b: "!" }).error!.issues.map((i) => i.path)).toEqual([["a"]]);
+  expect(obj.safeParse({ a: "!", b: "!" }).error!.issues.map((i) => i.path)).toEqual([["a"], ["b"]]);
   for (const input of [null, undefined, 5]) {
     expect(obj.safeParse(input).error!.issues.map((i) => [i.code, i.path])).toEqual([["invalid_type", []]]);
   }
 
-  // Known looseness versus the longhand, pinned so it stays deliberate: every element is typed over the whole shape, and `$ZodCheckInternals.check()` is a method, so TypeScript compares it bivariantly and accepts a check type that is a subtype of the target. Naming a key the target lacks therefore compiles here and fails at parse time, where the equivalent chain of `z.property()` calls rejects it outright. Typing each element over only its own key fixes that and breaks every valid call, since a union argument must satisfy the target on its own.
+  // Known looseness versus the longhand, pinned so it stays deliberate: the schema-as-check is typed over the whole shape, and `$ZodCheckInternals.check()` is a method, so TypeScript compares it bivariantly and accepts a check type that is a subtype of the target. Naming a key the target lacks therefore compiles here and fails at parse time, where the equivalent chain of `z.property()` calls rejects it outright.
   z.object({ a: z.string() }).check(...z.properties({ a: z.literal("x"), b: z.literal("y") }));
   expect(
     z
@@ -117,8 +117,11 @@ test("z.properties", () => {
   // @ts-expect-error a is a number, the schema takes a string
   z.object({ a: z.number() }).check(stringToLength);
 
-  // Plain property checks carry no `when`, so the schema stays on the compiled fast path.
+  // The properties check carries no `when`, so the schema stays on the compiled fast path.
   const compiled = z.compile(httpsUrl);
   expect(compiled.safeParse(new URL("https://example.com")).success).toBe(true);
-  expect(compiled.safeParse(new URL("http://localhost")).error!.issues.map((i) => i.path)).toEqual([["protocol"]]);
+  expect(compiled.safeParse(new URL("http://localhost")).error!.issues.map((i) => i.path)).toEqual([
+    ["protocol"],
+    ["hostname"],
+  ]);
 });

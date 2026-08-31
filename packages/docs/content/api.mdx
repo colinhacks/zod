@@ -2286,19 +2286,34 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-Use `z.properties()` to declare several property checks from an object literal. It returns an array to spread into `.check()`.
+Use `.properties()` to check several properties at once. Each call narrows the inferred type.
 
 ```ts
-const okResponse = z.instanceof(Response).check(
-  ...z.properties({
-    status: z.number().min(200).max(299),
-    redirected: z.literal(false),
-  })
-);
+const okResponse = z.instanceof(Response).properties({
+  status: z.number().min(200).max(299),
+  redirected: z.literal(false),
+});
 
 okResponse.parse(new Response("ok")); // ✅
 okResponse.parse(new Response("", { status: 404 })); // ❌ status
+
+type OkResponse = z.infer<typeof okResponse>;
+// => Response & { status: number; redirected: false }
 ```
+
+The underlying `z.properties()` is a standalone schema. It asserts the named properties in place and returns its input untouched — unlike `z.object()`, it never builds a new object, so prototypes, unlisted keys, and object identity survive. Schemas inside the shape are validated but their results are discarded, so a transform or a default never changes the parsed value.
+
+```ts
+const Named = z.properties({ name: z.string() });
+
+class Dog {
+  constructor(public name: string) {}
+}
+const rex = new Dog("Rex");
+Named.parse(rex); // => rex (the same instance)
+```
+
+Spreading into `.check()` works too: `z.instanceof(Response).check(...z.properties({ ... }))`. As a check it asserts on whatever the base schema produced, so `z.string().check(...z.properties({ length: z.number().min(3) }))` reads a string's length; as a standalone schema it expects an object.
 
 ## Refinements
 

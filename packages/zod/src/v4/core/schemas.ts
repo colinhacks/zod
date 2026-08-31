@@ -94,7 +94,8 @@ export interface $ZodTypeDef {
     | "promise"
     | "lazy"
     | "function"
-    | "custom";
+    | "custom"
+    | "properties";
   error?: errors.$ZodErrorMap<never> | undefined;
   checks?: checks.$ZodCheck<never>[];
 }
@@ -4976,6 +4977,101 @@ function handleRefineResult(result: unknown, payload: ParsePayload, input: unkno
   }
 }
 
+////////////////////////////////////////
+////////////////////////////////////////
+//////////                    //////////
+//////////  $ZodProperties    //////////
+//////////                    //////////
+////////////////////////////////////////
+////////////////////////////////////////
+export interface $ZodPropertiesDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef, checks.$ZodCheckDef {
+  type: "properties";
+  check: "properties";
+  shape: Shape;
+}
+
+// both sides infer the INPUT type: the shape is asserted and its results discarded, so a default, catch or transform inside it would make an output-typed inference a lie. The check side widens a literal to its primitive, so spreading over a `string` property still type-checks (#6520).
+export interface $ZodPropertiesInternals<Shape extends $ZodShape = $ZodShape>
+  extends $ZodTypeInternals<$InferObjectInput<Shape, {}>, $InferObjectInput<Shape, {}>>,
+    checks.$ZodCheckInternals<{ -readonly [k in keyof Shape]: util.Widen<core.input<Shape[k]>> }> {
+  def: $ZodPropertiesDef<Shape>;
+  isst: errors.$ZodIssueInvalidType;
+  issc: errors.$ZodIssue;
+}
+
+export interface $ZodProperties<Shape extends $ZodShape = $ZodShape> extends $ZodType {
+  _zod: $ZodPropertiesInternals<Shape>;
+  // yields the schema itself, so pre-4.6 `.check(...z.properties(shape))` spread call sites keep working
+  [Symbol.iterator](): Iterator<this>;
+}
+
+// asserts in place: the child result's value is discarded, matching z.property(), because a nested object or array schema rebuilds its output even when nothing transformed
+function handlePropertiesResult(result: ParsePayload, payload: ParsePayload, key: string | symbol): void {
+  if (result.issues.length) {
+    payload.issues.push(...util.prefixIssues(key, result.issues));
+  }
+}
+
+export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ core.$constructor(
+  "$ZodProperties",
+  (inst, def) => {
+    // $ZodType.init prepends an instance that already carries the $ZodCheck trait to its own `checks`, which would run the shape a second time and cost the parse context. Initializing the check trait after it keeps the schema role in `parse`, where the context arrives.
+    $ZodType.init(inst, def);
+    checks.$ZodCheck.init(inst, def);
+
+    const memo = core.globalConfig.memoizer;
+    memo?.attach(inst);
+
+    // key and schema snapshotted together: reading one live and the other cached lets a later mutation of the caller's shape object pair a stale key with a missing schema
+    let entries!: [string | symbol, $ZodType][];
+    const runShape = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<void> => {
+      entries ??= Reflect.ownKeys(def.shape).map((key) => [key, (def.shape as any)[key] as $ZodType]);
+      const input = payload.value as any;
+      let proms: Promise<any>[] | undefined;
+      for (const [key, schema] of entries) {
+        const result = schema._zod.run({ value: input[key], issues: [] }, ctx);
+        if (result instanceof Promise) {
+          proms ??= [];
+          proms.push(result.then((result) => handlePropertiesResult(result, payload, key)));
+        } else {
+          handlePropertiesResult(result, payload, key);
+        }
+      }
+      if (proms) return Promise.all(proms).then(() => undefined);
+      return undefined;
+    };
+
+    inst._zod.parse = (payload, ctx) => {
+      const input = payload.value;
+      // as a schema this is the type gate, and it infers an object shape, so a primitive is a type error. A function passes: its properties read like any other object's, and z.instanceof allows one.
+      if (input === null || (typeof input !== "object" && typeof input !== "function")) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input, inst });
+        return payload;
+      }
+      // both sides declare the shape's input type, so the assertion runs forward in either direction; encoding the children backward would reject the very type this schema claims to take
+      if (ctx.direction === "backward") ctx = { ...ctx, direction: "forward" };
+      // the input is its own output here, so it registers as its own memo entry: a cycle re-entering this node hits the bucket instead of recursing forever
+      if (memo) memo.alloc(inst, payload, input, ctx);
+      const result = runShape(payload, ctx);
+      return result instanceof Promise ? result.then(() => payload) : payload;
+    };
+
+    // as a check the base schema already typed the value, so this only asserts the properties — which read on a primitive too, matching z.property() on a string's length. It gets no context of its own, so a cycle through a spread schema is not tracked.
+    inst._zod.check = (payload) => {
+      if (payload.value == null) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input: payload.value, inst });
+        return undefined;
+      }
+      return runShape(payload, {});
+    };
+  },
+  {
+    *[Symbol.iterator]() {
+      yield this;
+    },
+  }
+);
+
 export type $ZodTypes =
   | $ZodString
   | $ZodNumber
@@ -5008,6 +5104,7 @@ export type $ZodTypes =
   | $ZodPrefault
   | $ZodTemplateLiteral
   | $ZodCustom
+  | $ZodProperties
   | $ZodTransform
   | $ZodNonOptional
   | $ZodReadonly
