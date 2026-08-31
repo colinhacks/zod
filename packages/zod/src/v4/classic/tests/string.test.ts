@@ -293,11 +293,17 @@ test("big base64 and base64url", () => {
   const bigbase64url = randomBytes(1024 * 1024 * 10).toString("base64url");
   z.base64url().parse(bigbase64url);
 
-  // the exported regexes and template-literal composition run raw regexes on the parse path; the quantified block forms overflowed the regex stack here (#6528 review)
-  expect(z.regexes.base64.test(bigbase64)).toBe(true);
-  expect(z.regexes.base64url.test(bigbase64url)).toBe(true);
+  // template literals compose def.pattern and test it on every parse; the quantified block forms overflowed the regex stack here
   expect(z.templateLiteral(["id-", z.base64()]).safeParse(`id-${bigbase64}`).success).toBe(true);
   expect(z.templateLiteral(["id-", z.base64url()]).safeParse(`id-${bigbase64url}`).success).toBe(true);
+});
+
+test("template literal composes base64 without alternation leaks", () => {
+  // the ^$| alternation in regexes.base64 used to leak: "AAAA" matched with the prefix dropped and "id-AAAA" was rejected
+  const tl = z.templateLiteral(["id-", z.base64()]);
+  expect(tl.safeParse("id-AAAA").success).toBe(true);
+  expect(tl.safeParse("id-").success).toBe(true);
+  expect(tl.safeParse("AAAA").success).toBe(false);
 });
 
 function makeJwt(header: object, payload: object) {

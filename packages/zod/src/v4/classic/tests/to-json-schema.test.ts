@@ -500,6 +500,21 @@ describe("toJSONSchema", () => {
     }
   });
 
+  test("base64 pattern agrees with parse", () => {
+    const schema = z.base64();
+    const pattern = new RegExp(z.toJSONSchema(schema).pattern!);
+    // the runtime def.pattern is lax; the emitted pattern must still carry the block structure parse enforces
+    for (const s of ["", "A", "AA", "AAA", "AAAA", "AAAAA", "AA==", "AAA=", "A===", "=", "AAAA=="]) {
+      expect(pattern.test(s)).toBe(schema.safeParse(s).success);
+    }
+  });
+
+  test("looseRecord with a format key emits the exact pattern", () => {
+    // recordProcessor reads bag.patterns directly; it must apply the same lax-to-exact swap as stringProcessor
+    const json = z.toJSONSchema(z.looseRecord(z.base64url(), z.number()));
+    expect(Object.keys(json.patternProperties!)).toEqual([z.regexes.base64url.source]);
+  });
+
   test("string patterns", () => {
     expect(
       z.toJSONSchema(

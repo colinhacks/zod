@@ -2,6 +2,7 @@ import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import * as regexes from "./regexes.js";
 import type { $ZodRegistry } from "./registries.js";
+import { base64Charset, base64urlCharset } from "./schemas.js";
 import type * as schemas from "./schemas.js";
 import {
   type ProcessParams,
@@ -29,11 +30,12 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 
 // ==================== SIMPLE TYPE PROCESSORS ====================
 
-// The runtime base64 regexes are linear-time and deliberately length-lax so composed parse paths cannot overflow the regex stack; the emitted JSON Schema swaps in the exact block-structured forms, which zod itself never executes.
+// the runtime patterns are lax so parse paths never overflow the regex stack; the emitted schema swaps in the exact block forms, which zod itself never executes
 const exactPatterns: Map<RegExp, RegExp> = new Map([
-  [regexes.base64, /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/],
-  [regexes.base64url, /^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-]{2,3})?$/],
+  [base64Charset, regexes.base64],
+  [base64urlCharset, regexes.base64url],
 ]);
+const exactPattern = (p: RegExp): RegExp => exactPatterns.get(p) ?? p;
 
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
@@ -54,7 +56,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
-    const patternList = [...patterns].map((p) => exactPatterns.get(p) ?? p);
+    const patternList = [...patterns].map(exactPattern);
     if (patternList.length === 1) json.pattern = patternList[0]!.source;
     else if (patternList.length > 1) {
       json.allOf = [
@@ -580,7 +582,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     });
     json.patternProperties = {};
     for (const pattern of patterns) {
-      assignProp(json.patternProperties, pattern.source, valueSchema);
+      assignProp(json.patternProperties, exactPattern(pattern).source, valueSchema);
     }
   } else {
     // Default behavior: use propertyNames + additionalProperties
