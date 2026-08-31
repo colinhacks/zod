@@ -85,11 +85,19 @@ function failure(Err: $ZodErrorClass, issues: errors.$ZodRawIssue[], ctx: schema
   return {
     success: false,
     get error() {
-      if (!error) error = new Err(issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+      if (!error) {
+        error = new Err(issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+        // finalizeIssue drops `input`, so the built error holds nothing; keeping the raw issues past this point pins the parsed value for the life of the result
+        issues = undefined as any;
+        ctx = undefined as any;
+      }
       return error;
     },
     set error(e: errors.$ZodError) {
       error = e;
+      // a replacement makes the getter's branch unreachable, so the captures have to go here too
+      issues = undefined as any;
+      ctx = undefined as any;
     },
   };
 }

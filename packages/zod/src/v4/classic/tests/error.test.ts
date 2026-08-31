@@ -1,4 +1,6 @@
 import { inspect, types } from "node:util";
+import v8 from "node:v8";
+import vm from "node:vm";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import * as z from "zod/v4";
 
@@ -1014,5 +1016,36 @@ describe("safeParse builds the error on first read", () => {
     const replaced = new z.ZodError([]);
     (result as any).error = replaced;
     expect(result.error).toBe(replaced);
+  });
+
+  test("reading the error releases the parsed input", async () => {
+    // es2020 is the target, and its lib predates WeakRef
+    type Weak<T extends object> = { deref(): T | undefined };
+    const { WeakRef: Weak } = globalThis as unknown as { WeakRef: new <T extends object>(target: T) => Weak<T> };
+    // vitest carries no --expose-gc, so reach the collector the way node's own tests do
+    v8.setFlagsFromString("--expose-gc");
+    const gc = vm.runInNewContext("gc") as () => void;
+
+    const schema = z.string();
+    const refs: Weak<object>[] = [];
+    const results: unknown[] = [];
+    for (let i = 0; i < 50; i++) {
+      const input = { i, blob: new Array(500).fill(i) };
+      refs.push(new Weak(input));
+      const result = schema.safeParse(input);
+      // half read the error, half replace it without ever reading; both have to release
+      if (i % 2) void result.error;
+      else (result as { error: z.core.$ZodError }).error = new z.ZodError([]);
+      results.push(result);
+    }
+    // the collector decides when it runs, so give it several passes; a retained input never clears no matter how many it gets
+    const live = () => refs.filter((ref) => ref.deref() !== undefined).length;
+    for (let attempt = 0; attempt < 10 && live() > 1; attempt++) {
+      // the loop's last input stays on the stack until a macrotask boundary
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      gc();
+    }
+    expect(live()).toBeLessThanOrEqual(1);
+    expect(results).toHaveLength(50);
   });
 });
