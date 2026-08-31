@@ -290,18 +290,7 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   return value;
 }
 
-export function cached<T>(getter: () => T): { value: T } {
-  return {
-    get value() {
-      const value = getter();
-      // own, enumerable and configurable, matching the accessor it replaces; public as `z.core.util.cached`
-      Object.defineProperty(this, "value", { value });
-      return value;
-    },
-  };
-}
-
-// accessor on the prototype, not an own literal property: an own accessor puts the box in dictionary mode from birth (~360 B and a slow load per read against ~100 B and an inlined getter here). Not `cached`, whose own enumerable `value` is public as `z.core.util.cached`.
+// the accessor lives on a shared prototype: an own accessor makes every box a dictionary-mode object (~360 B and a slow load per read against ~100 B and an inlined getter here)
 class Cached<T> {
   _getter: (() => T) | undefined;
   _value: T | undefined;
@@ -321,7 +310,7 @@ class Cached<T> {
   }
 }
 
-export function cachedInternal<T>(getter: () => T): { value: T } {
+export function cached<T>(getter: () => T): { value: T } {
   return new Cached(getter);
 }
 
