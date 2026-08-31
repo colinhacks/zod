@@ -491,6 +491,14 @@ test("z.enum - native", () => {
   // expect(a.enum.A).toEqual(NativeEnum.A);
   // expect(a.enum.B).toEqual(NativeEnum.B);
   // expect(a.enum.C).toEqual(NativeEnum.C);
+
+  enum NumericEnum {
+    A = 0,
+    B = 1,
+  }
+
+  // numeric enums carry reverse-mapping keys; options lists only what parse accepts
+  expect(z.enum(NumericEnum).options).toEqual([NumericEnum.A, NumericEnum.B]);
 });
 
 test("z.nativeEnum", () => {
