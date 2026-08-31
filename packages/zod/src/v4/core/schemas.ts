@@ -2080,7 +2080,7 @@ function handleCatchall(
 // Whichever object a def's `shape` currently answers from: the one the caller passed until the first read, the frozen copy after it. Keyed by def, so a def rebuilt by a builder is simply absent rather than inheriting the source's. Read its keys with `Object.keys`, which does not invoke them — that is what lets a discriminated union check its discriminator without resolving an option whose getters reference the union being constructed.
 const propShapes = new WeakMap<object, Record<string, unknown>>();
 
-/** The shape object this def currently answers from, without resolving its getters, so the cycle walk can see them before the first `def.shape` read spreads them away. Absent for a def whose `shape` is its own accessor — the object builders — because those resolve the source shape through a spread; a factory chain built through one can therefore still outrun the walk. Registering a descriptor-preserving shape from the builders would close that. */
+/** The shape object this def currently answers from, without resolving its getters, so the cycle walk can see them before the first `def.shape` read spreads them away. Absent for a def whose `shape` is its own accessor — the object builders — which register what they derive from instead, via `util.setShapeSources`. */
 export function rawShape(def: object): Record<string, unknown> | undefined {
   return propShapes.get(def);
 }

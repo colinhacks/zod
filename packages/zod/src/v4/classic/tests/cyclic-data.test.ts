@@ -772,6 +772,68 @@ test("the walk reports a cycle for a deferred edge instead of resolving it", () 
   expect(z.core.isRecursiveSchema(z.lazy(() => Leaf) as any)).toBe(true);
 });
 
+// the builders answer `shape` from an accessor that resolves the source's getters, so the walk has to reach the source schema itself
+test("parses a factory-built recursive schema through every object builder", () => {
+  const wraps: [string, (base: () => any) => any][] = [
+    ["extend", (b) => b().extend({ x: z.string() })],
+    ["safeExtend", (b) => b().safeExtend({ x: z.string() })],
+    ["merge", (b) => z.object({ x: z.string() }).merge(b())],
+    ["partial", (b) => b().partial()],
+    ["required", (b) => b().required()],
+    ["pick", (b) => b().pick({ self: true })],
+    ["omit", (b) => b().omit({ y: true })],
+    ["chained", (b) => b().extend({ x: z.string() }).partial()],
+  ];
+
+  for (const [name, wrap] of wraps) {
+    const Node = (): any =>
+      wrap(() =>
+        z.object({
+          y: z.string(),
+          get self() {
+            return z.optional(Node());
+          },
+        })
+      );
+    const S = z.object({ r: Node() });
+    for (const attempt of ["first", "second"]) {
+      expect(() => S.safeParse({ r: { y: "s", x: "s" } }), `${name} (${attempt} parse)`).not.toThrow();
+    }
+  }
+});
+
+test("an ordinary builder stays exact, so it still compiles", () => {
+  const plain = z.object({ a: z.string(), b: z.number() });
+  const derived: [string, any][] = [
+    ["extend", plain.extend({ c: z.boolean() })],
+    ["merge", plain.merge(z.object({ d: z.string() }))],
+    ["partial", plain.partial()],
+    ["required", plain.partial().required()],
+    ["pick", plain.pick({ a: true })],
+    ["omit", plain.omit({ a: true })],
+  ];
+  for (const [name, schema] of derived) {
+    expect(z.core.isRecursiveSchema(schema), name).toBe(false);
+    expect(() => z.compile(schema, { strict: true }), name).not.toThrow();
+  }
+});
+
+test("detects a cycle that closes through a builder", () => {
+  const Node: any = z
+    .object({
+      id: z.number(),
+      get self() {
+        return z.optional(Node);
+      },
+    })
+    .extend({ x: z.string() });
+
+  const input: any = { id: 1, x: "s" };
+  input.self = input;
+  const out = Node.parse(input);
+  expect(out.self).toBe(out);
+});
+
 test("a deferred edge stops being assumed a cycle once the graph resolves", () => {
   const Leaf = z.object({ n: z.number() });
   const Forward: any = z.object({

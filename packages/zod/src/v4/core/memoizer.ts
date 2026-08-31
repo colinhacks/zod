@@ -1,7 +1,7 @@
 import type * as errors from "./errors.js";
 import { rawShape } from "./schemas.js";
 import type { $ZodMemoizer, $ZodType, $ZodTypeDef, ParseContextInternal, ParsePayload } from "./schemas.js";
-import type * as util from "./util.js";
+import * as util from "./util.js";
 
 export class $ZodCyclicError extends Error {
   constructor() {
@@ -55,17 +55,26 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
     if (!result && child?._zod && isRecursive(child, stack)) result = true;
   };
 
+  // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
+  const shape = (sh: object) => {
+    for (const key of Reflect.ownKeys(sh)) {
+      const desc = Object.getOwnPropertyDescriptor(sh, key)!;
+      if (desc.get) result = assumed = true;
+      else check(desc.value);
+    }
+  };
+
   const def = inst._zod.def as any;
   const kind = def.type as $ZodTypeDef["type"];
   switch (kind) {
     case "object": {
-      // Reading the raw shape's descriptors leaves the user's getters unresolved; a def with no raw entry answers `shape` from its own accessor (the object builders do), and resolving that is how a factory chain built through `.extend()` can still outrun the walk — see the note on `rawShape`.
-      const sh: any = rawShape(def) ?? def.shape;
-      // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
-      for (const key of Reflect.ownKeys(sh)) {
-        const desc = Object.getOwnPropertyDescriptor(sh, key)!;
-        if (desc.get) result = assumed = true;
-        else check(desc.value);
+      const raw = rawShape(def);
+      if (raw) shape(raw);
+      else {
+        // No raw entry means the def answers `shape` from its own accessor, which is a builder deriving it from another schema. Reading that resolves the source's getters, so ask what it was built from instead: the derived subtree is contained in theirs.
+        const sources = util.getShapeSources(def);
+        if (sources) for (const src of sources) (src as any)?._zod ? check(src) : shape(src as object);
+        else shape(def.shape);
       }
       check(def.catchall);
       break;

@@ -338,6 +338,17 @@ export function assignProp<T extends object, K extends PropertyKey>(
   });
 }
 
+// What a derived object's shape is built from, registered by the builders below. Each of them answers `shape` from an accessor that reads the source's — resolving the user's getters — so the cycle walk asks this instead: the derived subtree is contained in its sources', which are schemas it can reach by identity and shape objects whose descriptors it can read unresolved. Entries are `$ZodType`s or plain shapes.
+const shapeSources = new WeakMap<object, unknown[]>();
+
+export function setShapeSources(def: object, sources: unknown[]): void {
+  shapeSources.set(def, sources);
+}
+
+export function getShapeSources(def: object): unknown[] | undefined {
+  return shapeSources.get(def);
+}
+
 export function mergeDefs(...defs: Record<string, any>[]): any {
   const mergedDescriptors: Record<string, PropertyDescriptor> = {};
 
@@ -665,6 +676,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
     checks: [],
   });
 
+  setShapeSources(def, [schema]);
   return clone(schema, def) as any;
 }
 
@@ -694,6 +706,7 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
     checks: [],
   });
 
+  setShapeSources(def, [schema]);
   return clone(schema, def);
 }
 
@@ -721,6 +734,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
       return _shape;
     },
   });
+  setShapeSources(def, [schema, shape]);
   return clone(schema, def) as any;
 }
 
@@ -735,6 +749,7 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
       return _shape;
     },
   });
+  setShapeSources(def, [schema, shape]);
   return clone(schema, def) as any;
 }
 
@@ -757,6 +772,7 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
     checks: b._zod.def.checks ?? [],
   });
 
+  setShapeSources(def, [a, b]);
   return clone(a, def) as any;
 }
 
@@ -811,6 +827,7 @@ export function partial(
     checks: [],
   });
 
+  setShapeSources(def, [schema]);
   return clone(schema, def) as any;
 }
 
@@ -851,6 +868,7 @@ export function required(
     },
   });
 
+  setShapeSources(def, [schema]);
   return clone(schema, def) as any;
 }
 
