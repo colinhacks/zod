@@ -752,10 +752,15 @@ test("parses a factory-built recursive discriminated union at the root and neste
   expect(z.object({ g: Geometry() }).parse({ g: collection }).g.type).toBe("GeometryCollection");
 });
 
-test("the depth cap keeps the walk exact below it", () => {
-  let deep: any = z.string();
-  for (let i = 0; i < 50; i++) deep = z.object({ v: deep });
-  expect(z.core.isRecursiveSchema(deep)).toBe(false);
+test("the depth cap keeps the walk exact below it and conservative past it", () => {
+  // the leaf of an n-wrapper chain enters the walk at depth n, so 255 wrappers sit just under the cap and 256 just past it
+  const nest = (n: number) => {
+    let s: any = z.string();
+    for (let i = 0; i < n; i++) s = z.object({ v: s });
+    return s;
+  };
+  expect(z.core.isRecursiveSchema(nest(255))).toBe(false);
+  expect(z.core.isRecursiveSchema(nest(256))).toBe(true);
 
   const Node = (): any =>
     z.object({
