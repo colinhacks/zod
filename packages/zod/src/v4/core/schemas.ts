@@ -1028,10 +1028,13 @@ export interface $ZodBase64 extends $ZodType {
   _zod: $ZodBase64Internals;
 }
 
+// lax on purpose: the quantified regexes.base64 overflows the regex stack on multi-MB input and its leading ^$| alternation leaks through template-literal composition; isValidBase64 enforces length and padding
+export const base64Charset: RegExp = /^[0-9a-zA-Z+/]*={0,2}$/;
+
 export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64",
   (inst, def): void => {
-    def.pattern ??= regexes.base64;
+    def.pattern ??= base64Charset;
     $ZodStringFormat.init(inst, def);
 
     inst._zod.bag.contentEncoding = "base64";
@@ -1051,8 +1054,8 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
 );
 
 //////////////////////////////   ZodBase64URL   //////////////////////////////
-// charset only — the quantified regexes.base64url overflows the regex stack on multi-MB input; isValidBase64 enforces length on the padded string
-const base64urlCharset = /^[A-Za-z0-9_-]*$/;
+// lax on purpose: the quantified regexes.base64url overflows the regex stack on multi-MB input; isValidBase64 enforces length on the padded string
+export const base64urlCharset: RegExp = /^[A-Za-z0-9_-]*$/;
 
 export function isValidBase64URL(data: string): boolean {
   if (!base64urlCharset.test(data)) return false;
@@ -1071,7 +1074,7 @@ export interface $ZodBase64URL extends $ZodType {
 export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64URL",
   (inst, def): void => {
-    def.pattern ??= regexes.base64url;
+    def.pattern ??= base64urlCharset;
     $ZodStringFormat.init(inst, def);
 
     inst._zod.bag.contentEncoding = "base64url";

@@ -2,6 +2,7 @@ import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import * as regexes from "./regexes.js";
 import type { $ZodRegistry } from "./registries.js";
+import { base64Charset, base64urlCharset } from "./schemas.js";
 import type * as schemas from "./schemas.js";
 import {
   type ProcessParams,
@@ -29,6 +30,13 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 
 // ==================== SIMPLE TYPE PROCESSORS ====================
 
+// the runtime patterns are lax so parse paths never overflow the regex stack; the emitted schema swaps in the exact block forms, which zod itself never executes
+const exactPatterns: Map<RegExp, RegExp> = new Map([
+  [base64Charset, regexes.base64],
+  [base64urlCharset, regexes.base64url],
+]);
+const exactPattern = (p: RegExp): RegExp => exactPatterns.get(p) ?? p;
+
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
@@ -48,7 +56,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
-    const patternList = [...patterns];
+    const patternList = [...patterns].map(exactPattern);
     if (patternList.length === 1) json.pattern = patternList[0]!.source;
     else if (patternList.length > 1) {
       json.allOf = [
@@ -574,7 +582,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     });
     json.patternProperties = {};
     for (const pattern of patterns) {
-      assignProp(json.patternProperties, pattern.source, valueSchema);
+      assignProp(json.patternProperties, exactPattern(pattern).source, valueSchema);
     }
   } else {
     // Default behavior: use propertyNames + additionalProperties
