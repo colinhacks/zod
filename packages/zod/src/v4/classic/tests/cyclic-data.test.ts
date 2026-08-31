@@ -719,7 +719,7 @@ test("detects a cycle through a user-defined container type", () => {
   expect(out.boxed.v).toBe(out);
 });
 
-// #6526: a factory returns fresh instances, so the identity walk never revisits a node; without the depth cap it descends until the stack overflows
+// #6526: a factory returns fresh instances, so the identity walk never revisits a node; it descends until the stack overflows unless it stops at the deferred edge
 test("parses a factory-built recursive schema", () => {
   const Node = (): any =>
     z.object({
@@ -784,6 +784,12 @@ test("a deferred edge stops being assumed a cycle once the graph resolves", () =
   // the parse resolved the getter, so the walk can follow it and drop the assumption
   expect(z.core.isRecursiveSchema(Forward)).toBe(false);
 
+  // same for a lazy edge, which caches its inner on the def once anything reads it
+  const Deferred: any = z.object({ a: z.lazy(() => Leaf) });
+  expect(z.core.isRecursiveSchema(Deferred)).toBe(true);
+  Deferred.parse({ a: { n: 1 } });
+  expect(z.core.isRecursiveSchema(Deferred)).toBe(false);
+
   // a factory hands back a fresh subtree every time, so no parse ever resolves it into a finite graph
   const Node = (): any =>
     z.object({
@@ -795,6 +801,11 @@ test("a deferred edge stops being assumed a cycle once the graph resolves", () =
   expect(z.core.isRecursiveSchema(Generated)).toBe(true);
   Generated.parse({ kids: [] });
   expect(z.core.isRecursiveSchema(Generated)).toBe(true);
+
+  // a lazy that closes a real cycle stays recursive however often it resolves
+  const Cyclic: any = z.object({ id: z.number(), self: z.lazy(() => z.optional(Cyclic)) });
+  Cyclic.parse({ id: 1 });
+  expect(z.core.isRecursiveSchema(Cyclic)).toBe(true);
 });
 
 test("the walk stays exact where nothing is deferred", () => {

@@ -111,8 +111,10 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       check(def.input);
       check(def.output);
       break;
+    // `$ZodLazy` caches its resolved inner on the def, so once anything has read it the walk follows it exactly without invoking the getter itself
     case "lazy":
-      result = assumed = true;
+      if (def._cachedInner) check(def._cachedInner);
+      else result = assumed = true;
       break;
     // a leaf by choice: `parts` are regex fragments, not data positions
     case "template_literal":
