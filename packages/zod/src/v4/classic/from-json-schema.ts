@@ -273,11 +273,12 @@ const SCHEMA_KEYWORDS = /*@__PURE__*/ new Set([
   "contentSchema",
 ]);
 
-// keywords whose value maps names to schemas
+// keywords whose value maps names to schemas. draft-7 `dependencies` also allows an array of property names, which holds no schema to walk
 const SCHEMA_MAP_KEYWORDS = /*@__PURE__*/ new Set([
   "properties",
   "patternProperties",
   "dependentSchemas",
+  "dependencies",
   "$defs",
   "definitions",
 ]);

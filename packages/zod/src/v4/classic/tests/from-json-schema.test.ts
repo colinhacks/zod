@@ -1445,6 +1445,18 @@ test("a carried subschema that references $defs is dropped rather than emitted d
     expect(annotated.safeParse(["x"]).success).toBe(false);
     expect(z.toJSONSchema(annotated)).toMatchObject({ contains: { type: "integer" } });
   }
+  // draft-7 `dependencies` is a schema map; its array form names properties and holds no reference
+  const dependent = fromJSONSchema({
+    type: "array",
+    contains: { type: "object", dependencies: { a: { $ref: "#/definitions/Hit" } } },
+    definitions: { Hit: { type: "object" } },
+  });
+  expect(z.toJSONSchema(dependent)).not.toHaveProperty("contains");
+  const named = fromJSONSchema({
+    type: "array",
+    contains: { type: "object", dependencies: { a: ["b"] } },
+  });
+  expect(z.toJSONSchema(named)).toMatchObject({ contains: { dependencies: { a: ["b"] } } });
   // a reference nested in a schema position is still caught
   const nested = fromJSONSchema({
     type: "array",
