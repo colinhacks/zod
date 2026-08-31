@@ -1849,6 +1849,25 @@ export const ZodMiniCustom: core.$constructor<ZodMiniCustom> = /*@__PURE__*/ cor
   }
 );
 
+// ZodMiniProperties
+export interface ZodMiniProperties<Shape extends core.$ZodShape = core.$ZodShape>
+  extends _ZodMiniType<core.$ZodPropertiesInternals<Shape>>,
+    core.$ZodProperties<Shape> {}
+export const ZodMiniProperties: core.$constructor<ZodMiniProperties> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniProperties",
+  (inst, def) => {
+    core.$ZodProperties.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+export function properties<Shape extends core.$ZodShape>(
+  shape: Shape,
+  params?: string | core.$ZodPropertiesParams
+): ZodMiniProperties<Shape> {
+  return core._properties(ZodMiniProperties, shape, params) as any;
+}
+
 // custom checks
 // @__NO_SIDE_EFFECTS__
 export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {

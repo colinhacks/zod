@@ -94,7 +94,8 @@ export interface $ZodTypeDef {
     | "promise"
     | "lazy"
     | "function"
-    | "custom";
+    | "custom"
+    | "properties";
   error?: errors.$ZodErrorMap<never> | undefined;
   checks?: checks.$ZodCheck<never>[];
 }
@@ -4963,6 +4964,85 @@ function handleRefineResult(result: unknown, payload: ParsePayload, input: unkno
   }
 }
 
+////////////////////////////////////////
+////////////////////////////////////////
+//////////                    //////////
+//////////  $ZodProperties    //////////
+//////////                    //////////
+////////////////////////////////////////
+////////////////////////////////////////
+export interface $ZodPropertiesDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef, checks.$ZodCheckDef {
+  type: "properties";
+  check: "properties";
+  shape: Shape;
+}
+
+export interface $ZodPropertiesInternals<Shape extends $ZodShape = $ZodShape>
+  extends $ZodTypeInternals<$InferObjectOutput<Shape, {}>, $InferObjectInput<Shape, {}>>,
+    checks.$ZodCheckInternals<$InferObjectOutput<Shape, {}>> {
+  def: $ZodPropertiesDef<Shape>;
+  isst: errors.$ZodIssueInvalidType;
+  issc: errors.$ZodIssue;
+}
+
+export interface $ZodProperties<Shape extends $ZodShape = $ZodShape> extends $ZodType {
+  _zod: $ZodPropertiesInternals<Shape>;
+  // yields the schema itself, so pre-4.6 `.check(...z.properties(shape))` spread call sites keep working
+  [Symbol.iterator](): Iterator<this>;
+}
+
+// asserts in place: the child result's value is discarded, matching z.property(), because a nested object or array schema rebuilds its output even when nothing transformed
+function handlePropertiesResult(result: ParsePayload, payload: ParsePayload, key: string): void {
+  if (result.issues.length) {
+    payload.issues.push(...util.prefixIssues(key, result.issues));
+  }
+}
+
+export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ core.$constructor(
+  "$ZodProperties",
+  (inst, def) => {
+    checks.$ZodCheck.init(inst, def);
+    $ZodType.init(inst, def);
+
+    // the base init runs a dual schema/check instance as its own first check, so parse is only the type gate and the shape loop lives in check, like $ZodCustom
+    inst._zod.parse = (payload, _) => {
+      // property reads work on any non-nullish value (string length, class instances), so only null and undefined are rejected outright
+      if (payload.value == null) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input: payload.value, inst });
+      }
+      return payload;
+    };
+
+    let keys!: string[];
+    inst._zod.check = (payload) => {
+      keys ??= Object.keys(def.shape);
+      const input = payload.value as any;
+      // reached with a nullish value only as a check on a base that allows one (z.any and friends); the schema role's own gate aborts before checks run
+      if (input == null) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input, inst });
+        return undefined;
+      }
+      let proms: Promise<any>[] | undefined;
+      for (const key of keys) {
+        const result = def.shape[key]!._zod.run({ value: input[key], issues: [] }, {});
+        if (result instanceof Promise) {
+          proms ??= [];
+          proms.push(result.then((result) => handlePropertiesResult(result, payload, key)));
+        } else {
+          handlePropertiesResult(result, payload, key);
+        }
+      }
+      if (proms) return Promise.all(proms).then(() => undefined);
+      return undefined;
+    };
+  },
+  {
+    *[Symbol.iterator]() {
+      yield this;
+    },
+  }
+);
+
 export type $ZodTypes =
   | $ZodString
   | $ZodNumber
@@ -4995,6 +5075,7 @@ export type $ZodTypes =
   | $ZodPrefault
   | $ZodTemplateLiteral
   | $ZodCustom
+  | $ZodProperties
   | $ZodTransform
   | $ZodNonOptional
   | $ZodReadonly

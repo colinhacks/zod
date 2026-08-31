@@ -17,7 +17,7 @@ import {
   urlHostnameOk,
   urlProtocolOk,
 } from "./schemas.js";
-import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
+import type { $ZodProperties, ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
 /** @internal Sentinel the compiled fast path returns when validation fails. */
@@ -82,6 +82,7 @@ type SupportedCheck =
   | checks.$ZodCheckLengthEquals
   | checks.$ZodCheckStringFormat
   | checks.$ZodCheckProperty
+  | $ZodProperties
   | checks.$ZodCheckMimeType
   | checks.$ZodCheckOverwrite
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
@@ -418,6 +419,9 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
       case "property":
         generatePropertyCheck(doc, ctx, def, currentAccessor);
         break;
+      case "properties":
+        generatePropertiesChecks(doc, ctx, def.shape as Record<string, SomeType>, currentAccessor);
+        break;
       case "overwrite": {
         // Overwrite transforms the value - create new variable for transformed result
         const newAccessor = newVar(ctx);
@@ -570,6 +574,21 @@ function generateMimeTypeCheck(
   if (mimeTypes && mimeTypes.length > 0) {
     const mimeSet = addConstant(ctx, new Set(mimeTypes));
     doc.write(`if (!${mimeSet}.has(${accessor}.type)) return INVALID;`);
+  }
+}
+
+// asserts each named property in place; children compile assert-only because z.properties never rebuilds its input
+function generatePropertiesChecks(
+  doc: Doc,
+  ctx: CompileContext,
+  shape: Record<string, SomeType>,
+  accessor: string
+): void {
+  for (const key of Object.keys(shape)) {
+    // cache the property read so a getter runs exactly once, matching the runtime
+    const inputVar = newVar(ctx);
+    doc.write(`const ${inputVar} = ${accessor}[${util.esc(key)}];`);
+    compileChild(doc, ctx, shape[key]!, inputVar, false);
   }
 }
 
@@ -861,6 +880,7 @@ type SupportedSchemaType =
   | "lazy"
   | "pipe"
   | "custom"
+  | "properties"
   | "transform"
   | "catch";
 
@@ -1004,6 +1024,16 @@ function generateCheck(
       break;
     case "custom":
       typeAccessor = generateCustomCheck(doc, ctx, schema, accessor);
+      break;
+    case "properties":
+      doc.write(`if (${accessor} == null) return INVALID;`);
+      generatePropertiesChecks(
+        doc,
+        ctx,
+        (schema as $ZodProperties)._zod.def.shape as Record<string, SomeType>,
+        accessor
+      );
+      typeAccessor = accessor;
       break;
     case "transform":
       typeAccessor = generateTransformCheck(doc, ctx, schema, accessor);

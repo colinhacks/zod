@@ -1076,20 +1076,24 @@ export function members(proto: object, table: object): void {
     // a method materializes bound on first read, which is what keeps a detached member working: `const opt = schema.optional; opt()`
     else defineBound(proto, key, desc.value);
   }
+  // for..in sees no symbol keys, so well-known members like Symbol.iterator install here
+  for (const sym of Object.getOwnPropertySymbols(table)) {
+    defineBound(proto, sym, (table as any)[sym]);
+  }
 }
 
 /** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */
-export function own<T>(inst: object, key: string, value: T, enumerable = true): T {
+export function own<T>(inst: object, key: PropertyKey, value: T, enumerable = true): T {
   Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable, value });
   return value;
 }
 
 /** Like {@link own}, for a member that was never an own data property and has to stay out of `Object.keys`. */
-export function hide<T>(inst: object, key: string, value: T): T {
+export function hide<T>(inst: object, key: PropertyKey, value: T): T {
   return own(inst, key, value, false);
 }
 
-function defineBound(proto: object, key: string, fn: AnyFunc): void {
+function defineBound(proto: object, key: PropertyKey, fn: AnyFunc): void {
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {

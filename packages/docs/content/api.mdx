@@ -2286,19 +2286,34 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-Use `z.properties()` to declare several property checks from an object literal. It returns an array to spread into `.check()`.
+Use `.properties()` to check several properties at once. Each call narrows the inferred type.
 
 ```ts
-const httpsUrl = z.instanceof(URL).check(
-  ...z.properties({
-    protocol: z.literal("https:" as string),
-    hostname: z.string().regex(z.regexes.domain),
-  })
-);
+const httpsUrl = z.instanceof(URL).properties({
+  protocol: z.literal("https:"),
+  hostname: z.string().regex(z.regexes.domain),
+});
 
 httpsUrl.parse(new URL("https://example.com")); // ✅
-httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
+httpsUrl.parse(new URL("http://localhost")); // ❌ protocol + hostname
+
+type HttpsUrl = z.infer<typeof httpsUrl>;
+// => URL & { protocol: "https:"; hostname: string }
 ```
+
+The underlying `z.properties()` is a standalone schema. It asserts the named properties in place and returns its input untouched — unlike `z.object()`, it never builds a new object, so prototypes, unlisted keys, and object identity survive. (Transforms inside the shape are validated but never written back.)
+
+```ts
+const Named = z.properties({ name: z.string() });
+
+class Dog {
+  constructor(public name: string) {}
+}
+const rex = new Dog("Rex");
+Named.parse(rex); // => rex (the same instance)
+```
+
+Spreading into `.check()` works too: `z.instanceof(URL).check(...z.properties({ ... }))`.
 
 ## Refinements
 

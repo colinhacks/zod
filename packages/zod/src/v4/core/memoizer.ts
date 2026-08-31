@@ -56,6 +56,10 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       check(def.catchall);
       break;
     }
+    case "properties": {
+      for (const key of Reflect.ownKeys(def.shape)) check(def.shape[key]);
+      break;
+    }
     case "array":
       check(def.element);
       break;

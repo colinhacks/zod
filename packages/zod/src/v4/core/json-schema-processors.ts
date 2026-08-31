@@ -368,6 +368,29 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   }
 };
 
+// asserts named properties in place and passes everything else through, so no additionalProperties constraint is emitted
+export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, ctx, _json, params) => {
+  const json = _json as JSONSchema.ObjectSchema;
+  const def = schema._zod.def;
+  json.type = "object";
+  json.properties = {};
+  for (const key in def.shape) {
+    assignProp(
+      json.properties,
+      key,
+      process(def.shape[key]!, ctx as any, {
+        ...params,
+        path: [...params.path, "properties", key],
+      })
+    );
+  }
+  const required = Object.keys(def.shape).filter((key) => {
+    const field = def.shape[key]!;
+    return ctx.io === "input" ? inputOptin(field) === undefined : field._zod.optout === undefined;
+  });
+  if (required.length > 0) json.required = required;
+};
+
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
   // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
@@ -747,6 +770,7 @@ export const allProcessors: Record<string, Processor<any>> = {
   file: fileProcessor,
   success: successProcessor,
   custom: customProcessor,
+  properties: propertiesProcessor,
   function: functionProcessor,
   transform: transformProcessor,
   map: mapProcessor,
