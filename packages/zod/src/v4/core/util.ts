@@ -290,18 +290,28 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   return value;
 }
 
+// accessor on the prototype, not an own literal property: an own accessor puts the box in dictionary mode from birth (~360 B and a slow load per read against ~100 B and an inlined getter here)
+class Cached<T> {
+  _getter: (() => T) | undefined;
+  _value: T | undefined;
+
+  constructor(getter: () => T) {
+    this._getter = getter;
+    this._value = undefined;
+  }
+
+  get value(): T {
+    const getter = this._getter;
+    if (getter !== undefined) {
+      this._value = getter();
+      this._getter = undefined;
+    }
+    return this._value as T;
+  }
+}
+
 export function cached<T>(getter: () => T): { value: T } {
-  const set = false;
-  return {
-    get value() {
-      if (!set) {
-        const value = getter();
-        Object.defineProperty(this, "value", { value });
-        return value;
-      }
-      throw new Error("cached value already set");
-    },
-  };
+  return new Cached(getter);
 }
 
 export function nullish(input: any): boolean {
