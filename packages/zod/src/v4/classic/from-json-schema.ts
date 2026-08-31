@@ -214,17 +214,43 @@ function checkObjectGuards(
   return guard.pipe(objectSchema);
 }
 
-// structural equality over JSON data, so two objects with the same entries in different key order are duplicates
-function jsonDeepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
-  if (Array.isArray(a) || Array.isArray(b)) {
-    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
-    return a.every((item, i) => jsonDeepEqual(item, b[i]));
+/**
+ * An injective string for JSON data: two values share a key exactly when `uniqueItems` calls them
+ * equal, so duplicate detection is a Map lookup rather than a pairwise walk. Strings and keys are
+ * length-prefixed so no value can spell another one. `null` means "never equal to anything" — a
+ * cycle or a NaN, neither of which JSON can express.
+ */
+function canonicalKey(value: unknown, seen: Set<object>): string | null {
+  if (value === null) return "z";
+  const type = typeof value;
+  if (type !== "object") {
+    if (type === "number" && Number.isNaN(value)) return null;
+    const raw = String(value);
+    return `${type[0]}${raw.length}:${raw}`;
   }
-  const keys = Object.keys(a);
-  if (keys.length !== Object.keys(b).length) return false;
-  return keys.every((k) => Object.prototype.hasOwnProperty.call(b, k) && jsonDeepEqual((a as any)[k], (b as any)[k]));
+  if (seen.has(value as object)) return null;
+  seen.add(value as object);
+  try {
+    if (Array.isArray(value)) {
+      const parts: string[] = [];
+      for (const item of value) {
+        const key = canonicalKey(item, seen);
+        if (key === null) return null;
+        parts.push(key);
+      }
+      return `a${parts.length}:[${parts.join(",")}]`;
+    }
+    const keys = Object.keys(value as object).sort();
+    const parts: string[] = [];
+    for (const k of keys) {
+      const key = canonicalKey((value as any)[k], seen);
+      if (key === null) return null;
+      parts.push(`${k.length}:${k}=${key}`);
+    }
+    return `o${parts.length}:{${parts.join(",")}}`;
+  } finally {
+    seen.delete(value as object);
+  }
 }
 
 function plural(n: number): string {
@@ -254,22 +280,27 @@ function checkArrayGuards(
       const items = payload.value;
       if (!Array.isArray(items)) return;
       if (guards.uniqueItems === true) {
-        outer: for (let i = 1; i < items.length; i++) {
-          for (let j = 0; j < i; j++) {
-            if (!jsonDeepEqual(items[i], items[j])) continue;
-            payload.issues.push({
-              code: "custom",
-              message: `Array items must be unique: element at index ${i} duplicates the one at index ${j}`,
-              input: items,
-              path: [i],
-              continue: true,
-            });
-            continue outer;
+        const firstSeen = new Map<string, number>();
+        for (let i = 0; i < items.length; i++) {
+          const key = canonicalKey(items[i], new Set());
+          if (key === null) continue;
+          const first = firstSeen.get(key);
+          if (first === undefined) {
+            firstSeen.set(key, i);
+            continue;
           }
+          payload.issues.push({
+            code: "custom",
+            message: `Array items must be unique: element at index ${i} duplicates the one at index ${first}`,
+            input: items,
+            path: [i],
+            continue: true,
+          });
         }
       }
       if (guards.containsSchema) {
         const minContains = guards.minContains ?? 1;
+        // counted in full rather than stopped at the ceiling, since the message names the exact number
         let matches = 0;
         for (const item of items) {
           if (guards.containsSchema.safeParse(item).success) matches++;

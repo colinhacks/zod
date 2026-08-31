@@ -1405,3 +1405,22 @@ test("a guard keyword drops default and examples from the input-mode document", 
   const plain = fromJSONSchema({ type: "array", default: [], examples: [[1]] });
   expect(z.toJSONSchema(plain, { io: "input" })).toMatchObject({ default: [], examples: [[1]] });
 });
+
+test("uniqueItems equality follows JSON semantics", () => {
+  const schema = fromJSONSchema({ type: "array", uniqueItems: true });
+  expect(schema.safeParse([1, "1", true, null]).success).toBe(true);
+  expect(schema.safeParse([{ a: undefined }, {}]).success).toBe(true);
+  expect(
+    schema.safeParse([
+      [1, [2]],
+      [1, [2]],
+    ]).success
+  ).toBe(false);
+  expect(schema.safeParse([{ a: "b=c" }, { "a=b": "c" }]).success).toBe(true);
+  // every duplicate is reported against the first element it matches
+  expect(schema.safeParse([1, 1, 1]).error!.issues.map((i) => i.path[0])).toEqual([1, 2]);
+  // a cycle cannot be compared, so it is never called a duplicate rather than hanging
+  const cyclic: any = {};
+  cyclic.self = cyclic;
+  expect(schema.safeParse([cyclic, cyclic]).success).toBe(true);
+});
