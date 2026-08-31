@@ -1044,31 +1044,36 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 </Tab>
 </Tabs>
 
-## Exact optionals
+<Callout>
+  **Exact optionals** — To allow an absent key without allowing an explicit `undefined`, use `.exactOptional()`, per TypeScript's [`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes).
 
-To allow an absent key without allowing an explicit `undefined`, per TypeScript's [`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes):
+  <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+  <Tab value="Zod">
+  ```ts
+  const User = z.object({
+    name: z.string().optional(),
+    nick: z.string().exactOptional(),
+  });
+  // { name?: string | undefined; nick?: string }
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
-```ts
-z.exactOptional(z.string()); // or z.string().exactOptional()
-```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-z.exactOptional(z.string());
-```
-</Tab>
-</Tabs>
+  User.parse({ name: undefined }); // ✅
+  User.parse({ nick: undefined }); // ❌
+  ```
+  </Tab>
+  <Tab value="Zod Mini">
+  ```ts
+  const User = z.object({
+    name: z.optional(z.string()),
+    nick: z.exactOptional(z.string()),
+  });
+  // { name?: string | undefined; nick?: string }
 
-```ts
-const User = z.object({ name: z.string().exactOptional() });
-// { name?: string }
-
-User.parse({}); // ✅
-User.parse({ name: "yoda" }); // ✅
-User.parse({ name: undefined }); // ❌
-```
+  z.parse(User, { name: undefined }); // ✅
+  z.parse(User, { nick: undefined }); // ❌
+  ```
+  </Tab>
+  </Tabs>
+</Callout>
 
 ## Nullables
 
@@ -1482,7 +1487,7 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
 
 ### `.exactPartial()`
 
-Identical to `.partial()`, but wraps each field in [`exactOptional()`](#exact-optionals) instead of `optional()`:
+Identical to `.partial()`, but wraps each field in [`exactOptional()`](#optionals) instead of `optional()`:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -1552,7 +1557,20 @@ const RecipeRequiredDescription = z.required(Recipe, {description: true});
 </Tab>
 </Tabs>
 
+### Symbol keys
 
+A shape can declare a symbol key. A `const` symbol infers as `unique symbol`, so the key is tracked in the inferred type and its value is validated like any other:
+
+```ts
+const TAG = Symbol("tag");
+const Post = z.object({ title: z.string(), [TAG]: z.number() });
+// { title: string; [TAG]: number }
+
+Post.parse({ title: "hello", [TAG]: 42 }); // ✅
+Post.parse({ title: "hello" });            // ❌ the symbol key is required
+```
+
+Declared symbol keys work with `.partial()`, `.pick()`, `.omit()`, `.extend()`, and the rest. Symbol keys the shape doesn't declare are ignored — `z.looseObject()` won't pass them through, and `z.strictObject()` won't flag them.
 
 ## Recursive objects
 
@@ -1970,6 +1988,20 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 </Accordion>
 </Accordions>
 
+### `z.getDiscriminatedOption()`
+
+To retrieve a single option by its discriminator value. The value must be one the union declares; anything else is a TypeScript error.
+
+```ts
+const Success = z.object({ status: z.literal("success"), data: z.string() });
+const Failed = z.object({ status: z.literal("failed"), error: z.string() });
+const MyResult = z.discriminatedUnion("status", [Success, Failed]);
+
+z.getDiscriminatedOption(MyResult, "success"); // typeof Success
+z.getDiscriminatedOption(MyResult, "pending"); // ❌ not a declared discriminator
+```
+
+The option is returned as-is, so `.shape` and the other object methods keep working.
 
 ## Intersections
 
@@ -2262,7 +2294,7 @@ z.instanceof(URL);
 z.instanceof(Error);
 ```
 
-### Property
+### `z.property()` [#property]
 
 To validate a particular property of a class instance against a Zod schema:
 
@@ -2285,6 +2317,8 @@ const blobSchema = z.string().check(
 blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
+
+### `.properties()`
 
 Use `.properties()` to check several properties at once. Each call narrows the inferred type.
 
