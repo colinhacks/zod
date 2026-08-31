@@ -3445,3 +3445,59 @@ const schema = z.string().apply(withDefault, "anonymous");
 schema.parse(undefined); // => "anonymous"
 schema.parse("sandwich"); // => "sandwich"
 ```
+
+## Matching an existing type
+
+Sometimes the type comes first: a database model, a type from a generated client, an interface you don't own. Pass it to `z.toZod<T>()` and TypeScript checks that the schema's output type is exactly `T`.
+
+```ts
+type Player = {
+  username: string;
+  xp: number;
+};
+
+const Player = z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+  })
+);
+
+Player.shape.username; // ZodString — the schema is returned unchanged
+```
+
+The check is exact type equality, so any drift from the type is a compile error:
+
+```ts
+z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+    admin: z.boolean(), // ❌ extra key
+  })
+);
+```
+
+The usual alternative is `satisfies z.ZodType<Player>`, which only checks assignability. It catches a missing required key, but extra keys, omitted optional keys, and a bare `z.any()` all slip through:
+
+```ts
+z.object({
+  username: z.string(),
+  xp: z.number(),
+  admin: z.boolean(),
+}) satisfies z.ZodType<Player>; // ✅ no error
+
+z.any() satisfies z.ZodType<Player>; // ✅ no error
+```
+
+An enum target matches `z.enum(...)`, and stays nominal — a plain literal union doesn't satisfy it:
+
+```ts
+enum Level {
+  Noob = "noob",
+  Pro = "pro",
+}
+
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(Level) })); // ✅
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(["noob", "pro"]) })); // ❌
+```
