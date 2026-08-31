@@ -155,32 +155,223 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
 }
 
 /**
- * Rejects every own key that fails `keySchema`, before `objectSchema` runs. The
- * guard has to see the raw input: an object parse drops `__proto__` and can add
- * keys from a property `default`, so its output is not the set of names the
- * instance actually carried.
+ * Enforces the keywords that constrain an object's own keys — `propertyNames`,
+ * `minProperties`, `maxProperties` — before `objectSchema` runs. The guard has
+ * to see the raw input: an object parse drops `__proto__` and can add keys from
+ * a property `default`, so its output is not the set of names the instance
+ * actually carried.
  */
-function checkPropertyNames(objectSchema: ZodType, keySchema: ZodType): ZodType {
+function checkObjectGuards(
+  objectSchema: ZodType,
+  guards: { keySchema?: ZodType | undefined; minProperties?: number | undefined; maxProperties?: number | undefined }
+): ZodType {
   // An identity transform, not z.any(), so `toJSONSchema` reports the object on both the input and the output side of the pipe.
   const guard = z
     .transform((value: unknown) => value)
     .check((payload) => {
       const value = payload.value;
       if (typeof value !== "object" || value === null || Array.isArray(value)) return;
-      for (const key of Object.getOwnPropertyNames(value)) {
-        const result = keySchema.safeParse(key);
-        if (result.success) continue;
+      const keys = Object.getOwnPropertyNames(value);
+      if (guards.minProperties !== undefined && keys.length < guards.minProperties) {
         payload.issues.push({
-          code: "invalid_key",
-          origin: "record",
-          issues: result.error.issues,
-          input: key,
-          path: [key],
+          origin: "object",
+          code: "too_small",
+          minimum: guards.minProperties,
+          inclusive: true,
+          message: `Too small: expected object to have >=${guards.minProperties} properties`,
+          input: value,
+          inst: objectSchema,
           continue: true,
         });
       }
+      if (guards.maxProperties !== undefined && keys.length > guards.maxProperties) {
+        payload.issues.push({
+          origin: "object",
+          code: "too_big",
+          maximum: guards.maxProperties,
+          inclusive: true,
+          message: `Too big: expected object to have <=${guards.maxProperties} properties`,
+          input: value,
+          inst: objectSchema,
+          continue: true,
+        });
+      }
+      if (guards.keySchema) {
+        for (const key of keys) {
+          const result = guards.keySchema.safeParse(key);
+          if (result.success) continue;
+          payload.issues.push({
+            code: "invalid_key",
+            origin: "record",
+            issues: result.error.issues,
+            input: key,
+            path: [key],
+            continue: true,
+          });
+        }
+      }
     });
   return guard.pipe(objectSchema);
+}
+
+/**
+ * An injective string for JSON data: two values share a key exactly when `uniqueItems` calls them
+ * equal, so duplicate detection is a Map lookup rather than a pairwise walk. Strings and keys are
+ * length-prefixed so no value can spell another one. `null` means "never equal to anything" — a
+ * cycle or a NaN, neither of which JSON can express.
+ */
+function canonicalKey(value: unknown, seen: Set<object>): string | null {
+  if (value === null) return "z";
+  const type = typeof value;
+  if (type !== "object") {
+    if (type === "number" && Number.isNaN(value)) return null;
+    const raw = String(value);
+    return `${type[0]}${raw.length}:${raw}`;
+  }
+  if (seen.has(value as object)) return null;
+  seen.add(value as object);
+  try {
+    if (Array.isArray(value)) {
+      const parts: string[] = [];
+      for (const item of value) {
+        const key = canonicalKey(item, seen);
+        if (key === null) return null;
+        parts.push(key);
+      }
+      return `a${parts.length}:[${parts.join(",")}]`;
+    }
+    const keys = Object.keys(value as object).sort();
+    const parts: string[] = [];
+    for (const k of keys) {
+      const key = canonicalKey((value as any)[k], seen);
+      if (key === null) return null;
+      parts.push(`${k.length}:${k}=${key}`);
+    }
+    return `o${parts.length}:{${parts.join(",")}}`;
+  } finally {
+    seen.delete(value as object);
+  }
+}
+
+// keywords whose value is a schema or an array of them
+const SCHEMA_KEYWORDS = /*@__PURE__*/ new Set([
+  "items",
+  "prefixItems",
+  "additionalItems",
+  "additionalProperties",
+  "contains",
+  "propertyNames",
+  "not",
+  "if",
+  "then",
+  "else",
+  "allOf",
+  "anyOf",
+  "oneOf",
+  "unevaluatedItems",
+  "unevaluatedProperties",
+  "contentSchema",
+]);
+
+// keywords whose value maps names to schemas. draft-7 `dependencies` also allows an array of property names, which holds no schema to walk
+const SCHEMA_MAP_KEYWORDS = /*@__PURE__*/ new Set([
+  "properties",
+  "patternProperties",
+  "dependentSchemas",
+  "dependencies",
+  "$defs",
+  "definitions",
+]);
+
+/**
+ * True when a subschema holds a `$ref` anywhere a schema can appear. Only those positions are
+ * walked: `$ref` under `default` or an `x-` annotation is instance data with an ordinary key, and
+ * reading it as a reference would drop a constraint that resolves perfectly well.
+ */
+function containsRef(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  if (Array.isArray(value)) return value.some(containsRef);
+  if (typeof (value as any).$ref === "string") return true;
+  return Object.entries(value).some(([key, sub]) => {
+    if (SCHEMA_KEYWORDS.has(key)) return containsRef(sub);
+    if (!SCHEMA_MAP_KEYWORDS.has(key) || typeof sub !== "object" || sub === null) return false;
+    return Object.values(sub).some(containsRef);
+  });
+}
+
+function plural(n: number): string {
+  return n === 1 ? "element" : "elements";
+}
+
+/**
+ * Enforces `uniqueItems` and the `contains` family before `arraySchema` runs, for the same reason
+ * `checkObjectGuards` runs pre-pipe: an item parse can apply a nested `default`, so the parsed
+ * array is not the instance the keywords are defined over. A guard issue aborts the pipe, so
+ * `minItems`/`maxItems` are not also reported on the same parse — instance correctness is worth
+ * more than co-reporting two issues.
+ */
+function checkArrayGuards(
+  arraySchema: ZodType,
+  guards: {
+    uniqueItems?: boolean | undefined;
+    containsSchema?: ZodType | undefined;
+    minContains?: number | undefined;
+    maxContains?: number | undefined;
+  }
+): ZodType {
+  // An identity transform, not z.any(), so `toJSONSchema` reports the array on both the input and the output side of the pipe.
+  const guard = z
+    .transform((value: unknown) => value)
+    .check((payload) => {
+      const items = payload.value;
+      if (!Array.isArray(items)) return;
+      if (guards.uniqueItems === true) {
+        const firstSeen = new Map<string, number>();
+        for (let i = 0; i < items.length; i++) {
+          const key = canonicalKey(items[i], new Set());
+          if (key === null) continue;
+          const first = firstSeen.get(key);
+          if (first === undefined) {
+            firstSeen.set(key, i);
+            continue;
+          }
+          payload.issues.push({
+            code: "custom",
+            message: `Array items must be unique: element at index ${i} duplicates the one at index ${first}`,
+            input: items,
+            path: [i],
+            continue: true,
+          });
+        }
+      }
+      if (guards.containsSchema) {
+        const minContains = guards.minContains ?? 1;
+        // one past the ceiling already proves the failure, and nothing above it changes the verdict
+        const ceiling = guards.maxContains !== undefined ? guards.maxContains + 1 : Number.POSITIVE_INFINITY;
+        let matches = 0;
+        for (const item of items) {
+          if (guards.containsSchema.safeParse(item).success && ++matches >= ceiling) break;
+        }
+        if (matches < minContains) {
+          // the scan ran to the end, so this count is exact
+          payload.issues.push({
+            code: "custom",
+            message: `Array must contain at least ${minContains} matching ${plural(minContains)}; found ${matches}`,
+            input: items,
+            continue: true,
+          });
+        }
+        if (guards.maxContains !== undefined && matches > guards.maxContains) {
+          payload.issues.push({
+            code: "custom",
+            message: `Array must contain at most ${guards.maxContains} matching ${plural(guards.maxContains)}`,
+            input: items,
+            continue: true,
+          });
+        }
+      }
+    });
+  return guard.pipe(arraySchema);
 }
 
 function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: ConversionContext): ZodType | undefined {
@@ -519,20 +710,25 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       }
 
       // propertyNames constrains key *names* only, and says nothing about which keys are required or how their values validate. Layering it on top of the result keeps properties/patternProperties/additionalProperties composing underneath. `true` allows every name, so it needs no guard.
-      if (schema.propertyNames !== undefined && schema.propertyNames !== true) {
-        // Keys are always strings, so a propertyNames subschema that omits `type` still constrains them — without this it would convert to z.any().
-        const keyJSONSchema =
-          typeof schema.propertyNames === "object" && schema.propertyNames.type === undefined
-            ? { type: "string", ...schema.propertyNames }
-            : schema.propertyNames;
-        zodSchema = checkPropertyNames(zodSchema, convertSchema(keyJSONSchema as JSONSchema.JSONSchema, ctx));
+      const hasKeyGuard = schema.propertyNames !== undefined && schema.propertyNames !== true;
+      const minProperties = typeof schema.minProperties === "number" ? schema.minProperties : undefined;
+      const maxProperties = typeof schema.maxProperties === "number" ? schema.maxProperties : undefined;
+      if (hasKeyGuard || minProperties !== undefined || maxProperties !== undefined) {
+        let keySchema: ZodType | undefined;
+        if (hasKeyGuard) {
+          // Keys are always strings, so a propertyNames subschema that omits `type` still constrains them — without this it would convert to z.any().
+          const keyJSONSchema =
+            typeof schema.propertyNames === "object" && schema.propertyNames.type === undefined
+              ? { type: "string", ...schema.propertyNames }
+              : schema.propertyNames;
+          keySchema = convertSchema(keyJSONSchema as JSONSchema.JSONSchema, ctx);
+        }
+        zodSchema = checkObjectGuards(zodSchema, { keySchema, minProperties, maxProperties });
       }
       break;
     }
 
     case "array": {
-      // TODO: uniqueItems and contains/minContains/maxContains are not supported
-
       // Check if this is a tuple (prefixItems or items as array)
       const prefixItems = schema.prefixItems;
       const items = schema.items;
@@ -585,6 +781,18 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         // No items specified - array of any
         zodSchema = z.array(z.any());
       }
+
+      // minContains/maxContains only constrain anything when `contains` itself is present
+      if (schema.uniqueItems === true || schema.contains !== undefined) {
+        zodSchema = checkArrayGuards(zodSchema, {
+          uniqueItems: schema.uniqueItems === true,
+          containsSchema:
+            schema.contains !== undefined ? convertSchema(schema.contains as JSONSchema.JSONSchema, ctx) : undefined,
+          minContains: typeof schema.minContains === "number" ? schema.minContains : undefined,
+          maxContains: typeof schema.maxContains === "number" ? schema.maxContains : undefined,
+        });
+      }
+
       break;
     }
 
@@ -666,9 +874,22 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer, so the original keyword is carried as metadata to keep the round-trip lossless. Only where it was actually applied: on any other type it is inert, and on a `$ref` the metadata would land on the target every reference shares.
-  if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
-    extraMeta.propertyNames = schema.propertyNames;
+  // `propertyNames` and `contains` are enforced by a guard, which `toJSONSchema` cannot infer, so the original keyword is carried as metadata to keep the round-trip lossless. Only where it was actually applied: on any other type it is inert, and on a `$ref` the metadata would land on the target every reference shares. A carried subschema is copied verbatim while the root `$defs` stay behind, so one holding a `$ref` is dropped rather than emitted as a dangling reference.
+  if (schema.type === "object" && schema.$ref === undefined) {
+    if (schema.propertyNames !== undefined && !containsRef(schema.propertyNames)) {
+      extraMeta.propertyNames = schema.propertyNames;
+    }
+    for (const key of ["minProperties", "maxProperties"] as const) {
+      if (schema[key] !== undefined) extraMeta[key] = schema[key];
+    }
+  }
+  if (schema.type === "array" && schema.$ref === undefined) {
+    if (schema.contains !== undefined && !containsRef(schema.contains)) {
+      extraMeta.contains = schema.contains;
+    }
+    for (const key of ["uniqueItems", "minContains", "maxContains"] as const) {
+      if (schema[key] !== undefined) extraMeta[key] = schema[key];
+    }
   }
 
   for (const key of Object.keys(schema)) {
