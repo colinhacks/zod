@@ -1,9 +1,8 @@
 import * as checks from "./checks.js";
 import type { $ZodNumberFormats } from "./checks.js";
 import type { $ZodBigIntFormats } from "./checks.js";
-import type { CompileContext } from "./compile.js";
 import * as core from "./core.js";
-import type { Doc } from "./doc.js";
+import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
 import { _safeParse, _safeParseAsync, parse, parseAsync } from "./parse.js";
@@ -119,9 +118,6 @@ export interface _$ZodTypeInternals {
 
   /** @internal Parses input, doesn't run checks. */
   parse(payload: ParsePayload<any>, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload>;
-
-  /** @internal Emits this schema's AOT fast path; installed by the JIT twins in jit.ts. */
-  codegen?(doc: Doc, ctx: CompileContext, accessor: string, buildsValue: boolean): string | null;
 
   /** @internal  Stores identifiers for the set of traits implemented by this schema. */
   traits: Set<string>;
@@ -2005,7 +2001,7 @@ export interface $ZodObject<
 // one shared instance; a fresh [] per schema cost 56 bytes retained
 const NO_SYMBOL_KEYS: symbol[] = [];
 
-export function normalizeDef(def: $ZodObjectDef) {
+function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
   const ownSymbols = Object.getOwnPropertySymbols(def.shape);
   const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
@@ -2029,7 +2025,7 @@ export function normalizeDef(def: $ZodObjectDef) {
   };
 }
 
-export function handleCatchall(
+function handleCatchall(
   proms: Promise<any>[],
   input: any,
   payload: ParsePayload,
@@ -2170,6 +2166,150 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
   };
 });
+
+export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor(
+  "$ZodObjectJIT",
+  (inst, def) => {
+    // requires cast because technically $ZodObject doesn't extend
+    $ZodObject.init(inst, def);
+
+    const superParse = inst._zod.parse;
+    const _normalized = util.cached(() => normalizeDef(def));
+
+    const memo = core.globalConfig.memoizer;
+
+    const generateFastpass = (shape: any) => {
+      const normalized = _normalized.value;
+      const syms = normalized.symbolKeys;
+      // a symbol has no source literal, so it is read as `syms[i]` off the closed-over scope
+      const doc = new Doc(["payload", "ctx"], { shape, inst, memo, syms });
+
+      const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+
+      // Prefixes in place, like util.prefixIssues does for every interpreted path.
+      const prefixStr = (id: string, k: string) => `
+          for (let i = 0; i < ${id}.issues.length; i++) {
+            const iss = ${id}.issues[i];
+            iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
+            payload.issues.push(iss);
+          }`;
+
+      doc.write(`const input = payload.value;`);
+
+      const ids: any = Object.create(null);
+      let counter = 0;
+      for (const key of normalized.allKeys) {
+        ids[key] = `key_${counter++}`;
+      }
+
+      // A: preserve key order {
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
+      for (const key of normalized.allKeys) {
+        if (key === "__proto__") continue;
+        const id = ids[key];
+        const k = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : util.esc(key);
+        const isPresent = `${k} in input`;
+        const schema = shape[key];
+        const optin = schema?._zod?.optin;
+        const isOptionalIn = optin !== undefined;
+        const isOptionalOut = schema?._zod?.optout === "optional";
+
+        doc.write(`const ${id} = ${parseStr(k)};`);
+
+        if (isOptionalIn && isOptionalOut) {
+          // For optional-in/out schemas, ignore errors on absent keys — and, like the interpreted path, drop the value produced alongside them. The middle rung goes further: it permits absence without supplying anything in its place, so an absent key contributes nothing at all.
+          const assign = optin === "optional" ? `${id}_present` : `${id}.value !== undefined || ${id}_present`;
+          doc.write(`
+        const ${id}_present = ${isPresent};
+        if (!${id}.issues.length || ${id}_present) {
+          if (${id}.issues.length) {${prefixStr(id, k)}
+          }
+
+          if (${assign}) {
+            newResult[${k}] = ${id}.value;
+          }
+        }
+
+      `);
+        } else if (!isOptionalIn) {
+          doc.write(`
+        const ${id}_present = ${isPresent};
+        if (${id}.issues.length) {${prefixStr(id, k)}
+        }
+        if (!${id}_present && !${id}.issues.length) {
+          payload.issues.push({
+            code: "invalid_type",
+            expected: "nonoptional",
+            input: undefined,
+            path: [${k}]
+          });
+        }
+
+        if (${id}_present) {
+          newResult[${k}] = ${id}.value;
+        }
+
+      `);
+        } else {
+          doc.write(`
+        if (${id}.issues.length) {${prefixStr(id, k)}
+        }
+        
+        if (${id}.value === undefined) {
+          if (${isPresent}) {
+            newResult[${k}] = undefined;
+          }
+        } else {
+          newResult[${k}] = ${id}.value;
+        }
+
+      `);
+        }
+      }
+
+      doc.write(`payload.value = newResult;`);
+      doc.write(`return payload;`);
+      // closing `shape` in is what pays: turbofan specializes the parser against that one shape object, so every `shape[k]._zod.run` folds to a known callee. as a parameter it stays a generic load and measures 13% slower even with the forwarding frame gone
+      return doc.compile() as (payload: any, ctx: any) => any;
+    };
+
+    let fastpass!: ReturnType<typeof generateFastpass>;
+
+    const isObject = util.isObject;
+    const jit = !core.globalConfig.jitless;
+    const allowsEval = util.allowsEval;
+
+    const fastEnabled = jit && allowsEval.value; // && !def.catchall;
+    const catchall = def.catchall;
+
+    let value!: typeof _normalized.value;
+
+    inst._zod.parse = (payload, ctx) => {
+      value ??= _normalized.value;
+      const input = payload.value;
+      if (!isObject(input)) {
+        payload.issues.push({
+          expected: "object",
+          code: "invalid_type",
+          input,
+          inst,
+        });
+        return payload;
+      }
+
+      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+        // always synchronous
+        if (!fastpass) fastpass = generateFastpass(def.shape);
+        payload = fastpass(payload, ctx);
+
+        if (!catchall) return payload;
+        return handleCatchall([], input, payload, ctx, value, inst);
+      }
+
+      return superParse(payload, ctx);
+    };
+  }
+);
 
 /////////////////////////////////////////
 /////////////////////////////////////////
@@ -2860,7 +3000,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
-export function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
+function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
   for (let i = items.length - 1; i >= 0; i--) {
     // optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
     const omittable = key === "optin" ? items[i]._zod.optin !== undefined : items[i]._zod.optout === "optional";
@@ -2917,6 +3057,120 @@ function handleTupleResults(
   }
   return final;
 }
+
+export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor(
+  "$ZodTupleJIT",
+  (inst, def) => {
+    $ZodTuple.init(inst, def);
+
+    const superParse = inst._zod.parse;
+    const memo = core.globalConfig.memoizer;
+
+    const generateFastpass = () => {
+      const items = def.items;
+      const rest = def.rest;
+      const optinStart = getTupleOptStart(items, "optin");
+      const optoutStart = getTupleOptStart(items, "optout");
+      const optouts = items.map((item) => item._zod.optout === "optional");
+      const doc = new Doc(["payload", "ctx"], { items, rest, inst, memo, optouts });
+
+      // Prefixes in place, like util.prefixIssues does for every interpreted path.
+      const prefixStr = (id: string, index: number | string) => `
+          for (let j = 0; j < ${id}.issues.length; j++) {
+            const iss = ${id}.issues[j];
+            iss.path = iss.path ? [${index}, ...iss.path] : [${index}];
+            payload.issues.push(iss);
+          }`;
+
+      doc.write(`const input = payload.value;`);
+      doc.write(`
+        if (!Array.isArray(input)) {
+          payload.issues.push({ input, inst, expected: "tuple", code: "invalid_type" });
+          return payload;
+        }`);
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, [], ctx);` : `const newResult = [];`);
+      doc.write(`payload.value = newResult;`);
+
+      if (!rest) {
+        doc.write(`
+          if (input.length < ${optinStart}) {
+            payload.issues.push({ code: "too_small", minimum: ${optinStart}, inclusive: true, input, inst, origin: "array" });
+            return payload;
+          }`);
+        doc.write(`
+          if (input.length > ${items.length}) {
+            payload.issues.push({ code: "too_big", maximum: ${items.length}, inclusive: true, input, inst, origin: "array" });
+          }`);
+      }
+
+      // Items run first, but their issues are pushed after the rest elements' — the interpreted path collects item results, pushes rest issues inside its rest loop, and only then walks the item results.
+      for (let i = 0; i < items.length; i++) {
+        doc.write(`const item_${i} = items[${i}]._zod.run({ value: input[${i}], issues: [] }, ctx);`);
+      }
+
+      if (rest) {
+        doc.write(`
+          for (let i = ${items.length}; i < input.length; i++) {
+            const r = rest._zod.run({ value: input[i], issues: [] }, ctx);
+            if (r.issues.length) {${prefixStr("r", "i")}
+            }
+            newResult[i] = r.value;
+          }`);
+      }
+
+      // handleTupleResults, unrolled: the optin/optout rungs per index are codegen-time constants, so each index emits only the branches it can take. `break` becomes a labeled-block break.
+      doc.write(`itemLoop: {`);
+      for (let i = 0; i < items.length; i++) {
+        const id = `item_${i}`;
+        const optinOptional = items[i]._zod.optin === "optional";
+        const afterOptout = i >= optoutStart;
+
+        if (afterOptout && optinOptional) {
+          // absence truncates the tail regardless of issues; when present, the interpreted inner absence check can no longer fire
+          doc.write(`
+          if (${i} >= input.length) { newResult.length = ${i}; break itemLoop; }
+          if (${id}.issues.length) {${prefixStr(id, i)}
+          }`);
+        } else if (afterOptout) {
+          doc.write(`
+          if (${id}.issues.length) {
+            if (${i} >= input.length) { newResult.length = ${i}; break itemLoop; }${prefixStr(id, i)}
+          }`);
+        } else {
+          doc.write(`
+          if (${id}.issues.length) {${prefixStr(id, i)}
+          }`);
+        }
+        doc.write(`newResult[${i}] = ${id}.value;`);
+      }
+      doc.write(`}`);
+
+      if (optouts.some((o) => o)) {
+        doc.write(`
+          for (let i = newResult.length - 1; i >= input.length; i--) {
+            if (optouts[i] && newResult[i] === undefined) newResult.length = i;
+            else break;
+          }`);
+      }
+
+      doc.write(`return payload;`);
+      return doc.compile() as (payload: ParsePayload, ctx: ParseContextInternal) => ParsePayload;
+    };
+
+    let fastpass!: ReturnType<typeof generateFastpass>;
+    const jit = !core.globalConfig.jitless;
+    const allowsEval = util.allowsEval;
+    const fastEnabled = jit && allowsEval.value;
+
+    inst._zod.parse = (payload, ctx) => {
+      if (fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+        if (!fastpass) fastpass = generateFastpass();
+        return fastpass(payload, ctx);
+      }
+      return superParse(payload, ctx);
+    };
+  }
+);
 
 //////////////////////////////////////////
 //////////////////////////////////////////
