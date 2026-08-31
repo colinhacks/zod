@@ -15,6 +15,7 @@ import {
   finalize,
   handleUnrepresentable,
   initializeContext,
+  isTransforming,
   process,
 } from "./to-json-schema.js";
 import { assignProp, getEnumValues } from "./util.js";
@@ -381,6 +382,24 @@ export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, c
     return;
   }
 
+  // the parsed value is the input, so an output-mode emission would describe a transformed value this schema never returns
+  if (ctx.io === "output") {
+    for (const key in def.shape) {
+      if (
+        isTransforming(def.shape[key]!) &&
+        handleUnrepresentable(
+          schema,
+          ctx,
+          json,
+          params,
+          `z.properties() returns its input, so the output of a transforming schema at key "${key}" cannot be represented in JSON Schema`
+        )
+      ) {
+        return;
+      }
+    }
+  }
+
   json.type = "object";
   json.properties = {};
   for (const key in def.shape) {
@@ -393,10 +412,8 @@ export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, c
       })
     );
   }
-  const required = Object.keys(def.shape).filter((key) => {
-    const field = def.shape[key]!;
-    return ctx.io === "input" ? inputOptin(field) === undefined : field._zod.optout === undefined;
-  });
+  // input-side optionality in both modes: the parsed value is the input, so a defaulted key that stays absent must not be required of the output either
+  const required = Object.keys(def.shape).filter((key) => inputOptin(def.shape[key]!) === undefined);
   if (required.length > 0) json.required = required;
 };
 

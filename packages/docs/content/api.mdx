@@ -2301,7 +2301,7 @@ type HttpsUrl = z.infer<typeof httpsUrl>;
 // => URL & { protocol: "https:"; hostname: string }
 ```
 
-The underlying `z.properties()` is a standalone schema. It asserts the named properties in place and returns its input untouched — unlike `z.object()`, it never builds a new object, so prototypes, unlisted keys, and object identity survive. (Transforms inside the shape are validated but never written back.)
+The underlying `z.properties()` is a standalone schema. It asserts the named properties in place and returns its input untouched — unlike `z.object()`, it never builds a new object, so prototypes, unlisted keys, and object identity survive. Schemas inside the shape are validated but their results are discarded, so a transform or a default never changes the parsed value.
 
 ```ts
 const Named = z.properties({ name: z.string() });

@@ -5009,21 +5009,14 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
     const memo = core.globalConfig.memoizer;
     memo?.attach(inst);
 
-    let keys!: (string | symbol)[];
+    // key and schema snapshotted together: reading one live and the other cached lets a later mutation of the caller's shape object pair a stale key with a missing schema
+    let entries!: [string | symbol, $ZodType][];
     const runShape = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<void> => {
-      keys ??= Reflect.ownKeys(def.shape);
+      entries ??= Reflect.ownKeys(def.shape).map((key) => [key, (def.shape as any)[key] as $ZodType]);
       const input = payload.value as any;
-      // property reads work on any non-nullish value (a string's length, a class instance), so only null and undefined are rejected outright
-      if (input == null) {
-        payload.issues.push({ expected: "object", code: "invalid_type", input, inst });
-        return undefined;
-      }
       let proms: Promise<any>[] | undefined;
-      for (const key of keys) {
-        const result = (def.shape as Record<string | symbol, $ZodType>)[key]!._zod.run(
-          { value: input[key], issues: [] },
-          ctx
-        );
+      for (const [key, schema] of entries) {
+        const result = schema._zod.run({ value: input[key], issues: [] }, ctx);
         if (result instanceof Promise) {
           proms ??= [];
           proms.push(result.then((result) => handlePropertiesResult(result, payload, key)));
@@ -5036,22 +5029,28 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
     };
 
     inst._zod.parse = (payload, ctx) => {
+      const input = payload.value;
+      // as a schema this is the type gate, and it infers an object shape, so a primitive is a type error. A function passes: its properties read like any other object's, and z.instanceof allows one.
+      if (input === null || (typeof input !== "object" && typeof input !== "function")) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input, inst });
+        return payload;
+      }
       // both sides declare the shape's input type, so the assertion runs forward in either direction; encoding the children backward would reject the very type this schema claims to take
       if (ctx.direction === "backward") ctx = { ...ctx, direction: "forward" };
       // the input is its own output here, so it registers as its own memo entry: a cycle re-entering this node hits the bucket instead of recursing forever
-      if (
-        memo &&
-        payload.value !== null &&
-        (typeof payload.value === "object" || typeof payload.value === "function")
-      ) {
-        memo.alloc(inst, payload, payload.value, ctx);
-      }
+      if (memo) memo.alloc(inst, payload, input, ctx);
       const result = runShape(payload, ctx);
       return result instanceof Promise ? result.then(() => payload) : payload;
     };
 
-    // the check role gets no context of its own, matching z.property(); a cycle through a schema spread into `.check()` is not tracked
-    inst._zod.check = (payload) => runShape(payload, {});
+    // as a check the base schema already typed the value, so this only asserts the properties — which read on a primitive too, matching z.property() on a string's length. It gets no context of its own, so a cycle through a spread schema is not tracked.
+    inst._zod.check = (payload) => {
+      if (payload.value == null) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input: payload.value, inst });
+        return undefined;
+      }
+      return runShape(payload, {});
+    };
   },
   {
     *[Symbol.iterator]() {

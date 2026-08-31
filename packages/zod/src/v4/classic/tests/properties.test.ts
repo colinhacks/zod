@@ -13,11 +13,21 @@ test("z.properties is a schema", () => {
   // every failing key reports
   expect(p.safeParse({ a: "!", b: "!" }).error!.issues.map((i) => i.path)).toEqual([["a"], ["b"]]);
 
-  // property reads work on any non-nullish value, so only null and undefined are a type error
-  expect(z.properties({ length: z.number().min(3) }).parse("abc")).toBe("abc");
-  for (const input of [null, undefined]) {
+  // as a schema it is the type gate and infers an object shape, so a primitive is a type error
+  for (const input of [null, undefined, 5, "abc"]) {
     expect(p.safeParse(input).error!.issues.map((i) => [i.code, i.path])).toEqual([["invalid_type", []]]);
   }
+
+  // as a check the base already typed the value, so the properties are asserted on whatever it produced — a string's length, as z.property() does
+  const long = z.string().check(...z.properties({ length: z.number().min(3) }));
+  expect(long.parse("abc")).toBe("abc");
+  expect(long.safeParse("ab").error!.issues.map((i) => i.path)).toEqual([["length"]]);
+  expect(
+    z
+      .compile(long)
+      .safeParse("ab")
+      .error!.issues.map((i) => i.path)
+  ).toEqual([["length"]]);
 
   // an optional key may be absent
   const opt = z.properties({ a: z.string().optional() });
@@ -185,4 +195,31 @@ test("z.properties parses a cyclic callable", () => {
   const fn = (() => {}) as unknown as Record<string, unknown>;
   fn.self = fn;
   expect(Fn.parse(fn)).toBe(fn);
+});
+
+test("z.properties survives shape mutation", () => {
+  // key and schema are snapshotted together; caching one and reading the other live paired a stale key with a missing schema
+  const shape: Record<string, z.ZodType> = { a: z.string() };
+  const p = z.properties(shape);
+  expect(p.safeParse({ a: "x" }).success).toBe(true);
+  delete shape.a;
+  expect(p.safeParse({ a: "x" }).success).toBe(true);
+  shape.b = z.string();
+  expect(p.safeParse({ a: "x" }).success).toBe(true);
+});
+
+test("z.properties JSON Schema describes the input side", () => {
+  // the parsed value is the input, so a defaulted key that stays absent must not be required of the output either
+  const p = z.properties({ a: z.string().default("x") });
+  expect(p.parse({})).toEqual({});
+  expect(z.toJSONSchema(p, { io: "output" })).toEqual({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    properties: { a: { default: "x", type: "string" } },
+  });
+
+  // an output mode emission for a transforming child would describe a value this schema never returns
+  const t = z.properties({ a: z.string().transform((s) => s.length) });
+  expect(() => z.toJSONSchema(t, { io: "output" })).toThrow(/cannot be represented/);
+  expect(z.toJSONSchema(t, { io: "input" })).toMatchObject({ properties: { a: { type: "string" } }, required: ["a"] });
 });

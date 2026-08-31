@@ -420,7 +420,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generatePropertyCheck(doc, ctx, def, currentAccessor);
         break;
       case "properties":
-        generatePropertiesChecks(doc, ctx, def, currentAccessor);
+        generatePropertiesChecks(doc, ctx, def, currentAccessor, false);
         break;
       case "overwrite": {
         // Overwrite transforms the value - create new variable for transformed result
@@ -578,13 +578,23 @@ function generateMimeTypeCheck(
 }
 
 // asserts each named property in place; children compile assert-only because z.properties never rebuilds its input
-function generatePropertiesChecks(doc: Doc, ctx: CompileContext, def: $ZodPropertiesDef, accessor: string): void {
+function generatePropertiesChecks(
+  doc: Doc,
+  ctx: CompileContext,
+  def: $ZodPropertiesDef,
+  accessor: string,
+  schemaRole: boolean
+): void {
   // a custom `when` gates the assertion at runtime; inside a union a wrongly-run branch is absorbed as a branch failure rather than falling back, so refuse at codegen the way the check role does
   if (def.when) {
     throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
   }
-  // the runtime reports invalid_type for a nullish value; without this the generated property read throws instead
-  doc.write(`if (${accessor} == null) return INVALID;`);
+  // matches the runtime gate for whichever role this is: a schema rejects a primitive outright, a check only a nullish value
+  doc.write(
+    schemaRole
+      ? `if (${accessor} === null || (typeof ${accessor} !== "object" && typeof ${accessor} !== "function")) return INVALID;`
+      : `if (${accessor} == null) return INVALID;`
+  );
   const shape = def.shape as Record<string | symbol, SomeType>;
   for (const key of Reflect.ownKeys(shape)) {
     // a symbol has no source literal, so it is hoisted as a constant
@@ -1030,7 +1040,7 @@ function generateCheck(
       typeAccessor = generateCustomCheck(doc, ctx, schema, accessor);
       break;
     case "properties":
-      generatePropertiesChecks(doc, ctx, (schema as $ZodProperties)._zod.def, accessor);
+      generatePropertiesChecks(doc, ctx, (schema as $ZodProperties)._zod.def, accessor, true);
       typeAccessor = accessor;
       break;
     case "transform":
