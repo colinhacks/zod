@@ -1418,8 +1418,8 @@ test("xor and custom when-gated checks force runtime fallback", () => {
   expectMatch(z.object({ n: gated }), { n: 3 }); // runtime skips the gated check
 });
 
-test("fast path throws where the runtime throws instead of bailing to INVALID", () => {
-  // unmergeable intersection: both children passed, which is exactly the case the interpreter answers with a throw
+test("compiled parse surfaces the interpreter's throws through the fallback", () => {
+  // an unmergeable intersection bails to INVALID, and the fallback it hands to raises the interpreter's own error
   const unmergeable = compile(
     z.intersection(
       z.number(),
@@ -1431,7 +1431,7 @@ test("fast path throws where the runtime throws instead of bailing to INVALID", 
     `[Error: Unmergable intersection. Error path: []]`
   );
 
-  // an async child behind a when-gated check islands at codegen; its thenable at parse time throws like the interpreter
+  // a when-gated check islands at codegen, and the island's INVALID for an async run reaches the same fallback
   const gated = z.number().refine(() => Promise.resolve(true));
   (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => true;
   const compiled = compile(z.object({ n: gated }), { strict: true });
