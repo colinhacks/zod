@@ -35,14 +35,10 @@ function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
 
-// Set by a walk that reported a cycle it could not confirm, so the answer is not cached and the caller knows to ask again once the graph is resolved. The walk is synchronous and never re-enters, so one flag serves the whole traversal.
+// the walk reported a cycle it couldn't confirm; it's synchronous and never re-enters, so one flag covers it
 let assumed = false;
 
-/**
- * Whether this schema's subtree contains a cycle, so one parse can re-enter it.
- *
- * The walk resolves nothing that runs user code, and reports a cycle for every edge it therefore can't follow — a shape getter or a `z.lazy`. Identity is its only termination argument, and a deferred edge need not answer with the same schema twice: a factory-built recursive schema mints a fresh subtree per level, so a walk that resolved those would never revisit a node and would descend until the stack overflows. Erring toward a cycle costs such a schema only the memoizer it keeps attached; erring the other way is unsound.
- */
+/** Whether this schema's subtree contains a cycle, so one parse can re-enter it. */
 function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   const cached = recursive.get(inst);
   if (cached !== undefined) return cached;
@@ -59,6 +55,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   const shape = (sh: object) => {
     for (const key of Reflect.ownKeys(sh)) {
       const desc = Object.getOwnPropertyDescriptor(sh, key)!;
+      // resolving runs user code, and a factory mints a fresh subtree per read, so an edge the walk can't follow counts as a cycle
       if (desc.get) result = assumed = true;
       else check(desc.value);
     }
@@ -72,11 +69,11 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       const desc = raw ? undefined : Object.getOwnPropertyDescriptor(def, "shape");
       const sources = desc?.get ? util.getShapeSources(def) : undefined;
       if (sources) {
-        // The def answers `shape` from a builder's accessor that has not run yet, and reading it resolves the source's getters. Ask what it was built from instead: the derived subtree is contained in theirs. Only contained, though — a builder can drop or overwrite the very branch that carries the cycle — so this is an over-approximation, and marking it assumed is what lets the recheck below replace it with the resolved shape's exact answer.
+        // unresolved builder accessor: reading it runs the source's getters, so answer from what it derives from — contained but not equal, since a builder can drop the cyclic key, hence assumed
         assumed = true;
         for (const src of sources) (src as any)?._zod ? check(src) : shape(src as object);
       } else {
-        // Either the raw shape, or a builder accessor that has already self-cached its result: both hold resolved values, so neither runs user code.
+        // raw shape, or a builder accessor that already self-cached: both hold resolved values
         shape(raw ?? def.shape);
       }
       check(def.catchall);
@@ -123,7 +120,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       check(def.input);
       check(def.output);
       break;
-    // `$ZodLazy` caches its resolved inner on the def, so once anything has read it the walk follows it exactly without invoking the getter itself
+    // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy":
       if (def._cachedInner) check(def._cachedInner);
       else result = assumed = true;
@@ -167,7 +164,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   }
 
   stack.delete(inst);
-  // An assumed answer is only true of the graph as it stands, so it must not outlive the resolution that settles it.
+  // an assumed answer must not outlive the resolution that settles it
   if (!assumed) recursive.set(inst, result);
   return result;
 }
@@ -245,7 +242,7 @@ const memo: $ZodMemoizer = {
             if (inst._zod.run === wrapped) inst._zod.run = base;
             return base(payload, ctx);
           }
-          // A cold walk can only assume a cycle across an edge it won't resolve. This parse resolves the ones on its own path, so leave the question open and ask again next time; a second assumed answer means the edge is still deferred and the wrapper stays for good.
+          // this parse resolves the deferred edges on its own path, so ask once more before latching
           if (!assumed || rechecked) isRecursiveInst = true;
           else rechecked = true;
         }

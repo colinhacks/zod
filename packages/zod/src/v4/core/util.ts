@@ -338,7 +338,7 @@ export function assignProp<T extends object, K extends PropertyKey>(
   });
 }
 
-// What a derived object's shape is built from, registered by the builders below. Each of them answers `shape` from an accessor that reads the source's — resolving the user's getters — so the cycle walk asks this instead: the derived subtree is contained in its sources', which are schemas it can reach by identity and shape objects whose descriptors it can read unresolved. Entries are `$ZodType`s or plain shapes.
+// what a derived shape is built from, as schemas or plain shapes: its subtree is contained in these, so the cycle walk answers from them rather than resolving the builder's accessor
 const shapeSources = new WeakMap<object, unknown[]>();
 
 export function setShapeSources(def: object, sources: unknown[]): void {
