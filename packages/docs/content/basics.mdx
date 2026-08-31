@@ -227,6 +227,18 @@ type Flatten<T> = { [K in keyof T]: T[K] } & {};
 z.toZod<Flatten<Entry>>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ✅
 ```
 
+An enum target matches `z.enum(...)`, and stays nominal — a plain literal union doesn't satisfy it:
+
+```ts
+enum Level {
+  Noob = "noob",
+  Pro = "pro",
+}
+
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(Level) })); // ✅
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(["noob", "pro"]) })); // ❌
+```
+
 ---
 
 Now that we have the basics covered, let's jump into the Schema API.
