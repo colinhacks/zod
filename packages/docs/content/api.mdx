@@ -2268,7 +2268,7 @@ To validate a particular property of a class instance against a Zod schema:
 
 ```ts
 const blobSchema = z.instanceof(URL).check(
-  z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
+  z.property("protocol", z.literal("https:", "Only HTTPS allowed"))
 );
 
 blobSchema.parse(new URL("https://example.com")); // ✅
@@ -2286,19 +2286,34 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-Use `z.properties()` to declare several property checks from an object literal. It returns an array to spread into `.check()`.
+Use `.properties()` to check several properties at once. Each call narrows the inferred type.
 
 ```ts
-const httpsUrl = z.instanceof(URL).check(
-  ...z.properties({
-    protocol: z.literal("https:" as string),
-    hostname: z.string().regex(z.regexes.domain),
-  })
-);
+const okResponse = z.instanceof(Response).properties({
+  status: z.number().min(200).max(299),
+  redirected: z.literal(false),
+});
 
-httpsUrl.parse(new URL("https://example.com")); // ✅
-httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+
+type OkResponse = z.infer<typeof okResponse>;
+// => Response & { status: number; redirected: false }
 ```
+
+The underlying `z.properties()` is a standalone schema. It asserts the named properties in place and returns its input untouched — unlike `z.object()`, it never builds a new object, so prototypes, unlisted keys, and object identity survive. Schemas inside the shape are validated but their results are discarded, so a transform or a default never changes the parsed value.
+
+```ts
+const Named = z.properties({ name: z.string() });
+
+class Dog {
+  constructor(public name: string) {}
+}
+const rex = new Dog("Rex");
+Named.parse(rex); // => rex (the same instance)
+```
+
+Spreading into `.check()` works too: `z.instanceof(Response).check(...z.properties({ ... }))`. As a check it asserts on whatever the base schema produced, so `z.string().check(...z.properties({ length: z.number().min(3) }))` reads a string's length; as a standalone schema it expects an object.
 
 ## Refinements
 
@@ -3444,4 +3459,60 @@ const schema = z.string().apply(withDefault, "anonymous");
 
 schema.parse(undefined); // => "anonymous"
 schema.parse("sandwich"); // => "sandwich"
+```
+
+## Matching an existing type
+
+Sometimes the type comes first: a database model, a type from a generated client, an interface you don't own. Pass it to `z.toZod<T>()` and TypeScript checks that the schema's output type is exactly `T`.
+
+```ts
+type Player = {
+  username: string;
+  xp: number;
+};
+
+const Player = z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+  })
+);
+
+Player.shape.username; // ZodString — the schema is returned unchanged
+```
+
+The check is exact type equality, so any drift from the type is a compile error:
+
+```ts
+z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+    admin: z.boolean(), // ❌ extra key
+  })
+);
+```
+
+The usual alternative is `satisfies z.ZodType<Player>`, which only checks assignability. It catches a missing required key, but extra keys, omitted optional keys, and a bare `z.any()` all slip through:
+
+```ts
+z.object({
+  username: z.string(),
+  xp: z.number(),
+  admin: z.boolean(),
+}) satisfies z.ZodType<Player>; // ✅ no error
+
+z.any() satisfies z.ZodType<Player>; // ✅ no error
+```
+
+An enum target matches `z.enum(...)`, and stays nominal — a plain literal union doesn't satisfy it:
+
+```ts
+enum Level {
+  Noob = "noob",
+  Pro = "pro",
+}
+
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(Level) })); // ✅
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(["noob", "pro"]) })); // ❌
 ```

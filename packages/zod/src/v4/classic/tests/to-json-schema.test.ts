@@ -218,6 +218,15 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    expect(z.toJSONSchema(z.base64url())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "contentEncoding": "base64url",
+        "format": "base64url",
+        "pattern": "^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-]{2,3})?$",
+        "type": "string",
+      }
+    `);
     expect(z.toJSONSchema(z.cuid())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -231,7 +240,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "emoji",
-        "pattern": "^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
+        "pattern": "^(?=[\\s\\S]*[\\p{Extended_Pictographic}\\p{Regional_Indicator}\\u20E3])[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
         "type": "string",
       }
     `);
@@ -480,6 +489,30 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+  });
+
+  test("base64url pattern agrees with parse", () => {
+    const schema = z.base64url();
+    const pattern = new RegExp(z.toJSONSchema(schema).pattern!);
+    // lengths 1 (mod 4) carry no whole byte; the emitted pattern must reject them like parse does
+    for (const s of ["", "A", "AA", "AAA", "AAAA", "AAAAA"]) {
+      expect(pattern.test(s)).toBe(schema.safeParse(s).success);
+    }
+  });
+
+  test("base64 pattern agrees with parse", () => {
+    const schema = z.base64();
+    const pattern = new RegExp(z.toJSONSchema(schema).pattern!);
+    // the runtime def.pattern is lax; the emitted pattern must still carry the block structure parse enforces
+    for (const s of ["", "A", "AA", "AAA", "AAAA", "AAAAA", "AA==", "AAA=", "A===", "=", "AAAA=="]) {
+      expect(pattern.test(s)).toBe(schema.safeParse(s).success);
+    }
+  });
+
+  test("looseRecord with a format key emits the exact pattern", () => {
+    // recordProcessor reads bag.patterns directly; it must apply the same lax-to-exact swap as stringProcessor
+    const json = z.toJSONSchema(z.looseRecord(z.base64url(), z.number()));
+    expect(Object.keys(json.patternProperties!)).toEqual([z.regexes.base64url.source]);
   });
 
   test("string patterns", () => {

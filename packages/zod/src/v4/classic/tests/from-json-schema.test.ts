@@ -1308,3 +1308,160 @@ test("__proto__ annotation key reaches the registry", () => {
   expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
   expect(meta.__proto__).toEqual({ custom: 1 });
 });
+
+test("minProperties and maxProperties count the raw input", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    minProperties: 1,
+    maxProperties: 2,
+  });
+  expect(schema.safeParse({ a: "x" }).success).toBe(true);
+  expect(schema.safeParse({}).error!.issues[0]).toMatchObject({ code: "too_small", origin: "object", minimum: 1 });
+  expect(schema.safeParse({ a: "x", b: 1, c: 2 }).error!.issues[0]).toMatchObject({
+    code: "too_big",
+    origin: "object",
+    maximum: 2,
+  });
+  // raw input: a defaulted property does not satisfy the minimum, and a dropped __proto__ still counts
+  const defaulted = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string", default: "x" } },
+    minProperties: 1,
+  });
+  expect(defaulted.safeParse({}).success).toBe(false);
+  const capped = fromJSONSchema({ type: "object", maxProperties: 1 });
+  expect(capped.safeParse(JSON.parse('{"__proto__":1,"a":1}')).success).toBe(false);
+  expect(z.toJSONSchema(schema)).toMatchObject({ minProperties: 1, maxProperties: 2 });
+});
+
+test("minProperties composes with propertyNames in one guard", () => {
+  const schema = fromJSONSchema({ type: "object", propertyNames: { pattern: "^a" }, minProperties: 1 });
+  expect(schema.safeParse({}).error!.issues[0]!.code).toBe("too_small");
+  expect(schema.safeParse({ b: 1 }).error!.issues[0]!.code).toBe("invalid_key");
+  expect(schema.safeParse({ a: 1 }).success).toBe(true);
+});
+
+test("uniqueItems rejects structural duplicates", () => {
+  const schema = fromJSONSchema({ type: "array", uniqueItems: true });
+  expect(
+    schema.safeParse([
+      { a: 1, b: 2 },
+      { b: 2, a: 1 },
+    ]).error!.issues[0]
+  ).toMatchObject({
+    code: "custom",
+    path: [1],
+  });
+  expect(schema.safeParse([1, "1", true, 1]).success).toBe(false);
+  expect(schema.safeParse([{ a: 1 }, { a: 2 }, [1], [2]]).success).toBe(true);
+  expect(z.toJSONSchema(schema)).toMatchObject({ uniqueItems: true });
+});
+
+test("contains with minContains and maxContains", () => {
+  const schema = fromJSONSchema({ type: "array", contains: { type: "integer" } });
+  expect(schema.safeParse(["a"]).success).toBe(false);
+  expect(schema.safeParse(["a", 1]).success).toBe(true);
+  const bounded = fromJSONSchema({ type: "array", contains: { type: "integer" }, minContains: 2, maxContains: 3 });
+  expect(bounded.safeParse([1, "a"]).success).toBe(false);
+  expect(bounded.safeParse([1, 2, "a"]).success).toBe(true);
+  expect(bounded.safeParse([1, 2, 3, 4]).success).toBe(false);
+  // minContains: 0 accepts an array with no matches at all
+  expect(fromJSONSchema({ type: "array", contains: { type: "integer" }, minContains: 0 }).safeParse([]).success).toBe(
+    true
+  );
+  expect(z.toJSONSchema(bounded)).toMatchObject({ contains: { type: "integer" }, minContains: 2, maxContains: 3 });
+});
+
+test("uniqueItems and contains see the raw instance, not the parsed output", () => {
+  const items = { type: "object", properties: { a: { type: "string", default: "x" } } } as const;
+  // no instance item carries `a`; the default must not synthesize the match
+  const contains = fromJSONSchema({
+    type: "array",
+    items,
+    contains: { type: "object", properties: { a: { const: "x" } }, required: ["a"] },
+  });
+  expect(contains.safeParse([{}]).success).toBe(false);
+  expect(contains.safeParse([{ a: "x" }]).success).toBe(true);
+  // the instance items differ; the default must not collapse them into duplicates
+  const unique = fromJSONSchema({ type: "array", items, uniqueItems: true });
+  expect(unique.safeParse([{ a: "x" }, {}]).success).toBe(true);
+  expect(unique.safeParse([{}, {}]).error!.issues[0]).toMatchObject({ code: "custom", path: [1] });
+});
+
+test("a guard keyword takes precedence over the length keywords", () => {
+  const schema = fromJSONSchema({ type: "array", items: { type: "integer" }, minItems: 3, uniqueItems: true });
+  // the guard runs on the input side of the pipe, so its issue aborts before minItems is reached
+  expect(schema.safeParse([1, 1]).error!.issues.map((i) => i.code)).toEqual(["custom"]);
+  expect(schema.safeParse([1, 2]).error!.issues.map((i) => i.code)).toEqual(["too_small"]);
+});
+
+test("a guard keyword drops default and examples from the input-mode document", () => {
+  // the guard is a transform on the pipe's input side, and toJSONSchema strips annotations from a transforming schema in input mode
+  const schema = fromJSONSchema({ type: "array", uniqueItems: true, default: [], examples: [[1]] });
+  expect(z.toJSONSchema(schema, { io: "input" })).not.toHaveProperty("default");
+  expect(z.toJSONSchema(schema, { io: "output" })).toMatchObject({ default: [], examples: [[1]] });
+  // without a guard keyword both modes carry them
+  const plain = fromJSONSchema({ type: "array", default: [], examples: [[1]] });
+  expect(z.toJSONSchema(plain, { io: "input" })).toMatchObject({ default: [], examples: [[1]] });
+});
+
+test("uniqueItems equality follows JSON semantics", () => {
+  const schema = fromJSONSchema({ type: "array", uniqueItems: true });
+  expect(schema.safeParse([1, "1", true, null]).success).toBe(true);
+  expect(schema.safeParse([{ a: undefined }, {}]).success).toBe(true);
+  expect(
+    schema.safeParse([
+      [1, [2]],
+      [1, [2]],
+    ]).success
+  ).toBe(false);
+  expect(schema.safeParse([{ a: "b=c" }, { "a=b": "c" }]).success).toBe(true);
+  // every duplicate is reported against the first element it matches
+  expect(schema.safeParse([1, 1, 1]).error!.issues.map((i) => i.path[0])).toEqual([1, 2]);
+  // a cycle cannot be compared, so it is never called a duplicate rather than hanging
+  const cyclic: any = {};
+  cyclic.self = cyclic;
+  expect(schema.safeParse([cyclic, cyclic]).success).toBe(true);
+});
+
+test("a carried subschema that references $defs is dropped rather than emitted dangling", () => {
+  const schema = fromJSONSchema({
+    type: "array",
+    contains: { $ref: "#/$defs/Hit" },
+    $defs: { Hit: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
+  });
+  // enforcement is unaffected; only the round trip gives the keyword up
+  expect(schema.safeParse([{ id: "a" }]).success).toBe(true);
+  expect(schema.safeParse([{}]).success).toBe(false);
+  expect(JSON.stringify(z.toJSONSchema(schema))).not.toContain("$ref");
+  expect(z.toJSONSchema(schema)).not.toHaveProperty("contains");
+  // an inline subschema is self-contained, so it still round-trips
+  const inline = fromJSONSchema({ type: "array", contains: { type: "integer" } });
+  expect(z.toJSONSchema(inline)).toMatchObject({ contains: { type: "integer" } });
+  // only schema positions are walked, so a `$ref` key in instance data or an unknown annotation still travels
+  for (const annotation of [{ default: { $ref: "literal" } }, { "x-note": { $ref: "literal" } }]) {
+    const annotated = fromJSONSchema({ type: "array", contains: { type: "integer", ...annotation } });
+    expect(annotated.safeParse(["x"]).success).toBe(false);
+    expect(z.toJSONSchema(annotated)).toMatchObject({ contains: { type: "integer" } });
+  }
+  // draft-7 `dependencies` is a schema map; its array form names properties and holds no reference
+  const dependent = fromJSONSchema({
+    type: "array",
+    contains: { type: "object", dependencies: { a: { $ref: "#/definitions/Hit" } } },
+    definitions: { Hit: { type: "object" } },
+  });
+  expect(z.toJSONSchema(dependent)).not.toHaveProperty("contains");
+  const named = fromJSONSchema({
+    type: "array",
+    contains: { type: "object", dependencies: { a: ["b"] } },
+  });
+  expect(z.toJSONSchema(named)).toMatchObject({ contains: { dependencies: { a: ["b"] } } });
+  // a reference nested in a schema position is still caught
+  const nested = fromJSONSchema({
+    type: "array",
+    contains: { type: "array", items: { $ref: "#/$defs/Hit" } },
+    $defs: { Hit: { type: "string" } },
+  });
+  expect(z.toJSONSchema(nested)).not.toHaveProperty("contains");
+});

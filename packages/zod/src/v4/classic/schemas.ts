@@ -2743,6 +2743,28 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
   inst._zod.processJSONSchema = (ctx, json, params) => processors.customProcessor(inst, ctx, json, params);
 });
 
+// ZodProperties
+export interface ZodProperties<Shape extends core.$ZodShape = core.$ZodShape>
+  extends _ZodType<core.$ZodPropertiesInternals<Shape>>,
+    core.$ZodProperties<Shape> {
+  "~standard": ZodStandardSchemaWithJSON<this>;
+}
+export const ZodProperties: core.$constructor<ZodProperties> = /*@__PURE__*/ core.$constructor(
+  "ZodProperties",
+  (inst, def) => {
+    _ensureDefaultMemoizer();
+    core.$ZodProperties.init(inst, def);
+    ZodType.init(inst, def);
+  }
+);
+
+export function properties<Shape extends core.$ZodShape>(
+  shape: Shape,
+  params?: string | core.$ZodPropertiesParams
+): ZodProperties<Shape> {
+  return core._properties(ZodProperties, shape, params) as any;
+}
+
 // custom checks
 export function check<O = unknown>(fn: core.CheckFn<O>): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
@@ -2785,14 +2807,35 @@ type ZodInstanceOfParams = core.Params<
   core.$ZodIssueCustom,
   "type" | "check" | "checks" | "fn" | "abort" | "error" | "params" | "path"
 >;
+
+// ZodInstanceOf
+export interface ZodInstanceOf<T = unknown> extends ZodCustom<T, T> {
+  properties<Shape extends core.$ZodShape>(
+    shape: Shape,
+    params?: string | core.$ZodPropertiesParams
+  ): ZodInstanceOf<T & core.$InferObjectInput<Shape, {}>>;
+}
+export const ZodInstanceOf: core.$constructor<ZodInstanceOf> = /*@__PURE__*/ core.$constructor(
+  "ZodInstanceOf",
+  (inst, def) => {
+    ZodCustom.init(inst, def);
+  },
+  {
+    properties(shape: core.$ZodShape, params?: string | core.$ZodPropertiesParams) {
+      // asserts in place, so the narrowed output type is truthful without a wrapper
+      return this.check(properties(shape, params)) as any;
+    },
+  }
+);
+
 function _instanceof<T extends typeof util.Class>(
   cls: T,
   params: ZodInstanceOfParams = {}
-): ZodCustom<InstanceType<T>, InstanceType<T>> {
-  const inst = new ZodCustom({
+): ZodInstanceOf<InstanceType<T>> {
+  const inst = new ZodInstanceOf({
     type: "custom",
     check: "custom",
-    fn: (data) => data instanceof cls,
+    fn: (data: unknown) => data instanceof cls,
     abort: true,
     ...(util.normalizeParams(params) as any),
   });

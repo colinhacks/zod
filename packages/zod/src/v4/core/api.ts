@@ -1118,7 +1118,7 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   property: K,
   schema: T,
   params?: string | $ZodCheckPropertyParams
-): checks.$ZodCheckProperty<{ [k in K]: core.output<T> }> {
+): checks.$ZodCheckProperty<{ [k in K]: util.Widen<core.input<T>> }> {
   return new checks.$ZodCheckProperty({
     check: "property",
     property,
@@ -1127,13 +1127,20 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
+// `when` is omitted: it gates a check inside the run loop, so it means nothing when this is parsed as a schema, and honoring it in one role only would diverge silently
+export type $ZodPropertiesParams = CheckTypeParams<schemas.$ZodProperties, "shape" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _properties<Shape extends schemas.$ZodShape>(
-  shape: Shape
-): checks.$ZodCheckProperty<{ -readonly [k in keyof Shape]: core.output<Shape[k]> }>[] {
-  return Object.entries(shape).map(
-    ([property, schema]) => new checks.$ZodCheckProperty({ check: "property", property, schema })
-  ) as any;
+  Class: util.SchemaClass<schemas.$ZodProperties>,
+  shape: Shape,
+  params?: string | $ZodPropertiesParams
+): schemas.$ZodProperties<Shape> {
+  return new Class({
+    type: "properties",
+    check: "properties",
+    shape,
+    ...util.normalizeParams(params),
+  }) as any;
 }
 
 export type $ZodCheckMimeTypeParams = CheckParams<checks.$ZodCheckMimeType, "mime" | "when">;

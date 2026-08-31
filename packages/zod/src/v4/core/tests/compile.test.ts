@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
 import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
+import { $ZodAsyncError } from "../core.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
 function expectMatch(schema: z.ZodType, value: unknown) {
@@ -1415,6 +1416,26 @@ test("xor and custom when-gated checks force runtime fallback", () => {
   (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => false;
   expect(() => compile(gated, { strict: true })).toThrow(ZodCompileUnsupportedError);
   expectMatch(z.object({ n: gated }), { n: 3 }); // runtime skips the gated check
+});
+
+test("compiled parse surfaces the interpreter's throws through the fallback", () => {
+  // an unmergeable intersection bails to INVALID, and the fallback it hands to raises the interpreter's own error
+  const unmergeable = compile(
+    z.intersection(
+      z.number(),
+      z.number().transform((x) => x + 1)
+    ),
+    { strict: true }
+  );
+  expect(() => unmergeable.parse(1234)).toThrowErrorMatchingInlineSnapshot(
+    `[Error: Unmergable intersection. Error path: []]`
+  );
+
+  // a when-gated check islands at codegen, and the island's INVALID for an async run reaches the same fallback
+  const gated = z.number().refine(() => Promise.resolve(true));
+  (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => true;
+  const compiled = compile(z.object({ n: gated }), { strict: true });
+  expect(() => compiled.parse({ n: 3 })).toThrow($ZodAsyncError);
 });
 
 test("strict objects reject inherited enumerable keys like the runtime", () => {

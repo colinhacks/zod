@@ -753,7 +753,7 @@ export function finalize<T extends schemas.$ZodType>(
   }
 }
 
-function isTransforming(
+export function isTransforming(
   _schema: schemas.$ZodType,
   _ctx?: {
     seen: Set<schemas.$ZodType>;

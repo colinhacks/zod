@@ -237,6 +237,48 @@ test("toZod", () => {
   expectTypeOf<z.input<typeof Transformed>>().toEqualTypeOf<{ count: string }>();
   expectTypeOf<z.output<typeof Transformed>>().toEqualTypeOf<{ count: number }>();
 
+  // An enum target matches z.enum(...) even though the enum reference is not identical to the union of its members (#6524)
+  enum SkillLevel {
+    Noob = "noob",
+    Pro = "pro",
+  }
+  enum Rank {
+    First = 1,
+    Second = 2,
+  }
+
+  z.toZod<SkillLevel>()(z.enum(SkillLevel));
+  const Enums = z.toZod<{
+    skill: SkillLevel;
+    members: SkillLevel.Noob | SkillLevel.Pro;
+    rank: Rank;
+    maybe: SkillLevel | null;
+    list: SkillLevel[];
+    nested: { skill: SkillLevel };
+  }>()(
+    z.object({
+      skill: z.enum(SkillLevel),
+      members: z.enum(SkillLevel),
+      rank: z.enum(Rank),
+      maybe: z.enum(SkillLevel).nullable(),
+      list: z.array(z.enum(SkillLevel)),
+      nested: z.object({ skill: z.enum(SkillLevel) }),
+    })
+  );
+  expectTypeOf<z.output<typeof Enums>["skill"]>().toEqualTypeOf<SkillLevel>();
+
+  // @ts-expect-error a member subset is not the enum
+  z.toZod<{ skill: SkillLevel }>()(z.object({ skill: z.literal(SkillLevel.Noob) }));
+
+  // @ts-expect-error plain literals do not match a nominal enum target
+  z.toZod<{ skill: SkillLevel }>()(z.object({ skill: z.enum(["noob", "pro"]) }));
+
+  // @ts-expect-error an enum schema does not match a plain literal-union target
+  z.toZod<{ skill: "noob" | "pro" }>()(z.object({ skill: z.enum(SkillLevel) }));
+
+  // @ts-expect-error plain numeric literals do not match a numeric enum target either
+  z.toZod<{ rank: Rank }>()(z.object({ rank: z.union([z.literal(1), z.literal(2)]) }));
+
   z.toZod<Company>()(
     // @ts-expect-error missing optional keys still fail exact output matching
     z.object({
@@ -277,24 +319,32 @@ test("toZod", () => {
   // @ts-expect-error toZod checks output, not input
   z.toZod<string>()(z.string().transform((value) => value.length));
 
-  // Exact equality is deliberately the only mode. A bidirectional-assignability mode would accept both of the two cases above — `any` is assignable in both directions by construction, and `readonly` is not part of assignability — so it would silently drop the guarantees the rest of this test pins. The cost is the asymmetry below: an intersection target matches `.and()` but not `.safeExtend()`, and a flat target matches `.safeExtend()` but not `.and()`. Flattening the target with a mapped type switches which spelling matches rather than accepting both.
+  // Exact equality is deliberately the only mode. A bidirectional-assignability mode would accept both of the two cases above — `any` is assignable in both directions by construction, and `readonly` is not part of assignability — so it would silently drop the guarantees the rest of this test pins.
+
+  // An intersection and the flat object with the same keys are interchangeable as targets, since the normalizer flattens both.
   type Intersected = { a: number } & { b: string };
-  type Flatten<T> = { [K in keyof T]: T[K] } & {};
   const viaAnd = z.object({ a: z.number() }).and(z.object({ b: z.string() }));
   const viaExtend = z.object({ a: z.number() }).safeExtend({ b: z.string() });
 
   z.toZod<Intersected>()(viaAnd);
-  z.toZod<{ a: number; b: string }>()(viaExtend);
-  z.toZod<Flatten<Intersected>>()(viaExtend);
-
-  // @ts-expect-error flattening the target does not make `.and()` match as well
-  z.toZod<Flatten<Intersected>>()(viaAnd);
-
-  // @ts-expect-error .safeExtend() produces a flat object type, not an intersection
   z.toZod<Intersected>()(viaExtend);
-
-  // @ts-expect-error .and() produces an intersection, not a flat object type
   z.toZod<{ a: number; b: string }>()(viaAnd);
+  z.toZod<{ a: number; b: string }>()(viaExtend);
+
+  // @ts-expect-error a missing key is still a missing key
+  z.toZod<Intersected>()(z.object({ a: z.number() }));
+
+  // `keyof` a function is `never`, so the normalizer must not walk into one — mapping it would erase the signature and make every callable compare equal
+  z.toZod<() => string>()(z.custom<() => string>());
+
+  // @ts-expect-error an incompatible callable output is still rejected
+  z.toZod<() => string>()(z.custom<() => number>());
+
+  // @ts-expect-error and so is an incompatible function-valued property
+  z.toZod<{ cb: (x: number) => void }>()(z.object({ cb: z.custom<(x: string) => void>() }));
+
+  // @ts-expect-error a method-bearing generic keeps its type arguments
+  z.toZod<{ m: Map<string, number> }>()(z.object({ m: z.custom<Map<string, string>>() }));
 });
 
 test("checks", () => {

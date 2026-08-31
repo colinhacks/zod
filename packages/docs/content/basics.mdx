@@ -1,10 +1,12 @@
 ---
 title: Basic usage
-description: "Basic usage guide covering schema definition, parsing data, error handling, type inference, and matching an existing type"
+description: "Basic usage guide covering schema definition, parsing data, error handling, and type inference"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
+
+{/* This page is a carefully curated introduction: the one workflow every new user walks through (define a schema, parse, infer, handle errors), shown once, in its simplest form. Edge cases, carve-outs, exceptions, and behavior notes for specific input shapes do NOT belong here, however true or recently fixed — they go on the relevant API reference page. If an addition explains when something *doesn't* work, it doesn't go on this page. */}
 
 This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
 
@@ -164,67 +166,6 @@ type MySchemaIn = z.input<typeof mySchema>;
 
 type MySchemaOut = z.output<typeof mySchema>; // equivalent to z.infer<typeof mySchema>
 // number
-```
-
-## Matching an existing type
-
-Sometimes the type comes first: a database model, a type from a generated client, an interface you don't own. Pass it to `z.toZod<T>()` and TypeScript checks that the schema's output type is exactly `T`.
-
-```ts
-type Player = {
-  username: string;
-  xp: number;
-};
-
-const Player = z.toZod<Player>()(
-  z.object({
-    username: z.string(),
-    xp: z.number(),
-  })
-);
-
-Player.shape.username; // ZodString — the schema is returned unchanged
-```
-
-The check is exact type equality, so any drift from the type is a compile error:
-
-```ts
-z.toZod<Player>()(
-  z.object({
-    username: z.string(),
-    xp: z.number(),
-    admin: z.boolean(), // ❌ extra key
-  })
-);
-```
-
-The usual alternative is `satisfies z.ZodType<Player>`, which only checks assignability. It catches a missing required key, but extra keys, omitted optional keys, and a bare `z.any()` all slip through:
-
-```ts
-z.object({
-  username: z.string(),
-  xp: z.number(),
-  admin: z.boolean(),
-}) satisfies z.ZodType<Player>; // ✅ no error
-
-z.any() satisfies z.ZodType<Player>; // ✅ no error
-```
-
-Exactness applies to the type as TypeScript wrote it, so an intersection target matches `.and()` rather than `.safeExtend()`:
-
-```ts
-type Entry = { id: string } & { label: string };
-
-z.toZod<Entry>()(z.object({ id: z.string() }).and(z.object({ label: z.string() }))); // ✅
-z.toZod<Entry>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ❌
-```
-
-Flatten the target and `.safeExtend()` matches instead:
-
-```ts
-type Flatten<T> = { [K in keyof T]: T[K] } & {};
-
-z.toZod<Flatten<Entry>>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ✅
 ```
 
 ---

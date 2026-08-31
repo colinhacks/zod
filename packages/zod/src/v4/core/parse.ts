@@ -75,14 +75,24 @@ export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schem
     throw new core.$ZodAsyncError();
   }
 
-  return result.issues.length
-    ? {
-        success: false,
-        error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
-      }
-    : ({ success: true, data: result.value } as any);
+  return result.issues.length ? failure(_Err, result.issues, ctx) : ({ success: true, data: result.value } as any);
 };
 export const safeParse: $SafeParse = /* @__PURE__*/ _safeParse(errors.$ZodRealError);
+
+// the error is built on the first read of `error`: finalizing the issues and constructing the instance is most of a failing parse, and a caller that only branches on `success` never pays it. a getter in the literal keeps this small; the alternative, one shared accessor descriptor plus a hidden state slot, reads ~15% faster but costs ~75 B gzipped in every bundle
+function failure(Err: $ZodErrorClass, issues: errors.$ZodRawIssue[], ctx: schemas.ParseContextInternal): any {
+  let error: errors.$ZodError | undefined;
+  return {
+    success: false,
+    get error() {
+      if (!error) error = new Err(issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+      return error;
+    },
+    set error(e: errors.$ZodError) {
+      error = e;
+    },
+  };
+}
 
 export type $SafeParseAsync = <T extends schemas.$ZodType>(
   schema: T,
@@ -95,12 +105,7 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
-  return result.issues.length
-    ? {
-        success: false,
-        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
-      }
-    : ({ success: true, data: result.value } as any);
+  return result.issues.length ? failure(_Err, result.issues, ctx) : ({ success: true, data: result.value } as any);
 };
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);
@@ -110,7 +115,7 @@ const COMPILE_INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
 const COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 
 interface CompiledBag {
-  validator?: (input: unknown) => unknown;
+  validator?: ((input: unknown) => unknown) & { definite?: boolean | undefined };
   fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
 }
 
@@ -127,7 +132,11 @@ export const validate: $Validate = ((
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean => {
   const validator = (schema._zod.bag as CompiledBag).validator;
-  if (validator !== undefined && validator(value) !== COMPILE_INVALID) return true;
+  if (validator !== undefined) {
+    if (validator(value) !== COMPILE_INVALID) return true;
+    // a definite sentinel means the runtime would reject, so skip the re-parse; a ctx can still change the answer
+    if (validator.definite === true && _ctx === undefined) return false;
+  }
   return validateFallback(schema, value, _ctx);
 }) as $Validate;
 

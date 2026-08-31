@@ -98,11 +98,29 @@ type ToZodKeyMismatch<Expected, Received> = schemas.$ZodType & {
   "types do not match": { expected: Expected; received: Received };
 };
 
+// An enum reference and the union of exactly its members are mutually assignable but not identical, so `AssertEqual` alone rejects `z.enum(SomeEnum)` against a `SomeEnum` target. Unioning each side with a private dummy forces the union to be rebuilt, which collapses that one difference and nothing else — plain literals against an enum, member subsets, brands and `any` all still fail. The symbol is not exported, so no user type can smuggle it in and cancel a real difference.
+declare const toZodDummy: unique symbol;
+
+// Homomorphic, so `readonly` and optional modifiers survive the rebuild and only leaves are normalized. An intersection flattens here, which is why an intersection target and the flat object with the same keys match each other. A callable stops the walk because `keyof` a function is `never`, so mapping one would erase its signature and make every function compare equal.
+type ToZodNormalize<T> = [T] extends [(...args: any[]) => any]
+  ? T
+  : [T] extends [object]
+    ? { [K in keyof T]: ToZodNormalize<T[K]> }
+    : T | typeof toZodDummy;
+
+type ToZodEqual<Output, T> = AssertEqual<Output, T> extends true
+  ? true
+  : IsAny<Output> extends true
+    ? false
+    : IsAny<T> extends true
+      ? false
+      : AssertEqual<ToZodNormalize<Output>, ToZodNormalize<T>>;
+
 // Rebuilds the shape with a marker on each key that disagrees, so the diagnostic names the key instead of failing the whole schema at the top level. A key the target lacks reports `expected: never`; a key the schema lacks reports `received: never`.
 type ToZodShape<Shape, T> = {
   [K in keyof Shape]: Shape[K] extends schemas.$ZodType
     ? K extends keyof T
-      ? AssertEqual<Shape[K]["_zod"]["output"], T[K]> extends true
+      ? ToZodEqual<Shape[K]["_zod"]["output"], T[K]> extends true
         ? Shape[K]
         : ToZodKeyMismatch<T[K], Shape[K]["_zod"]["output"]>
       : ToZodKeyMismatch<never, Shape[K]["_zod"]["output"]>
@@ -129,6 +147,17 @@ export type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
 export type Whatever = {} | undefined | null;
+// literal inputs widen to their primitive so a property check over `"https:"` accepts a `string` property
+export type Widen<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends bigint
+        ? bigint
+        : T;
+
 export type LoosePartial<T extends object> = InexactPartial<T> & {
   [k: string]: unknown;
 };
@@ -232,7 +261,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 }
 
 export function toZod<T>(): <S extends schemas.$ZodType>(
-  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
+  schema: ToZodEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
 ) => S {
   return (schema) => schema as any;
 }
@@ -261,18 +290,28 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   return value;
 }
 
+// the accessor lives on a shared prototype: an own accessor makes every box a dictionary-mode object (~360 B and a slow load per read against ~100 B and an inlined getter here)
+class Cached<T> {
+  _getter: (() => T) | undefined;
+  _value: T | undefined;
+
+  constructor(getter: () => T) {
+    this._getter = getter;
+    this._value = undefined;
+  }
+
+  get value(): T {
+    const getter = this._getter;
+    if (getter !== undefined) {
+      this._value = getter();
+      this._getter = undefined;
+    }
+    return this._value as T;
+  }
+}
+
 export function cached<T>(getter: () => T): { value: T } {
-  const set = false;
-  return {
-    get value() {
-      if (!set) {
-        const value = getter();
-        Object.defineProperty(this, "value", { value });
-        return value;
-      }
-      throw new Error("cached value already set");
-    },
-  };
+  return new Cached(getter);
 }
 
 export function nullish(input: any): boolean {
@@ -1094,20 +1133,24 @@ export function members(proto: object, table: object): void {
     // a method materializes bound on first read, which is what keeps a detached member working: `const opt = schema.optional; opt()`
     else defineBound(proto, key, desc.value);
   }
+  // for..in sees no symbol keys, so well-known members like Symbol.iterator install here
+  for (const sym of Object.getOwnPropertySymbols(table)) {
+    defineBound(proto, sym, (table as any)[sym]);
+  }
 }
 
 /** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */
-export function own<T>(inst: object, key: string, value: T, enumerable = true): T {
+export function own<T>(inst: object, key: PropertyKey, value: T, enumerable = true): T {
   Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable, value });
   return value;
 }
 
 /** Like {@link own}, for a member that was never an own data property and has to stay out of `Object.keys`. */
-export function hide<T>(inst: object, key: string, value: T): T {
+export function hide<T>(inst: object, key: PropertyKey, value: T): T {
   return own(inst, key, value, false);
 }
 
-function defineBound(proto: object, key: string, fn: AnyFunc): void {
+function defineBound(proto: object, key: PropertyKey, fn: AnyFunc): void {
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
