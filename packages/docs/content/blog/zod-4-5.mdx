@@ -132,15 +132,15 @@ z.creditCard().parse("4111 1111 1111 1112"); // ❌ bad checksum
 The multi-property counterpart to `z.property()`. ([#5912](https://github.com/colinhacks/zod/pull/5912))
 
 ```ts
-const httpsUrl = z.instanceof(URL).check(
+const okResponse = z.instanceof(Response).check(
   ...z.properties({
-    protocol: z.literal("https:" as string),
-    hostname: z.string().regex(z.regexes.domain),
+    status: z.number().min(200).max(299),
+    redirected: z.literal(false),
   })
 );
 
-httpsUrl.parse(new URL("https://example.com")); // ✅
-httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
 ```
 
 ## `z.deepPartial()`

@@ -230,7 +230,7 @@ test("continuability", () => {
         "message": "Invalid emoji",
         "origin": "string",
         "path": [],
-        "pattern": "/^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$/u",
+        "pattern": "/^(?=[\\s\\S]*[\\p{Extended_Pictographic}\\p{Regional_Indicator}\\u20E3])[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$/u",
       },
       {
         "code": "custom",

@@ -5,7 +5,7 @@ import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
-import { _safeParse, _safeParseAsync, parse, parseAsync } from "./parse.js";
+import { parse, parseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
@@ -333,24 +333,25 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 );
 
 /** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
-const toStandardResult = (r: util.SafeParseResult<unknown>) =>
-  r.success ? { value: r.data } : { issues: r.error?.issues };
+// a Standard Schema result only reports issues, so a failure finalizes them straight off the raw payload: no ZodError, and no lazy result to read through
+const toStandardResult = (r: ParsePayload, ctx: ParseContextInternal) =>
+  r.issues.length ? { issues: r.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())) } : { value: r.value };
 
-// a Standard Schema result only reports issues, so a failure skips the ZodError and its construction cost: the bag holds the finalized issues and nothing else
-function IssueBag(this: { issues: errors.$ZodIssue[] }, issues: errors.$ZodIssue[]) {
-  this.issues = issues;
+async function validateAsync(inst: $ZodType, value: unknown) {
+  const ctx: ParseContextInternal = { async: true };
+  return toStandardResult((await inst._zod.run({ value, issues: [] }, ctx)) as ParsePayload, ctx);
 }
-const standardParse = /* @__PURE__ */ _safeParse(IssueBag as any);
-const standardParseAsync = /* @__PURE__ */ _safeParseAsync(IssueBag as any);
 
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
   return {
     validate: (value: unknown) => {
+      const ctx: ParseContextInternal = { async: false };
       try {
-        return toStandardResult(standardParse(inst, value));
-      } catch (_) {
-        return standardParseAsync(inst, value).then(toStandardResult);
-      }
+        const r = inst._zod.run({ value, issues: [] }, ctx);
+        if (!(r instanceof Promise)) return toStandardResult(r, ctx);
+      } catch (_) {}
+      // async function so a synchronously throwing check rejects instead of escaping validate
+      return validateAsync(inst, value);
     },
     vendor: "zod",
     version: 1 as const,
@@ -1029,10 +1030,13 @@ export interface $ZodBase64 extends $ZodType {
   _zod: $ZodBase64Internals;
 }
 
+// lax on purpose: the quantified regexes.base64 overflows the regex stack on multi-MB input and its leading ^$| alternation leaks through template-literal composition; isValidBase64 enforces length and padding
+export const base64Charset: RegExp = /^[0-9a-zA-Z+/]*={0,2}$/;
+
 export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64",
   (inst, def): void => {
-    def.pattern ??= regexes.base64;
+    def.pattern ??= base64Charset;
     $ZodStringFormat.init(inst, def);
 
     inst._zod.bag.contentEncoding = "base64";
@@ -1051,9 +1055,12 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
   }
 );
 
-//////////////////////////////   ZodBase64   //////////////////////////////
+//////////////////////////////   ZodBase64URL   //////////////////////////////
+// lax on purpose: the quantified regexes.base64url overflows the regex stack on multi-MB input; isValidBase64 enforces length on the padded string
+export const base64urlCharset: RegExp = /^[A-Za-z0-9_-]*$/;
+
 export function isValidBase64URL(data: string): boolean {
-  if (!regexes.base64url.test(data)) return false;
+  if (!base64urlCharset.test(data)) return false;
   const base64 = data.replace(/[-_]/g, (c) => (c === "-" ? "+" : "/"));
   const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
   return isValidBase64(padded);
@@ -1069,7 +1076,7 @@ export interface $ZodBase64URL extends $ZodType {
 export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64URL",
   (inst, def): void => {
-    def.pattern ??= regexes.base64url;
+    def.pattern ??= base64urlCharset;
     $ZodStringFormat.init(inst, def);
 
     inst._zod.bag.contentEncoding = "base64url";
@@ -1112,7 +1119,7 @@ function isLuhnAlgo(digits: string): boolean {
   let bit = 1;
   let sum = 0;
   while (length) {
-    const value = +digits[--length]!;
+    const value = digits.charCodeAt(--length) - 48;
     bit ^= 1;
     sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
   }
@@ -2102,7 +2109,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     });
   }
 
-  const _normalized = util.cached(() => normalizeDef(def));
+  const _normalized = util.cachedInternal(() => normalizeDef(def));
 
   util.defineLazyInternal(inst, "propValues", (zod) => {
     const shape = zod.def.shape;
@@ -2175,7 +2182,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     $ZodObject.init(inst, def);
 
     const superParse = inst._zod.parse;
-    const _normalized = util.cached(() => normalizeDef(def));
+    const _normalized = util.cachedInternal(() => normalizeDef(def));
 
     const memo = core.globalConfig.memoizer;
 
@@ -2626,7 +2633,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
     });
 
-    const disc = util.cached(() => {
+    const disc = util.cachedInternal(() => {
       const opts = def.options;
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
@@ -3521,12 +3528,13 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   const valuesSet = new Set<util.Primitive>(values);
   inst._zod.values = valuesSet;
 
-  const patternValues = values.filter((k) => util.propertyKeyTypes.has(typeof k));
-
-  // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
-  inst._zod.pattern = new RegExp(
-    patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^[^\\s\\S]$"
-  );
+  util.defineLazyInternal(inst, "pattern", (zod) => {
+    const patternValues = util.getEnumValues(zod.def.entries).filter((k) => util.propertyKeyTypes.has(typeof k));
+    // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
+    return new RegExp(
+      patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^[^\\s\\S]$"
+    );
+  });
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
@@ -3576,14 +3584,19 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     const values = new Set<util.Literal>(def.values);
     inst._zod.values = values;
 
-    // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
-    inst._zod.pattern = new RegExp(
-      def.values.length
-        ? `^(${def.values
-            .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)))
-            .join("|")})$`
-        : "^[^\\s\\S]$"
-    );
+    util.defineLazyInternal(inst, "pattern", (zod) => {
+      const vals = zod.def.values;
+      // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
+      return new RegExp(
+        vals.length
+          ? `^(${vals
+              .map((o: util.Literal) =>
+                typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)
+              )
+              .join("|")})$`
+          : "^[^\\s\\S]$"
+      );
+    });
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
@@ -4977,10 +4990,10 @@ export interface $ZodPropertiesDef<Shape extends $ZodShape = $ZodShape> extends 
   shape: Shape;
 }
 
-// both sides infer the INPUT type: the shape is asserted and its results discarded, so a default, catch or transform inside it would make an output-typed inference a lie
+// both sides infer the INPUT type: the shape is asserted and its results discarded, so a default, catch or transform inside it would make an output-typed inference a lie. The check side widens a literal to its primitive, so spreading over a `string` property still type-checks (#6520).
 export interface $ZodPropertiesInternals<Shape extends $ZodShape = $ZodShape>
   extends $ZodTypeInternals<$InferObjectInput<Shape, {}>, $InferObjectInput<Shape, {}>>,
-    checks.$ZodCheckInternals<$InferObjectInput<Shape, {}>> {
+    checks.$ZodCheckInternals<{ -readonly [k in keyof Shape]: util.Widen<core.input<Shape[k]>> }> {
   def: $ZodPropertiesDef<Shape>;
   isst: errors.$ZodIssueInvalidType;
   issc: errors.$ZodIssue;

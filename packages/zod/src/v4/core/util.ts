@@ -98,11 +98,29 @@ type ToZodKeyMismatch<Expected, Received> = schemas.$ZodType & {
   "types do not match": { expected: Expected; received: Received };
 };
 
+// An enum reference and the union of exactly its members are mutually assignable but not identical, so `AssertEqual` alone rejects `z.enum(SomeEnum)` against a `SomeEnum` target. Unioning each side with a private dummy forces the union to be rebuilt, which collapses that one difference and nothing else — plain literals against an enum, member subsets, brands and `any` all still fail. The symbol is not exported, so no user type can smuggle it in and cancel a real difference.
+declare const toZodDummy: unique symbol;
+
+// Recurses only through types identical to their own homomorphic rebuild, which preserves the exactness guarantees: an intersection, a call signature and `readonly`/optional modifiers all survive or block the walk, so only leaves are normalized.
+type ToZodNormalize<T> = [T] extends [object]
+  ? AssertEqual<T, { [K in keyof T]: T[K] }> extends true
+    ? { [K in keyof T]: ToZodNormalize<T[K]> }
+    : T
+  : T | typeof toZodDummy;
+
+type ToZodEqual<Output, T> = AssertEqual<Output, T> extends true
+  ? true
+  : IsAny<Output> extends true
+    ? false
+    : IsAny<T> extends true
+      ? false
+      : AssertEqual<ToZodNormalize<Output>, ToZodNormalize<T>>;
+
 // Rebuilds the shape with a marker on each key that disagrees, so the diagnostic names the key instead of failing the whole schema at the top level. A key the target lacks reports `expected: never`; a key the schema lacks reports `received: never`.
 type ToZodShape<Shape, T> = {
   [K in keyof Shape]: Shape[K] extends schemas.$ZodType
     ? K extends keyof T
-      ? AssertEqual<Shape[K]["_zod"]["output"], T[K]> extends true
+      ? ToZodEqual<Shape[K]["_zod"]["output"], T[K]> extends true
         ? Shape[K]
         : ToZodKeyMismatch<T[K], Shape[K]["_zod"]["output"]>
       : ToZodKeyMismatch<never, Shape[K]["_zod"]["output"]>
@@ -129,6 +147,17 @@ export type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
 export type Whatever = {} | undefined | null;
+// literal inputs widen to their primitive so a property check over `"https:"` accepts a `string` property
+export type Widen<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends bigint
+        ? bigint
+        : T;
+
 export type LoosePartial<T extends object> = InexactPartial<T> & {
   [k: string]: unknown;
 };
@@ -232,7 +261,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 }
 
 export function toZod<T>(): <S extends schemas.$ZodType>(
-  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
+  schema: ToZodEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
 ) => S {
   return (schema) => schema as any;
 }
@@ -262,17 +291,38 @@ export function jsonStringifyReplacer(_: string, value: any): any {
 }
 
 export function cached<T>(getter: () => T): { value: T } {
-  const set = false;
   return {
     get value() {
-      if (!set) {
-        const value = getter();
-        Object.defineProperty(this, "value", { value });
-        return value;
-      }
-      throw new Error("cached value already set");
+      const value = getter();
+      // own, enumerable and configurable, matching the accessor it replaces; public as `z.core.util.cached`
+      Object.defineProperty(this, "value", { value });
+      return value;
     },
   };
+}
+
+// accessor on the prototype, not an own literal property: an own accessor puts the box in dictionary mode from birth (~360 B and a slow load per read against ~100 B and an inlined getter here). Not `cached`, whose own enumerable `value` is public as `z.core.util.cached`.
+class Cached<T> {
+  _getter: (() => T) | undefined;
+  _value: T | undefined;
+
+  constructor(getter: () => T) {
+    this._getter = getter;
+    this._value = undefined;
+  }
+
+  get value(): T {
+    const getter = this._getter;
+    if (getter !== undefined) {
+      this._value = getter();
+      this._getter = undefined;
+    }
+    return this._value as T;
+  }
+}
+
+export function cachedInternal<T>(getter: () => T): { value: T } {
+  return new Cached(getter);
 }
 
 export function nullish(input: any): boolean {

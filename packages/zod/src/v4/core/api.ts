@@ -1118,7 +1118,7 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   property: K,
   schema: T,
   params?: string | $ZodCheckPropertyParams
-): checks.$ZodCheckProperty<{ [k in K]: core.output<T> }> {
+): checks.$ZodCheckProperty<{ [k in K]: util.Widen<core.input<T>> }> {
   return new checks.$ZodCheckProperty({
     check: "property",
     property,

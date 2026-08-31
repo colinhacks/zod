@@ -237,6 +237,48 @@ test("toZod", () => {
   expectTypeOf<z.input<typeof Transformed>>().toEqualTypeOf<{ count: string }>();
   expectTypeOf<z.output<typeof Transformed>>().toEqualTypeOf<{ count: number }>();
 
+  // An enum target matches z.enum(...) even though the enum reference is not identical to the union of its members (#6524)
+  enum SkillLevel {
+    Noob = "noob",
+    Pro = "pro",
+  }
+  enum Rank {
+    First = 1,
+    Second = 2,
+  }
+
+  z.toZod<SkillLevel>()(z.enum(SkillLevel));
+  const Enums = z.toZod<{
+    skill: SkillLevel;
+    members: SkillLevel.Noob | SkillLevel.Pro;
+    rank: Rank;
+    maybe: SkillLevel | null;
+    list: SkillLevel[];
+    nested: { skill: SkillLevel };
+  }>()(
+    z.object({
+      skill: z.enum(SkillLevel),
+      members: z.enum(SkillLevel),
+      rank: z.enum(Rank),
+      maybe: z.enum(SkillLevel).nullable(),
+      list: z.array(z.enum(SkillLevel)),
+      nested: z.object({ skill: z.enum(SkillLevel) }),
+    })
+  );
+  expectTypeOf<z.output<typeof Enums>["skill"]>().toEqualTypeOf<SkillLevel>();
+
+  // @ts-expect-error a member subset is not the enum
+  z.toZod<{ skill: SkillLevel }>()(z.object({ skill: z.literal(SkillLevel.Noob) }));
+
+  // @ts-expect-error plain literals do not match a nominal enum target
+  z.toZod<{ skill: SkillLevel }>()(z.object({ skill: z.enum(["noob", "pro"]) }));
+
+  // @ts-expect-error an enum schema does not match a plain literal-union target
+  z.toZod<{ skill: "noob" | "pro" }>()(z.object({ skill: z.enum(SkillLevel) }));
+
+  // @ts-expect-error plain numeric literals do not match a numeric enum target either
+  z.toZod<{ rank: Rank }>()(z.object({ rank: z.union([z.literal(1), z.literal(2)]) }));
+
   z.toZod<Company>()(
     // @ts-expect-error missing optional keys still fail exact output matching
     z.object({

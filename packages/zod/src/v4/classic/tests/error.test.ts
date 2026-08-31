@@ -1,5 +1,5 @@
 import { inspect, types } from "node:util";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import * as z from "zod/v4";
 
 // Several tests install a global error map. Resetting on the last line of each leaks it into every later test in the file whenever an assertion above that line fails, which turns one real failure into a cascade.
@@ -976,4 +976,43 @@ test("error initializer never installs onto an intrinsic prototype", () => {
   expect(Object.getOwnPropertyNames(Object.prototype)).not.toContain("format");
   expect({}.toString()).toEqual("[object Object]");
   expect(String(new Error("boom"))).toEqual("Error: boom");
+});
+
+describe("safeParse builds the error on first read", () => {
+  class CountingError {
+    static constructed = 0;
+    constructor(public issues: unknown[]) {
+      CountingError.constructed++;
+    }
+  }
+
+  test("constructs once, on read", () => {
+    CountingError.constructed = 0;
+    const result = z.core._safeParse(CountingError as any)(z.string(), 1) as any;
+    expect(result.success).toBe(false);
+    expect(CountingError.constructed).toBe(0);
+    const err = result.error;
+    expect(CountingError.constructed).toBe(1);
+    expect(result.error).toBe(err);
+    expect(CountingError.constructed).toBe(1);
+    expect(err.issues[0].code).toBe("invalid_type");
+  });
+
+  test("async variant", async () => {
+    CountingError.constructed = 0;
+    const result = (await z.core._safeParseAsync(CountingError as any)(z.string(), 1)) as any;
+    expect(CountingError.constructed).toBe(0);
+    expect(result.error).toBeInstanceOf(CountingError);
+    expect(CountingError.constructed).toBe(1);
+  });
+
+  test("result stays plain data", () => {
+    const result = z.string().safeParse(1);
+    expect(Object.keys(result)).toEqual(["success", "error"]);
+    expect(result).toEqual({ success: false, error: expect.any(z.ZodError) });
+    expect(structuredClone(result).error).toBeInstanceOf(Error);
+    const replaced = new z.ZodError([]);
+    (result as any).error = replaced;
+    expect(result.error).toBe(replaced);
+  });
 });

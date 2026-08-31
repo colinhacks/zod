@@ -264,6 +264,7 @@ test("base64url validations", () => {
 
   const invalidBase64URLStrings = [
     "w7/Dv8O+w74K", // Has + and / characters (is base64)
+    "A", // Invalid length (1 mod 4 carries no whole byte)
     "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
     "12345===", // Not padded correctly
     "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
@@ -291,6 +292,18 @@ test("big base64 and base64url", () => {
   z.base64().parse(bigbase64);
   const bigbase64url = randomBytes(1024 * 1024 * 10).toString("base64url");
   z.base64url().parse(bigbase64url);
+
+  // template literals compose def.pattern and test it on every parse; the quantified block forms overflowed the regex stack here
+  expect(z.templateLiteral(["id-", z.base64()]).safeParse(`id-${bigbase64}`).success).toBe(true);
+  expect(z.templateLiteral(["id-", z.base64url()]).safeParse(`id-${bigbase64url}`).success).toBe(true);
+});
+
+test("template literal composes base64 without alternation leaks", () => {
+  // the ^$| alternation in regexes.base64 used to leak: "AAAA" matched with the prefix dropped and "id-AAAA" was rejected
+  const tl = z.templateLiteral(["id-", z.base64()]);
+  expect(tl.safeParse("id-AAAA").success).toBe(true);
+  expect(tl.safeParse("id-").success).toBe(true);
+  expect(tl.safeParse("AAAA").success).toBe(false);
 });
 
 function makeJwt(header: object, payload: object) {
@@ -552,6 +565,18 @@ test("emoji validations", () => {
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
   expect(() => emoji.parse("😀stuff")).toThrow();
   expect(() => emoji.parse("stuff😀")).toThrow();
+
+  emoji.parse("1\u{FE0F}\u{20E3}"); // keycap sequences stay valid
+  emoji.parse("#\u{FE0F}\u{20E3}");
+
+  // `\p{Emoji_Component}` alone covers ASCII digits, "#", "*", ZWJ, variation selectors and skin tone modifiers; none is an emoji without a base, so a component-only string is not one either
+  expect(() => emoji.parse("123")).toThrow();
+  expect(() => emoji.parse("#")).toThrow();
+  expect(() => emoji.parse("*")).toThrow();
+  expect(() => emoji.parse("\u{200D}")).toThrow();
+  expect(() => emoji.parse("\u{FE0F}")).toThrow();
+  expect(() => emoji.parse("\u{1F3FD}")).toThrow();
+  expect(() => emoji.parse("1\u{FE0F}")).toThrow();
 });
 
 test("nanoid", () => {
