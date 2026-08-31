@@ -69,12 +69,15 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   switch (kind) {
     case "object": {
       const raw = rawShape(def);
-      if (raw) shape(raw);
-      else {
-        // No raw entry means the def answers `shape` from its own accessor, which is a builder deriving it from another schema. Reading that resolves the source's getters, so ask what it was built from instead: the derived subtree is contained in theirs.
-        const sources = util.getShapeSources(def);
-        if (sources) for (const src of sources) (src as any)?._zod ? check(src) : shape(src as object);
-        else shape(def.shape);
+      const desc = raw ? undefined : Object.getOwnPropertyDescriptor(def, "shape");
+      const sources = desc?.get ? util.getShapeSources(def) : undefined;
+      if (sources) {
+        // The def answers `shape` from a builder's accessor that has not run yet, and reading it resolves the source's getters. Ask what it was built from instead: the derived subtree is contained in theirs. Only contained, though — a builder can drop or overwrite the very branch that carries the cycle — so this is an over-approximation, and marking it assumed is what lets the recheck below replace it with the resolved shape's exact answer.
+        assumed = true;
+        for (const src of sources) (src as any)?._zod ? check(src) : shape(src as object);
+      } else {
+        // Either the raw shape, or a builder accessor that has already self-cached its result: both hold resolved values, so neither runs user code.
+        shape(raw ?? def.shape);
       }
       check(def.catchall);
       break;

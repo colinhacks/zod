@@ -818,6 +818,31 @@ test("an ordinary builder stays exact, so it still compiles", () => {
   }
 });
 
+// asking what a derived shape was built from over-approximates, since a builder can drop the branch carrying the cycle; the resolved shape has to be allowed to correct it
+test("a builder that drops the recursive key ends up exact", () => {
+  const Node: any = z.object({
+    id: z.number(),
+    get self() {
+      return z.optional(Node);
+    },
+  });
+
+  const derived: [string, any, any][] = [
+    ["omit", Node.omit({ self: true }), { id: 1 }],
+    ["pick", Node.pick({ id: true }), { id: 1 }],
+    ["extend overwrites it", Node.extend({ self: z.string() }), { id: 1, self: "x" }],
+  ];
+  for (const [name, schema, input] of derived) {
+    schema.parse(input);
+    expect(z.core.isRecursiveSchema(schema), name).toBe(false);
+    expect(() => z.compile(schema, { strict: true }), name).not.toThrow();
+  }
+
+  // the branch that stays is still found
+  const kept = Node.extend({ x: z.string() });
+  expect(z.core.isRecursiveSchema(kept)).toBe(true);
+});
+
 test("detects a cycle that closes through a builder", () => {
   const Node: any = z
     .object({
