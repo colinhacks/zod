@@ -786,6 +786,10 @@ test("parses a factory-built recursive schema through every object builder", () 
     ["pick", (b) => b().pick({ self: true })],
     ["omit", (b) => b().omit({ y: true })],
     ["chained", (b) => b().extend({ x: z.string() }).partial()],
+    // rebuilds the def without touching the shape, so the clone carries the source's accessor rather than a shape of its own
+    ["strict", (b) => b().extend({ x: z.string() }).strict()],
+    ["catchall", (b) => b().extend({ x: z.string() }).catchall(z.unknown())],
+    ["meta", (b) => b().extend({ x: z.string() }).meta({ id: "node" })],
   ];
 
   for (const [name, wrap] of wraps) {
@@ -814,6 +818,9 @@ test("an ordinary builder stays exact, so it still compiles", () => {
     ["required", plain.partial().required()],
     ["pick", plain.pick({ a: true })],
     ["omit", plain.omit({ a: true })],
+    ["strict", plain.extend({ c: z.boolean() }).strict()],
+    ["catchall", plain.extend({ c: z.boolean() }).catchall(z.unknown())],
+    ["meta", plain.extend({ c: z.boolean() }).meta({ id: "plain" })],
   ];
   for (const [name, schema] of derived) {
     expect(z.core.isRecursiveSchema(schema), name).toBe(false);
@@ -821,7 +828,7 @@ test("an ordinary builder stays exact, so it still compiles", () => {
   }
 });
 
-// asking what a derived shape was built from over-approximates, since a builder can drop the branch carrying the cycle; the resolved shape has to be allowed to correct it
+// a derived shape mirrors its source's descriptors, so dropping or overwriting the key that carries the cycle leaves nothing deferred and the walk is exact before anything parses
 test("a builder that drops the recursive key ends up exact", () => {
   const Node: any = z.object({
     id: z.number(),
@@ -836,9 +843,9 @@ test("a builder that drops the recursive key ends up exact", () => {
     ["extend overwrites it", Node.extend({ self: z.string() }), { id: 1, self: "x" }],
   ];
   for (const [name, schema, input] of derived) {
-    schema.parse(input);
     expect(z.core.isRecursiveSchema(schema), name).toBe(false);
     expect(() => z.compile(schema, { strict: true }), name).not.toThrow();
+    expect(schema.parse(input), name).toEqual(input);
   }
 
   // the branch that stays is still found

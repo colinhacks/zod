@@ -838,6 +838,13 @@ describe("__proto__ as a declared shape key", () => {
     expect(() => (schema[method] as any)(mask).shape).toThrow('Unrecognized key: "__proto__"');
   });
 
+  // the mask is checked against the source's declared keys, which reads without resolving them, so it throws where the mistake is
+  test.each(["pick", "omit", "partial", "required"] as const)("%s rejects an undeclared key at the call", (method) => {
+    const schema = z.object({ value: z.string() });
+
+    expect(() => (schema[method] as any)({ nope: true })).toThrow('Unrecognized key: "nope"');
+  });
+
   test("shape helpers preserve a declared key", () => {
     const shape = () =>
       Object.fromEntries([

@@ -1635,19 +1635,20 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
       return _enum(Object.keys(this._zod.def.shape));
     },
     catchall(catchall) {
-      return this.clone({ ...this._zod.def, catchall: catchall as any });
+      // `mergeDefs` rather than a spread: spreading reads `shape`, and resolving it can mint a whole fresh subtree
+      return this.clone(util.mergeDefs(this._zod.def, { catchall: catchall as any }));
     },
     passthrough() {
-      return this.clone({ ...this._zod.def, catchall: unknown() });
+      return this.clone(util.mergeDefs(this._zod.def, { catchall: unknown() }));
     },
     loose() {
-      return this.clone({ ...this._zod.def, catchall: unknown() });
+      return this.clone(util.mergeDefs(this._zod.def, { catchall: unknown() }));
     },
     strict() {
-      return this.clone({ ...this._zod.def, catchall: never() });
+      return this.clone(util.mergeDefs(this._zod.def, { catchall: never() }));
     },
     strip() {
-      return this.clone({ ...this._zod.def, catchall: undefined });
+      return this.clone(util.mergeDefs(this._zod.def, { catchall: undefined }));
     },
     extend(incoming) {
       return util.extend(this, incoming);
