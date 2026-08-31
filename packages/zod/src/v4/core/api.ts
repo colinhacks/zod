@@ -1127,7 +1127,8 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
-export type $ZodPropertiesParams = CheckTypeParams<schemas.$ZodProperties, "shape">;
+// `when` is omitted: it gates a check inside the run loop, so it means nothing when this is parsed as a schema, and honoring it in one role only would diverge silently
+export type $ZodPropertiesParams = CheckTypeParams<schemas.$ZodProperties, "shape" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _properties<Shape extends schemas.$ZodShape>(
   Class: util.SchemaClass<schemas.$ZodProperties>,

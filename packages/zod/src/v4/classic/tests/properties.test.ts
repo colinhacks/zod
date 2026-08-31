@@ -143,9 +143,28 @@ test("z.properties compiled and interpreted agree on a nullish value", () => {
 });
 
 test("z.properties with a custom when refuses to compile", () => {
-  // `when` gates the assertion at runtime; a union branch compiled without it is absorbed as a branch failure rather than falling back
-  const p = z.properties({ a: z.literal("x") }, { when: () => false });
-  const s = z.union([p, z.object({ b: z.string() })]);
+  // `when` is not publicly settable, since it gates a check inside the run loop and means nothing to a parsed schema. A hand-built def can still carry one, and compiling it must refuse rather than run the shape unconditionally: a union branch compiles to its own IIFE, so a wrong rejection is absorbed as a branch failure with no fallback.
+  const p = new z.core.$ZodProperties({
+    type: "properties",
+    check: "properties",
+    shape: { a: z.literal("x") },
+    when: () => false,
+  });
+  const s = z.union([p as unknown as z.ZodType, z.object({ b: z.string() })]);
   const input = { a: "wrong", b: "hello" };
   expect(z.compile(s).safeParse(input)).toEqual(s.safeParse(input));
+});
+
+test("z.properties parses cyclic input", () => {
+  // the input is its own output, so it registers as its own memo entry; without that a cycle re-enters forever
+  const Node: z.ZodType<{ id: string; next?: unknown }> = z.lazy(() =>
+    z.properties({ id: z.string(), next: Node.optional() })
+  );
+  const cyclic: Record<string, unknown> = { id: "a" };
+  cyclic.next = cyclic;
+  expect(Node.parse(cyclic)).toBe(cyclic);
+  expect(z.compile(Node).parse(cyclic)).toBe(cyclic);
+
+  // the cycle guard must not swallow a real failure further down
+  expect(Node.safeParse({ id: "a", next: { id: 1 } }).error!.issues.map((i) => i.path)).toEqual([["next", "id"]]);
 });

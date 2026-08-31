@@ -372,6 +372,15 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def;
+
+  // dropping a symbol key silently would emit a schema that asserts less than this one does
+  if (
+    Object.getOwnPropertySymbols(def.shape).length &&
+    handleUnrepresentable(schema, ctx, json, params, "Symbol keys cannot be represented in JSON Schema")
+  ) {
+    return;
+  }
+
   json.type = "object";
   json.properties = {};
   for (const key in def.shape) {

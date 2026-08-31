@@ -2752,6 +2752,7 @@ export interface ZodProperties<Shape extends core.$ZodShape = core.$ZodShape>
 export const ZodProperties: core.$constructor<ZodProperties> = /*@__PURE__*/ core.$constructor(
   "ZodProperties",
   (inst, def) => {
+    _ensureDefaultMemoizer();
     core.$ZodProperties.init(inst, def);
     ZodType.init(inst, def);
   }

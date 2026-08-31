@@ -5002,23 +5002,18 @@ function handlePropertiesResult(result: ParsePayload, payload: ParsePayload, key
 export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ core.$constructor(
   "$ZodProperties",
   (inst, def) => {
-    checks.$ZodCheck.init(inst, def);
+    // $ZodType.init prepends an instance that already carries the $ZodCheck trait to its own `checks`, which would run the shape a second time and cost the parse context. Initializing the check trait after it keeps the schema role in `parse`, where the context arrives.
     $ZodType.init(inst, def);
+    checks.$ZodCheck.init(inst, def);
 
-    // the base init runs a dual schema/check instance as its own first check, so parse is only the type gate and the shape loop lives in check, like $ZodCustom
-    inst._zod.parse = (payload, _) => {
-      // property reads work on any non-nullish value (string length, class instances), so only null and undefined are rejected outright
-      if (payload.value == null) {
-        payload.issues.push({ expected: "object", code: "invalid_type", input: payload.value, inst });
-      }
-      return payload;
-    };
+    const memo = core.globalConfig.memoizer;
+    memo?.attach(inst);
 
     let keys!: (string | symbol)[];
-    inst._zod.check = (payload) => {
+    const runShape = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<void> => {
       keys ??= Reflect.ownKeys(def.shape);
       const input = payload.value as any;
-      // reached with a nullish value only as a check on a base that allows one (z.any and friends); the schema role's own gate aborts before checks run
+      // property reads work on any non-nullish value (a string's length, a class instance), so only null and undefined are rejected outright
       if (input == null) {
         payload.issues.push({ expected: "object", code: "invalid_type", input, inst });
         return undefined;
@@ -5027,7 +5022,7 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
       for (const key of keys) {
         const result = (def.shape as Record<string | symbol, $ZodType>)[key]!._zod.run(
           { value: input[key], issues: [] },
-          {}
+          ctx
         );
         if (result instanceof Promise) {
           proms ??= [];
@@ -5039,6 +5034,18 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
       if (proms) return Promise.all(proms).then(() => undefined);
       return undefined;
     };
+
+    inst._zod.parse = (payload, ctx) => {
+      // the input is its own output here, so it registers as its own memo entry: a cycle re-entering this node hits the bucket instead of recursing forever
+      if (memo && payload.value !== null && typeof payload.value === "object") {
+        memo.alloc(inst, payload, payload.value, ctx);
+      }
+      const result = runShape(payload, ctx);
+      return result instanceof Promise ? result.then(() => payload) : payload;
+    };
+
+    // the check role gets no context of its own, matching z.property(); a cycle through a schema spread into `.check()` is not tracked
+    inst._zod.check = (payload) => runShape(payload, {});
   },
   {
     *[Symbol.iterator]() {
