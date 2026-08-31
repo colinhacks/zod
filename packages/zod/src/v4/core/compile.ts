@@ -34,7 +34,11 @@ interface CompileFnOptions {
   assertOnly?: boolean | undefined;
 }
 
-type CompiledFn<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
+type CompiledFn<T> = ((input: unknown) => T | INVALID) & {
+  code?: string | undefined;
+  /** False when this function's INVALID does not strictly mean "the runtime would reject". */
+  definite?: boolean | undefined;
+};
 
 /** Raised when the schema contains async refinements or transforms. Surfaces only under `compile(schema, { strict: true })`. */
 export class ZodCompileAsyncError extends Error {
@@ -65,6 +69,8 @@ interface CompileContext {
   constants: Map<string, unknown>;
   constantCounter: number;
   varCounter: number;
+  /** Cleared when a construct can return INVALID for something the interpreter throws on, so `validate` keeps its fallback. */
+  definite: boolean;
 }
 
 // Union of all check types we support in AOT compilation
@@ -92,9 +98,9 @@ type SupportedCheck =
  * dropped. A schema the flag cannot express reuses the parser, which still answers correctly — it
  * just builds a value nothing reads.
  */
-function compileValidator(schema: SomeType, parser: (input: unknown) => unknown): (input: unknown) => unknown {
+function compileValidator(schema: SomeType, parser: CompiledFn<unknown>): CompiledFn<unknown> {
   try {
-    return compileFn(schema, { assertOnly: true }) as (input: unknown) => unknown;
+    return compileFn(schema, { assertOnly: true }) as CompiledFn<unknown>;
   } catch {
     return parser;
   }
@@ -160,7 +166,7 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fallbackRun = originalRun;
-    clone._zod.bag.validator = compileValidator(schema, parser as (input: unknown) => unknown);
+    clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
     clone._zod.run = wrapped;
 
     // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
@@ -223,6 +229,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     constants: new Map(),
     constantCounter: 0,
     varCounter: 0,
+    definite: true,
   };
 
   const doc = new Doc(["input"]);
@@ -254,6 +261,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
   if (options?.debug) {
     fn.code = fullCode;
   }
+  fn.definite = ctx.definite;
   return fn;
 }
 
@@ -265,6 +273,12 @@ function addConstant(ctx: CompileContext, value: unknown): string {
   const name = `c${ctx.constantCounter++}`;
   ctx.constants.set(name, value);
   return name;
+}
+
+/** Hoists a user-supplied callback. Anything the schema's author wrote can throw, and generated code can reject an earlier sibling before ever reaching it, so this clears `definite` — a rejection is then no longer proof that the interpreter would have rejected rather than thrown. */
+function addUserConstant(ctx: CompileContext, fn: unknown): string {
+  ctx.definite = false;
+  return addConstant(ctx, fn);
 }
 
 function newVar(ctx: CompileContext): string {
@@ -323,6 +337,8 @@ function compileChild(
 }
 
 function emitRuntimeIsland(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  // an islanded child answers INVALID for an async run too, which the interpreter throws for
+  ctx.definite = false;
   const schemaConst = addConstant(ctx, schema);
   const runConst = addConstant(ctx, runtimeRun);
   const outVar = newVar(ctx);
@@ -659,7 +675,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     if (isAsyncFunction(def.fn)) {
       throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
     }
-    const fnConst = addConstant(ctx, def.fn);
+    const fnConst = addUserConstant(ctx, def.fn);
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
@@ -686,7 +702,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
       if (result instanceof Promise) throwAsync();
       return fakePayload.issues.length === 0 ? fakePayload.value : INVALID;
     };
-    const helperConst = addConstant(ctx, helperFn);
+    const helperConst = addUserConstant(ctx, helperFn);
     const outVar = newVar(ctx);
     doc.write(`const ${outVar} = ${helperConst}(${accessor});`);
     doc.write(`if (${outVar} === INVALID) return INVALID;`);
@@ -1871,6 +1887,8 @@ function literalEquality(ctx: CompileContext, accessor: string, value: unknown):
 
 function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
+  // An unmergeable merge, and a child failing before the merge is even reached, both return INVALID for a case the interpreter answers with a throw.
+  ctx.definite = false;
   const leftOutput = compileChild(doc, ctx, def.left, accessor);
   const rightOutput = compileChild(doc, ctx, def.right, accessor);
 
@@ -1950,7 +1968,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     // The runtime runs it against each own enumerable key and writes the value
     // under the key it produced, so compile it once and call it per key.
     const isLoose = (def as { mode?: string }).mode === "loose";
-    const keyFast = addConstant(ctx, compileFn(def.keyType));
+    // the key compiles in its own context, so carry its verdict out: a key schema that can answer INVALID undecidably makes this validator undecidable too
+    const keyFn = compileFn(def.keyType);
+    if (keyFn.definite === false) ctx.definite = false;
+    const keyFast = addConstant(ctx, keyFn);
     const numericConst = addConstant(ctx, regexes.number);
     const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
     const outKeyVar = newVar(ctx);
@@ -2065,7 +2086,7 @@ function generateTemplateLiteralCheck(doc: Doc, ctx: CompileContext, schema: Som
 function generateLazyCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   // For lazy schemas, we use a cached parser that falls back to runtime Zod parsing This handles recursive schemas correctly by avoiding infinite compilation loops
   const def = schema._zod.def as unknown as { getter: () => SomeType };
-  const getterConst = addConstant(ctx, def.getter);
+  const getterConst = addUserConstant(ctx, def.getter);
   const cacheConst = addConstant(ctx, { parser: null as ((input: unknown) => unknown) | null });
 
   doc.write(`if (!${cacheConst}.parser) {`);
@@ -2098,7 +2119,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   const inputOutput = generateCheck(doc, ctx, def.in, accessor);
 
   if (def.transform) {
-    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime.
+    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime, and a plain function handing back a promise answers INVALID too — union parity, but not a decidable rejection at the top level.
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
@@ -2111,7 +2132,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
       if (result instanceof Promise) return INVALID;
       return fakePayload.issues.length === 0 ? result : INVALID;
     };
-    const helperConst = addConstant(ctx, helperFn);
+    const helperConst = addUserConstant(ctx, helperFn);
     const transformedVar = newVar(ctx);
     doc.write(`const ${transformedVar} = ${helperConst}(${inputOutput});`);
     doc.write(`if (${transformedVar} === INVALID) return INVALID;`);
@@ -2139,7 +2160,7 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
     }
     // Custom schema with a predicate function (e.g. z.instanceof). `isAsyncFunction` above is syntactic, so a plain function returning a promise reaches here, and a promise is truthy — it would read as a pass where the interpreter throws.
-    const fnConst = addConstant(ctx, def.fn);
+    const fnConst = addUserConstant(ctx, def.fn);
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
@@ -2184,7 +2205,7 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   doc.write(`})();`);
 
   const innerConst = addConstant(ctx, def.innerType);
-  const catchConst = addConstant(ctx, def.catchValue);
+  const catchConst = addUserConstant(ctx, def.catchValue);
   const catchHelperConst = addConstant(ctx, runtimeCatch);
   doc.write(`if (${outputVar} === INVALID) {`);
   doc.indented((d) => {
@@ -2215,7 +2236,7 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
       if (result instanceof Promise) return INVALID;
       return fakePayload.issues.length === 0 ? result : INVALID;
     };
-    const helperConst = addConstant(ctx, helperFn);
+    const helperConst = addUserConstant(ctx, helperFn);
     const outputVar = newVar(ctx);
     doc.write(`const ${outputVar} = ${helperConst}(${accessor});`);
     doc.write(`if (${outputVar} === INVALID) return INVALID;`);
