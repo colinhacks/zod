@@ -19,7 +19,9 @@ There is no `z.compile()` no-arg form. Different shapes for different jobs: expl
 
 The compiled fast path is a happy-path validator. It returns the parsed/transformed output or an `INVALID` sentinel. On `INVALID`, the wrapper calls the original `_zod.run` to produce the canonical `ZodError`.
 
-`INVALID` is not uniformly a rejection. A union reads it as one, so several constructs return it for a case the interpreter throws on: a transform handing back a thenable (union parity — the interpreter's own union falls through there), a runtime island running async, and an intersection whose merge is unmergeable. Codegen therefore tracks a `definite` flag, cleared by exactly those three, and `z.validate` skips its interpreted fallback only when the flag survives. Everything else — type, range and format checks, enums, unions, object and array members, and refinements, which throw on a thenable rather than bailing — leaves it set.
+`INVALID` is not uniformly a rejection, so codegen tracks a `definite` flag and `z.validate` skips its interpreted fallback only while it survives. Two things clear it. Any hoisted **user callback** — a refine, transform, custom predicate, catch value or lazy getter — clears it through `addUserConstant`, because that callback can throw and generated code can reject an earlier sibling before ever reaching it, so the rejection is no longer proof the interpreter would have rejected rather than thrown. A **runtime island**, an **intersection**, and a **record key whose own compile is not definite** clear it directly, for the same reason applied to a construct rather than a callback. What survives is the callback-free subset — type, range and format checks, enums, literals, unions, and object, array and tuple members — which is the shape a type guard is usually asked about.
+
+The transform case is why the flag exists rather than a throw in generated code: a transform handing back a thenable must keep answering `INVALID`, because the interpreter's own union falls through to the next branch there instead of propagating. `compile-differential` pins that.
 
 Consequences:
 

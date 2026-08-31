@@ -63,13 +63,43 @@ test("validate agrees with the compiled fast path and keeps the callback bound",
 
   calls = 0;
   expect(z.validate(compiled, { name: "x" })).toBe(false);
-  // the compiled rejection is definitive, so the interpreted fallback never runs and the callback fires once
-  expect(calls).toBe(1);
+  // a user callback can throw, so its rejection is not decidable and the fallback still runs
+  expect(calls).toBeLessThanOrEqual(2);
 
   expect(z.validate(compiled, { name: 42 })).toBe(false);
-  // a ctx can change the verdict, so it still takes the interpreted path
   expect(z.validate(compiled, { name: "x" }, {})).toBe(false);
   expect(z.validate(schema, { name: "ok" })).toBe(true);
+});
+
+test("the validate shortcut is taken for callback-free schemas only", () => {
+  const definite = (s: z.ZodType) => (z.compile(s, { strict: true }) as any)._zod.bag.validator?.definite;
+
+  // nothing here can throw, so a compiled rejection is proof the runtime would reject
+  expect(definite(z.object({ a: z.string().min(1), b: z.number().max(3), c: z.email() }))).toBe(true);
+  expect(definite(z.array(z.enum(["a", "b"])))).toBe(true);
+
+  // each of these can answer INVALID for something the interpreter throws on
+  expect(definite(z.object({ a: z.string().refine(() => true) }))).toBe(false);
+  expect(definite(z.string().transform((v) => v))).toBe(false);
+  expect(definite(z.custom(() => true))).toBe(false);
+  expect(definite(z.number().catch(0))).toBe(false);
+  expect(definite(z.lazy(() => z.string()))).toBe(false);
+  expect(
+    definite(
+      z.intersection(
+        z.number(),
+        z.number().transform((x) => x + 1)
+      )
+    )
+  ).toBe(false);
+  expect(
+    definite(
+      z.record(
+        z.string().transform((k) => k),
+        z.number()
+      )
+    )
+  ).toBe(false);
 });
 
 test("compiled validate keeps the fallback where INVALID is not a decidable rejection", () => {
@@ -113,6 +143,9 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
     z.array(z.string().min(1)),
     z.tuple([z.string()], z.number()),
     z.record(z.string(), z.number()),
+    // a record key compiles in its own context, so its definiteness has to be carried out
+    z.record(z.string().transform(thenable), z.number()),
+    z.record(z.email(), z.number()),
     z.union([z.string(), z.number()]),
     z.intersection(
       z.number(),
@@ -136,6 +169,32 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
     z.custom(thenable),
     z.string().refine(thenable),
     z.string().pipe(z.string().min(3)),
+    // a user callback can throw, and compiled code can reject an earlier sibling before ever reaching it
+    z.object({
+      first: z.string(),
+      second: z.string().refine(() => {
+        throw new RangeError("u");
+      }),
+    }),
+    z.object({
+      first: z.string(),
+      second: z.custom(() => {
+        throw new TypeError("u");
+      }),
+    }),
+    z.object({
+      first: z.string(),
+      second: z.string().transform(() => {
+        throw new RangeError("u");
+      }),
+    }),
+    z.object({ first: z.string(), second: z.custom(thenable) }),
+    z.tuple([
+      z.string(),
+      z.number().catch(() => {
+        throw new RangeError("u");
+      }),
+    ]),
   ];
   const inputs = [
     "x",

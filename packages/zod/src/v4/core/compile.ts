@@ -274,6 +274,12 @@ function addConstant(ctx: CompileContext, value: unknown): string {
   return name;
 }
 
+/** Hoists a user-supplied callback. Anything the schema's author wrote can throw, and generated code can reject an earlier sibling before ever reaching it, so this clears `definite` — a rejection is then no longer proof that the interpreter would have rejected rather than thrown. */
+function addUserConstant(ctx: CompileContext, fn: unknown): string {
+  ctx.definite = false;
+  return addConstant(ctx, fn);
+}
+
 function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
 }
@@ -636,7 +642,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     if (isAsyncFunction(def.fn)) {
       throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
     }
-    const fnConst = addConstant(ctx, def.fn);
+    const fnConst = addUserConstant(ctx, def.fn);
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
@@ -663,7 +669,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
       if (result instanceof Promise) throwAsync();
       return fakePayload.issues.length === 0 ? fakePayload.value : INVALID;
     };
-    const helperConst = addConstant(ctx, helperFn);
+    const helperConst = addUserConstant(ctx, helperFn);
     const outVar = newVar(ctx);
     doc.write(`const ${outVar} = ${helperConst}(${accessor});`);
     doc.write(`if (${outVar} === INVALID) return INVALID;`);
@@ -1924,7 +1930,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     // The runtime runs it against each own enumerable key and writes the value
     // under the key it produced, so compile it once and call it per key.
     const isLoose = (def as { mode?: string }).mode === "loose";
-    const keyFast = addConstant(ctx, compileFn(def.keyType));
+    // the key compiles in its own context, so carry its verdict out: a key schema that can answer INVALID undecidably makes this validator undecidable too
+    const keyFn = compileFn(def.keyType);
+    if (keyFn.definite === false) ctx.definite = false;
+    const keyFast = addConstant(ctx, keyFn);
     const numericConst = addConstant(ctx, regexes.number);
     const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
     const outKeyVar = newVar(ctx);
@@ -2039,7 +2048,7 @@ function generateTemplateLiteralCheck(doc: Doc, ctx: CompileContext, schema: Som
 function generateLazyCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   // For lazy schemas, we use a cached parser that falls back to runtime Zod parsing This handles recursive schemas correctly by avoiding infinite compilation loops
   const def = schema._zod.def as unknown as { getter: () => SomeType };
-  const getterConst = addConstant(ctx, def.getter);
+  const getterConst = addUserConstant(ctx, def.getter);
   const cacheConst = addConstant(ctx, { parser: null as ((input: unknown) => unknown) | null });
 
   doc.write(`if (!${cacheConst}.parser) {`);
@@ -2073,7 +2082,6 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
 
   if (def.transform) {
     // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime, and a plain function handing back a promise answers INVALID too — union parity, but not a decidable rejection at the top level.
-    ctx.definite = false;
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
@@ -2086,7 +2094,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
       if (result instanceof Promise) return INVALID;
       return fakePayload.issues.length === 0 ? result : INVALID;
     };
-    const helperConst = addConstant(ctx, helperFn);
+    const helperConst = addUserConstant(ctx, helperFn);
     const transformedVar = newVar(ctx);
     doc.write(`const ${transformedVar} = ${helperConst}(${inputOutput});`);
     doc.write(`if (${transformedVar} === INVALID) return INVALID;`);
@@ -2114,7 +2122,7 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
     }
     // Custom schema with a predicate function (e.g. z.instanceof). `isAsyncFunction` above is syntactic, so a plain function returning a promise reaches here, and a promise is truthy — it would read as a pass where the interpreter throws.
-    const fnConst = addConstant(ctx, def.fn);
+    const fnConst = addUserConstant(ctx, def.fn);
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
@@ -2159,7 +2167,7 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   doc.write(`})();`);
 
   const innerConst = addConstant(ctx, def.innerType);
-  const catchConst = addConstant(ctx, def.catchValue);
+  const catchConst = addUserConstant(ctx, def.catchValue);
   const catchHelperConst = addConstant(ctx, runtimeCatch);
   doc.write(`if (${outputVar} === INVALID) {`);
   doc.indented((d) => {
@@ -2176,8 +2184,6 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
   };
 
   if (def.transform) {
-    // as in the pipe helper: a thenable answers INVALID, which is union parity but not a decidable rejection
-    ctx.definite = false;
     // Check for async transform
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms are not supported");
@@ -2192,7 +2198,7 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
       if (result instanceof Promise) return INVALID;
       return fakePayload.issues.length === 0 ? result : INVALID;
     };
-    const helperConst = addConstant(ctx, helperFn);
+    const helperConst = addUserConstant(ctx, helperFn);
     const outputVar = newVar(ctx);
     doc.write(`const ${outputVar} = ${helperConst}(${accessor});`);
     doc.write(`if (${outputVar} === INVALID) return INVALID;`);
