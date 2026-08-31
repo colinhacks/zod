@@ -142,3 +142,12 @@ test("a failing validate reports the same issues as safeParse, without a ZodErro
   const sync = z.string().min(3)["~standard"].validate("ab") as { issues: unknown[] };
   expect(sync.issues).toEqual(z.string().min(3).safeParse("ab").error!.issues);
 });
+
+test("a synchronously throwing check rejects through ~standard instead of throwing", async () => {
+  const schema = z.string().refine(() => {
+    throw new Error("boom");
+  });
+  const result = schema["~standard"].validate("abc");
+  expect(result).toBeInstanceOf(Promise);
+  await expect(result as Promise<unknown>).rejects.toThrow("boom");
+});

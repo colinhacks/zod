@@ -336,6 +336,11 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 const toStandardResult = (r: ParsePayload, ctx: ParseContextInternal) =>
   r.issues.length ? { issues: r.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())) } : { value: r.value };
 
+async function validateAsync(inst: $ZodType, value: unknown) {
+  const ctx: ParseContextInternal = { async: true };
+  return toStandardResult((await inst._zod.run({ value, issues: [] }, ctx)) as ParsePayload, ctx);
+}
+
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
   return {
     validate: (value: unknown) => {
@@ -344,10 +349,8 @@ export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> 
         const r = inst._zod.run({ value, issues: [] }, ctx);
         if (!(r instanceof Promise)) return toStandardResult(r, ctx);
       } catch (_) {}
-      const actx: ParseContextInternal = { async: true };
-      return (inst._zod.run({ value, issues: [] }, actx) as Promise<ParsePayload>).then((r) =>
-        toStandardResult(r, actx)
-      );
+      // async function so a synchronously throwing check rejects instead of escaping validate
+      return validateAsync(inst, value);
     },
     vendor: "zod",
     version: 1 as const,
