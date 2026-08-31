@@ -1050,7 +1050,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
   }
 );
 
-//////////////////////////////   ZodBase64   //////////////////////////////
+//////////////////////////////   ZodBase64URL   //////////////////////////////
 // charset only — the quantified regexes.base64url overflows the regex stack on multi-MB input; isValidBase64 enforces length on the padded string
 const base64urlCharset = /^[A-Za-z0-9_-]*$/;
 
