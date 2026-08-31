@@ -290,6 +290,9 @@ export function processSchema<T extends schemas.$ZodType>(
   return _result.schema;
 }
 
+/** @deprecated Renamed to `processSchema`. An export alias declares no binding, so it is safe to keep. */
+export { processSchema as process };
+
 // Escape a reference token for use in a JSON Pointer fragment (RFC 6901): `~` becomes `~0` and `/` becomes `~1`. The `~` replacement must run first.
 function encodeJSONPointerSegment(segment: string): string {
   return segment.replace(/~/g, "~0").replace(/\//g, "~1");
