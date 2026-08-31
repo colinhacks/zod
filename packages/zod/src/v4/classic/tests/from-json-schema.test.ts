@@ -1424,3 +1424,19 @@ test("uniqueItems equality follows JSON semantics", () => {
   cyclic.self = cyclic;
   expect(schema.safeParse([cyclic, cyclic]).success).toBe(true);
 });
+
+test("a carried subschema that references $defs is dropped rather than emitted dangling", () => {
+  const schema = fromJSONSchema({
+    type: "array",
+    contains: { $ref: "#/$defs/Hit" },
+    $defs: { Hit: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
+  });
+  // enforcement is unaffected; only the round trip gives the keyword up
+  expect(schema.safeParse([{ id: "a" }]).success).toBe(true);
+  expect(schema.safeParse([{}]).success).toBe(false);
+  expect(JSON.stringify(z.toJSONSchema(schema))).not.toContain("$ref");
+  expect(z.toJSONSchema(schema)).not.toHaveProperty("contains");
+  // an inline subschema is self-contained, so it still round-trips
+  const inline = fromJSONSchema({ type: "array", contains: { type: "integer" } });
+  expect(z.toJSONSchema(inline)).toMatchObject({ contains: { type: "integer" } });
+});

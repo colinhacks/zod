@@ -253,6 +253,13 @@ function canonicalKey(value: unknown, seen: Set<object>): string | null {
   }
 }
 
+// a carried subschema travels without the root `$defs` its `$ref`s point into
+function containsRef(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  if (!Array.isArray(value) && typeof (value as any).$ref === "string") return true;
+  return Object.values(value).some(containsRef);
+}
+
 function plural(n: number): string {
   return n === 1 ? "element" : "elements";
 }
@@ -300,12 +307,14 @@ function checkArrayGuards(
       }
       if (guards.containsSchema) {
         const minContains = guards.minContains ?? 1;
-        // counted in full rather than stopped at the ceiling, since the message names the exact number
+        // one past the ceiling already proves the failure, and nothing above it changes the verdict
+        const ceiling = guards.maxContains !== undefined ? guards.maxContains + 1 : Number.POSITIVE_INFINITY;
         let matches = 0;
         for (const item of items) {
-          if (guards.containsSchema.safeParse(item).success) matches++;
+          if (guards.containsSchema.safeParse(item).success && ++matches >= ceiling) break;
         }
         if (matches < minContains) {
+          // the scan ran to the end, so this count is exact
           payload.issues.push({
             code: "custom",
             message: `Array must contain at least ${minContains} matching ${plural(minContains)}; found ${matches}`,
@@ -316,7 +325,7 @@ function checkArrayGuards(
         if (guards.maxContains !== undefined && matches > guards.maxContains) {
           payload.issues.push({
             code: "custom",
-            message: `Array must contain at most ${guards.maxContains} matching ${plural(guards.maxContains)}; found ${matches}`,
+            message: `Array must contain at most ${guards.maxContains} matching ${plural(guards.maxContains)}`,
             input: items,
             continue: true,
           });
@@ -826,19 +835,20 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer, so the original keyword is carried as metadata to keep the round-trip lossless. Only where it was actually applied: on any other type it is inert, and on a `$ref` the metadata would land on the target every reference shares.
-  if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
-    extraMeta.propertyNames = schema.propertyNames;
-  }
-
-  // Same carry for the other guard-enforced keywords.
+  // `propertyNames` and `contains` are enforced by a guard, which `toJSONSchema` cannot infer, so the original keyword is carried as metadata to keep the round-trip lossless. Only where it was actually applied: on any other type it is inert, and on a `$ref` the metadata would land on the target every reference shares. A carried subschema is copied verbatim while the root `$defs` stay behind, so one holding a `$ref` is dropped rather than emitted as a dangling reference.
   if (schema.type === "object" && schema.$ref === undefined) {
+    if (schema.propertyNames !== undefined && !containsRef(schema.propertyNames)) {
+      extraMeta.propertyNames = schema.propertyNames;
+    }
     for (const key of ["minProperties", "maxProperties"] as const) {
       if (schema[key] !== undefined) extraMeta[key] = schema[key];
     }
   }
   if (schema.type === "array" && schema.$ref === undefined) {
-    for (const key of ["uniqueItems", "contains", "minContains", "maxContains"] as const) {
+    if (schema.contains !== undefined && !containsRef(schema.contains)) {
+      extraMeta.contains = schema.contains;
+    }
+    for (const key of ["uniqueItems", "minContains", "maxContains"] as const) {
       if (schema[key] !== undefined) extraMeta[key] = schema[key];
     }
   }
