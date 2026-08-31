@@ -290,7 +290,18 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   return value;
 }
 
-// accessor on the prototype, not an own literal property: an own accessor puts the box in dictionary mode from birth (~360 B and a slow load per read against ~100 B and an inlined getter here)
+export function cached<T>(getter: () => T): { value: T } {
+  return {
+    get value() {
+      const value = getter();
+      // own, enumerable and configurable, matching the accessor it replaces; public as `z.core.util.cached`
+      Object.defineProperty(this, "value", { value });
+      return value;
+    },
+  };
+}
+
+// accessor on the prototype, not an own literal property: an own accessor puts the box in dictionary mode from birth (~360 B and a slow load per read against ~100 B and an inlined getter here). Not `cached`, whose own enumerable `value` is public as `z.core.util.cached`.
 class Cached<T> {
   _getter: (() => T) | undefined;
   _value: T | undefined;
@@ -310,7 +321,7 @@ class Cached<T> {
   }
 }
 
-export function cached<T>(getter: () => T): { value: T } {
+export function cachedInternal<T>(getter: () => T): { value: T } {
   return new Cached(getter);
 }
 
@@ -440,16 +451,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-// public as `z.core.util.allowsEval`, so it keeps its own box rather than a Cached: the shape stays `{ value }` under Object.keys and spread, and one box per process gains nothing from the prototype accessor
-export const allowsEval: { value: boolean } = {
-  get value(): boolean {
-    const value = probeEval();
-    Object.defineProperty(this, "value", { value });
-    return value;
-  },
-};
-
-function probeEval(): boolean {
+export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
   // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
     return false;
@@ -467,7 +469,7 @@ function probeEval(): boolean {
   } catch (_) {
     return false;
   }
-}
+});
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;

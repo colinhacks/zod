@@ -2104,7 +2104,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     });
   }
 
-  const _normalized = util.cached(() => normalizeDef(def));
+  const _normalized = util.cachedInternal(() => normalizeDef(def));
 
   util.defineLazyInternal(inst, "propValues", (zod) => {
     const shape = zod.def.shape;
@@ -2177,7 +2177,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     $ZodObject.init(inst, def);
 
     const superParse = inst._zod.parse;
-    const _normalized = util.cached(() => normalizeDef(def));
+    const _normalized = util.cachedInternal(() => normalizeDef(def));
 
     const memo = core.globalConfig.memoizer;
 
@@ -2628,7 +2628,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
     });
 
-    const disc = util.cached(() => {
+    const disc = util.cachedInternal(() => {
       const opts = def.options;
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
