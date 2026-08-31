@@ -333,6 +333,18 @@ test("toZod", () => {
 
   // @ts-expect-error a missing key is still a missing key
   z.toZod<Intersected>()(z.object({ a: z.number() }));
+
+  // `keyof` a function is `never`, so the normalizer must not walk into one — mapping it would erase the signature and make every callable compare equal
+  z.toZod<() => string>()(z.custom<() => string>());
+
+  // @ts-expect-error an incompatible callable output is still rejected
+  z.toZod<() => string>()(z.custom<() => number>());
+
+  // @ts-expect-error and so is an incompatible function-valued property
+  z.toZod<{ cb: (x: number) => void }>()(z.object({ cb: z.custom<(x: string) => void>() }));
+
+  // @ts-expect-error a method-bearing generic keeps its type arguments
+  z.toZod<{ m: Map<string, number> }>()(z.object({ m: z.custom<Map<string, string>>() }));
 });
 
 test("checks", () => {
