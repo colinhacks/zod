@@ -253,11 +253,15 @@ function canonicalKey(value: unknown, seen: Set<object>): string | null {
   }
 }
 
+// keywords whose value is instance data, where a `$ref` property is a plain key rather than a reference
+const INSTANCE_KEYWORDS = /*@__PURE__*/ new Set(["default", "const", "enum", "examples"]);
+
 // a carried subschema travels without the root `$defs` its `$ref`s point into
 function containsRef(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
-  if (!Array.isArray(value) && typeof (value as any).$ref === "string") return true;
-  return Object.values(value).some(containsRef);
+  if (Array.isArray(value)) return value.some(containsRef);
+  if (typeof (value as any).$ref === "string") return true;
+  return Object.entries(value).some(([key, sub]) => !INSTANCE_KEYWORDS.has(key) && containsRef(sub));
 }
 
 function plural(n: number): string {

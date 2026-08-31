@@ -1439,4 +1439,11 @@ test("a carried subschema that references $defs is dropped rather than emitted d
   // an inline subschema is self-contained, so it still round-trips
   const inline = fromJSONSchema({ type: "array", contains: { type: "integer" } });
   expect(z.toJSONSchema(inline)).toMatchObject({ contains: { type: "integer" } });
+  // a `$ref` key inside instance data is a plain key, not a reference, so the constraint still travels
+  const annotated = fromJSONSchema({
+    type: "array",
+    contains: { type: "integer", default: { $ref: "literal" } },
+  });
+  expect(annotated.safeParse(["x"]).success).toBe(false);
+  expect(z.toJSONSchema(annotated)).toMatchObject({ contains: { type: "integer" } });
 });
