@@ -253,15 +253,49 @@ function canonicalKey(value: unknown, seen: Set<object>): string | null {
   }
 }
 
-// keywords whose value is instance data, where a `$ref` property is a plain key rather than a reference
-const INSTANCE_KEYWORDS = /*@__PURE__*/ new Set(["default", "const", "enum", "examples"]);
+// keywords whose value is a schema or an array of them
+const SCHEMA_KEYWORDS = /*@__PURE__*/ new Set([
+  "items",
+  "prefixItems",
+  "additionalItems",
+  "additionalProperties",
+  "contains",
+  "propertyNames",
+  "not",
+  "if",
+  "then",
+  "else",
+  "allOf",
+  "anyOf",
+  "oneOf",
+  "unevaluatedItems",
+  "unevaluatedProperties",
+  "contentSchema",
+]);
 
-// a carried subschema travels without the root `$defs` its `$ref`s point into
+// keywords whose value maps names to schemas
+const SCHEMA_MAP_KEYWORDS = /*@__PURE__*/ new Set([
+  "properties",
+  "patternProperties",
+  "dependentSchemas",
+  "$defs",
+  "definitions",
+]);
+
+/**
+ * True when a subschema holds a `$ref` anywhere a schema can appear. Only those positions are
+ * walked: `$ref` under `default` or an `x-` annotation is instance data with an ordinary key, and
+ * reading it as a reference would drop a constraint that resolves perfectly well.
+ */
 function containsRef(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   if (Array.isArray(value)) return value.some(containsRef);
   if (typeof (value as any).$ref === "string") return true;
-  return Object.entries(value).some(([key, sub]) => !INSTANCE_KEYWORDS.has(key) && containsRef(sub));
+  return Object.entries(value).some(([key, sub]) => {
+    if (SCHEMA_KEYWORDS.has(key)) return containsRef(sub);
+    if (!SCHEMA_MAP_KEYWORDS.has(key) || typeof sub !== "object" || sub === null) return false;
+    return Object.values(sub).some(containsRef);
+  });
 }
 
 function plural(n: number): string {
