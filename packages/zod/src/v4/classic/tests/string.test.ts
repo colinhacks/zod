@@ -264,6 +264,7 @@ test("base64url validations", () => {
 
   const invalidBase64URLStrings = [
     "w7/Dv8O+w74K", // Has + and / characters (is base64)
+    "A", // Invalid length (1 mod 4 carries no whole byte)
     "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
     "12345===", // Not padded correctly
     "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
