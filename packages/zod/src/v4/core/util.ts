@@ -98,15 +98,15 @@ type ToZodKeyMismatch<Expected, Received> = schemas.$ZodType & {
   "types do not match": { expected: Expected; received: Received };
 };
 
-// An enum reference and the union of exactly its members are mutually assignable but not identical, so `AssertEqual` alone rejects `z.enum(SomeEnum)` against a `SomeEnum` target. Rebuilding the string/number part of each side through a mapped type collapses that one difference and nothing else — plain literals against an enum, member subsets, brands and `any` all still fail.
-type ToZodNormalizeEnum<T> = { [K in Extract<T, EnumValue>]: K }[Extract<T, EnumValue>] | Exclude<T, EnumValue>;
+// An enum reference and the union of exactly its members are mutually assignable but not identical, so `AssertEqual` alone rejects `z.enum(SomeEnum)` against a `SomeEnum` target. Unioning each side with a private dummy forces the union to be rebuilt, which collapses that one difference and nothing else — plain literals against an enum, member subsets, brands and `any` all still fail. The symbol is not exported, so no user type can smuggle it in and cancel a real difference.
+declare const toZodDummy: unique symbol;
 
-// Recurses only through types identical to their own homomorphic rebuild, which preserves the exactness guarantees: an intersection, a call signature and `readonly`/optional modifiers all survive or block the walk, so only enum leaves are normalized.
+// Recurses only through types identical to their own homomorphic rebuild, which preserves the exactness guarantees: an intersection, a call signature and `readonly`/optional modifiers all survive or block the walk, so only leaves are normalized.
 type ToZodNormalize<T> = [T] extends [object]
   ? AssertEqual<T, { [K in keyof T]: T[K] }> extends true
     ? { [K in keyof T]: ToZodNormalize<T[K]> }
     : T
-  : ToZodNormalizeEnum<T>;
+  : T | typeof toZodDummy;
 
 type ToZodEqual<Output, T> = AssertEqual<Output, T> extends true
   ? true
