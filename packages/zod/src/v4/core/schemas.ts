@@ -1111,7 +1111,7 @@ function isLuhnAlgo(digits: string): boolean {
   let bit = 1;
   let sum = 0;
   while (length) {
-    const value = +digits[--length]!;
+    const value = digits.charCodeAt(--length) - 48;
     bit ^= 1;
     sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
   }
