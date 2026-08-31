@@ -752,16 +752,7 @@ test("parses a factory-built recursive discriminated union at the root and neste
   expect(z.object({ g: Geometry() }).parse({ g: collection }).g.type).toBe("GeometryCollection");
 });
 
-test("the depth cap keeps the walk exact below it and conservative past it", () => {
-  // the leaf of an n-wrapper chain enters the walk at depth n, so 255 wrappers sit just under the cap and 256 just past it
-  const nest = (n: number) => {
-    let s: any = z.string();
-    for (let i = 0; i < n; i++) s = z.object({ v: s });
-    return s;
-  };
-  expect(z.core.isRecursiveSchema(nest(255))).toBe(false);
-  expect(z.core.isRecursiveSchema(nest(256))).toBe(true);
-
+test("the walk flags a generative loop without resolving it to the bottom", () => {
   const Node = (): any =>
     z.object({
       get self() {
@@ -769,4 +760,45 @@ test("the depth cap keeps the walk exact below it and conservative past it", () 
       },
     });
   expect(z.core.isRecursiveSchema(Node())).toBe(true);
+
+  // mutual factories: the loop closes over two getter sources
+  const A = (): any =>
+    z.object({
+      get b() {
+        return B();
+      },
+    });
+  const B = (): any =>
+    z.object({
+      get a() {
+        return A();
+      },
+    });
+  expect(z.core.isRecursiveSchema(A())).toBe(true);
+
+  // a lone forward-reference getter is not a loop
+  const Leaf = z.object({ id: z.string() });
+  const forward: any = z.object({
+    get leaf() {
+      return Leaf;
+    },
+  });
+  expect(z.core.isRecursiveSchema(forward)).toBe(false);
+});
+
+test("the walk stays exact on deep acyclic nesting", () => {
+  let deep: any = z.string();
+  for (let i = 0; i < 300; i++) deep = z.object({ v: deep });
+  expect(z.core.isRecursiveSchema(deep)).toBe(false);
+});
+
+test("parses a factory-built recursive schema through z.lazy", () => {
+  const Node = (): any =>
+    z.object({
+      id: z.number(),
+      child: z.lazy(() => z.optional(Node())),
+    });
+
+  const out = z.object({ root: Node() }).parse({ root: { id: 1, child: { id: 2, child: undefined } } });
+  expect(out.root.child.id).toBe(2);
 });

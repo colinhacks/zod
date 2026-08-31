@@ -1,4 +1,5 @@
 import type * as errors from "./errors.js";
+import { rawShape } from "./schemas.js";
 import type { $ZodMemoizer, $ZodType, $ZodTypeDef, ParseContextInternal, ParsePayload } from "./schemas.js";
 import type * as util from "./util.js";
 
@@ -34,29 +35,51 @@ function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
 
-// A factory-built recursive schema mints fresh instances on every getter read, so the identity walk below never revisits a node and would descend until the stack overflows. Past this depth, assume a cycle: an acyclic schema nested this deep keeps the memoizer attached, so it dedupes output by input identity and `z.compile` declines it.
-const MAX_DEPTH = 256;
-
 /** Whether this schema's subtree contains a cycle, so one parse can re-enter it. */
-function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
+function isRecursive(inst: $ZodType, stack: Set<object>, sources: Set<string>): boolean {
   const cached = recursive.get(inst);
   if (cached !== undefined) return cached;
   // Relative to the walk in progress, so not cached.
   if (stack.has(inst)) return true;
-  if (stack.size >= MAX_DEPTH) return true;
   stack.add(inst);
 
   let result = false;
   const check = (child: any) => {
-    if (!result && child?._zod && isRecursive(child, stack)) result = true;
+    if (!result && child?._zod && isRecursive(child, stack, sources)) result = true;
+  };
+
+  // A factory-built recursive schema mints fresh instances on every getter read, so instance identity never sees the walk revisit a node and it would descend forever. What every minted level shares is the getter itself: a path that re-enters a getter whose source it is already resolving can only have been produced by a loop in user code, so treat the repeat as a back-edge and don't resolve it.
+  const follow = (source: string, read: () => unknown) => {
+    if (result) return;
+    if (sources.has(source)) {
+      result = true;
+      return;
+    }
+    sources.add(source);
+    check(read());
+    sources.delete(source);
   };
 
   const def = inst._zod.def as any;
   const kind = def.type as $ZodTypeDef["type"];
   switch (kind) {
     case "object": {
+      // The first `def.shape` read resolves every user getter at once via spread, so fingerprint the raw shape's getters before triggering it; a def without a raw entry was already resolved, and its shape holds plain values.
+      const sh = rawShape(def) ?? def.shape;
+      const pending: [PropertyKey, string][] = [];
       // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
-      for (const key of Reflect.ownKeys(def.shape)) check(def.shape[key]);
+      for (const key of Reflect.ownKeys(sh)) {
+        const desc = Object.getOwnPropertyDescriptor(sh, key)!;
+        if (desc.get) pending.push([key, desc.get.toString()]);
+        else check(desc.value);
+      }
+      if (pending.length) {
+        for (const [, source] of pending) if (sources.has(source)) result = true;
+        if (!result) {
+          const resolved = def.shape;
+          for (const [key, source] of pending) follow(source, () => resolved[key]);
+        }
+      }
       check(def.catchall);
       break;
     }
@@ -103,7 +126,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       break;
     // reading `_zod.innerType` resolves the getter once and caches it
     case "lazy":
-      check((inst as any)._zod.innerType);
+      follow(def.getter.toString(), () => (inst as any)._zod.innerType);
       break;
     // a leaf by choice: `parts` are regex fragments, not data positions
     case "template_literal":
@@ -155,7 +178,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
  * generated fast path has no context to key on.
  */
 export function isRecursiveSchema(inst: $ZodType): boolean {
-  return isRecursive(inst, new Set());
+  return isRecursive(inst, new Set(), new Set());
 }
 
 function bucketFor(state: State, inst: $ZodType): Map<object, Entry> {
@@ -211,7 +234,7 @@ const memo: $ZodMemoizer = {
 
       const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload> => {
         if (isRecursiveInst === undefined) {
-          isRecursiveInst = isRecursive(inst, new Set());
+          isRecursiveInst = isRecursive(inst, new Set(), new Set());
           if (!isRecursiveInst) {
             // Nothing here can ever fire, so take it back out.
             inst._zod.parse = base;

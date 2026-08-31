@@ -2080,6 +2080,11 @@ function handleCatchall(
 // Whichever object a def's `shape` currently answers from: the one the caller passed until the first read, the frozen copy after it. Keyed by def, so a def rebuilt by a builder is simply absent rather than inheriting the source's. Read its keys with `Object.keys`, which does not invoke them — that is what lets a discriminated union check its discriminator without resolving an option whose getters reference the union being constructed.
 const propShapes = new WeakMap<object, Record<string, unknown>>();
 
+/** The shape object this def currently answers from, without resolving its getters. The cycle walk fingerprints these before the first `def.shape` read spreads them away. */
+export function rawShape(def: object): Record<string, unknown> | undefined {
+  return propShapes.get(def);
+}
+
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
