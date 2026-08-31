@@ -14,7 +14,6 @@ import {
   mergeValues,
   parseURLObject,
   stripTabAndNewline,
-  throwUnmergable,
   urlHostnameOk,
   urlProtocolOk,
 } from "./schemas.js";
@@ -35,7 +34,11 @@ interface CompileFnOptions {
   assertOnly?: boolean | undefined;
 }
 
-type CompiledFn<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
+type CompiledFn<T> = ((input: unknown) => T | INVALID) & {
+  code?: string | undefined;
+  /** False when this function's INVALID does not strictly mean "the runtime would reject". */
+  definite?: boolean | undefined;
+};
 
 /** Raised when the schema contains async refinements or transforms. Surfaces only under `compile(schema, { strict: true })`. */
 export class ZodCompileAsyncError extends Error {
@@ -66,6 +69,8 @@ interface CompileContext {
   constants: Map<string, unknown>;
   constantCounter: number;
   varCounter: number;
+  /** Cleared when a construct can return INVALID for something the interpreter throws on, so `validate` keeps its fallback. */
+  definite: boolean;
 }
 
 // Union of all check types we support in AOT compilation
@@ -92,9 +97,9 @@ type SupportedCheck =
  * dropped. A schema the flag cannot express reuses the parser, which still answers correctly — it
  * just builds a value nothing reads.
  */
-function compileValidator(schema: SomeType, parser: (input: unknown) => unknown): (input: unknown) => unknown {
+function compileValidator(schema: SomeType, parser: CompiledFn<unknown>): CompiledFn<unknown> {
   try {
-    return compileFn(schema, { assertOnly: true }) as (input: unknown) => unknown;
+    return compileFn(schema, { assertOnly: true }) as CompiledFn<unknown>;
   } catch {
     return parser;
   }
@@ -160,7 +165,7 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fallbackRun = originalRun;
-    clone._zod.bag.validator = compileValidator(schema, parser as (input: unknown) => unknown);
+    clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
     clone._zod.run = wrapped;
 
     // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
@@ -223,6 +228,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     constants: new Map(),
     constantCounter: 0,
     varCounter: 0,
+    definite: true,
   };
 
   const doc = new Doc(["input"]);
@@ -254,6 +260,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
   if (options?.debug) {
     fn.code = fullCode;
   }
+  fn.definite = ctx.definite;
   return fn;
 }
 
@@ -271,13 +278,13 @@ function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
 }
 
-// Runs a child schema as a black box: its value, or INVALID for a failure. A thenable is an async child reached synchronously — throw like generated code does, because INVALID must keep meaning "the runtime would reject": a union reads it as a rejected branch, and validate reads it as a definitive false.
+// Runs a child schema as a black box: its value, or INVALID for a failure or an async run.
 function runtimeRun(schema: SomeType, value: unknown): unknown {
   const result = (schema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
     {} as ParseContextInternal
   );
-  if (result && typeof (result as Promise<unknown>).then === "function") throw new $ZodAsyncError();
+  if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
   const r = result as { value: unknown; issues: unknown[] };
   return r.issues.length === 0 ? r.value : INVALID;
 }
@@ -323,6 +330,8 @@ function compileChild(
 }
 
 function emitRuntimeIsland(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  // an islanded child answers INVALID for an async run too, which the interpreter throws for
+  ctx.definite = false;
   const schemaConst = addConstant(ctx, schema);
   const runConst = addConstant(ctx, runtimeRun);
   const outVar = newVar(ctx);
@@ -1834,15 +1843,16 @@ function literalEquality(ctx: CompileContext, accessor: string, value: unknown):
 
 function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
+  // An unmergeable merge, and a child failing before the merge is even reached, both return INVALID for a case the interpreter answers with a throw.
+  ctx.definite = false;
   const leftOutput = compileChild(doc, ctx, def.left, accessor);
   const rightOutput = compileChild(doc, ctx, def.right, accessor);
 
-  // Hoist the runtime merge helper so recursive object/array merge semantics stay in one place. Both children already passed here, which is exactly the case the interpreter answers with a throw — INVALID must keep meaning "the runtime would reject", so a schema bug throws instead.
+  // Hoist the runtime merge helper so recursive object/array merge semantics stay in one place. If the merge is invalid, return INVALID and let the runtime fallback construct canonical errors.
   const mergeConst = addConstant(ctx, mergeValues);
   const mergedVar = newVar(ctx);
   doc.write(`const ${mergedVar} = ${mergeConst}(${leftOutput}, ${rightOutput});`);
-  const throwConst = addConstant(ctx, throwUnmergable);
-  doc.write(`if (!${mergedVar}.valid) ${throwConst}(${mergedVar}.mergeErrorPath);`);
+  doc.write(`if (!${mergedVar}.valid) return INVALID;`);
   return `${mergedVar}.data`;
 }
 
@@ -2062,7 +2072,8 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   const inputOutput = generateCheck(doc, ctx, def.in, accessor);
 
   if (def.transform) {
-    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime.
+    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime, and a plain function handing back a promise answers INVALID too — union parity, but not a decidable rejection at the top level.
+    ctx.definite = false;
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
@@ -2165,6 +2176,8 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
   };
 
   if (def.transform) {
+    // as in the pipe helper: a thenable answers INVALID, which is union parity but not a decidable rejection
+    ctx.definite = false;
     // Check for async transform
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms are not supported");

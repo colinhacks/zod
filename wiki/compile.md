@@ -19,7 +19,7 @@ There is no `z.compile()` no-arg form. Different shapes for different jobs: expl
 
 The compiled fast path is a happy-path validator. It returns the parsed/transformed output or an `INVALID` sentinel. On `INVALID`, the wrapper calls the original `_zod.run` to produce the canonical `ZodError`.
 
-`INVALID` strictly means "the runtime would reject". Anything generated code cannot decide throws instead of bailing — an async child reached synchronously throws `$ZodAsyncError`, an unmergeable intersection throws the interpreter's own `Unmergable intersection` error. Unions depend on this (a branch's `INVALID` is read as a rejection), and it is what lets `z.validate` answer `false` on `INVALID` without the interpreted fallback.
+`INVALID` is not uniformly a rejection. A union reads it as one, so several constructs return it for a case the interpreter throws on: a transform handing back a thenable (union parity — the interpreter's own union falls through there), a runtime island running async, and an intersection whose merge is unmergeable. Codegen therefore tracks a `definite` flag, cleared by exactly those three, and `z.validate` skips its interpreted fallback only when the flag survives. Everything else — type, range and format checks, enums, unions, object and array members, and refinements, which throw on a thenable rather than bailing — leaves it set.
 
 Consequences:
 

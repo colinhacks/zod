@@ -115,7 +115,7 @@ const COMPILE_INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
 const COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 
 interface CompiledBag {
-  validator?: (input: unknown) => unknown;
+  validator?: ((input: unknown) => unknown) & { definite?: boolean | undefined };
   fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
 }
 
@@ -134,8 +134,8 @@ export const validate: $Validate = ((
   const validator = (schema._zod.bag as CompiledBag).validator;
   if (validator !== undefined) {
     if (validator(value) !== COMPILE_INVALID) return true;
-    // the sentinel is definitive — generated code throws for anything it cannot decide — so the interpreted re-parse is only needed when a ctx might change the answer
-    if (_ctx === undefined) return false;
+    // a definite sentinel means the runtime would reject, so skip the re-parse; a ctx can still change the answer
+    if (validator.definite === true && _ctx === undefined) return false;
   }
   return validateFallback(schema, value, _ctx);
 }) as $Validate;

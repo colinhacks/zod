@@ -72,8 +72,8 @@ test("validate agrees with the compiled fast path and keeps the callback bound",
   expect(z.validate(schema, { name: "ok" })).toBe(true);
 });
 
-test("compiled validate still throws where parsing throws", () => {
-  // both sides pass but the outputs conflict, which the interpreter answers with a throw — a definitive false would misreport a schema bug
+test("compiled validate keeps the fallback where INVALID is not a decidable rejection", () => {
+  // an intersection answers INVALID for an unmergeable merge, which the interpreter answers with a throw — a fast false would misreport a schema bug
   const unmergeable = z.compile(
     z.intersection(
       z.number(),
@@ -83,12 +83,25 @@ test("compiled validate still throws where parsing throws", () => {
   );
   expect(() => z.validate(unmergeable, 1234)).toThrow("Unmergable intersection");
 
-  // an async child behind a when-gated check islands at codegen; its thenable at parse time throws like the interpreter
+  // a when-gated check islands at codegen, and an island answers INVALID for an async run too
   const gated = z.number().refine(() => Promise.resolve(true));
   (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => true;
   const compiled = z.compile(z.object({ n: gated }), { strict: true });
   expect(() => z.validate(compiled, { n: 3 })).toThrow(z.core.$ZodAsyncError);
   expect(() => z.validate(z.object({ n: gated }), { n: 3 })).toThrow(z.core.$ZodAsyncError);
+
+  // a plain function handing back a promise answers INVALID for union parity, so a transform is never a decidable rejection
+  const piped = z.string().transform(() => Promise.resolve(1));
+  expect(() => z.validate(z.compile(piped, { strict: true }), "x")).toThrow(z.core.$ZodAsyncError);
+  expect(() => z.validate(piped, "x")).toThrow(z.core.$ZodAsyncError);
+
+  // a continuable child issue short-circuits the compiled intersection before its merge, but the interpreter reaches the merge and throws
+  const continuable = z.intersection(
+    z.number().min(10),
+    z.number().transform((x) => x + 1)
+  );
+  expect(() => z.validate(z.compile(continuable, { strict: true }), 1)).toThrow("Unmergable intersection");
+  expect(() => z.validate(continuable, 1)).toThrow("Unmergable intersection");
 });
 
 test("validate is exported from zod/mini", () => {
