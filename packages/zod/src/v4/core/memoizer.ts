@@ -1,5 +1,4 @@
 import type * as errors from "./errors.js";
-import { rawShape } from "./schemas.js";
 import type { $ZodMemoizer, $ZodType, $ZodTypeDef, ParseContextInternal, ParsePayload } from "./schemas.js";
 import * as util from "./util.js";
 
@@ -82,29 +81,15 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
   const kind = def.type as $ZodTypeDef["type"];
   switch (kind) {
     case "object": {
-      const raw = rawShape(def);
-      const desc = raw ? undefined : Object.getOwnPropertyDescriptor(def, "shape");
-      const sources = desc?.get ? util.getShapeSources(def) : undefined;
-      if (sources) {
-        // unresolved builder accessor: reading it runs the source's getters, so answer from what it derives from
-        let derived: Answer = NONE;
-        for (const src of sources) {
-          const answer = (src as any)?._zod ? isRecursive(src as any, stack, resolve) : shape(src as object);
-          if (answer > derived) derived = answer;
-        }
-        // containment only proves the acyclic case; a builder can drop the very key that carries the cycle, so never call that one proven
-        merge(derived === NONE ? NONE : ASSUMED);
-      } else {
-        // raw shape, or a builder accessor that already self-cached: both hold resolved values
-        merge(shape(raw ?? def.shape));
-      }
+      const raw = util.rawShape(def);
+      // a def with no raw shape answers `shape` from an accessor of its own, and running that can mint a whole fresh subtree
+      merge(raw ? shape(raw) : ASSUMED);
       check(def.catchall);
       break;
     }
-    case "properties": {
-      for (const key of Reflect.ownKeys(def.shape)) check(def.shape[key]);
+    case "properties":
+      merge(shape(def.shape));
       break;
-    }
     case "array":
       check(def.element);
       break;

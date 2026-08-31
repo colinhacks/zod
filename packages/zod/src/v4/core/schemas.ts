@@ -2085,33 +2085,22 @@ function handleCatchall(
   });
 }
 
-// Whichever object a def's `shape` currently answers from: the one the caller passed until the first read, the frozen copy after it. Keyed by def, so a def rebuilt by a builder is simply absent rather than inheriting the source's. Read its keys with `Object.keys`, which does not invoke them — that is what lets a discriminated union check its discriminator without resolving an option whose getters reference the union being constructed.
-const propShapes = new WeakMap<object, Record<string, unknown>>();
-
-/** The shape a def answers from, getters unresolved; absent when `shape` is the def's own accessor, which the builders register sources for instead. */
-export function rawShape(def: object): Record<string, unknown> | undefined {
-  return propShapes.get(def);
-}
-
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
-  // const sh = def.shape;
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
-  if (!desc?.get) {
-    const sh = def.shape;
-    propShapes.set(def, sh);
-    Object.defineProperty(def, "shape", {
-      get: () => {
-        const newSh = { ...sh };
-        Object.defineProperty(def, "shape", {
-          value: newSh,
-        });
-        propShapes.set(def, newSh);
-
-        return newSh;
-      },
-    });
+  // a cloned def carries its source's accessor, which knows the shape it answers from; adopting that keeps the clone's keys readable without running it
+  const sh = desc?.get ? (desc.get as util.ShapeGetter).raw : (def.shape ?? {});
+  if (sh) {
+    // Freezes the shape on first read, so its getters resolve once and every later read sees the same schemas.
+    const get: util.ShapeGetter = () => {
+      const newSh = { ...sh };
+      Object.defineProperty(def, "shape", { value: newSh });
+      get.raw = newSh;
+      return newSh;
+    };
+    get.raw = sh;
+    Object.defineProperty(def, "shape", { get });
   }
 
   const _normalized = util.cached(() => normalizeDef(def));
@@ -2630,9 +2619,9 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       return propValues;
     });
 
-    // Checked now rather than in the lookup map below, so an option that lacks the discriminator fails at the `discriminatedUnion` call instead of on the first object parsed. Options whose shape cannot be enumerated without resolving it — pipes, lazies, and objects rebuilt by a builder such as `.extend()` — are left to the map.
+    // Checked now rather than in the lookup map below, so an option that lacks the discriminator fails at the `discriminatedUnion` call instead of on the first object parsed. Options whose shape cannot be enumerated without resolving it — pipes and lazies — are left to the map.
     def.options.forEach((option, i) => {
-      const propShape = propShapes.get(option._zod.def);
+      const propShape = util.rawShape(option._zod.def);
       if (propShape && !Object.prototype.hasOwnProperty.call(propShape, def.discriminator)) {
         throw new Error(`Invalid discriminated union option at index "${i}"`);
       }
