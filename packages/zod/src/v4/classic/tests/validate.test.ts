@@ -63,10 +63,32 @@ test("validate agrees with the compiled fast path and keeps the callback bound",
 
   calls = 0;
   expect(z.validate(compiled, { name: "x" })).toBe(false);
-  expect(calls).toBeLessThanOrEqual(2);
+  // the compiled rejection is definitive, so the interpreted fallback never runs and the callback fires once
+  expect(calls).toBe(1);
 
   expect(z.validate(compiled, { name: 42 })).toBe(false);
+  // a ctx can change the verdict, so it still takes the interpreted path
+  expect(z.validate(compiled, { name: "x" }, {})).toBe(false);
   expect(z.validate(schema, { name: "ok" })).toBe(true);
+});
+
+test("compiled validate still throws where parsing throws", () => {
+  // both sides pass but the outputs conflict, which the interpreter answers with a throw — a definitive false would misreport a schema bug
+  const unmergeable = z.compile(
+    z.intersection(
+      z.number(),
+      z.number().transform((x) => x + 1)
+    ),
+    { strict: true }
+  );
+  expect(() => z.validate(unmergeable, 1234)).toThrow("Unmergable intersection");
+
+  // an async child behind a when-gated check islands at codegen; its thenable at parse time throws like the interpreter
+  const gated = z.number().refine(() => Promise.resolve(true));
+  (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => true;
+  const compiled = z.compile(z.object({ n: gated }), { strict: true });
+  expect(() => z.validate(compiled, { n: 3 })).toThrow(z.core.$ZodAsyncError);
+  expect(() => z.validate(z.object({ n: gated }), { n: 3 })).toThrow(z.core.$ZodAsyncError);
 });
 
 test("validate is exported from zod/mini", () => {

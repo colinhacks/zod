@@ -132,7 +132,11 @@ export const validate: $Validate = ((
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean => {
   const validator = (schema._zod.bag as CompiledBag).validator;
-  if (validator !== undefined && validator(value) !== COMPILE_INVALID) return true;
+  if (validator !== undefined) {
+    if (validator(value) !== COMPILE_INVALID) return true;
+    // the sentinel is definitive — generated code throws for anything it cannot decide — so the interpreted re-parse is only needed when a ctx might change the answer
+    if (_ctx === undefined) return false;
+  }
   return validateFallback(schema, value, _ctx);
 }) as $Validate;
 

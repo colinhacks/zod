@@ -14,6 +14,7 @@ import {
   mergeValues,
   parseURLObject,
   stripTabAndNewline,
+  throwUnmergable,
   urlHostnameOk,
   urlProtocolOk,
 } from "./schemas.js";
@@ -270,13 +271,13 @@ function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
 }
 
-// Runs a child schema as a black box: its value, or INVALID for a failure or an async run.
+// Runs a child schema as a black box: its value, or INVALID for a failure. A thenable is an async child reached synchronously — throw like generated code does, because INVALID must keep meaning "the runtime would reject": a union reads it as a rejected branch, and validate reads it as a definitive false.
 function runtimeRun(schema: SomeType, value: unknown): unknown {
   const result = (schema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
     {} as ParseContextInternal
   );
-  if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
+  if (result && typeof (result as Promise<unknown>).then === "function") throw new $ZodAsyncError();
   const r = result as { value: unknown; issues: unknown[] };
   return r.issues.length === 0 ? r.value : INVALID;
 }
@@ -1836,11 +1837,12 @@ function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeTy
   const leftOutput = compileChild(doc, ctx, def.left, accessor);
   const rightOutput = compileChild(doc, ctx, def.right, accessor);
 
-  // Hoist the runtime merge helper so recursive object/array merge semantics stay in one place. If the merge is invalid, return INVALID and let the runtime fallback construct canonical errors.
+  // Hoist the runtime merge helper so recursive object/array merge semantics stay in one place. Both children already passed here, which is exactly the case the interpreter answers with a throw — INVALID must keep meaning "the runtime would reject", so a schema bug throws instead.
   const mergeConst = addConstant(ctx, mergeValues);
   const mergedVar = newVar(ctx);
   doc.write(`const ${mergedVar} = ${mergeConst}(${leftOutput}, ${rightOutput});`);
-  doc.write(`if (!${mergedVar}.valid) return INVALID;`);
+  const throwConst = addConstant(ctx, throwUnmergable);
+  doc.write(`if (!${mergedVar}.valid) ${throwConst}(${mergedVar}.mergeErrorPath);`);
   return `${mergedVar}.data`;
 }
 

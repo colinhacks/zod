@@ -2742,6 +2742,11 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
   }
 );
 
+/** Shared with the compiler, which emits a hoisted call so both paths raise the identical error. */
+export function throwUnmergable(mergeErrorPath: PropertyKey[]): never {
+  throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(mergeErrorPath)}`);
+}
+
 export function mergeValues(
   a: any,
   b: any
@@ -2849,7 +2854,7 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
 
   if (!merged.valid) {
     if (util.aborted(result)) return result;
-    throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
+    throwUnmergable(merged.mergeErrorPath);
   }
 
   result.value = merged.data;

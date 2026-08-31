@@ -19,6 +19,8 @@ There is no `z.compile()` no-arg form. Different shapes for different jobs: expl
 
 The compiled fast path is a happy-path validator. It returns the parsed/transformed output or an `INVALID` sentinel. On `INVALID`, the wrapper calls the original `_zod.run` to produce the canonical `ZodError`.
 
+`INVALID` strictly means "the runtime would reject". Anything generated code cannot decide throws instead of bailing — an async child reached synchronously throws `$ZodAsyncError`, an unmergeable intersection throws the interpreter's own `Unmergable intersection` error. Unions depend on this (a branch's `INVALID` is read as a rejection), and it is what lets `z.validate` answer `false` on `INVALID` without the interpreted fallback.
+
 Consequences:
 
 - 100% error parity with uncompiled Zod by construction. The fast path never produces errors; the runtime is the only source of `ZodError`s. We don't maintain a second error-path implementation, which is the main reason this design is preferable to arktype's dual `Allows` + `Apply` codegen.
