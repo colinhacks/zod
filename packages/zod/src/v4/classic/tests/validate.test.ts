@@ -155,6 +155,8 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
       z.number().min(10),
       z.number().transform((x) => x + 1)
     ),
+    // unmergeable with no user callback in it, so only the intersection itself can clear the flag
+    z.intersection(z.string().default("a"), z.string().default("b")),
     z.lazy(() => z.object({ a: z.string() })),
     z.number().catch(0),
     z.nonoptional(z.string().optional()),
@@ -169,6 +171,9 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
     z.custom(thenable),
     z.string().refine(thenable),
     z.string().pipe(z.string().min(3)),
+    // a codec's decode is the pipe branch's transform, and a plain function can still hand back a promise
+    z.codec(z.string(), z.number(), { decode: thenable, encode: String }),
+    z.object({ first: z.string(), second: z.codec(z.string(), z.number(), { decode: thenable, encode: String }) }),
     // a user callback can throw, and compiled code can reject an earlier sibling before ever reaching it
     z.object({
       first: z.string(),
@@ -182,6 +187,14 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
         throw new TypeError("u");
       }),
     }),
+    // superRefine and check take the other branch of the refine generator than refine does
+    z.object({
+      first: z.string(),
+      second: z.string().superRefine(() => {
+        throw new RangeError("u");
+      }),
+    }),
+    z.string().superRefine(thenable as never),
     z.object({
       first: z.string(),
       second: z.string().transform(() => {
@@ -214,6 +227,12 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
     new Map(),
     new Set(["a"]),
     "true",
+    // the exposing shape: an earlier field the compiled path rejects before it reaches the throwing one
+    { first: 1, second: "s" },
+    { first: "s", second: "s" },
+    { first: 1 },
+    [1, "x"],
+    ["s", "x"],
   ];
   const outcome = (fn: () => unknown) => {
     try {
