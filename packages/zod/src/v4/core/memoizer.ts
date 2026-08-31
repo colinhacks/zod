@@ -27,7 +27,7 @@ type WithState = { [STATE]?: State };
 
 const NO_ISSUES: errors.$ZodRawIssue[] = [];
 
-// A value a cycle can close through. `z.properties()` asserts on any non-nullish value, so a callable is one too; every other container rejects a function before it gets here.
+// a value a cycle can close through; callables count, since z.properties asserts on one
 function isRef(value: unknown): value is object {
   return value !== null && (typeof value === "object" || typeof value === "function");
 }
