@@ -100,3 +100,52 @@ test("z.properties async", async () => {
   const bad = await p.safeParseAsync({ a: "!" });
   expect(bad.error!.issues.map((i) => i.path)).toEqual([["a"]]);
 });
+
+test("z.properties infers the input side", () => {
+  // nothing is written back, so an output-typed inference would lie for every shape entry whose output differs from its input
+  const withDefault = z.properties({ a: z.string().default("x") });
+  expectTypeOf<z.infer<typeof withDefault>>().toEqualTypeOf<{ a?: string | undefined }>();
+  expect(withDefault.parse({})).toEqual({});
+
+  const withTransform = z.properties({ a: z.string().transform((s) => s.length) });
+  expectTypeOf<z.infer<typeof withTransform>>().toEqualTypeOf<{ a: string }>();
+  expect(withTransform.parse({ a: "hi" })).toEqual({ a: "hi" });
+
+  // a plain schema has the same input and output, so the documented narrowing is unchanged
+  const W = z.instanceof(URL).properties({ protocol: z.literal("https:") });
+  expectTypeOf<z.infer<typeof W>>().toEqualTypeOf<URL & { protocol: "https:" }>();
+});
+
+test("z.properties validates symbol keys", () => {
+  const sym = Symbol("tag");
+  const p = z.properties({ [sym]: z.string() });
+  expect(p.safeParse({ [sym]: "ok" }).success).toBe(true);
+  expect(p.safeParse({ [sym]: 123 }).error!.issues.map((i) => i.path)).toEqual([[sym]]);
+  expect(
+    z
+      .compile(p)
+      .safeParse({ [sym]: 123 })
+      .error!.issues.map((i) => i.path)
+  ).toEqual([[sym]]);
+});
+
+test("z.properties compiled and interpreted agree on a nullish value", () => {
+  // a base that permits null reaches the check role with one; the compiled property read must not throw where the runtime reports an issue
+  const s = z.any().check(...z.properties({ a: z.string() }));
+  const expected = [["invalid_type", []]];
+  expect(s.safeParse(null).error!.issues.map((i) => [i.code, i.path])).toEqual(expected);
+  expect(
+    z
+      .compile(s)
+      .safeParse(null)
+      .error!.issues.map((i) => [i.code, i.path])
+  ).toEqual(expected);
+});
+
+test("z.properties with a custom when refuses to compile", () => {
+  // `when` gates the assertion at runtime; a union branch compiled without it is absorbed as a branch failure rather than falling back
+  const p = z.properties({ a: z.literal("x") }, { when: () => false });
+  const s = z.union([p, z.object({ b: z.string() })]);
+  const input = { a: "wrong", b: "hello" };
+  expect(z.compile(s).safeParse(input)).toEqual(s.safeParse(input));
+});

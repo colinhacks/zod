@@ -2812,7 +2812,7 @@ export interface ZodInstanceOf<T = unknown> extends ZodCustom<T, T> {
   properties<Shape extends core.$ZodShape>(
     shape: Shape,
     params?: string | core.$ZodPropertiesParams
-  ): ZodInstanceOf<T & core.$InferObjectOutput<Shape, {}>>;
+  ): ZodInstanceOf<T & core.$InferObjectInput<Shape, {}>>;
 }
 export const ZodInstanceOf: core.$constructor<ZodInstanceOf> = /*@__PURE__*/ core.$constructor(
   "ZodInstanceOf",

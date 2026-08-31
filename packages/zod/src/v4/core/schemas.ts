@@ -4977,9 +4977,10 @@ export interface $ZodPropertiesDef<Shape extends $ZodShape = $ZodShape> extends 
   shape: Shape;
 }
 
+// both sides infer the INPUT type: the shape is asserted and its results discarded, so a default, catch or transform inside it would make an output-typed inference a lie
 export interface $ZodPropertiesInternals<Shape extends $ZodShape = $ZodShape>
-  extends $ZodTypeInternals<$InferObjectOutput<Shape, {}>, $InferObjectInput<Shape, {}>>,
-    checks.$ZodCheckInternals<$InferObjectOutput<Shape, {}>> {
+  extends $ZodTypeInternals<$InferObjectInput<Shape, {}>, $InferObjectInput<Shape, {}>>,
+    checks.$ZodCheckInternals<$InferObjectInput<Shape, {}>> {
   def: $ZodPropertiesDef<Shape>;
   isst: errors.$ZodIssueInvalidType;
   issc: errors.$ZodIssue;
@@ -4992,7 +4993,7 @@ export interface $ZodProperties<Shape extends $ZodShape = $ZodShape> extends $Zo
 }
 
 // asserts in place: the child result's value is discarded, matching z.property(), because a nested object or array schema rebuilds its output even when nothing transformed
-function handlePropertiesResult(result: ParsePayload, payload: ParsePayload, key: string): void {
+function handlePropertiesResult(result: ParsePayload, payload: ParsePayload, key: string | symbol): void {
   if (result.issues.length) {
     payload.issues.push(...util.prefixIssues(key, result.issues));
   }
@@ -5013,9 +5014,9 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
       return payload;
     };
 
-    let keys!: string[];
+    let keys!: (string | symbol)[];
     inst._zod.check = (payload) => {
-      keys ??= Object.keys(def.shape);
+      keys ??= Reflect.ownKeys(def.shape);
       const input = payload.value as any;
       // reached with a nullish value only as a check on a base that allows one (z.any and friends); the schema role's own gate aborts before checks run
       if (input == null) {
@@ -5024,7 +5025,10 @@ export const $ZodProperties: core.$constructor<$ZodProperties> = /*@__PURE__*/ c
       }
       let proms: Promise<any>[] | undefined;
       for (const key of keys) {
-        const result = def.shape[key]!._zod.run({ value: input[key], issues: [] }, {});
+        const result = (def.shape as Record<string | symbol, $ZodType>)[key]!._zod.run(
+          { value: input[key], issues: [] },
+          {}
+        );
         if (result instanceof Promise) {
           proms ??= [];
           proms.push(result.then((result) => handlePropertiesResult(result, payload, key)));

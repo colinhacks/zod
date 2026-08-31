@@ -17,7 +17,7 @@ import {
   urlHostnameOk,
   urlProtocolOk,
 } from "./schemas.js";
-import type { $ZodProperties, ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
+import type { $ZodProperties, $ZodPropertiesDef, ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
 /** @internal Sentinel the compiled fast path returns when validation fails. */
@@ -420,7 +420,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generatePropertyCheck(doc, ctx, def, currentAccessor);
         break;
       case "properties":
-        generatePropertiesChecks(doc, ctx, def.shape as Record<string, SomeType>, currentAccessor);
+        generatePropertiesChecks(doc, ctx, def, currentAccessor);
         break;
       case "overwrite": {
         // Overwrite transforms the value - create new variable for transformed result
@@ -578,16 +578,20 @@ function generateMimeTypeCheck(
 }
 
 // asserts each named property in place; children compile assert-only because z.properties never rebuilds its input
-function generatePropertiesChecks(
-  doc: Doc,
-  ctx: CompileContext,
-  shape: Record<string, SomeType>,
-  accessor: string
-): void {
-  for (const key of Object.keys(shape)) {
+function generatePropertiesChecks(doc: Doc, ctx: CompileContext, def: $ZodPropertiesDef, accessor: string): void {
+  // a custom `when` gates the assertion at runtime; inside a union a wrongly-run branch is absorbed as a branch failure rather than falling back, so refuse at codegen the way the check role does
+  if (def.when) {
+    throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
+  }
+  // the runtime reports invalid_type for a nullish value; without this the generated property read throws instead
+  doc.write(`if (${accessor} == null) return INVALID;`);
+  const shape = def.shape as Record<string | symbol, SomeType>;
+  for (const key of Reflect.ownKeys(shape)) {
+    // a symbol has no source literal, so it is hoisted as a constant
+    const keyExpr = typeof key === "symbol" ? addConstant(ctx, key) : util.esc(key);
     // cache the property read so a getter runs exactly once, matching the runtime
     const inputVar = newVar(ctx);
-    doc.write(`const ${inputVar} = ${accessor}[${util.esc(key)}];`);
+    doc.write(`const ${inputVar} = ${accessor}[${keyExpr}];`);
     compileChild(doc, ctx, shape[key]!, inputVar, false);
   }
 }
@@ -1026,13 +1030,7 @@ function generateCheck(
       typeAccessor = generateCustomCheck(doc, ctx, schema, accessor);
       break;
     case "properties":
-      doc.write(`if (${accessor} == null) return INVALID;`);
-      generatePropertiesChecks(
-        doc,
-        ctx,
-        (schema as $ZodProperties)._zod.def.shape as Record<string, SomeType>,
-        accessor
-      );
+      generatePropertiesChecks(doc, ctx, (schema as $ZodProperties)._zod.def, accessor);
       typeAccessor = accessor;
       break;
     case "transform":

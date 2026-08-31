@@ -158,18 +158,18 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
         const { _cachedInner, ...rest } = def;
         return clone(s, { ...rest, getter: () => run(original()) });
       }
-      // A leaf by choice: `parts` are regex fragments, not data positions.
       case "properties": {
-        const oldShape = def.shape as Record<string, AnyZod>;
+        const oldShape = def.shape as Record<string | symbol, AnyZod>;
         let changed = false;
-        const newShape: Record<string, AnyZod> = {};
-        for (const k of Object.keys(oldShape)) {
+        const newShape: Record<string | symbol, AnyZod> = {};
+        for (const k of Reflect.ownKeys(oldShape)) {
           const mapped = run(oldShape[k]!);
           if (mapped !== oldShape[k]) changed = true;
           newShape[k] = mapped;
         }
         return changed ? clone(s, { ...def, shape: newShape }) : s;
       }
+      // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":
       // Leaves.
       case "string":
