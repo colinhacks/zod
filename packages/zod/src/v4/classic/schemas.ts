@@ -315,7 +315,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     validate(data, params) {
       return parse.validate(this, data, params);
     },
-    async validateAsync(data, params) {
+    validateAsync(data, params) {
       return parse.validateAsync(this, data, params);
     },
     encode: function _encode(data, params) {
