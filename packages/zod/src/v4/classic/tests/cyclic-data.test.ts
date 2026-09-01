@@ -922,6 +922,28 @@ test("a deferred edge stops being assumed a cycle once the graph resolves", () =
   expect(z.core.isRecursiveSchema(Cyclic)).toBe(true);
 });
 
+// `z.object` resolves its shape by spread, so a non-enumerable key is no part of it; `z.properties` reads every own key, so one there is still parsed and can still close a cycle
+test("a non-enumerable key counts for z.properties and not for z.object", () => {
+  const props = (enumerable: boolean) => {
+    const shape: Record<string, any> = { id: z.number() };
+    const P = z.properties(shape);
+    Object.defineProperty(shape, "next", { value: z.lazy(() => z.optional(P)), enumerable, configurable: true });
+    return P;
+  };
+  expect(z.core.isRecursiveSchema(props(true) as any)).toBe(true);
+  expect(z.core.isRecursiveSchema(props(false) as any)).toBe(true);
+
+  const object = (enumerable: boolean) => {
+    const shape: Record<string, any> = { id: z.number() };
+    const O: any = z.object(shape);
+    Object.defineProperty(shape, "next", { value: z.lazy(() => z.optional(O)), enumerable, configurable: true });
+    return O;
+  };
+  expect(z.core.isRecursiveSchema(object(true))).toBe(true);
+  // the spread drops it, so nothing can ever parse it
+  expect(z.core.isRecursiveSchema(object(false))).toBe(false);
+});
+
 test("the walk stays exact where nothing is deferred", () => {
   let deep: any = z.string();
   for (let i = 0; i < 300; i++) deep = z.object({ v: deep });

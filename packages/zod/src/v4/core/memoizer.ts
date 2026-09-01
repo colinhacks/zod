@@ -62,12 +62,12 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
   };
 
   // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
-  const shape = (sh: object): Answer => {
+  const shape = (sh: object, spread: boolean): Answer => {
     let answer: Answer = NONE;
     for (const key of Reflect.ownKeys(sh)) {
       const desc = Object.getOwnPropertyDescriptor(sh, key)!;
-      // a shape resolves by object spread, so a key it does not enumerate is never parsed
-      if (!desc.enumerable) continue;
+      // an object resolves its shape by spread, so a key it does not enumerate is never parsed; `z.properties` reads every own key and so keeps them all
+      if (spread && !desc.enumerable) continue;
       // resolving runs user code, and a factory mints a fresh subtree per read, so an edge the walk can't follow counts as a cycle
       const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve) : NONE;
       if (child > answer) answer = child;
@@ -85,12 +85,12 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
     case "object": {
       const raw = util.rawShape(def);
       // a def with no raw shape answers `shape` from an accessor of its own, and running that can mint a whole fresh subtree
-      merge(raw ? shape(raw) : ASSUMED);
+      merge(raw ? shape(raw, true) : ASSUMED);
       check(def.catchall);
       break;
     }
     case "properties":
-      merge(shape(def.shape));
+      merge(shape(def.shape, false));
       break;
     case "array":
       check(def.element);
