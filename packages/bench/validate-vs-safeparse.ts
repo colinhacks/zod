@@ -128,36 +128,42 @@ interface Measurement {
   validateNs: number;
 }
 
-function measure(schema: z.ZodType, input: unknown): Measurement {
+interface Pair {
+  plain: Measurement;
+  compiled: Measurement | null;
+}
+
+// All four calls for a case are alternated inside one round and share one iteration count, so every pair of numbers below is directly comparable — including the cross-mode one, plain safeParse against compiled validate. Measuring the plain schema to completion and then the compiled one would put whatever drifted between those two blocks straight onto that ratio, which is the same trap as running all of revision A before all of revision B.
+function measure(plain: z.ZodType, compiled: z.ZodType | null, input: unknown): Pair {
   // Feed the input through an array load. Passed as a constant the whole call is loop-invariant and V8 hoists it out of the timing loop.
   const pool = Array.from({ length: 64 }, () => input);
   let idx = 0;
-  const safeParse = () => {
-    const r = schema.safeParse(pool[idx++ & 63]);
+  const safeParseOn = (s: z.ZodType) => () => {
+    const r = s.safeParse(pool[idx++ & 63]);
     sink += r.success ? 1 : 0;
     escaped = r;
   };
-  const validate = () => {
-    const ok = z.validate(schema, pool[idx++ & 63]);
+  const validateOn = (s: z.ZodType) => () => {
+    const ok = z.validate(s, pool[idx++ & 63]);
     sink += ok ? 1 : 0;
     escaped = ok;
   };
 
-  const iters = calibrate(safeParse);
-  for (let i = 0; i < 3; i++) {
-    safeParse();
-    validate();
-  }
+  const ops = [safeParseOn(plain), validateOn(plain)];
+  if (compiled) ops.push(safeParseOn(compiled), validateOn(compiled));
 
-  let bestSafeParse = Number.POSITIVE_INFINITY;
-  let bestValidate = Number.POSITIVE_INFINITY;
-  for (let r = 0; r < ROUNDS; r++) {
-    bestSafeParse = Math.min(bestSafeParse, timed(safeParse, iters));
-    bestValidate = Math.min(bestValidate, timed(validate, iters));
-  }
+  // the plain safeParse is the slowest of the four, so calibrating on it keeps every block at or under the ~40ms target
+  const iters = calibrate(ops[0]);
+  for (let i = 0; i < 3; i++) for (const op of ops) op();
+
+  const best = ops.map(() => Number.POSITIVE_INFINITY);
+  for (let r = 0; r < ROUNDS; r++)
+    for (let i = 0; i < ops.length; i++) best[i] = Math.min(best[i], timed(ops[i], iters));
+
+  const ns = (i: number) => (best[i] * 1e6) / iters;
   return {
-    safeParseNs: (bestSafeParse * 1e6) / iters,
-    validateNs: (bestValidate * 1e6) / iters,
+    plain: { safeParseNs: ns(0), validateNs: ns(1) },
+    compiled: compiled ? { safeParseNs: ns(2), validateNs: ns(3) } : null,
   };
 }
 
@@ -179,7 +185,16 @@ interface Target {
   invalid: unknown;
 }
 
+interface CasePair {
+  name: string;
+  plain: z.ZodType;
+  compiled: z.ZodType | null;
+  valid: unknown;
+  invalid: unknown;
+}
+
 const targets: Target[] = [];
+const pairs: CasePair[] = [];
 for (const c of cases) {
   if (c.schema.safeParse(c.valid).success !== true) problems.push(`${c.name}: "valid" input does not parse`);
   if (c.schema.safeParse(c.invalid).success !== false) problems.push(`${c.name}: "invalid" input parses`);
@@ -188,18 +203,20 @@ for (const c of cases) {
   targets.push({ name: c.name, compiled: false, schema: c.schema, valid: c.valid, invalid: c.invalid });
 
   // strict: a silent uncompiled fallback would publish a "compiled" row that is really a second uncompiled measurement
-  let compiled: z.ZodType;
+  let compiled: z.ZodType | null = null;
   try {
     compiled = compile(c.schema, { strict: true });
   } catch (err) {
     problems.push(
       `${c.name}: did not compile (${err instanceof ZodCompileUnsupportedError ? "unsupported" : (err as Error).name})`
     );
-    continue;
   }
-  if (z.validate(compiled, c.valid) !== true || z.validate(compiled, c.invalid) !== false)
-    problems.push(`${c.name}: compiled validate disagrees with the runtime`);
-  targets.push({ name: c.name, compiled: true, schema: compiled, valid: c.valid, invalid: c.invalid });
+  if (compiled) {
+    if (z.validate(compiled, c.valid) !== true || z.validate(compiled, c.invalid) !== false)
+      problems.push(`${c.name}: compiled validate disagrees with the runtime`);
+    targets.push({ name: c.name, compiled: true, schema: compiled, valid: c.valid, invalid: c.invalid });
+  }
+  pairs.push({ name: c.name, plain: c.schema, compiled, valid: c.valid, invalid: c.invalid });
 }
 
 // Every case shares one safeParse/validate call site inside measure(), so those inline caches go megamorphic as the sweep proceeds and a case measured first would see a cleaner cache than one measured last. Warm every target before timing any, so each is measured against the same polluted-cache state.
@@ -212,13 +229,12 @@ for (let i = 0; i < 200; i++) {
   }
 }
 
-for (const t of targets) {
-  rows.push({
-    name: t.name,
-    compiled: t.compiled,
-    valid: measure(t.schema, t.valid),
-    invalid: measure(t.schema, t.invalid),
-  });
+for (const p of pairs) {
+  const valid = measure(p.plain, p.compiled, p.valid);
+  const invalid = measure(p.plain, p.compiled, p.invalid);
+  rows.push({ name: p.name, compiled: false, valid: valid.plain, invalid: invalid.plain });
+  if (valid.compiled && invalid.compiled)
+    rows.push({ name: p.name, compiled: true, valid: valid.compiled, invalid: invalid.compiled });
 }
 
 const fmtNs = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}µs` : `${n.toFixed(0)}ns`);
@@ -252,6 +268,35 @@ for (const mode of [false, true]) {
     const ratios = subset.map((r) => r[key].safeParseNs / r[key].validateNs).sort((a, b) => a - b);
     console.log(
       `${label}: median ${ratios[Math.floor(ratios.length / 2)].toFixed(1)}x, range ${ratios[0].toFixed(1)}x-${ratios[ratios.length - 1].toFixed(1)}x`
+    );
+  }
+}
+
+// The cross-mode table: what a caller gains by adopting both at once. Its two columns come from the same interleaved rounds as the two tables above, so this ratio is paired like theirs.
+{
+  const cross = rows
+    .filter((r) => !r.compiled)
+    .map((r) => ({ name: r.name, compiled: rows.find((o) => o.name === r.name && o.compiled) }))
+    .filter((r): r is { name: string; compiled: Row } => !!r.compiled);
+  if (cross.length) {
+    console.log();
+    console.log(
+      `compiled z.validate vs plain safeParse().success — the cross-mode upgrade, best of ${ROUNDS} interleaved rounds`
+    );
+    console.log();
+    console.log(`${pad("schema", 26)}${padL("plain sp", 11)}${padL("comp v", 10)}${padL("x", 8)}`);
+    console.log("-".repeat(55));
+    for (const c of cross) {
+      const plainSp = rows.find((o) => o.name === c.name && !o.compiled)!.invalid.safeParseNs;
+      const compV = c.compiled.invalid.validateNs;
+      console.log(`${pad(c.name, 26)}${padL(fmtNs(plainSp), 11)}${padL(fmtNs(compV), 10)}${padL(`${(plainSp / compV).toFixed(2)}x`, 8)}`);
+    }
+    console.log("-".repeat(55));
+    const ratios = cross
+      .map((c) => rows.find((o) => o.name === c.name && !o.compiled)!.invalid.safeParseNs / c.compiled.invalid.validateNs)
+      .sort((a, b) => a - b);
+    console.log(
+      `invalid input: median ${ratios[Math.floor(ratios.length / 2)].toFixed(1)}x, range ${ratios[0].toFixed(1)}x-${ratios[ratios.length - 1].toFixed(1)}x`
     );
   }
 }
