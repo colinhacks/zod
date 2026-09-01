@@ -54,7 +54,8 @@ const CEILINGS: Record<string, number> = {
   // Also carries the Standard Schema issue bag: a failing `~standard.validate` parses with a plain issue holder instead of constructing a ZodError. Measured 2974 / 3455 / 4540 locally plus 28 headroom.
   // Also carries the lazy `safeParse` error: a getter and a setter on the failing result, and the async wrapper that keeps a sync throw a rejection. Measured 3021 / 3497 / 4581 locally plus 18 headroom.
   // Also carries the symbol-key loop in `util.members`, which is what installs `$ZodProperties`'s `Symbol.iterator` on its prototype, and the memoizer's shared reference predicate. Measured 3036 / 3516 / 4611 locally plus 18 headroom.
-  "zod-mini-object": 4629,
+  // Also carries the guards `validate` parses under: an `aborted` check in each container loop, and two early exits in the generated object parser. Only a bundle containing a container pays — boolean is byte-identical to main and string measures three bytes smaller — so this ceiling rises by the measured +76 and the other two do not move. Measured 4696 locally plus 18 headroom.
+  "zod-mini-object": 4714,
 };
 
 /**

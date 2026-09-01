@@ -263,3 +263,370 @@ test("validate is exported from zod/mini", () => {
   expect(zm.validate(zm.string(), 1)).toBe(false);
   expect(zm.validate(zm.object({ a: zm.number() }), { a: 1 })).toBe(true);
 });
+
+test("the validate method matches the top-level function", () => {
+  expect(z.string().validate("asdf")).toBe(true);
+  expect(z.string().validate(12)).toBe(false);
+  expect(z.object({ a: z.string() }).validate({ a: "x" })).toBe(true);
+  expect(z.object({ a: z.string() }).validate({ a: 1 })).toBe(false);
+  expect(z.compile(z.object({ a: z.string() })).validate({ a: "x" })).toBe(true);
+});
+
+test("the validate method narrows to the input type", () => {
+  const value: unknown = "hi";
+  if (z.string().validate(value)) {
+    expectTypeOf(value).toEqualTypeOf<string>();
+  }
+  const transforming = z.string().transform((s) => s.length);
+  if (transforming.validate(value)) {
+    expectTypeOf(value).toEqualTypeOf<string>();
+    expectTypeOf(value).not.toEqualTypeOf<number>();
+  }
+});
+
+test("the validate method takes a params argument", () => {
+  let calls = 0;
+  const error = () => {
+    calls++;
+    return "bad";
+  };
+  expect(z.string().validate(12, { error })).toBe(false);
+  expect(z.string().validate("ok", { error })).toBe(true);
+  // a ctx defeats the compiled definite shortcut, so this is the fallback answering
+  expect(z.compile(z.string()).validate(12, { error })).toBe(false);
+  expect(z.string().validate("ok", { jitless: true })).toBe(true);
+  // no issue is ever finalized, so an error map never runs
+  expect(calls).toBe(0);
+});
+
+test("the validateAsync method handles async schemas the method form throws on", async () => {
+  const schema = z.string().refine(async (s) => s.length > 2);
+  expect(() => schema.validate("asdf")).toThrow(z.core.$ZodAsyncError);
+  await expect(schema.validateAsync("asdf")).resolves.toBe(true);
+  await expect(schema.validateAsync("a")).resolves.toBe(false);
+  await expect(z.string().validateAsync(12)).resolves.toBe(false);
+});
+
+test("zod/mini has no validate method", () => {
+  const schema = zm.string();
+  expect("parse" in schema).toBe(true);
+  expect("validate" in schema).toBe(false);
+  expect("validateAsync" in schema).toBe(false);
+});
+
+// counts reads of each child slot, so a stopped walk is observable without putting a callback in the schema — a refinement spy would work too, but reading the input says nothing about what ran
+function counted(
+  slots: Record<string, unknown>,
+  bad: Record<string, unknown> = {}
+): [Record<string, unknown>, () => number] {
+  let reads = 0;
+  const obj: Record<string, unknown> = { ...bad };
+  for (const [k, v] of Object.entries(slots)) {
+    Object.defineProperty(obj, k, {
+      enumerable: true,
+      get() {
+        reads++;
+        return v;
+      },
+    });
+  }
+  return [obj, () => reads];
+}
+
+test("validate stops a container at its first aborting issue", () => {
+  const shape = { a: z.number(), b: z.string(), c: z.string() };
+
+  for (const jitless of [false, true]) {
+    const label = jitless ? "interpreted" : "compiled";
+    const [input, reads] = counted({ b: "x", c: "x" }, { a: "no" });
+    expect(z.validate(z.object(shape), input, { jitless }), label).toBe(false);
+    expect(reads(), `${label}: keys read after the first abort`).toBe(0);
+
+    const [ok, okReads] = counted({ b: "x", c: "x" }, { a: 1 });
+    expect(z.validate(z.object(shape), ok, { jitless }), label).toBe(true);
+    expect(okReads(), `${label}: a valid parse still reads every key`).toBe(2);
+  }
+
+  // an array stops at the first bad element
+  const arr: unknown[] = [1];
+  let elementReads = 0;
+  for (const i of [1, 2]) {
+    Object.defineProperty(arr, i, {
+      enumerable: true,
+      get() {
+        elementReads++;
+        return "x";
+      },
+    });
+  }
+  expect(z.validate(z.array(z.string()), arr)).toBe(false);
+  expect(elementReads, "elements read after the first abort").toBe(0);
+
+  // the shape phase's abort carries across into the catchall
+  const [co, coReads] = counted({ b: "x" }, { a: "no" });
+  expect(z.validate(z.object({ a: z.number() }).catchall(z.string()), co)).toBe(false);
+  expect(coReads(), "catchall keys read after the shape aborted").toBe(0);
+
+  // and a tuple's fixed items carry into its rest
+  const tup: unknown[] = ["no"];
+  let restReads = 0;
+  for (const i of [1, 2]) {
+    Object.defineProperty(tup, i, {
+      enumerable: true,
+      get() {
+        restReads++;
+        return "x";
+      },
+    });
+  }
+  expect(z.validate(z.tuple([z.number()], z.string()), tup)).toBe(false);
+  expect(restReads, "rest elements read after a fixed item aborted").toBe(0);
+});
+
+test("a default provider runs only when the key is absent", () => {
+  const boom = (): never => {
+    throw new RangeError("boom");
+  };
+  // the provider sits behind an accessor, so reading the def would call it
+  for (const [name, schema] of [
+    ["default", z.object({ a: z.number(), b: z.string().default(boom as any) })],
+    ["prefault", z.object({ a: z.number(), b: z.string().prefault(boom as any) })],
+  ] as const) {
+    expect(z.validate(schema, { a: "bad", b: "ok" }), name).toBe(false);
+    expect(z.validate(schema, { a: 1, b: "ok" }), name).toBe(true);
+  }
+  // absent, the provider does run, and its throw is the parse's own
+  expect(() => z.validate(z.object({ b: z.string().default(boom as any) }), {})).toThrow(RangeError);
+});
+
+test("the first failure stops the walk whatever follows it", () => {
+  // a sibling after the failure is never parsed, so its refinement never runs
+  let calls = 0;
+  const spy = z.string().refine(() => {
+    calls++;
+    return true;
+  });
+  expect(z.validate(z.object({ a: z.number(), b: spy, c: spy }), { a: "no", b: "x", c: "x" })).toBe(false);
+  expect(calls).toBe(0);
+
+  // reads of the trailing key say whether the walk stopped, without putting a callback in the schema
+  const skips = (b: z.ZodType, value: unknown = "x") => {
+    let reads = 0;
+    const input: Record<string, unknown> = { a: "no" };
+    Object.defineProperty(input, "b", {
+      enumerable: true,
+      get() {
+        reads++;
+        return value;
+      },
+    });
+    z.validate(z.object({ a: z.number(), b }), input);
+    return reads === 0;
+  };
+
+  // the trailing key is skipped no matter what it holds -- user code included, since it is never reached
+  for (const [name, b, value] of [
+    ["plain", z.string(), "x"],
+    ["min", z.string().min(2), "x"],
+    ["email", z.email(), "x"],
+    ["array", z.array(z.string().min(2)), ["ab"]],
+    ["error map", z.string({ error: () => "nope" }), "x"],
+    ["transform", z.string().transform((v) => v), "x"],
+    ["refine", z.string().refine(() => true), "x"],
+    ["custom", z.custom(() => true), "x"],
+    ["catch", z.string().catch("x"), "x"],
+    ["lazy", z.lazy(() => z.string()), "x"],
+    ["coerce", z.coerce.number(), 1],
+  ] as [string, z.ZodType, unknown][]) {
+    expect(skips(b, value), name).toBe(true);
+  }
+});
+
+test("a continuable issue never stops the walk", () => {
+  // .min() is continuable, so a surrounding schema can still reconcile it and the guard must not stop
+  let calls = 0;
+  const el = z
+    .string()
+    .min(5)
+    .refine(() => {
+      calls++;
+      return true;
+    });
+  expect(z.validate(z.array(el), ["a", "b", "c"])).toBe(false);
+  expect(calls).toBe(3);
+});
+
+test("z.record keeps walking under validate", () => {
+  // deliberate asymmetry: a record's invalid_key aborts, but an enclosing intersection reconciles it against the sibling operand, so a stopped loop hides keys the sibling does not own
+  let reads = 0;
+  const input: Record<string, unknown> = { a: 1 };
+  for (const k of ["b", "c"]) {
+    Object.defineProperty(input, k, {
+      enumerable: true,
+      get() {
+        reads++;
+        return "x";
+      },
+    });
+  }
+  expect(z.validate(z.record(z.string(), z.string()), input)).toBe(false);
+  expect(reads).toBe(2);
+});
+
+test("validate matches safeParse where an issue can still be reconciled away", async () => {
+  const recA = z.record(z.string().regex(/^a/), z.any());
+  const recB = z.record(z.string().regex(/^b/), z.any());
+  const schemas: z.ZodType[] = [
+    z.intersection(recA, recB),
+    z.intersection(recA.pipe(z.any()), recB.pipe(z.any())),
+    z.intersection(z.strictObject({ a: z.string() }), z.strictObject({ b: z.number() })),
+    z.intersection(z.array(z.string()), z.array(z.string().min(2))),
+    z.strictObject({ a: z.string() }).pipe(z.any()),
+    z.union([z.strictObject({ a: z.string() }), z.strictObject({ a: z.string(), b: z.number() })]),
+    z.array(z.string()).catch([]),
+    z.object({ a: z.string() }).optional(),
+  ];
+  const inputs: unknown[] = [
+    { a1: 1, b1: 2 },
+    { a1: 1, b1: 2, zz: 3 },
+    { a1: 1, zz: 2, b1: 3, yy: 4 },
+    { b1: 1, a1: 2, zz: 3, yy: 4 },
+    { a: "x", b: 1 },
+    { a: "x", b: 1, c: 9 },
+    { a: "x" },
+    ["ab", "cd"],
+    ["a", "b"],
+    undefined,
+  ];
+
+  const outcome = (fn: () => unknown) => {
+    try {
+      return `ok:${fn()}`;
+    } catch (err) {
+      return `throw:${(err as Error)?.constructor?.name}`;
+    }
+  };
+  const outcomeAsync = async (fn: () => Promise<unknown>) => {
+    try {
+      return `ok:${await fn()}`;
+    } catch (err) {
+      return `throw:${(err as Error)?.constructor?.name}`;
+    }
+  };
+
+  for (const schema of schemas) {
+    for (const input of inputs) {
+      const label = `${schema._zod.def.type} on ${JSON.stringify(input)}`;
+      expect(
+        outcome(() => z.validate(schema, input)),
+        label
+      ).toBe(outcome(() => schema.safeParse(input).success));
+      expect(await outcomeAsync(() => z.validateAsync(schema, input)), label).toBe(
+        await outcomeAsync(async () => (await schema.safeParseAsync(input)).success)
+      );
+    }
+  }
+});
+
+test("abortEarly does not leak into safeParse", () => {
+  const schema = z.object({ a: z.string(), b: z.string(), c: z.string() });
+  expect(schema.safeParse({ a: 1, b: 2, c: 3 }).error!.issues).toHaveLength(3);
+  expect(z.validate(schema, { a: 1, b: 2, c: 3 })).toBe(false);
+  expect(schema.safeParse({ a: 1, b: 2, c: 3 }).error!.issues).toHaveLength(3);
+});
+
+test("a callback after the first failure never runs, so validate answers where safeParse throws", () => {
+  const boom = (): never => {
+    throw new RangeError("boom");
+  };
+  // the deliberate divergence, in every shape that can carry a callback: an earlier sibling settles the boolean, so the later throw is never reached
+  const lateSym = Symbol("late");
+  const cases: [string, z.ZodType, unknown][] = [
+    ["object transform", z.object({ a: z.number(), b: z.string().transform(boom) }), { a: "bad", b: "ok" }],
+    ["object refine", z.object({ a: z.number(), b: z.string().refine(boom) }), { a: "bad", b: "ok" }],
+    ["object custom", z.object({ a: z.number(), b: z.custom(boom) }), { a: "bad", b: "ok" }],
+    // these three hang the callback off `_zod.check` rather than the def
+    ["object check", z.object({ a: z.number(), b: z.string().check(boom) }), { a: "bad", b: "ok" }],
+    ["object superRefine", z.object({ a: z.number(), b: z.string().superRefine(boom) }), { a: "bad", b: "ok" }],
+    ["object overwrite", z.object({ a: z.number(), b: z.string().overwrite(boom as any) }), { a: "bad", b: "ok" }],
+    // the input must carry the same symbol with a value the field accepts, or the transform never runs and the row asserts nothing
+    [
+      "symbol key",
+      z.object({ a: z.number(), [lateSym]: z.string().transform(boom) } as any),
+      { a: "bad", [lateSym]: "ok" },
+    ],
+    ["object catch", z.object({ a: z.number(), b: z.string().catch(boom) }), { a: "bad", b: 1 }],
+    ["object lazy", z.object({ a: z.number(), b: z.lazy(() => z.string().transform(boom)) }), { a: "bad", b: "ok" }],
+    ["array", z.array(z.union([z.number(), z.string().transform(boom)])), [true, "throws"]],
+    ["tuple rest", z.tuple([z.number()], z.string().transform(boom)), ["bad", "throws"]],
+    ["catchall", z.object({ a: z.number() }).catchall(z.string().transform(boom)), { a: "bad", b: "ok" }],
+    ["set", z.set(z.union([z.number(), z.string().transform(boom)])), new Set([true, "throws"])],
+    [
+      "map",
+      z.map(z.string(), z.union([z.number(), z.string().transform(boom)])),
+      new Map<any, any>([
+        [1, 0],
+        ["k", "throws"],
+      ]),
+    ],
+  ];
+
+  const outcome = (fn: () => unknown) => {
+    try {
+      return `ok:${fn()}`;
+    } catch (err) {
+      return `throw:${(err as Error)?.constructor?.name}`;
+    }
+  };
+
+  for (const [name, schema, input] of cases) {
+    // safeParse walks the whole tree and reaches the throw; validate settled the answer at the earlier sibling and never runs it
+    expect(
+      outcome(() => schema.safeParse(input).success),
+      `${name}: safeParse`
+    ).toBe("throw:RangeError");
+    expect(
+      outcome(() => z.validate(schema, input)),
+      `${name}: validate`
+    ).toBe("ok:false");
+  }
+});
+
+test("the stop lands between children, not inside one", () => {
+  const boom = (): never => {
+    throw new RangeError("boom");
+  };
+  // both parse as a unit, so an abort in one half cannot skip the other; stopping inside either risks a discarded issue turning a false into a true
+  const pairs: [string, z.ZodType, unknown][] = [
+    ["map entry", z.map(z.number(), z.string().transform(boom)), new Map([["bad", "ok"]])],
+    ["tuple fixed item", z.tuple([z.number(), z.string().transform(boom)]), ["bad", "ok"]],
+  ];
+  for (const [name, schema, input] of pairs) {
+    expect(() => z.validate(schema, input), name).toThrow(RangeError);
+    expect(() => schema.safeParse(input), `${name}: safeParse agrees`).toThrow(RangeError);
+  }
+
+  // between children, the stop does happen
+  expect(z.validate(z.object({ a: z.number(), b: z.string().transform(boom) }), { a: "bad", b: "ok" })).toBe(false);
+  expect(z.validate(z.array(z.union([z.number(), z.string().transform(boom)])), [true, "ok"])).toBe(false);
+});
+
+test("validate rethrows a callback it actually reaches", () => {
+  const boom = (): never => {
+    throw new RangeError("boom");
+  };
+  // nothing rejects before the callback, so validate reaches it and the throw is the caller's
+  const cases: [string, z.ZodType, unknown][] = [
+    ["transform", z.object({ a: z.string().transform(boom), b: z.number() }), { a: "ok", b: "bad" }],
+    ["refine", z.object({ a: z.string().refine(boom), b: z.number() }), { a: "ok", b: "bad" }],
+    ["check", z.object({ a: z.string().check(boom), b: z.number() }), { a: "ok", b: "bad" }],
+    ["array element", z.array(z.string().transform(boom)), ["ok", "ok"]],
+    ["catchall", z.object({}).catchall(z.string().transform(boom)), { a: "ok" }],
+    ["set", z.set(z.string().transform(boom)), new Set(["ok"])],
+    ["map", z.map(z.string(), z.string().transform(boom)), new Map([["k", "ok"]])],
+    ["tuple rest", z.tuple([z.string()], z.string().transform(boom)), ["ok", "ok"]],
+  ];
+  for (const [name, schema, input] of cases) {
+    expect(() => z.validate(schema, input), name).toThrow(RangeError);
+  }
+});

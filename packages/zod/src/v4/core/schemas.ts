@@ -30,6 +30,8 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  /** Set only by `validate`/`validateAsync`. A container may stop before its next child, never inside one, so a map entry and a tuple's fixed items parse whole. */
+  readonly abortEarly?: boolean;
 }
 
 /** Gives a container cycle support: `attach` wraps its parse, and `alloc` registers the object it builds into before any child is parsed so a reference back to the same input resolves to it. */
@@ -1819,6 +1821,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 
     payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
+    const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
       const result = def.element._zod.run(
@@ -1833,6 +1836,8 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
         proms.push(result.then((result) => handleArrayResult(result, payload, i)));
       } else {
         handleArrayResult(result, payload, i);
+        // the element's payload is authoritative here, since handleArrayResult forwards every issue; an object's is not, because it drops a failed absent optional
+        if (abortEarly && result.issues.length !== 0 && util.aborted(result)) break;
       }
     }
 
@@ -2037,9 +2042,10 @@ function handleCatchall(
   proms: Promise<any>[],
   input: any,
   payload: ParsePayload,
-  ctx: ParseContext,
+  ctx: ParseContextInternal,
   def: ReturnType<typeof normalizeDef>,
-  inst: $ZodObject
+  inst: $ZodObject,
+  abortEarly: boolean
 ) {
   const unrecognized: string[] = [];
   const keySet = def.keySet;
@@ -2047,7 +2053,13 @@ function handleCatchall(
   const t = _catchall.def.type;
   const optin = _catchall.optin;
   const optout = _catchall.optout;
+  // starts at 0, not the current length: the shape phase already ran and may have aborted
+  let seen = 0;
   for (const key in input) {
+    if (abortEarly && payload.issues.length !== seen) {
+      if (util.aborted(payload, seen)) break;
+      seen = payload.issues.length;
+    }
     // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
     // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would replace the result prototype. But in strict mode it is still an unknown key, so report it before skipping.
@@ -2146,8 +2158,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
+    const abortEarly = ctx?.abortEarly;
+    let seen = payload.issues.length;
 
     for (const key of value.allKeys) {
+      if (abortEarly && payload.issues.length !== seen) {
+        if (util.aborted(payload, seen)) break;
+        seen = payload.issues.length;
+      }
       if (key === "__proto__") continue;
       const el = (shape as any)[key]!;
       const optin = el._zod.optin;
@@ -2165,7 +2183,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
 
-    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst, abortEarly === true);
   };
 });
 
@@ -2188,12 +2206,18 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
 
-      // Prefixes in place, like util.prefixIssues does for every interpreted path.
+      // prefixes in place, like util.prefixIssues. newResult must land before the early return: a catchall runs after this and would otherwise write onto the caller's input
       const prefixStr = (id: string, k: string) => `
+          let ${id}_ab = false;
           for (let i = 0; i < ${id}.issues.length; i++) {
             const iss = ${id}.issues[i];
             iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
             payload.issues.push(iss);
+            if (iss.continue !== true) ${id}_ab = true;
+          }
+          if (${id}_ab && ctx && ctx.abortEarly) {
+            payload.value = newResult;
+            return payload;
           }`;
 
       doc.write(`const input = payload.value;`);
@@ -2245,6 +2269,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             input: undefined,
             path: [${k}]
           });
+          if (ctx && ctx.abortEarly) {
+            payload.value = newResult;
+            return payload;
+          }
         }
 
         if (${id}_present) {
@@ -2305,7 +2333,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         payload = fastpass(payload, ctx);
 
         if (!catchall) return payload;
-        return handleCatchall([], input, payload, ctx, value, inst);
+        return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true);
       }
 
       return superParse(payload, ctx);
@@ -2968,6 +2996,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
     // Run every item in parallel, collecting results into an indexed array. The post-processing in `handleTupleResults` walks them in order so it can decide whether an absent optional-output error can truncate the tail or must be reported to preserve required output.
     const itemResults: ParsePayload[] = new Array(items.length);
+    // only tracked when there is a rest loop to skip
+    const abortEarly = def.rest ? ctx?.abortEarly : undefined;
+    let itemAborted = false;
     for (let i = 0; i < items.length; i++) {
       const r = items[i]._zod.run({ value: input[i], issues: [] }, ctx);
       if (r instanceof Promise) {
@@ -2978,13 +3009,20 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
         );
       } else {
         itemResults[i] = r;
+        if (abortEarly && !itemAborted && r.issues.length) itemAborted = util.aborted(r);
       }
     }
 
-    if (def.rest) {
+    // sound because rest is non-empty exactly when every fixed index is present, the one case handleTupleResults cannot discard an item's issues
+    if (def.rest && !itemAborted) {
       let i = items.length - 1;
       const rest = input.slice(items.length);
+      let seen = payload.issues.length;
       for (const el of rest) {
+        if (abortEarly && payload.issues.length !== seen) {
+          if (util.aborted(payload, seen)) break;
+          seen = payload.issues.length;
+        }
         i++;
         const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
@@ -3154,6 +3192,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       return payload;
     }
 
+    // no guard in either loop below: a record's invalid_key aborts but an enclosing intersection can reconcile it, so a stopped loop hides keys the sibling does not own and the intersection then rejects nothing
     const proms: Promise<any>[] = [];
 
     const values = def.keyType._zod.values;
@@ -3358,8 +3397,14 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = memo ? memo.alloc(inst, payload, new Map(), ctx) : new Map();
+    const abortEarly = ctx?.abortEarly;
+    let seen = payload.issues.length;
 
     for (const [key, value] of input) {
+      if (abortEarly && payload.issues.length !== seen) {
+        if (util.aborted(payload, seen)) break;
+        seen = payload.issues.length;
+      }
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
       const valueResult = def.valueType._zod.run({ value: value, issues: [] }, ctx);
 
@@ -3463,7 +3508,13 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = memo ? memo.alloc(inst, payload, new Set(), ctx) : new Set();
+    const abortEarly = ctx?.abortEarly;
+    let seen = payload.issues.length;
     for (const item of input) {
+      if (abortEarly && payload.issues.length !== seen) {
+        if (util.aborted(payload, seen)) break;
+        seen = payload.issues.length;
+      }
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleSetResult(result, payload)));
