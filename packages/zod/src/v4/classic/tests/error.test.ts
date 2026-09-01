@@ -1054,8 +1054,13 @@ describe("safeParse builds the error on first read", () => {
 
     // the constructor runs at THIS read: a macrotask later and twenty frames deeper than the parse
     await new Promise((resolve) => setTimeout(resolve, 0));
-    const readDeep = (n: number): z.core.$ZodError => (n ? readDeep(n - 1) : result.error);
-    const error = readDeep(20) as unknown as Error;
+    const readDeep = <T>(n: number, make: () => T): T => (n ? readDeep(n - 1, make) : make());
+    const error = readDeep(20, () => result.error) as unknown as Error;
+
+    // control: a plain Error at that same depth does carry the frames, so the assertions below discriminate rather than pass vacuously
+    const control = readDeep(20, () => new Error("control"));
+    expect(control.stack!.split("\n").some((line) => line.trim().startsWith("at "))).toBe(true);
+    expect(control.stack!).toContain("readDeep");
 
     expect(error.stack!.startsWith("ZodError: [")).toBe(true);
     expect(error.stack!.split("\n").some((line) => line.trim().startsWith("at "))).toBe(false);
