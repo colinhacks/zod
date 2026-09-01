@@ -864,6 +864,8 @@ test("a nested walk can't corrupt the one that resolved into it", () => {
   });
 
   const omitted = Node.omit({ self: true });
+  // exact before anything parses: the mirrored shape kept only `id`, so nothing here is deferred
+  expect(z.core.isRecursiveSchema(omitted)).toBe(false);
   omitted.parse({ id: 1 });
   expect(z.core.isRecursiveSchema(omitted)).toBe(false);
   expect(() => z.compile(omitted, { strict: true })).not.toThrow();
