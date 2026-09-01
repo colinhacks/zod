@@ -17,6 +17,7 @@ At a glance:
 
 - [`z.properties()`](#zproperties) — now a schema that infers, with a `.properties()` method on `z.instanceof()`
 - [`@zod/mini`](#zodmini) — Zod Mini, published as its own package
+- [`.validate()`](#validate) — the 4.5 boolean check, now a method on Zod Classic
 - [Faster failures](#faster-failures) — up to 4.7x on the failure path when you only check `success`
 - [Less memory per schema](#less-memory-per-schema) — up to 17% on top of the 9x reduction in Zod 4.5
 - [Recursive schemas built by a factory](#recursive-schemas-built-by-a-factory) no longer crash
@@ -63,6 +64,18 @@ import * as z from "@zod/mini";
 ```
 
 The `zod/mini` subpath is unchanged and is not going anywhere. The standalone package exists for tooling that resolves bare package names rather than subpaths, and it bundles to the same bytes.
+
+## `.validate()`
+
+Zod 4.5 added `z.validate()`, a boolean check that never builds an error and narrows to the schema's input type. It is a method on Zod Classic schemas now. ([#6547](https://github.com/colinhacks/zod/pull/6547))
+
+```ts
+if (Player.validate(data)) {
+  data.username; // narrowed
+}
+```
+
+`.validateAsync()` covers schemas with async refinements. `zod/mini` keeps the top-level function form.
 
 ## Faster failures
 
