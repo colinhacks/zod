@@ -2,9 +2,10 @@
 title: Zod 4.6
 author: Colin McDonnell
 date: 2026-09-01
-description: Zod 4.6 is now available, with z.properties() as a real schema, Zod Mini as a standalone package, and failing parses up to 4.7x faster.
+description: Zod 4.6 is now available, with z.properties() as a real schema, a .validate() method on Zod Classic, and six more JSON Schema keywords.
 ---
 
+import { ThemedImage } from "@/components/themed-image";
 import { Callout } from "fumadocs-ui/components/callout";
 
 Zod 4.6 is now available.
@@ -16,11 +17,9 @@ npm install zod@latest
 At a glance:
 
 - [`z.properties()`](#zproperties) — now a schema that infers, with a `.properties()` method on `z.instanceof()`
-- [`@zod/mini`](#zodmini) — Zod Mini, published as its own package
 - [`.validate()`](#validate) — the 4.5 boolean check, now a method on Zod Classic
+- [`fromJSONSchema()`](#fromjsonschema) — six more JSON Schema keywords
 - [Faster failures](#faster-failures) — up to 4.7x on the failure path when you only check `success`
-- [Less memory per schema](#less-memory-per-schema) — up to 17% on top of the 9x reduction in Zod 4.5
-- [Recursive schemas built by a factory](#recursive-schemas-built-by-a-factory) — no longer crash
 
 ## `z.properties()`
 
@@ -43,6 +42,19 @@ httpsUrl.parse(new URL("https://example.com"));  // ✅ the same URL instance
 httpsUrl.parse(new URL("http://nope"));          // ❌ protocol, hostname
 ```
 
+On its own it is a standalone schema: a gate that accepts any object carrying the named properties, whatever built it.
+
+```ts
+const okResponse = z.properties({ status: z.number().min(200).max(299) });
+
+type OkResponse = z.infer<typeof okResponse>;
+// { status: number }
+
+okResponse.parse(new Response("ok"));               // ✅
+okResponse.parse({ status: 204, cached: true });     // ✅ unlisted keys survive
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+```
+
 The 4.5 spread form still compiles and runs, because the schema yields itself from `Symbol.iterator`.
 
 ```ts
@@ -51,23 +63,9 @@ z.instanceof(URL).check(...z.properties({ protocol: z.literal("https:") })); // 
 
 <Callout>Spreading `z.properties()` now yields one element instead of one per key. Code that destructured or mapped that array sees a different shape; `.check(...)` and the new method form are unaffected.</Callout>
 
-## `@zod/mini`
-
-Zod Mini is now published as a standalone package. It re-exports `zod/mini` from a peer dependency on `zod`, and its version tracks `zod` release for release. ([#6491](https://github.com/colinhacks/zod/pull/6491))
-
-```sh
-npm install @zod/mini zod
-```
-
-```ts
-import * as z from "@zod/mini";
-```
-
-The `zod/mini` subpath is unchanged and is not going anywhere. The standalone package exists for tooling that resolves bare package names rather than subpaths, and it bundles to the same bytes.
-
 ## `.validate()`
 
-Zod 4.5 added `z.validate()`, a boolean check that never builds an error and narrows to the schema's input type. It is a method on Zod Classic schemas now. ([#6547](https://github.com/colinhacks/zod/pull/6547))
+Zod 4.5 added `z.validate()`, a boolean check that narrows to the schema's input type. It is a method on Zod Classic schemas now. ([#6547](https://github.com/colinhacks/zod/pull/6547))
 
 ```ts
 if (Player.validate(data)) {
@@ -75,7 +73,53 @@ if (Player.validate(data)) {
 }
 ```
 
+On invalid input it is up to 6.3x faster than `.safeParse().success`. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
+
+<ThemedImage
+  lightSrc="/blog/validate-invalid-light.svg"
+  darkSrc="/blog/validate-invalid-dark.svg"
+  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 692 ns (1.5x faster), an array of 10 strings 234 ns (2.1x), a 3-element tuple 166 ns (2.6x), a discriminated union of 3 89 ns (3.7x), a 5-key object 79 ns (4.2x), z.number() 45 ns (6.1x), z.string() 41 ns (6.1x), z.boolean() 40 ns (6.3x); up to 6.3x faster"
+  caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
+/>
+
+On a [compiled schema](/compile) it answers straight from the compiled fast path, and the gap widens to 35.6x.
+
+<ThemedImage
+  lightSrc="/blog/validate-compiled-invalid-light.svg"
+  darkSrc="/blog/validate-compiled-invalid-dark.svg"
+  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 32 ns (35.6x faster), an array of 10 strings 22 ns (23.6x), a 3-element tuple 27 ns (17.5x), a 5-key object 20 ns (16.9x), a discriminated union of 3 22 ns (14.6x), z.string() 18 ns (15.5x), z.number() 18 ns (15.1x), z.boolean() 18 ns (14.8x); up to 35.6x faster"
+  caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
+/>
+
+Both charts measure the failure path, which is the only one that diverges. On valid input the two calls land within 0.9x to 1.3x of each other across the same shapes, so `.validate()` is worth reaching for when you expect rejections, not as a blanket replacement.
+
 `.validateAsync()` covers schemas with async refinements. `zod/mini` keeps the top-level function form.
+
+## `fromJSONSchema()`
+
+Six validation keywords were listed as recognized and then silently ignored, so a converted schema accepted data the source schema rejects. All six are enforced now, and all six round-trip back out through `z.toJSONSchema()`. ([#6535](https://github.com/colinhacks/zod/pull/6535))
+
+```ts
+const schema = z.fromJSONSchema({
+  type: "object",
+  minProperties: 2,      // also maxProperties
+});
+
+schema.parse({ a: 1 });        // ❌ too few properties
+schema.parse({ a: 1, b: 2 });  // ✅
+```
+
+`minProperties` and `maxProperties` count the raw input's own keys. On arrays, `uniqueItems` compares structurally, so `[{ a: 1 }, { a: 1 }]` is a duplicate.
+
+```ts
+z.fromJSONSchema({ type: "array", uniqueItems: true }).parse([{ a: 1 }, { a: 1 }]); // ❌
+
+z.fromJSONSchema({
+  type: "array",
+  contains: { type: "number" },   // also minContains and maxContains
+  minContains: 2,
+}).parse(["a", 2]);               // ❌ only one number
+```
 
 ## Faster failures
 
@@ -90,40 +134,6 @@ Reading the error costs what it always did, plus a little: the same work now hap
 
 The Standard Schema surface got the same treatment from the other direction. A failing `~standard.validate` reports its issues straight off the raw payload and never builds a `ZodError` at all.
 
-## Less memory per schema
-
-Zod 4.5 cut retained heap per schema by up to 9x. Zod 4.6 takes another 5–17% off the container types, by moving the internal memo box's accessor onto a prototype instead of allocating it per instance. ([#6537](https://github.com/colinhacks/zod/pull/6537), [#6540](https://github.com/colinhacks/zod/pull/6540), [#6531](https://github.com/colinhacks/zod/pull/6531))
-
-| schema | 4.5 | 4.6 |
-| --- | --- | --- |
-| `z.object({})` | 3176 b | 2648 b |
-| `z.discriminatedUnion()`, 2 options | 12705 b | 11056 b |
-| `z.object()`, 3 keys | 5278 b | 4746 b |
-| `z.object()`, 10 keys | 11160 b | 10633 b |
-| `z.enum(['a','b','c'])` | 1531 b | 1432 b |
-| `z.literal('a')` | 1730 b | 1640 b |
-| `z.object()`, 3 keys, `zod/mini` | 3736 b | 3480 b |
-
-Literal and enum schemas also build their pattern regex lazily now, which is what accounts for their share. Construction got cheaper along with it.
-
-## Recursive schemas built by a factory
-
-A recursive schema built by a factory function threw `RangeError: Maximum call stack size exceeded` on Zod 4.5, after roughly eight seconds on the main thread. It parses again. ([#6530](https://github.com/colinhacks/zod/pull/6530))
-
-```ts
-const Node = (): any =>
-  z.object({
-    id: z.number(),
-    get child() {
-      return z.array(Node()); // a fresh instance on every read
-    },
-  });
-
-z.object({ root: Node() }).parse({ root: { id: 1, child: [] } }); // ✅
-```
-
-Published schemas hit this — `zod-geojson` builds its geometry schemas this way, so an empty feature collection crashed. Closes [#6526](https://github.com/colinhacks/zod/issues/6526).
-
 ## Bug fixes
 
 ### ⚠️ Error maps run on the first read of `error`
@@ -136,7 +146,7 @@ z.config(z.locales.fr());
 result.error.issues[0].message; // French in 4.6, English in 4.5
 ```
 
-An error map with a side effect never runs at all if nothing reads the error. `.parse()` is unaffected, since it reads the error to throw it.
+An error map with a side effect never runs at all if nothing reads the error. `.parse()` is unaffected: it builds and throws its error on the spot and never takes the lazy path, so its stack still points at your call site.
 
 ### ⚠️ `z.emoji()` rejects component-only strings
 
@@ -149,15 +159,6 @@ z.emoji().parse("123");  // ❌ was accepted in 4.5
 ```
 
 Flags, subdivision flags, skin-tone-modified emoji, and ZWJ sequences are unchanged. Closes [#6515](https://github.com/colinhacks/zod/issues/6515).
-
-### ⚠️ `fromJSONSchema()` enforces six keywords it used to drop
-
-Six validation keywords were listed as recognized and then silently ignored: `minProperties`, `maxProperties`, `uniqueItems`, `contains`, `minContains`, and `maxContains`. A converted schema accepted data the source schema rejects, which is the worst failure mode for a validating converter. ([#6535](https://github.com/colinhacks/zod/pull/6535))
-
-```ts
-z.fromJSONSchema({ type: "object", minProperties: 1 }).safeParse({});
-// 4.5: accepted — 4.6: rejected
-```
 
 ### ⚠️ A numeric enum's reverse mappings are out of `.options`
 
