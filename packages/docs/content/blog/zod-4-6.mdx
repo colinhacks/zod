@@ -91,7 +91,7 @@ On a [compiled schema](/compile) it answers straight from the compiled fast path
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
-Both charts measure the failure path, which is the only one that diverges. On valid input the two calls land within 0.9x to 1.3x of each other across the same shapes, so `.validate()` is worth reaching for when you expect rejections, not as a blanket replacement.
+Both charts measure the failure path, where the gap is widest. Valid input is closer: 1.0x to 1.3x on a plain schema, and 1.1x to 2.1x on a compiled one, since a compiled `.validate()` answers without building the output.
 
 `.validateAsync()` covers schemas with async refinements. `zod/mini` keeps the top-level function form.
 
