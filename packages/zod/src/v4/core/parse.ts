@@ -153,7 +153,9 @@ function validateFallback(
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? { ..._ctx, async: false, abortEarly: true }
+    : { async: false, abortEarly: true };
   const fallbackRun = (schema._zod.bag as CompiledBag).fallbackRun;
   let result: unknown;
   if (fallbackRun) {
@@ -177,7 +179,9 @@ export type $ValidateAsync = <T extends schemas.$ZodType>(
 
 // no fast path: the compiler keeps async parses on the runtime, because a promise-returning callback that is not declared async compiles to a throw
 export const validateAsync: $ValidateAsync = async (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? { ..._ctx, async: true, abortEarly: true }
+    : { async: true, abortEarly: true };
   let result: unknown = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   return (result as schemas.ParsePayload).issues.length === 0;
