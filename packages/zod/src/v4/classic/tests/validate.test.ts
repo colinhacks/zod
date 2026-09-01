@@ -263,3 +263,53 @@ test("validate is exported from zod/mini", () => {
   expect(zm.validate(zm.string(), 1)).toBe(false);
   expect(zm.validate(zm.object({ a: zm.number() }), { a: 1 })).toBe(true);
 });
+
+test("the validate method matches the top-level function", () => {
+  expect(z.string().validate("asdf")).toBe(true);
+  expect(z.string().validate(12)).toBe(false);
+  expect(z.object({ a: z.string() }).validate({ a: "x" })).toBe(true);
+  expect(z.object({ a: z.string() }).validate({ a: 1 })).toBe(false);
+  expect(z.compile(z.object({ a: z.string() })).validate({ a: "x" })).toBe(true);
+});
+
+test("the validate method narrows to the input type", () => {
+  const value: unknown = "hi";
+  if (z.string().validate(value)) {
+    expectTypeOf(value).toEqualTypeOf<string>();
+  }
+  const transforming = z.string().transform((s) => s.length);
+  if (transforming.validate(value)) {
+    expectTypeOf(value).toEqualTypeOf<string>();
+    expectTypeOf(value).not.toEqualTypeOf<number>();
+  }
+});
+
+test("the validate method takes a params argument", () => {
+  let calls = 0;
+  const error = () => {
+    calls++;
+    return "bad";
+  };
+  expect(z.string().validate(12, { error })).toBe(false);
+  expect(z.string().validate("ok", { error })).toBe(true);
+  // a ctx defeats the compiled definite shortcut, so this is the fallback answering
+  expect(z.compile(z.string()).validate(12, { error })).toBe(false);
+  expect(z.string().validate("ok", { jitless: true })).toBe(true);
+  // no issue is ever finalized, so an error map never runs
+  expect(calls).toBe(0);
+});
+
+test("the validateAsync method handles async schemas the method form throws on", async () => {
+  const schema = z.string().refine(async (s) => s.length > 2);
+  expect(() => schema.validate("asdf")).toThrow(z.core.$ZodAsyncError);
+  await expect(schema.validateAsync("asdf")).resolves.toBe(true);
+  await expect(schema.validateAsync("a")).resolves.toBe(false);
+  await expect(z.string().validateAsync(12)).resolves.toBe(false);
+});
+
+test("zod/mini has no validate method", () => {
+  const schema = zm.string();
+  expect("parse" in schema).toBe(true);
+  expect("validate" in schema).toBe(false);
+  expect("validateAsync" in schema).toBe(false);
+});
