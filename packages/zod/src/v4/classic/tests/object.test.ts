@@ -845,6 +845,32 @@ describe("__proto__ as a declared shape key", () => {
     expect(() => (schema[method] as any)({ nope: true })).toThrow('Unrecognized key: "nope"');
   });
 
+  // a derived shape is built key by key, and a plain assignment runs whatever setter answers to the key — `__proto__` always has one, and a polluted prototype can supply one for any name
+  test("an inherited setter cannot swallow a derived key", () => {
+    let swallowed: unknown;
+    Object.defineProperty(Object.prototype, "field", {
+      configurable: true,
+      set(v) {
+        swallowed = v;
+      },
+      get() {
+        return undefined;
+      },
+    });
+
+    try {
+      const derived = z.object({ field: z.string() }).extend({ extra: z.number() });
+
+      expect(Object.keys(derived.shape)).toEqual(["field", "extra"]);
+      expect(swallowed).toBeUndefined();
+      // the key is still validated; what a parse writes into its result is the ambient prototype's business, as it is without a builder
+      expect(derived.safeParse({ field: 123, extra: 1 }).success).toBe(false);
+      expect(derived.safeParse({ field: "a", extra: 1 }).success).toBe(true);
+    } finally {
+      delete (Object.prototype as any).field;
+    }
+  });
+
   // a shape resolves by object spread, so a non-enumerable entry is no part of it and no builder may promote one into a derived shape
   test("a non-enumerable shape entry stays out of every derived shape", () => {
     const sym = Symbol("kept");

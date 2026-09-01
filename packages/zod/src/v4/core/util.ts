@@ -411,9 +411,9 @@ function deferProp(target: object, key: PropertyKey, getter: () => any): void {
   });
 }
 
-// Writes a settled key. A plain assignment is much cheaper than `defineProperty` and produces the same descriptor, but it runs a setter — `__proto__` has one on every object, and a key this shape already deferred has one of its own.
-function putProp(target: any, key: PropertyKey, value: any, deferred: boolean): void {
-  if (deferred || key === "__proto__") assignProp(target, key as any, value);
+// Writes a settled key. A plain assignment is much cheaper than `defineProperty` and produces the same descriptor, but it runs whatever setter already answers to the key — an accessor this shape deferred, or an inherited one, which `__proto__` has on every object and prototype pollution can add for any name.
+function putProp(target: any, key: PropertyKey, value: any): void {
+  if (key in target) assignProp(target, key as any, value);
   else target[key] = value;
 }
 
@@ -426,31 +426,28 @@ function mirrorShape(
   target: object,
   source: schemas.$ZodObject,
   keys: PropertyKey[],
-  deferred: boolean,
   wrap?: ((value: any, key: PropertyKey) => any) | null
-): boolean {
+): void {
   const raw = sourceShape(source);
   for (const key of keys) {
     const desc = Object.getOwnPropertyDescriptor(raw, key)!;
     if (!desc.enumerable) continue;
     if (desc.get) {
-      deferred = true;
       deferProp(target, key, () => {
         const value = (source._zod.def.shape as any)[key];
         return wrap ? wrap(value, key) : value;
       });
-    } else putProp(target, key, wrap ? wrap(desc.value, key) : desc.value, deferred);
+    } else putProp(target, key, wrap ? wrap(desc.value, key) : desc.value);
   }
-  return deferred;
 }
 
 // same, for a plain shape a caller passed rather than a schema's
-function mirrorProps(target: object, source: Record<PropertyKey, any>, deferred: boolean): void {
+function mirrorProps(target: object, source: Record<PropertyKey, any>): void {
   for (const key of Reflect.ownKeys(source)) {
     const desc = Object.getOwnPropertyDescriptor(source, key)!;
     if (!desc.enumerable) continue;
     if (desc.get) deferProp(target, key, () => source[key as any]);
-    else putProp(target, key, desc.value, deferred);
+    else putProp(target, key, desc.value);
   }
 }
 
@@ -764,7 +761,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
   }
 
   const newShape: Writeable<schemas.$ZodShape> = {};
-  mirrorShape(newShape, schema, maskedKeys(schema, mask), false);
+  mirrorShape(newShape, schema, maskedKeys(schema, mask));
 
   return clone(schema, mergeDefs(currDef, { shape: newShape, checks: [] })) as any;
 }
@@ -797,8 +794,7 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
   mirrorShape(
     newShape,
     schema,
-    Reflect.ownKeys(sourceShape(schema)).filter((key) => !omitted.has(key)),
-    false
+    Reflect.ownKeys(sourceShape(schema)).filter((key) => !omitted.has(key))
   );
 
   return clone(schema, mergeDefs(currDef, { shape: newShape, checks: [] }));
@@ -827,8 +823,8 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
 // the source's keys, then the caller's overlaid on top
 function extended(schema: schemas.$ZodObject, shape: schemas.$ZodShape): schemas.$ZodShape {
   const newShape: Writeable<schemas.$ZodShape> = {};
-  const deferred = mirrorShape(newShape, schema, Reflect.ownKeys(sourceShape(schema)), false);
-  mirrorProps(newShape, shape, deferred);
+  mirrorShape(newShape, schema, Reflect.ownKeys(sourceShape(schema)));
+  mirrorProps(newShape, shape);
   return newShape;
 }
 
@@ -847,8 +843,8 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
     throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
   }
   const newShape: Writeable<schemas.$ZodShape> = {};
-  const deferred = mirrorShape(newShape, a, Reflect.ownKeys(sourceShape(a)), false);
-  mirrorShape(newShape, b, Reflect.ownKeys(sourceShape(b)), deferred);
+  mirrorShape(newShape, a, Reflect.ownKeys(sourceShape(a)));
+  mirrorShape(newShape, b, Reflect.ownKeys(sourceShape(b)));
 
   const def = mergeDefs(a._zod.def, {
     shape: newShape,
@@ -880,7 +876,6 @@ export function partial(
     newShape,
     schema,
     Reflect.ownKeys(sourceShape(schema)),
-    false,
     Class &&
       ((value, key) => (selected && !selected.has(key) ? value : new Class({ type: "optional", innerType: value })))
   );
@@ -895,7 +890,7 @@ export function required(
 ): any {
   const selected = mask ? new Set(maskedKeys(schema, mask)) : undefined;
   const newShape: Writeable<schemas.$ZodShape> = {};
-  mirrorShape(newShape, schema, Reflect.ownKeys(sourceShape(schema)), false, (value, key) =>
+  mirrorShape(newShape, schema, Reflect.ownKeys(sourceShape(schema)), (value, key) =>
     // overwrite with non-optional
     selected && !selected.has(key) ? value : new Class({ type: "nonoptional", innerType: value })
   );
