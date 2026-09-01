@@ -3,9 +3,9 @@ import { ZodCompileUnsupportedError, compile } from "zod/v4/core";
 
 // z.validate(schema, input) vs schema.safeParse(input).success, across schema shapes, on valid and invalid input.
 //
-// Two independent comparisons, reported separately: the same pair of calls on a plain schema, and on that schema passed through z.compile(). Neither table compares compiled against uncompiled — each answers what a caller holding one schema gains by asking for a boolean instead of a result.
+// Three tables. The first two answer what a caller holding one schema gains by asking for a boolean instead of a result: the same pair of calls on a plain schema, and on that schema passed through z.compile(). The third is the cross-mode upgrade — compiled validate against plain safeParse — which is what a caller adopting both at once gains.
 //
-// Methodology follows compile-matrix.ts: absolute ops/sec drifts by tens of percent between runs, so the two calls are measured *interleaved* inside one round and the best of N rounds is kept. safeParse allocates a result object per call while validate allocates nothing, so a time-boxed loop would sample whatever the collector is doing — the harness uses a fixed iteration count with gc() between samples instead. The failing result's ZodError is not part of that: failure() builds it lazily behind a getter, so reading only .success never constructs one.
+// Methodology follows compile-matrix.ts: absolute ops/sec drifts by tens of percent between runs, so all four calls are measured *interleaved* inside one round and the best of N rounds is kept. That is what makes the cross-mode ratio legitimate; measuring the plain schema to completion and then the compiled one would put whatever drifted between those two blocks straight onto it. safeParse allocates a result object per call while validate allocates nothing, so a time-boxed loop would sample whatever the collector is doing — the harness uses a fixed iteration count with gc() between samples instead. The failing result's ZodError is not part of that: failure() builds it lazily behind a getter, so reading only .success never constructs one.
 
 interface Case {
   name: string;
@@ -133,7 +133,7 @@ interface Pair {
   compiled: Measurement | null;
 }
 
-// All four calls for a case are alternated inside one round and share one iteration count, so every pair of numbers below is directly comparable — including the cross-mode one, plain safeParse against compiled validate. Measuring the plain schema to completion and then the compiled one would put whatever drifted between those two blocks straight onto that ratio, which is the same trap as running all of revision A before all of revision B.
+// all four calls alternate inside a round and share one iteration count, so every ratio the harness prints is paired
 function measure(plain: z.ZodType, compiled: z.ZodType | null, input: unknown): Pair {
   // Feed the input through an array load. Passed as a constant the whole call is loop-invariant and V8 hoists it out of the timing loop.
   const pool = Array.from({ length: 64 }, () => input);
@@ -289,11 +289,15 @@ for (const mode of [false, true]) {
     for (const c of cross) {
       const plainSp = rows.find((o) => o.name === c.name && !o.compiled)!.invalid.safeParseNs;
       const compV = c.compiled.invalid.validateNs;
-      console.log(`${pad(c.name, 26)}${padL(fmtNs(plainSp), 11)}${padL(fmtNs(compV), 10)}${padL(`${(plainSp / compV).toFixed(2)}x`, 8)}`);
+      console.log(
+        `${pad(c.name, 26)}${padL(fmtNs(plainSp), 11)}${padL(fmtNs(compV), 10)}${padL(`${(plainSp / compV).toFixed(2)}x`, 8)}`
+      );
     }
     console.log("-".repeat(55));
     const ratios = cross
-      .map((c) => rows.find((o) => o.name === c.name && !o.compiled)!.invalid.safeParseNs / c.compiled.invalid.validateNs)
+      .map(
+        (c) => rows.find((o) => o.name === c.name && !o.compiled)!.invalid.safeParseNs / c.compiled.invalid.validateNs
+      )
       .sort((a, b) => a - b);
     console.log(
       `invalid input: median ${ratios[Math.floor(ratios.length / 2)].toFixed(1)}x, range ${ratios[0].toFixed(1)}x-${ratios[ratios.length - 1].toFixed(1)}x`
