@@ -28,11 +28,11 @@ A new API for validating specific properties of an object. Unlike `z.object()` i
 ```ts
 const responseLike = z.properties({ status: z.number().min(200).max(299) });
 
-responseLike.parse(new Response("ok"));  // ✅ a real Response
-responseLike.parse({ status: 204 });     // ✅ a plain object
+responseLike.parse(new Response("ok", { status: 200 }));  // ✅ a real Response
+responseLike.parse({ status: 204 });                      // ✅ a plain object
 ```
 
-A `.properties()` method on `z.instanceof()` narrows both at once: the class *and* the properties.
+A corresponding `.properties()` method has been added to `ZodInstanceof`.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -55,14 +55,13 @@ const okResponse = z.instanceof(Response).check(
 </Tab>
 </Tabs>
 
-The input comes back untouched, so the prototype survives and the methods still work. That is the part `z.object()` cannot do: it would hand back a plain object and the `Response` would be gone.
+The input comes back untouched — the same object, not a copy. That is the part `z.object()` cannot do: it would hand back a new plain object and the `Response` would be gone.
 
 ```ts
-const res = okResponse.parse(await fetch("/api/user"));
+const res = await fetch("/api/user");
 
-await res.json();  // ✅ still a Response
+okResponse.parse(res) === res; // ✅ true
 ```
-
 
 ## `.validate()`
 
@@ -74,7 +73,7 @@ if (Player.validate(data)) {
 }
 ```
 
-On a [compiled schema](/compile) it answers straight from the compiled fast path, up to 35.6x faster than `.safeParse().success` on invalid input.
+In conjunction with [`z.compile()`](/compile), this can return up to 35.6x faster than `.safeParse().success` on invalid input.
 
 <ThemedImage
   lightSrc="/blog/validate-compiled-invalid-light.svg"
