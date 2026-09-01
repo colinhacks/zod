@@ -130,14 +130,14 @@ await schema.safeParseAsync("hello");
 ```
 </Callout>
 
-When you only need to know whether an input is acceptable, use the top-level `z.validate()` function. It returns a boolean, never builds an error, and acts as a type guard on the schema's input type. On invalid input it is up to 16x faster than `.safeParse().success`.
+When you only need to know whether an input is acceptable, use `.validate()`. It returns a boolean, never builds an error, and acts as a type guard on the schema's input type. On invalid input it is up to 16x faster than `.safeParse().success`.
 
 ```ts
-z.validate(Player, { username: "billie", xp: 100 }); // true
-z.validate(Player, { username: 42, xp: "100" });     // false
+Player.validate({ username: "billie", xp: 100 }); // true
+Player.validate({ username: 42, xp: "100" });     // false
 ```
 
-Use `z.validateAsync()` for schemas with async refinements or transforms. On a [compiled schema](/compile), `z.validate()` answers directly from the compiled fast path.
+Use `.validateAsync()` for schemas with async refinements or transforms. On a [compiled schema](/compile), `.validate()` answers directly from the compiled fast path. The top-level `z.validate(schema, data)` does the same thing and is the form `zod/mini` uses.
 
 ## Inferring types
 
