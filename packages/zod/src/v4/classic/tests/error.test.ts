@@ -1048,4 +1048,30 @@ describe("safeParse builds the error on first read", () => {
     expect(live()).toBeLessThanOrEqual(1);
     expect(results).toHaveLength(50);
   });
+
+  test("no reader frames leak into the error, however late it is read", async () => {
+    const result = z.string().safeParse(12) as { error: z.core.$ZodError };
+
+    // the constructor runs at THIS read: a macrotask later and twenty frames deeper than the parse
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const readDeep = (n: number): z.core.$ZodError => (n ? readDeep(n - 1) : result.error);
+    const error = readDeep(20) as unknown as Error;
+
+    expect(error.stack!.startsWith("ZodError: [")).toBe(true);
+    expect(error.stack!.split("\n").some((line) => line.trim().startsWith("at "))).toBe(false);
+    expect(error.stack!).not.toContain("readDeep");
+  });
+
+  test("a lazy build gives back the caller's stackTraceLimit, not the parse-time one", () => {
+    const result = z.string().safeParse(12) as { error: z.core.$ZodError };
+    const ambient = Error.stackTraceLimit;
+    // changed between the parse and the read, so restoring a value captured at parse time would clobber it
+    Error.stackTraceLimit = ambient + 7;
+    try {
+      void result.error;
+      expect(Error.stackTraceLimit).toBe(ambient + 7);
+    } finally {
+      Error.stackTraceLimit = ambient;
+    }
+  });
 });
