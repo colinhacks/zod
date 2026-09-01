@@ -78,6 +78,8 @@ export interface ZodType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  validate(data: unknown, params?: core.ParseContext<core.$ZodIssue>): data is core.input<this>;
+  validateAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<boolean>;
 
   // encoding/decoding
   encode(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
@@ -309,6 +311,12 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     },
     set spa(value: ZodType["safeParseAsync"]) {
       util.own(this, "spa", value);
+    },
+    validate(data, params) {
+      return parse.validate(this, data, params);
+    },
+    validateAsync(data, params) {
+      return parse.validateAsync(this, data, params);
     },
     encode: function _encode(data, params) {
       return parse.encode(this, data, params, { callee: _encode });
