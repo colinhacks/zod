@@ -23,16 +23,13 @@ At a glance:
 
 ## `z.properties()`
 
-A new API for validating specific properties of an object. Unlike `z.object()` it does not parse the input object. It validates *in-place*, so it plays nice with *class instances*. ([#6536](https://github.com/colinhacks/zod/pull/6536))
-
-One schema accepts anything carrying the named properties, so a real `Error` and a plain object both pass without a second schema for the second shape.
+A new API for validating specific properties of an object. Unlike `z.object()` it validates *in-place*, so it plays nice with class instances. ([#6536](https://github.com/colinhacks/zod/pull/6536))
 
 ```ts
-const errorLike = z.properties({ message: z.string() });
+const responseLike = z.properties({ status: z.number().min(200).max(299) });
 
-errorLike.parse(new Error("boom"));    // ✅ a real Error
-errorLike.parse({ message: "boom" });  // ✅ a plain object
-errorLike.parse({ code: 500 });        // ❌ message
+responseLike.parse(new Response("ok"));  // ✅ a real Response
+responseLike.parse({ status: 204 });     // ✅ a plain object
 ```
 
 A `.properties()` method on `z.instanceof()` narrows both at once: the class *and* the properties.
@@ -86,7 +83,7 @@ On a [compiled schema](/compile) it answers straight from the compiled fast path
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
-Without compilation the win is smaller but still there, up to 6.3x. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
+Without compilation it is up to 6.3x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
 
 <Accordions type="single">
 <Accordion title="Uncompiled schemas">
@@ -99,7 +96,9 @@ Without compilation the win is smaller but still there, up to 6.3x. The saving i
 </Accordion>
 </Accordions>
 
-Both charts measure the failure path, where the gap is widest. Valid input is closer: 1.0x to 1.3x on a plain schema, and 1.1x to 2.1x on a compiled one, since a compiled validator answers without building the output. Async refinements are covered by `.validateAsync()`, and Zod Mini keeps the top-level function form.
+Both charts measure the failure path, where the gap is widest. Valid input is closer: 1.0x to 1.3x on a plain schema, and 1.1x to 2.1x on a compiled one, since a compiled `.validate()` answers without building the output.
+
+Async refinements are covered by `.validateAsync()`, and Zod Mini keeps the top-level function form.
 
 ## `fromJSONSchema()`
 
