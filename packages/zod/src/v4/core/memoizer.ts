@@ -1,6 +1,6 @@
 import type * as errors from "./errors.js";
 import type { $ZodMemoizer, $ZodType, $ZodTypeDef, ParseContextInternal, ParsePayload } from "./schemas.js";
-import type * as util from "./util.js";
+import * as util from "./util.js";
 
 export class $ZodCyclicError extends Error {
   constructor() {
@@ -39,32 +39,59 @@ function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
 
+/** What the walk established, in order of certainty: ordered so the strongest answer among children wins. */
+const NONE = 0;
+const ASSUMED = 1;
+const PROVEN = 2;
+type Answer = typeof NONE | typeof ASSUMED | typeof PROVEN;
+
 /** Whether this schema's subtree contains a cycle, so one parse can re-enter it. */
-function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
+function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answer {
   const cached = recursive.get(inst);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) return cached ? PROVEN : NONE;
   // Relative to the walk in progress, so not cached.
-  if (stack.has(inst)) return true;
+  if (stack.has(inst)) return PROVEN;
   stack.add(inst);
 
-  let result = false;
+  let result: Answer = NONE;
   const check = (child: any) => {
-    if (!result && child?._zod && isRecursive(child, stack)) result = true;
+    if (result !== PROVEN && child?._zod) {
+      const answer = isRecursive(child, stack, resolve);
+      if (answer > result) result = answer;
+    }
+  };
+
+  // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
+  const shape = (sh: object, spread: boolean): Answer => {
+    let answer: Answer = NONE;
+    for (const key of Reflect.ownKeys(sh)) {
+      const desc = Object.getOwnPropertyDescriptor(sh, key)!;
+      // an object resolves its shape by spread, so a key it does not enumerate is never parsed; `z.properties` reads every own key and so keeps them all
+      if (spread && !desc.enumerable) continue;
+      // resolving runs user code, and a factory mints a fresh subtree per read, so an edge the walk can't follow counts as a cycle
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve) : NONE;
+      if (child > answer) answer = child;
+    }
+    return answer;
+  };
+
+  const merge = (answer: Answer) => {
+    if (answer > result) result = answer;
   };
 
   const def = inst._zod.def as any;
   const kind = def.type as $ZodTypeDef["type"];
   switch (kind) {
     case "object": {
-      // `Reflect.ownKeys` rather than `Object.keys`, so a cycle through a declared symbol key is still seen
-      for (const key of Reflect.ownKeys(def.shape)) check(def.shape[key]);
+      const raw = util.rawShape(def);
+      // a def with no raw shape answers `shape` from an accessor of its own, and running that can mint a whole fresh subtree
+      merge(raw ? shape(raw, true) : ASSUMED);
       check(def.catchall);
       break;
     }
-    case "properties": {
-      for (const key of Reflect.ownKeys(def.shape)) check(def.shape[key]);
+    case "properties":
+      merge(shape(def.shape, false));
       break;
-    }
     case "array":
       check(def.element);
       break;
@@ -106,10 +133,13 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
       check(def.input);
       check(def.output);
       break;
-    // reading `_zod.innerType` resolves the getter once and caches it
-    case "lazy":
-      check((inst as any)._zod.innerType);
+    // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
+    case "lazy": {
+      const inner = def._cachedInner ?? (resolve ? (inst as any)._zod.innerType : undefined);
+      // walked with resolution off: one hop sees past the deferral, and a lazy that yields only another unresolved lazy is generative, so it stops there
+      merge(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
+    }
     // a leaf by choice: `parts` are regex fragments, not data positions
     case "template_literal":
     // leaves
@@ -149,8 +179,13 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   }
 
   stack.delete(inst);
-  recursive.set(inst, result);
-  return result;
+  return settle(inst, result);
+}
+
+/** An assumed answer must not outlive the resolution that settles it, so only a certain one is cached. */
+function settle(inst: $ZodType, answer: Answer): Answer {
+  if (answer !== ASSUMED) recursive.set(inst, answer === PROVEN);
+  return answer;
 }
 
 /**
@@ -160,7 +195,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
  * generated fast path has no context to key on.
  */
 export function isRecursiveSchema(inst: $ZodType): boolean {
-  return isRecursive(inst, new Set());
+  // z.compile never parses, so nothing would ever resolve a lazy for it; it runs once and already treats a throw here as recursive
+  return isRecursive(inst, new Set(), true) !== NONE;
 }
 
 function bucketFor(state: State, inst: $ZodType): Map<object, Entry> {
@@ -205,6 +241,7 @@ const memo: $ZodMemoizer = {
 
   attach(inst) {
     let isRecursiveInst: boolean | undefined;
+    let rechecked = false;
     // `bucket` memoized for one parse; a recursive schema is re-entered many times and its bucket never changes
     let lastCtx: object | undefined;
     let lastBucket: Map<object, Entry> | undefined;
@@ -216,13 +253,16 @@ const memo: $ZodMemoizer = {
 
       const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload> => {
         if (isRecursiveInst === undefined) {
-          isRecursiveInst = isRecursive(inst, new Set());
-          if (!isRecursiveInst) {
+          const walked = isRecursive(inst, new Set(), false);
+          if (walked === NONE) {
             // Nothing here can ever fire, so take it back out.
             inst._zod.parse = base;
             if (inst._zod.run === wrapped) inst._zod.run = base;
             return base(payload, ctx);
           }
+          // this parse resolves the deferred edges on its own path, so ask once more before latching
+          if (walked === PROVEN || rechecked) isRecursiveInst = true;
+          else rechecked = true;
         }
 
         const input = payload.value;

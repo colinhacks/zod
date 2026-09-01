@@ -718,3 +718,245 @@ test("detects a cycle through a user-defined container type", () => {
   const out: any = Node.parse(input);
   expect(out.boxed.v).toBe(out);
 });
+
+// #6526: a factory returns fresh instances, so the identity walk never revisits a node; it descends until the stack overflows unless it stops at the deferred edge
+test("parses a factory-built recursive schema", () => {
+  const Node = (): any =>
+    z.object({
+      id: z.number(),
+      get kids() {
+        return z.array(Node());
+      },
+    });
+
+  const S = z.object({ root: Node() });
+  const out = S.parse({ root: { id: 1, kids: [{ id: 2, kids: [] }] } });
+  expect(out.root.kids[0].id).toBe(2);
+  expect(S.safeParse({ root: { id: 1, kids: [{ id: "x", kids: [] }] } }).success).toBe(false);
+});
+
+test("parses a factory-built recursive discriminated union at the root and nested", () => {
+  const Geometry = (): any =>
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("Point"), coordinates: z.array(z.number()) }),
+      z.looseObject({
+        type: z.literal("GeometryCollection"),
+        get geometries() {
+          return z.array(Geometry());
+        },
+      }),
+    ]);
+
+  const collection = { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [1, 2] }] };
+  expect(Geometry().parse(collection).geometries[0].coordinates).toEqual([1, 2]);
+  expect(z.object({ g: Geometry() }).parse({ g: collection }).g.type).toBe("GeometryCollection");
+});
+
+test("the walk reports a cycle for a deferred edge instead of resolving it", () => {
+  const Node = (): any =>
+    z.object({
+      get self() {
+        return Node();
+      },
+    });
+  expect(z.core.isRecursiveSchema(Node())).toBe(true);
+
+  // conservative by design: a getter that closes no cycle is reported too, and pays only the memoizer it keeps
+  const Leaf = z.object({ id: z.string() });
+  const forward: any = z.object({
+    get leaf() {
+      return Leaf;
+    },
+  });
+  expect(z.core.isRecursiveSchema(forward)).toBe(true);
+
+  // a lazy is followed one hop, which is what lets z.compile see past it; past that hop it is deferred like any other edge
+  expect(z.core.isRecursiveSchema(z.lazy(() => Leaf) as any)).toBe(false);
+  expect(z.core.isRecursiveSchema(z.lazy(() => z.lazy(() => Leaf)) as any)).toBe(true);
+});
+
+// the builders answer `shape` from an accessor that resolves the source's getters, so the walk has to reach the source schema itself
+test("parses a factory-built recursive schema through every object builder", () => {
+  const wraps: [string, (base: () => any) => any][] = [
+    ["extend", (b) => b().extend({ x: z.string() })],
+    ["safeExtend", (b) => b().safeExtend({ x: z.string() })],
+    ["merge", (b) => z.object({ x: z.string() }).merge(b())],
+    ["partial", (b) => b().partial()],
+    ["required", (b) => b().required()],
+    ["pick", (b) => b().pick({ self: true })],
+    ["omit", (b) => b().omit({ y: true })],
+    ["chained", (b) => b().extend({ x: z.string() }).partial()],
+    // rebuilds the def without touching the shape, so the clone carries the source's accessor rather than a shape of its own
+    ["strict", (b) => b().extend({ x: z.string() }).strict()],
+    ["catchall", (b) => b().extend({ x: z.string() }).catchall(z.unknown())],
+    ["meta", (b) => b().extend({ x: z.string() }).meta({ id: "node" })],
+  ];
+
+  for (const [name, wrap] of wraps) {
+    const Node = (): any =>
+      wrap(() =>
+        z.object({
+          y: z.string(),
+          get self() {
+            return z.optional(Node());
+          },
+        })
+      );
+    const S = z.object({ r: Node() });
+    for (const attempt of ["first", "second"]) {
+      expect(() => S.safeParse({ r: { y: "s", x: "s" } }), `${name} (${attempt} parse)`).not.toThrow();
+    }
+  }
+});
+
+test("an ordinary builder stays exact, so it still compiles", () => {
+  const plain = z.object({ a: z.string(), b: z.number() });
+  const derived: [string, any][] = [
+    ["extend", plain.extend({ c: z.boolean() })],
+    ["merge", plain.merge(z.object({ d: z.string() }))],
+    ["partial", plain.partial()],
+    ["required", plain.partial().required()],
+    ["pick", plain.pick({ a: true })],
+    ["omit", plain.omit({ a: true })],
+    ["strict", plain.extend({ c: z.boolean() }).strict()],
+    ["catchall", plain.extend({ c: z.boolean() }).catchall(z.unknown())],
+    ["meta", plain.extend({ c: z.boolean() }).meta({ id: "plain" })],
+  ];
+  for (const [name, schema] of derived) {
+    expect(z.core.isRecursiveSchema(schema), name).toBe(false);
+    expect(() => z.compile(schema, { strict: true }), name).not.toThrow();
+  }
+});
+
+// a derived shape mirrors its source's descriptors, so dropping or overwriting the key that carries the cycle leaves nothing deferred and the walk is exact before anything parses
+test("a builder that drops the recursive key ends up exact", () => {
+  const Node: any = z.object({
+    id: z.number(),
+    get self() {
+      return z.optional(Node);
+    },
+  });
+
+  const derived: [string, any, any][] = [
+    ["omit", Node.omit({ self: true }), { id: 1 }],
+    ["pick", Node.pick({ id: true }), { id: 1 }],
+    ["extend overwrites it", Node.extend({ self: z.string() }), { id: 1, self: "x" }],
+  ];
+  for (const [name, schema, input] of derived) {
+    expect(z.core.isRecursiveSchema(schema), name).toBe(false);
+    expect(() => z.compile(schema, { strict: true }), name).not.toThrow();
+    expect(schema.parse(input), name).toEqual(input);
+  }
+
+  // the branch that stays is still found
+  const kept = Node.extend({ x: z.string() });
+  expect(z.core.isRecursiveSchema(kept)).toBe(true);
+});
+
+// resolving a lazy runs user code, which can re-enter the walk; a walk that kept its certainty outside its own frames would have the inner one clobber the outer
+test("a nested walk can't corrupt the one that resolved into it", () => {
+  const Node: any = z.object({
+    id: z.number(),
+    self: z.lazy(() => {
+      z.compile(z.string(), { strict: true });
+      return z.optional(Node);
+    }),
+  });
+
+  const omitted = Node.omit({ self: true });
+  // exact before anything parses: the mirrored shape kept only `id`, so nothing here is deferred
+  expect(z.core.isRecursiveSchema(omitted)).toBe(false);
+  omitted.parse({ id: 1 });
+  expect(z.core.isRecursiveSchema(omitted)).toBe(false);
+  expect(() => z.compile(omitted, { strict: true })).not.toThrow();
+
+  const shared = { id: 1 };
+  const out: any = z.object({ a: omitted, b: omitted }).parse({ a: shared, b: shared });
+  expect(out.a).not.toBe(out.b);
+  expect(z.core.isRecursiveSchema(Node)).toBe(true);
+});
+
+test("detects a cycle that closes through a builder", () => {
+  const Node: any = z
+    .object({
+      id: z.number(),
+      get self() {
+        return z.optional(Node);
+      },
+    })
+    .extend({ x: z.string() });
+
+  const input: any = { id: 1, x: "s" };
+  input.self = input;
+  const out = Node.parse(input);
+  expect(out.self).toBe(out);
+});
+
+test("a deferred edge stops being assumed a cycle once the graph resolves", () => {
+  const Leaf = z.object({ n: z.number() });
+  const Forward: any = z.object({
+    get a() {
+      return Leaf;
+    },
+  });
+  expect(z.core.isRecursiveSchema(Forward)).toBe(true);
+  Forward.parse({ a: { n: 1 } });
+  // the parse resolved the getter, so the walk can follow it and drop the assumption
+  expect(z.core.isRecursiveSchema(Forward)).toBe(false);
+
+  // a factory hands back a fresh subtree every time, so no parse ever resolves it into a finite graph
+  const Node = (): any =>
+    z.object({
+      get kids() {
+        return z.array(Node());
+      },
+    });
+  const Generated = Node();
+  expect(z.core.isRecursiveSchema(Generated)).toBe(true);
+  Generated.parse({ kids: [] });
+  expect(z.core.isRecursiveSchema(Generated)).toBe(true);
+
+  // a lazy that closes a real cycle stays recursive however often it resolves
+  const Cyclic: any = z.object({ id: z.number(), self: z.lazy(() => z.optional(Cyclic)) });
+  Cyclic.parse({ id: 1 });
+  expect(z.core.isRecursiveSchema(Cyclic)).toBe(true);
+});
+
+// `z.object` resolves its shape by spread, so a non-enumerable key is no part of it; `z.properties` reads every own key, so one there is still parsed and can still close a cycle
+test("a non-enumerable key counts for z.properties and not for z.object", () => {
+  const props = (enumerable: boolean) => {
+    const shape: Record<string, any> = { id: z.number() };
+    const P = z.properties(shape);
+    Object.defineProperty(shape, "next", { value: z.lazy(() => z.optional(P)), enumerable, configurable: true });
+    return P;
+  };
+  expect(z.core.isRecursiveSchema(props(true) as any)).toBe(true);
+  expect(z.core.isRecursiveSchema(props(false) as any)).toBe(true);
+
+  const object = (enumerable: boolean) => {
+    const shape: Record<string, any> = { id: z.number() };
+    const O: any = z.object(shape);
+    Object.defineProperty(shape, "next", { value: z.lazy(() => z.optional(O)), enumerable, configurable: true });
+    return O;
+  };
+  expect(z.core.isRecursiveSchema(object(true))).toBe(true);
+  // the spread drops it, so nothing can ever parse it
+  expect(z.core.isRecursiveSchema(object(false))).toBe(false);
+});
+
+test("the walk stays exact where nothing is deferred", () => {
+  let deep: any = z.string();
+  for (let i = 0; i < 300; i++) deep = z.object({ v: deep });
+  expect(z.core.isRecursiveSchema(deep)).toBe(false);
+});
+
+test("parses a factory-built recursive schema through z.lazy", () => {
+  const Node = (): any =>
+    z.object({
+      id: z.number(),
+      child: z.lazy(() => z.optional(Node())),
+    });
+
+  const out = z.object({ root: Node() }).parse({ root: { id: 1, child: { id: 2, child: undefined } } });
+  expect(out.root.child.id).toBe(2);
+});

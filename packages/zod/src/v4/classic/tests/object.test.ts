@@ -838,6 +838,62 @@ describe("__proto__ as a declared shape key", () => {
     expect(() => (schema[method] as any)(mask).shape).toThrow('Unrecognized key: "__proto__"');
   });
 
+  // the mask is checked against the source's declared keys, which reads without resolving them, so it throws where the mistake is
+  test.each(["pick", "omit", "partial", "required"] as const)("%s rejects an undeclared key at the call", (method) => {
+    const schema = z.object({ value: z.string() });
+
+    expect(() => (schema[method] as any)({ nope: true })).toThrow('Unrecognized key: "nope"');
+  });
+
+  // a derived shape is built key by key, and a plain assignment runs whatever setter answers to the key — `__proto__` always has one, and a polluted prototype can supply one for any name
+  test("an inherited setter cannot swallow a derived key", () => {
+    let swallowed: unknown;
+    Object.defineProperty(Object.prototype, "field", {
+      configurable: true,
+      set(v) {
+        swallowed = v;
+      },
+      get() {
+        return undefined;
+      },
+    });
+
+    try {
+      const derived = z.object({ field: z.string() }).extend({ extra: z.number() });
+
+      expect(Object.keys(derived.shape)).toEqual(["field", "extra"]);
+      expect(swallowed).toBeUndefined();
+      // the key is still validated; what a parse writes into its result is the ambient prototype's business, as it is without a builder
+      expect(derived.safeParse({ field: 123, extra: 1 }).success).toBe(false);
+      expect(derived.safeParse({ field: "a", extra: 1 }).success).toBe(true);
+    } finally {
+      delete (Object.prototype as any).field;
+    }
+  });
+
+  // a shape resolves by object spread, so a non-enumerable entry is no part of it and no builder may promote one into a derived shape
+  test("a non-enumerable shape entry stays out of every derived shape", () => {
+    const sym = Symbol("kept");
+    const hide = (target: Record<string, any>) =>
+      Object.defineProperty(target, "hidden", { value: z.string(), enumerable: false, configurable: true });
+    // each case needs a source whose shape is still unresolved, since resolving drops the entry on its own
+    const source = () => z.object(hide({ b: z.number(), [sym]: z.boolean() }) as any);
+
+    expect(Reflect.ownKeys(source().shape)).toEqual(["b", sym]);
+    expect(Reflect.ownKeys(source().extend({ c: z.boolean() }).shape)).toEqual(["b", "c", sym]);
+    expect(Reflect.ownKeys(source().partial().shape)).toEqual(["b", sym]);
+    expect(Reflect.ownKeys(source().merge(z.object({ c: z.boolean() })).shape)).toEqual(["b", "c", sym]);
+    expect(Object.keys(z.object({ b: z.number() }).extend(hide({}) as any).shape)).toEqual(["b"]);
+    expect(() => source().pick({ hidden: true } as any)).toThrow('Unrecognized key: "hidden"');
+
+    // promoting it would make a key the source ignores required
+    expect(
+      source()
+        .extend({ c: z.boolean() })
+        .safeParse({ b: 1, [sym]: true, c: true }).success
+    ).toBe(true);
+  });
+
   test("shape helpers preserve a declared key", () => {
     const shape = () =>
       Object.fromEntries([

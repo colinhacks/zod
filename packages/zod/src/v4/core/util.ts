@@ -377,6 +377,80 @@ export function assignProp<T extends object, K extends PropertyKey>(
   });
 }
 
+/** A def's `shape` accessor, carrying whichever object it currently answers from. */
+export interface ShapeGetter {
+  (): Record<PropertyKey, any>;
+  raw: Record<PropertyKey, any>;
+}
+
+/**
+ * Whichever object a def's `shape` currently answers from: the one the caller passed until the first read, the frozen copy after it.
+ *
+ * Its keys and descriptors read without invoking anything, which is what lets a discriminated union check its discriminator, and the cycle walk read a shape, without resolving a getter that references the schema being constructed. A def that answers `shape` from an accessor of its own has none.
+ */
+export function rawShape(def: any): Record<PropertyKey, any> | undefined {
+  const desc = Object.getOwnPropertyDescriptor(def, "shape");
+  return desc?.get ? (desc.get as ShapeGetter).raw : desc?.value;
+}
+
+// where a builder reads its source's keys and descriptors, resolving only a shape a def answers for itself. A shape resolves by object spread, so only its enumerable keys are ever part of it.
+function sourceShape(schema: schemas.$ZodObject): Record<PropertyKey, any> {
+  return rawShape(schema._zod.def) ?? (schema._zod.def.shape as any);
+}
+
+// a key whose value is not settled yet, self-caching so every read after the first gets the same one
+function deferProp(target: object, key: PropertyKey, getter: () => any): void {
+  Object.defineProperty(target, key, {
+    get(this: any) {
+      const value = getter();
+      assignProp(this, key as any, value);
+      return value;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+}
+
+// Writes a settled key. A plain assignment is much cheaper than `defineProperty` and produces the same descriptor, but it runs whatever setter already answers to the key — an accessor this shape deferred, or an inherited one, which `__proto__` has on every object and prototype pollution can add for any name.
+function putProp(target: any, key: PropertyKey, value: any): void {
+  if (key in target) assignProp(target, key as any, value);
+  else target[key] = value;
+}
+
+/**
+ * Copies `keys` of `source`'s shape onto `target`, each value passed through `wrap`.
+ *
+ * A key the source has resolved is copied through now, so the derived shape states it outright and nothing has to resolve it to learn what it holds. A key the source still defers stays deferred, and reads back through the source's own `shape`, so it resolves once and both shapes get that one schema.
+ */
+function mirrorShape(
+  target: object,
+  source: schemas.$ZodObject,
+  keys: PropertyKey[],
+  wrap?: ((value: any, key: PropertyKey) => any) | null
+): void {
+  const raw = sourceShape(source);
+  for (const key of keys) {
+    const desc = Object.getOwnPropertyDescriptor(raw, key)!;
+    if (!desc.enumerable) continue;
+    if (desc.get) {
+      deferProp(target, key, () => {
+        const value = (source._zod.def.shape as any)[key];
+        return wrap ? wrap(value, key) : value;
+      });
+    } else putProp(target, key, wrap ? wrap(desc.value, key) : desc.value);
+  }
+}
+
+// same, for a plain shape a caller passed rather than a schema's
+function mirrorProps(target: object, source: Record<PropertyKey, any>): void {
+  for (const key of Reflect.ownKeys(source)) {
+    const desc = Object.getOwnPropertyDescriptor(source, key)!;
+    if (!desc.enumerable) continue;
+    if (desc.get) deferProp(target, key, () => source[key as any]);
+    else putProp(target, key, desc.value);
+  }
+}
+
 export function mergeDefs(...defs: Record<string, any>[]): any {
   const mergedDescriptors: Record<string, PropertyDescriptor> = {};
 
@@ -686,25 +760,24 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
     throw new Error(".pick() cannot be used on object schemas containing refinements");
   }
 
-  const def = mergeDefs(schema._zod.def, {
-    get shape() {
-      const newShape: Writeable<schemas.$ZodShape> = {};
-      // `for...in` skips symbols, so a symbol in the mask would select nothing
-      for (const key of Reflect.ownKeys(mask)) {
-        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
-          throw new Error(`Unrecognized key: "${String(key)}"`);
-        }
-        if (!mask[key as string]) continue;
-        assignProp(newShape, key as string, (currDef.shape as any)[key]!);
-      }
+  const newShape: Writeable<schemas.$ZodShape> = {};
+  mirrorShape(newShape, schema, maskedKeys(schema, mask));
 
-      assignProp(this, "shape", newShape); // self-caching
-      return newShape;
-    },
-    checks: [],
-  });
+  return clone(schema, mergeDefs(currDef, { shape: newShape, checks: [] })) as any;
+}
 
-  return clone(schema, def) as any;
+// the mask keys that select something, checked against the source's shape without resolving it
+function maskedKeys(schema: schemas.$ZodObject, mask: object): PropertyKey[] {
+  const raw = sourceShape(schema);
+  const keys: PropertyKey[] = [];
+  // `for...in` skips symbols, so a symbol in the mask would select nothing
+  for (const key of Reflect.ownKeys(mask)) {
+    if (!Object.getOwnPropertyDescriptor(raw, key)?.enumerable) {
+      throw new Error(`Unrecognized key: "${String(key)}"`);
+    }
+    if ((mask as any)[key]) keys.push(key);
+  }
+  return keys;
 }
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
@@ -716,24 +789,15 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
     throw new Error(".omit() cannot be used on object schemas containing refinements");
   }
 
-  const def = mergeDefs(schema._zod.def, {
-    get shape() {
-      const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
-      for (const key of Reflect.ownKeys(mask)) {
-        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
-          throw new Error(`Unrecognized key: "${String(key)}"`);
-        }
-        if (!(mask as any)[key]) continue;
+  const omitted = new Set(maskedKeys(schema, mask));
+  const newShape: Writeable<schemas.$ZodShape> = {};
+  mirrorShape(
+    newShape,
+    schema,
+    Reflect.ownKeys(sourceShape(schema)).filter((key) => !omitted.has(key))
+  );
 
-        delete newShape[key as string];
-      }
-      assignProp(this, "shape", newShape); // self-caching
-      return newShape;
-    },
-    checks: [],
-  });
-
-  return clone(schema, def);
+  return clone(schema, mergeDefs(currDef, { shape: newShape, checks: [] }));
 }
 
 export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
@@ -745,7 +809,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
     // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
-    const existingShape = schema._zod.def.shape;
+    const existingShape = sourceShape(schema);
     for (const key of Reflect.ownKeys(shape)) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
         throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
@@ -753,28 +817,22 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
     }
   }
 
-  const def = mergeDefs(schema._zod.def, {
-    get shape() {
-      const _shape = { ...schema._zod.def.shape, ...shape };
-      assignProp(this, "shape", _shape); // self-caching
-      return _shape;
-    },
-  });
-  return clone(schema, def) as any;
+  return clone(schema, mergeDefs(schema._zod.def, { shape: extended(schema, shape) })) as any;
+}
+
+// the source's keys, then the caller's overlaid on top
+function extended(schema: schemas.$ZodObject, shape: schemas.$ZodShape): schemas.$ZodShape {
+  const newShape: Writeable<schemas.$ZodShape> = {};
+  mirrorShape(newShape, schema, Reflect.ownKeys(sourceShape(schema)));
+  mirrorProps(newShape, shape);
+  return newShape;
 }
 
 export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
   if (!isPlainObject(shape)) {
     throw new Error("Invalid input to safeExtend: expected a plain object");
   }
-  const def = mergeDefs(schema._zod.def, {
-    get shape() {
-      const _shape = { ...schema._zod.def.shape, ...shape };
-      assignProp(this, "shape", _shape); // self-caching
-      return _shape;
-    },
-  });
-  return clone(schema, def) as any;
+  return clone(schema, mergeDefs(schema._zod.def, { shape: extended(schema, shape) })) as any;
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
@@ -784,12 +842,12 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
   if (a._zod.def.checks?.length) {
     throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
   }
+  const newShape: Writeable<schemas.$ZodShape> = {};
+  mirrorShape(newShape, a, Reflect.ownKeys(sourceShape(a)));
+  mirrorShape(newShape, b, Reflect.ownKeys(sourceShape(b)));
+
   const def = mergeDefs(a._zod.def, {
-    get shape() {
-      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
-      assignProp(this, "shape", _shape); // self-caching
-      return _shape;
-    },
+    shape: newShape,
     get catchall() {
       return b._zod.def.catchall;
     },
@@ -812,45 +870,17 @@ export function partial(
     throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
   }
 
-  const def = mergeDefs(schema._zod.def, {
-    get shape() {
-      const oldShape = schema._zod.def.shape;
-      const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
+  const selected = mask ? new Set(maskedKeys(schema, mask)) : undefined;
+  const newShape: Writeable<schemas.$ZodShape> = {};
+  mirrorShape(
+    newShape,
+    schema,
+    Reflect.ownKeys(sourceShape(schema)),
+    Class &&
+      ((value, key) => (selected && !selected.has(key) ? value : new Class({ type: "optional", innerType: value })))
+  );
 
-      if (mask) {
-        for (const key of Reflect.ownKeys(mask)) {
-          if (!Object.prototype.hasOwnProperty.call(oldShape, key)) {
-            throw new Error(`Unrecognized key: "${String(key)}"`);
-          }
-          if (!(mask as any)[key]) continue;
-          // if (oldShape[key]!._zod.optin === "optional") continue;
-          (shape as any)[key] = Class
-            ? new Class({
-                type: "optional",
-                innerType: (oldShape as any)[key]!,
-              })
-            : (oldShape as any)[key]!;
-        }
-      } else {
-        // the spread copies symbol keys; `for...in` would not reach them
-        for (const key of Reflect.ownKeys(oldShape)) {
-          // if (oldShape[key]!._zod.optin === "optional") continue;
-          (shape as any)[key] = Class
-            ? new Class({
-                type: "optional",
-                innerType: (oldShape as any)[key]!,
-              })
-            : (oldShape as any)[key]!;
-        }
-      }
-
-      assignProp(this, "shape", shape); // self-caching
-      return shape;
-    },
-    checks: [],
-  });
-
-  return clone(schema, def) as any;
+  return clone(schema, mergeDefs(schema._zod.def, { shape: newShape, checks: [] })) as any;
 }
 
 export function required(
@@ -858,39 +888,14 @@ export function required(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
-  const def = mergeDefs(schema._zod.def, {
-    get shape() {
-      const oldShape = schema._zod.def.shape;
-      const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
+  const selected = mask ? new Set(maskedKeys(schema, mask)) : undefined;
+  const newShape: Writeable<schemas.$ZodShape> = {};
+  mirrorShape(newShape, schema, Reflect.ownKeys(sourceShape(schema)), (value, key) =>
+    // overwrite with non-optional
+    selected && !selected.has(key) ? value : new Class({ type: "nonoptional", innerType: value })
+  );
 
-      if (mask) {
-        for (const key of Reflect.ownKeys(mask)) {
-          if (!Object.prototype.hasOwnProperty.call(shape, key)) {
-            throw new Error(`Unrecognized key: "${String(key)}"`);
-          }
-          if (!(mask as any)[key]) continue;
-          // overwrite with non-optional
-          (shape as any)[key] = new Class({
-            type: "nonoptional",
-            innerType: (oldShape as any)[key]!,
-          });
-        }
-      } else {
-        for (const key of Reflect.ownKeys(oldShape)) {
-          // overwrite with non-optional
-          (shape as any)[key] = new Class({
-            type: "nonoptional",
-            innerType: (oldShape as any)[key]!,
-          });
-        }
-      }
-
-      assignProp(this, "shape", shape); // self-caching
-      return shape;
-    },
-  });
-
-  return clone(schema, def) as any;
+  return clone(schema, mergeDefs(schema._zod.def, { shape: newShape })) as any;
 }
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;

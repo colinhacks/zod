@@ -1094,7 +1094,8 @@ export function catchall<T extends ZodMiniObject, U extends SomeType>(
   inst: T,
   catchall: U
 ): ZodMiniObject<T["shape"], core.$catchall<U>> {
-  return inst.clone({ ...inst._zod.def, catchall: catchall as any }) as any;
+  // `mergeDefs` rather than a spread: spreading reads `shape`, and resolving it can mint a whole fresh subtree
+  return inst.clone(util.mergeDefs(inst._zod.def, { catchall: catchall as any })) as any;
 }
 
 // ZodMiniUnion
