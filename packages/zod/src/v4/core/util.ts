@@ -393,7 +393,7 @@ export function rawShape(def: any): Record<PropertyKey, any> | undefined {
   return desc?.get ? (desc.get as ShapeGetter).raw : desc?.value;
 }
 
-// where a builder reads its source's keys and descriptors, resolving only a shape a def answers for itself
+// where a builder reads its source's keys and descriptors, resolving only a shape a def answers for itself. A shape resolves by object spread, so only its enumerable keys are ever part of it.
 function sourceShape(schema: schemas.$ZodObject): Record<PropertyKey, any> {
   return rawShape(schema._zod.def) ?? (schema._zod.def.shape as any);
 }
@@ -432,6 +432,7 @@ function mirrorShape(
   const raw = sourceShape(source);
   for (const key of keys) {
     const desc = Object.getOwnPropertyDescriptor(raw, key)!;
+    if (!desc.enumerable) continue;
     if (desc.get) {
       deferred = true;
       deferProp(target, key, () => {
@@ -447,6 +448,7 @@ function mirrorShape(
 function mirrorProps(target: object, source: Record<PropertyKey, any>, deferred: boolean): void {
   for (const key of Reflect.ownKeys(source)) {
     const desc = Object.getOwnPropertyDescriptor(source, key)!;
+    if (!desc.enumerable) continue;
     if (desc.get) deferProp(target, key, () => source[key as any]);
     else putProp(target, key, desc.value, deferred);
   }
@@ -773,7 +775,7 @@ function maskedKeys(schema: schemas.$ZodObject, mask: object): PropertyKey[] {
   const keys: PropertyKey[] = [];
   // `for...in` skips symbols, so a symbol in the mask would select nothing
   for (const key of Reflect.ownKeys(mask)) {
-    if (!Object.prototype.hasOwnProperty.call(raw, key)) {
+    if (!Object.getOwnPropertyDescriptor(raw, key)?.enumerable) {
       throw new Error(`Unrecognized key: "${String(key)}"`);
     }
     if ((mask as any)[key]) keys.push(key);

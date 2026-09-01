@@ -845,6 +845,29 @@ describe("__proto__ as a declared shape key", () => {
     expect(() => (schema[method] as any)({ nope: true })).toThrow('Unrecognized key: "nope"');
   });
 
+  // a shape resolves by object spread, so a non-enumerable entry is no part of it and no builder may promote one into a derived shape
+  test("a non-enumerable shape entry stays out of every derived shape", () => {
+    const sym = Symbol("kept");
+    const hide = (target: Record<string, any>) =>
+      Object.defineProperty(target, "hidden", { value: z.string(), enumerable: false, configurable: true });
+    // each case needs a source whose shape is still unresolved, since resolving drops the entry on its own
+    const source = () => z.object(hide({ b: z.number(), [sym]: z.boolean() }) as any);
+
+    expect(Reflect.ownKeys(source().shape)).toEqual(["b", sym]);
+    expect(Reflect.ownKeys(source().extend({ c: z.boolean() }).shape)).toEqual(["b", "c", sym]);
+    expect(Reflect.ownKeys(source().partial().shape)).toEqual(["b", sym]);
+    expect(Reflect.ownKeys(source().merge(z.object({ c: z.boolean() })).shape)).toEqual(["b", "c", sym]);
+    expect(Object.keys(z.object({ b: z.number() }).extend(hide({}) as any).shape)).toEqual(["b"]);
+    expect(() => source().pick({ hidden: true } as any)).toThrow('Unrecognized key: "hidden"');
+
+    // promoting it would make a key the source ignores required
+    expect(
+      source()
+        .extend({ c: z.boolean() })
+        .safeParse({ b: 1, [sym]: true, c: true }).success
+    ).toBe(true);
+  });
+
   test("shape helpers preserve a declared key", () => {
     const shape = () =>
       Object.fromEntries([

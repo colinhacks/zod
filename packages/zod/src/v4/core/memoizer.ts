@@ -66,6 +66,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
     let answer: Answer = NONE;
     for (const key of Reflect.ownKeys(sh)) {
       const desc = Object.getOwnPropertyDescriptor(sh, key)!;
+      // a shape resolves by object spread, so a key it does not enumerate is never parsed
+      if (!desc.enumerable) continue;
       // resolving runs user code, and a factory mints a fresh subtree per read, so an edge the walk can't follow counts as a cycle
       const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve) : NONE;
       if (child > answer) answer = child;
