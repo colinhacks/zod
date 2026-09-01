@@ -1,0 +1,218 @@
+---
+title: Zod 4.6
+author: Colin McDonnell
+date: 2026-09-01
+description: Zod 4.6 is now available, with z.properties() as a real schema, Zod Mini as a standalone package, and failing parses up to 4.7x faster.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+Zod 4.6 is now available.
+
+```sh
+npm install zod@latest
+```
+
+At a glance:
+
+- [`z.properties()`](#zproperties) — now a schema that infers, with a `.properties()` method on `z.instanceof()`
+- [`@zod/mini`](#zodmini) — Zod Mini, published as its own package
+- [Faster failures](#faster-failures) — up to 4.7x on the failure path when you only check `success`
+- [Less memory per schema](#less-memory-per-schema) — up to 17% on top of the 9x reduction in Zod 4.5
+- [Recursive schemas built by a factory](#recursive-schemas-built-by-a-factory) no longer crash
+
+## `z.properties()`
+
+Zod 4.5 shipped `z.properties()` as an array of checks, which meant it could assert but never narrow. It is now a schema, so it infers. ([#6536](https://github.com/colinhacks/zod/pull/6536))
+
+```ts
+const httpsUrl = z.instanceof(URL).properties({
+  protocol: z.literal("https:"),
+  hostname: z.string().regex(z.regexes.domain),
+});
+
+type HttpsUrl = z.infer<typeof httpsUrl>;
+// URL & { protocol: "https:"; hostname: string }
+```
+
+The named properties are asserted in place and the input comes back untouched, so prototypes, unlisted keys, and object identity all survive. Every failing property is reported, not just the first.
+
+```ts
+httpsUrl.parse(new URL("https://example.com"));  // ✅ the same URL instance
+httpsUrl.parse(new URL("http://nope"));          // ❌ protocol, hostname
+```
+
+The 4.5 spread form still compiles and runs, because the schema yields itself from `Symbol.iterator`.
+
+```ts
+z.instanceof(URL).check(...z.properties({ protocol: z.literal("https:") })); // ✅
+```
+
+<Callout>Spreading `z.properties()` now yields one element instead of one per key. Code that destructured or mapped that array sees a different shape; `.check(...)` and the new method form are unaffected.</Callout>
+
+## `@zod/mini`
+
+Zod Mini is now published as a standalone package. It re-exports `zod/mini` from a peer dependency on `zod`, and its version tracks `zod` release for release. ([#6491](https://github.com/colinhacks/zod/pull/6491))
+
+```sh
+npm install @zod/mini zod
+```
+
+```ts
+import * as z from "@zod/mini";
+```
+
+The `zod/mini` subpath is unchanged and is not going anywhere. The standalone package exists for tooling that resolves bare package names rather than subpaths, and it bundles to the same bytes.
+
+## Faster failures
+
+Zod 4.5 made failing parses about 7.5x faster by skipping the stack trace. Zod 4.6 takes the next piece: `safeParse()` no longer finalizes issues or constructs the `ZodError` until something actually reads `result.error`. A caller that only branches on `success` never pays for either. ([#6519](https://github.com/colinhacks/zod/pull/6519), [#6509](https://github.com/colinhacks/zod/pull/6509))
+
+```ts
+const result = Player.safeParse({ username: 42, bio: "hello", xp: "12" });
+result.success; // false — 1.10µs in 4.5, 236ns in 4.6
+```
+
+Reading the error costs what it always did, plus a little: the same work now happens behind an accessor, which measures about 1.4x slower than building it eagerly. The trade favors the overwhelmingly common case, where a failing parse is counted, logged by code, or turned into a boolean.
+
+The Standard Schema surface got the same treatment from the other direction. A failing `~standard.validate` reports its issues straight off the raw payload and never builds a `ZodError` at all.
+
+## Less memory per schema
+
+Zod 4.5 cut retained heap per schema by up to 9x. Zod 4.6 takes another 5–17% off the container types, by moving the internal memo box's accessor onto a prototype instead of allocating it per instance. ([#6537](https://github.com/colinhacks/zod/pull/6537), [#6540](https://github.com/colinhacks/zod/pull/6540), [#6531](https://github.com/colinhacks/zod/pull/6531))
+
+| schema | 4.5 | 4.6 |
+| --- | --- | --- |
+| `z.object({})` | 3176 b | 2648 b |
+| `z.discriminatedUnion()`, 2 options | 12705 b | 11056 b |
+| `z.object()`, 3 keys | 5278 b | 4746 b |
+| `z.object()`, 10 keys | 11160 b | 10633 b |
+| `z.enum(['a','b','c'])` | 1531 b | 1432 b |
+| `z.literal('a')` | 1730 b | 1640 b |
+| `z.object()`, 3 keys, `zod/mini` | 3736 b | 3480 b |
+
+Literal and enum schemas also build their pattern regex lazily now, which is what accounts for their share. Construction got cheaper along with it.
+
+## Recursive schemas built by a factory
+
+A recursive schema built by a factory function threw `RangeError: Maximum call stack size exceeded` on Zod 4.5, after roughly eight seconds on the main thread. It parses again. ([#6530](https://github.com/colinhacks/zod/pull/6530))
+
+```ts
+const Node = (): any =>
+  z.object({
+    id: z.number(),
+    get child() {
+      return z.array(Node()); // a fresh instance on every read
+    },
+  });
+
+z.object({ root: Node() }).parse({ root: { id: 1, child: [] } }); // ✅
+```
+
+Published schemas hit this — `zod-geojson` builds its geometry schemas this way, so an empty feature collection crashed. Closes [#6526](https://github.com/colinhacks/zod/issues/6526).
+
+## Bug fixes
+
+### ⚠️ Error maps run on the first read of `error`
+
+Because `safeParse()` now builds its error lazily, a global error map, a locale, and a per-schema `error` function all run when `result.error` is first read rather than when the parse happens. Code that swaps `z.config()` between the parse and the read gets the newer configuration. ([#6519](https://github.com/colinhacks/zod/pull/6519))
+
+```ts
+const result = schema.safeParse(12);
+z.config(z.locales.fr());
+result.error.issues[0].message; // French in 4.6, English in 4.5
+```
+
+An error map with a side effect never runs at all if nothing reads the error. `.parse()` is unaffected, since it reads the error to throw it.
+
+### ⚠️ `z.emoji()` rejects component-only strings
+
+The emoji class covers the pieces that combine with an emoji, not emoji themselves, so `z.emoji()` accepted `"123"`, `"#"`, `"*"`, and a lone zero-width joiner, variation selector, or skin tone modifier. A leading lookahead now requires at least one real anchor. ([#6532](https://github.com/colinhacks/zod/pull/6532))
+
+```ts
+z.emoji().parse("😀");   // ✅
+z.emoji().parse("1️⃣");   // ✅ the keycap is the anchor
+z.emoji().parse("123");  // ❌ was accepted in 4.5
+```
+
+Flags, subdivision flags, skin-tone-modified emoji, and ZWJ sequences are unchanged. Closes [#6515](https://github.com/colinhacks/zod/issues/6515).
+
+### ⚠️ `fromJSONSchema()` enforces six keywords it used to drop
+
+Six validation keywords were listed as recognized and then silently ignored: `minProperties`, `maxProperties`, `uniqueItems`, `contains`, `minContains`, and `maxContains`. A converted schema accepted data the source schema rejects, which is the worst failure mode for a validating converter. ([#6535](https://github.com/colinhacks/zod/pull/6535))
+
+```ts
+z.fromJSONSchema({ type: "object", minProperties: 1 }).safeParse({});
+// 4.5: accepted — 4.6: rejected
+```
+
+### ⚠️ A numeric enum's reverse mappings are out of `.options`
+
+A TypeScript enum carries both directions of its mapping at runtime. The parser already dropped the reverse half, but `.options` was read straight off the entries object, so a three-member numeric enum listed six values — three of which the schema rejects. ([#6542](https://github.com/colinhacks/zod/pull/6542))
+
+```ts
+enum Country { UK, Germany, France }
+
+z.enum(Country).options; // 4.5: ["UK", "Germany", "France", 0, 1, 2] — 4.6: [0, 1, 2]
+```
+
+### ⚠️ base64 patterns
+
+The runtime patterns for `z.base64()` and `z.base64url()` are the character sets, with length and padding enforced in code, so a multi-megabyte string can no longer overflow the regex stack through a composed schema. The JSON Schema output still emits the exact block forms, so `z.toJSONSchema()` is unchanged. ([#6534](https://github.com/colinhacks/zod/pull/6534), [#6527](https://github.com/colinhacks/zod/pull/6527))
+
+Two consequences. Composing `z.base64()` into a template literal now checks the alphabet but not the length, matching how `z.creditCard()` already behaves there. And `z.regexes.base64url`, which is exported, is now the length-aware form and will overflow on a multi-megabyte input, exactly as `z.regexes.base64` always has.
+
+## Commits
+
+Zod 4.6 rolls up 50 commits.
+
+- [`cafbee47`](https://github.com/colinhacks/zod/commit/cafbee47) fix(v4): parse recursive schemas built by a factory ([#6530](https://github.com/colinhacks/zod/pull/6530)) by [@colinhacks](https://github.com/colinhacks)
+- [`4d730882`](https://github.com/colinhacks/zod/commit/4d730882) Release the parsed input once a failing safeParse builds its error ([#6543](https://github.com/colinhacks/zod/pull/6543)) by [@colinhacks](https://github.com/colinhacks)
+- [`90269c60`](https://github.com/colinhacks/zod/commit/90269c60) Keep a numeric TS enum's reverse-mapping keys out of `.options` ([#6542](https://github.com/colinhacks/zod/pull/6542)) by [@colinhacks](https://github.com/colinhacks)
+- [`18e71c71`](https://github.com/colinhacks/zod/commit/18e71c71) Rename the JSON Schema `process` helper so bundler polyfills cannot collide ([#6541](https://github.com/colinhacks/zod/pull/6541)) by [@colinhacks](https://github.com/colinhacks)
+- [`68aca3dc`](https://github.com/colinhacks/zod/commit/68aca3dc) docs: cover the 4.5 API surface that never made it into the reference by [@colinhacks](https://github.com/colinhacks)
+- [`eca96871`](https://github.com/colinhacks/zod/commit/eca96871) fix(v4): enforce the six JSON Schema keywords fromJSONSchema silently dropped ([#6535](https://github.com/colinhacks/zod/pull/6535)) by [@colinhacks](https://github.com/colinhacks)
+- [`81ded991`](https://github.com/colinhacks/zod/commit/81ded991) perf: answer z.validate from the compiled fast path on invalid input ([#6538](https://github.com/colinhacks/zod/pull/6538)) by [@colinhacks](https://github.com/colinhacks)
+- [`51caf010`](https://github.com/colinhacks/zod/commit/51caf010) refactor: collapse cachedInternal back into cached ([#6540](https://github.com/colinhacks/zod/pull/6540)) by [@colinhacks](https://github.com/colinhacks)
+- [`abfb3897`](https://github.com/colinhacks/zod/commit/abfb3897) feat(v4): make z.properties() a schema, and give z.instanceof() a .properties() method ([#6536](https://github.com/colinhacks/zod/pull/6536)) by [@colinhacks](https://github.com/colinhacks)
+- [`69f2a7ff`](https://github.com/colinhacks/zod/commit/69f2a7ff) Collapse toZod's normalizer and move its docs to the API reference ([#6539](https://github.com/colinhacks/zod/pull/6539)) by [@colinhacks](https://github.com/colinhacks)
+- [`bf990216`](https://github.com/colinhacks/zod/commit/bf990216) perf: move util.cached's accessor to a prototype ([#6537](https://github.com/colinhacks/zod/pull/6537)) by [@colinhacks](https://github.com/colinhacks)
+- [`bec73bea`](https://github.com/colinhacks/zod/commit/bec73bea) perf(v4): build the safeParse error on first read ([#6519](https://github.com/colinhacks/zod/pull/6519)) by [@colinhacks](https://github.com/colinhacks)
+- [`07c43e2a`](https://github.com/colinhacks/zod/commit/07c43e2a) Keep the runtime base64 regexes linear so composed parse paths cannot overflow ([#6534](https://github.com/colinhacks/zod/pull/6534)) by [@colinhacks](https://github.com/colinhacks)
+- [`bc1157e7`](https://github.com/colinhacks/zod/commit/bc1157e7) docs: use a Response example for z.properties() by [@colinhacks](https://github.com/colinhacks)
+- [`2ec972ec`](https://github.com/colinhacks/zod/commit/2ec972ec) refactor: collapse toZod's enum leaf normalizer to a dummy union ([#6533](https://github.com/colinhacks/zod/pull/6533)) by [@colinhacks](https://github.com/colinhacks)
+- [`68a609ac`](https://github.com/colinhacks/zod/commit/68a609ac) Widen literal inputs in property check types ([#6520](https://github.com/colinhacks/zod/pull/6520)) by [@colinhacks](https://github.com/colinhacks)
+- [`0227e53d`](https://github.com/colinhacks/zod/commit/0227e53d) docs: bump the star pill's GitHub mark to 20px by [@colinhacks](https://github.com/colinhacks)
+- [`84dd3b0f`](https://github.com/colinhacks/zod/commit/84dd3b0f) perf: build literal and enum pattern regexes lazily ([#6531](https://github.com/colinhacks/zod/pull/6531)) by [@colinhacks](https://github.com/colinhacks)
+- [`f83ab511`](https://github.com/colinhacks/zod/commit/f83ab511) fix(v4): reject component-only strings from z.emoji() ([#6532](https://github.com/colinhacks/zod/pull/6532)) by [@colinhacks](https://github.com/colinhacks)
+- [`74f9a6d3`](https://github.com/colinhacks/zod/commit/74f9a6d3) docs: drop the toZod enum block from basics and pin the page's curation rule in a comment by [@colinhacks](https://github.com/colinhacks)
+- [`a2a019a5`](https://github.com/colinhacks/zod/commit/a2a019a5) Accept enum-typed targets in z.toZod ([#6528](https://github.com/colinhacks/zod/pull/6528)) by [@colinhacks](https://github.com/colinhacks)
+- [`319f47f4`](https://github.com/colinhacks/zod/commit/319f47f4) Emit a length-aware base64url pattern in toJSONSchema ([#6527](https://github.com/colinhacks/zod/pull/6527)) by [@colinhacks](https://github.com/colinhacks)
+- [`08ba069e`](https://github.com/colinhacks/zod/commit/08ba069e) perf(v4): read Luhn digits with charCodeAt instead of string indexing ([#6529](https://github.com/colinhacks/zod/pull/6529)) by [@colinhacks](https://github.com/colinhacks)
+- [`1ec6b7c5`](https://github.com/colinhacks/zod/commit/1ec6b7c5) docs: add an RSS feed to the blog at /blog/rss.xml by [@colinhacks](https://github.com/colinhacks)
+- [`b801439b`](https://github.com/colinhacks/zod/commit/b801439b) bench: add typebox (compiled and dynamic) to the moltar cross-library harness by [@colinhacks](https://github.com/colinhacks)
+- [`7ae49d64`](https://github.com/colinhacks/zod/commit/7ae49d64) docs: drop the circle around the star pill's GitHub mark and center it on the pill's arc by [@colinhacks](https://github.com/colinhacks)
+- [`93f3ab32`](https://github.com/colinhacks/zod/commit/93f3ab32) docs: replace the blog navbar's GitHub icon with a star-count pill by [@colinhacks](https://github.com/colinhacks)
+- [`fb2fedfd`](https://github.com/colinhacks/zod/commit/fb2fedfd) docs: tighten the memory chart callout, pad the canvas, say "less memory" by [@colinhacks](https://github.com/colinhacks)
+- [`ff56a551`](https://github.com/colinhacks/zod/commit/ff56a551) docs: center the memory chart callout labels and pad them off the number by [@colinhacks](https://github.com/colinhacks)
+- [`8cd1250f`](https://github.com/colinhacks/zod/commit/8cd1250f) docs: center the memory chart callout labels by [@colinhacks](https://github.com/colinhacks)
+- [`3195ed01`](https://github.com/colinhacks/zod/commit/3195ed01) docs: label the memory chart like the compile chart by [@colinhacks](https://github.com/colinhacks)
+- [`a6b49390`](https://github.com/colinhacks/zod/commit/a6b49390) Mark the compile internals @internal instead of hiding them ([#6518](https://github.com/colinhacks/zod/pull/6518)) by [@colinhacks](https://github.com/colinhacks)
+- [`40b4d0b3`](https://github.com/colinhacks/zod/commit/40b4d0b3) fix(ci): read zod's latest version with npm view when picking the backfill dist-tag by [@colinhacks](https://github.com/colinhacks)
+- [`5ff95665`](https://github.com/colinhacks/zod/commit/5ff95665) Stop re-exporting the compile internals from zod/v4/core ([#6511](https://github.com/colinhacks/zod/pull/6511)) by [@colinhacks](https://github.com/colinhacks)
+- [`f412178d`](https://github.com/colinhacks/zod/commit/f412178d) ci: publish @zod/mini to JSR in lockstep with npm ([#6510](https://github.com/colinhacks/zod/pull/6510)) by [@colinhacks](https://github.com/colinhacks)
+- [`f3e7c72e`](https://github.com/colinhacks/zod/commit/f3e7c72e) fix(docs): render the docs 404 page inside the (doc) layout once by [@colinhacks](https://github.com/colinhacks)
+- [`f3cb3644`](https://github.com/colinhacks/zod/commit/f3cb3644) docs: surface the blog on the home page and in the sidebar by [@colinhacks](https://github.com/colinhacks)
+- [`cd4f9a67`](https://github.com/colinhacks/zod/commit/cd4f9a67) perf(v4): report Standard Schema issues without constructing a ZodError ([#6509](https://github.com/colinhacks/zod/pull/6509)) by [@colinhacks](https://github.com/colinhacks)
+- [`43b9bfc5`](https://github.com/colinhacks/zod/commit/43b9bfc5) docs: drop the bound-methods section from the Zod package page by [@colinhacks](https://github.com/colinhacks)
+- [`70eb2c07`](https://github.com/colinhacks/zod/commit/70eb2c07) docs: drop the traits section and the compilation feature bullet by [@colinhacks](https://github.com/colinhacks)
+- [`1c0bce0c`](https://github.com/colinhacks/zod/commit/1c0bce0c) docs: bring the 4.5 charts and worked examples into the docs pages by [@colinhacks](https://github.com/colinhacks)
+- [`a0898b4b`](https://github.com/colinhacks/zod/commit/a0898b4b) ci: wait hours for npm to serve a publish, not ten minutes ([#6502](https://github.com/colinhacks/zod/pull/6502)) by [@colinhacks](https://github.com/colinhacks)
+- [`c46eeff0`](https://github.com/colinhacks/zod/commit/c46eeff0) chore: narrow blanket biome-ignore comments ([#6504](https://github.com/colinhacks/zod/pull/6504)) by [@pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`c7ec94d3`](https://github.com/colinhacks/zod/commit/c7ec94d3) ci: check zod and @zod/mini lockstep on npm after every publish ([#6507](https://github.com/colinhacks/zod/pull/6507)) by [@colinhacks](https://github.com/colinhacks)
+- [`81065739`](https://github.com/colinhacks/zod/commit/81065739) chore(docs): build with Turbopack by [@colinhacks](https://github.com/colinhacks)
+- [`abd41adb`](https://github.com/colinhacks/zod/commit/abd41adb) docs(wiki): move plans and comparisons into a gitignored internal/ ([#6506](https://github.com/colinhacks/zod/pull/6506)) by [@colinhacks](https://github.com/colinhacks)
+- [`2956c4c2`](https://github.com/colinhacks/zod/commit/2956c4c2) chore(mini): sync @zod/mini to 4.5.4 by [@colinhacks](https://github.com/colinhacks)
+- [`8ce9e8d5`](https://github.com/colinhacks/zod/commit/8ce9e8d5) feat(mini): publish Zod Mini as the standalone @zod/mini package ([#6491](https://github.com/colinhacks/zod/pull/6491)) by [@colinhacks](https://github.com/colinhacks)
+- [`93186cab`](https://github.com/colinhacks/zod/commit/93186cab) docs(wiki): drop the zod-compiler benchmark ([#6505](https://github.com/colinhacks/zod/pull/6505)) by [@colinhacks](https://github.com/colinhacks)
+- [`908c9e17`](https://github.com/colinhacks/zod/commit/908c9e17) fix(docs): retry the GitHub stars fetch and log the real status by [@colinhacks](https://github.com/colinhacks)

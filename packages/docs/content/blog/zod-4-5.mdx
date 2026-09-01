@@ -19,7 +19,6 @@ At a glance:
 
 - [`z.compile()`](#zcompile) — the flagship feature of Zod 4.5
 - [`z.creditCard()`](#zcreditcard) — 12–19 digits plus Luhn checksum
-- [`z.properties()`](#zproperties) — the multi-property counterpart to `z.property()`
 - [`z.deepPartial()`](#zdeeppartial)/[`.exactPartial()`](#exactpartial)
 - [`z.validate(): boolean`](#zvalidate) — a fast-path to verify input validity without a full parse (up to 16x faster on invalid data)
 - [9x reduction in memory footprint](#9x-reduction-in-schema-memory-footprint)
@@ -125,22 +124,6 @@ A new string format: 12–19 digits, optionally separated by single spaces or hy
 ```ts
 z.creditCard().parse("4111 1111 1111 1111"); // ✅
 z.creditCard().parse("4111 1111 1111 1112"); // ❌ bad checksum
-```
-
-## `z.properties()`
-
-The multi-property counterpart to `z.property()`. ([#5912](https://github.com/colinhacks/zod/pull/5912))
-
-```ts
-const okResponse = z.instanceof(Response).check(
-  ...z.properties({
-    status: z.number().min(200).max(299),
-    redirected: z.literal(false),
-  })
-);
-
-okResponse.parse(new Response("ok")); // ✅
-okResponse.parse(new Response("", { status: 404 })); // ❌ status
 ```
 
 ## `z.deepPartial()`
