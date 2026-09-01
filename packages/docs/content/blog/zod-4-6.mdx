@@ -73,7 +73,7 @@ if (Player.validate(data)) {
 }
 ```
 
-In conjunction with [`z.compile()`](/compile), this can return up to 35.6x faster than `.safeParse().success` on invalid input.
+In conjunction with [`z.compile()`](/compile), this can be up to 35x faster than `.safeParse().success` on invalid input.
 
 <ThemedImage
   lightSrc="/blog/validate-compiled-invalid-light.svg"
@@ -82,10 +82,10 @@ In conjunction with [`z.compile()`](/compile), this can return up to 35.6x faste
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
-Without compilation it is up to 6.3x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
-
 <Accordions type="single">
 <Accordion title="Uncompiled schemas">
+Without compilation it is up to 6.3x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
+
 <ThemedImage
   lightSrc="/blog/validate-invalid-light.svg"
   darkSrc="/blog/validate-invalid-dark.svg"
@@ -95,14 +95,13 @@ Without compilation it is up to 6.3x faster. The saving is the result object: `.
 </Accordion>
 </Accordions>
 
-Both charts measure the failure path, where the gap is widest. Valid input is closer: 1.0x to 1.3x on a plain schema, and 1.1x to 2.1x on a compiled one, since a compiled `.validate()` answers without building the output.
+Both charts measure the failure path. The key feature of `.validate()` is that, once compiled, it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
 
-Async refinements are covered by `.validateAsync()`, and Zod Mini keeps the top-level function form.
+> **Note** — Async refinements are covered by `.validateAsync()`.
 
 ## `fromJSONSchema()`
 
-
-Six validation keywords were listed as recognized and then silently ignored, so a converted schema accepted data the source schema rejects. All six are enforced now, and all six round-trip back out through `z.toJSONSchema()`. ([#6535](https://github.com/colinhacks/zod/pull/6535))
+Six additional JSON Schema keywords are now supported in `z.fromJSONSchema()`. ([#6535](https://github.com/colinhacks/zod/pull/6535))
 
 - [`minProperties`](https://json-schema.org/understanding-json-schema/reference/object#size) / [`maxProperties`](https://json-schema.org/understanding-json-schema/reference/object#size)
 - [`uniqueItems`](https://json-schema.org/understanding-json-schema/reference/array#uniqueItems)
