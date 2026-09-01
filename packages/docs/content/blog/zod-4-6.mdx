@@ -7,6 +7,8 @@ description: Zod 4.6 is now available, with z.properties() as a real schema, a .
 
 import { ThemedImage } from "@/components/themed-image";
 import { Callout } from "fumadocs-ui/components/callout";
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 Zod 4.6 is now available.
 
@@ -16,52 +18,55 @@ npm install zod@latest
 
 At a glance:
 
-- [`z.properties()`](#zproperties) — now a schema that infers, with a `.properties()` method on `z.instanceof()`
-- [`.validate()`](#validate) — the 4.5 boolean check, now a method on Zod Classic
-- [`fromJSONSchema()`](#fromjsonschema) — six more JSON Schema keywords
-- [Faster failures](#faster-failures) — up to 4.7x on the failure path when you only check `success`
+- [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
+- [`.validate()`](#validate) — checks input validity without building a result (up to 35x faster than `.safeParse().success` on a compiled schema)
+- [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
 
 ## `z.properties()`
 
-Zod 4.5 shipped `z.properties()` as an array of checks, which meant it could assert but never narrow. It is now a schema, so it infers. ([#6536](https://github.com/colinhacks/zod/pull/6536))
+A new API for validating specific properties of an object. Unlike `z.object()` it does not parse the input object. It validates *in-place*, so it plays nice with *class instances*. ([#6536](https://github.com/colinhacks/zod/pull/6536))
+
+One schema accepts anything carrying the named properties, so a real `Error` and a plain object both pass without a second schema for the second shape.
 
 ```ts
-const httpsUrl = z.instanceof(URL).properties({
-  protocol: z.literal("https:"),
-  hostname: z.string().regex(z.regexes.domain),
+const errorLike = z.properties({ message: z.string() });
+
+errorLike.parse(new Error("boom"));    // ✅ a real Error
+errorLike.parse({ message: "boom" });  // ✅ a plain object
+errorLike.parse({ code: 500 });        // ❌ message
+```
+
+A `.properties()` method on `z.instanceof()` narrows both at once: the class *and* the properties.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const okResponse = z.instanceof(Response).properties({
+  ok: z.literal(true),
+  status: z.number().min(200).max(299),
 });
-
-type HttpsUrl = z.infer<typeof httpsUrl>;
-// URL & { protocol: "https:"; hostname: string }
 ```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const okResponse = z.instanceof(Response).check(
+  ...z.properties({
+    ok: z.literal(true),
+    status: z.number().check(z.minimum(200), z.maximum(299)),
+  })
+);
+```
+</Tab>
+</Tabs>
 
-The named properties are asserted in place and the input comes back untouched, so prototypes, unlisted keys, and object identity all survive. Every failing property is reported, not just the first.
+The input comes back untouched, so the prototype survives and the methods still work. That is the part `z.object()` cannot do: it would hand back a plain object and the `Response` would be gone.
 
 ```ts
-httpsUrl.parse(new URL("https://example.com"));  // ✅ the same URL instance
-httpsUrl.parse(new URL("http://nope"));          // ❌ protocol, hostname
+const res = okResponse.parse(await fetch("/api/user"));
+
+await res.json();  // ✅ still a Response
 ```
 
-On its own it is a standalone schema: a gate that accepts any object carrying the named properties, whatever built it.
-
-```ts
-const okResponse = z.properties({ status: z.number().min(200).max(299) });
-
-type OkResponse = z.infer<typeof okResponse>;
-// { status: number }
-
-okResponse.parse(new Response("ok"));               // ✅
-okResponse.parse({ status: 204, cached: true });     // ✅ unlisted keys survive
-okResponse.parse(new Response("", { status: 404 })); // ❌ status
-```
-
-The 4.5 spread form still compiles and runs, because the schema yields itself from `Symbol.iterator`.
-
-```ts
-z.instanceof(URL).check(...z.properties({ protocol: z.literal("https:") })); // ✅
-```
-
-<Callout>Spreading `z.properties()` now yields one element instead of one per key. Code that destructured or mapped that array sees a different shape; `.check(...)` and the new method form are unaffected.</Callout>
 
 ## `.validate()`
 
@@ -73,16 +78,7 @@ if (Player.validate(data)) {
 }
 ```
 
-On invalid input it is up to 6.3x faster than `.safeParse().success`. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
-
-<ThemedImage
-  lightSrc="/blog/validate-invalid-light.svg"
-  darkSrc="/blog/validate-invalid-dark.svg"
-  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 692 ns (1.5x faster), an array of 10 strings 234 ns (2.1x), a 3-element tuple 166 ns (2.6x), a discriminated union of 3 89 ns (3.7x), a 5-key object 79 ns (4.2x), z.number() 45 ns (6.1x), z.string() 41 ns (6.1x), z.boolean() 40 ns (6.3x); up to 6.3x faster"
-  caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
-/>
-
-On a [compiled schema](/compile) it answers straight from the compiled fast path, and the gap widens to 35.6x.
+On a [compiled schema](/compile) it answers straight from the compiled fast path, up to 35.6x faster than `.safeParse().success` on invalid input.
 
 <ThemedImage
   lightSrc="/blog/validate-compiled-invalid-light.svg"
@@ -91,13 +87,30 @@ On a [compiled schema](/compile) it answers straight from the compiled fast path
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
-Both charts measure the failure path, where the gap is widest. Valid input is closer: 1.0x to 1.3x on a plain schema, and 1.1x to 2.1x on a compiled one, since a compiled `.validate()` answers without building the output.
+Without compilation the win is smaller but still there, up to 6.3x. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
 
-`.validateAsync()` covers schemas with async refinements. `zod/mini` keeps the top-level function form.
+<Accordions type="single">
+<Accordion title="Uncompiled schemas">
+<ThemedImage
+  lightSrc="/blog/validate-invalid-light.svg"
+  darkSrc="/blog/validate-invalid-dark.svg"
+  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 692 ns (1.5x faster), an array of 10 strings 234 ns (2.1x), a 3-element tuple 166 ns (2.6x), a discriminated union of 3 89 ns (3.7x), a 5-key object 79 ns (4.2x), z.number() 45 ns (6.1x), z.string() 41 ns (6.1x), z.boolean() 40 ns (6.3x); up to 6.3x faster"
+  caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
+/>
+</Accordion>
+</Accordions>
+
+Both charts measure the failure path, where the gap is widest. Valid input is closer: 1.0x to 1.3x on a plain schema, and 1.1x to 2.1x on a compiled one, since a compiled validator answers without building the output. Async refinements are covered by `.validateAsync()`, and Zod Mini keeps the top-level function form.
 
 ## `fromJSONSchema()`
 
+
 Six validation keywords were listed as recognized and then silently ignored, so a converted schema accepted data the source schema rejects. All six are enforced now, and all six round-trip back out through `z.toJSONSchema()`. ([#6535](https://github.com/colinhacks/zod/pull/6535))
+
+- [`minProperties`](https://json-schema.org/understanding-json-schema/reference/object#size) / [`maxProperties`](https://json-schema.org/understanding-json-schema/reference/object#size)
+- [`uniqueItems`](https://json-schema.org/understanding-json-schema/reference/array#uniqueItems)
+- [`contains`](https://json-schema.org/understanding-json-schema/reference/array#contains)
+- [`minContains`](https://json-schema.org/understanding-json-schema/reference/array#mincontains-maxcontains) / [`maxContains`](https://json-schema.org/understanding-json-schema/reference/array#mincontains-maxcontains)
 
 ```ts
 const schema = z.fromJSONSchema({
@@ -109,7 +122,7 @@ schema.parse({ a: 1 });        // ❌ too few properties
 schema.parse({ a: 1, b: 2 });  // ✅
 ```
 
-`minProperties` and `maxProperties` count the raw input's own keys. On arrays, `uniqueItems` compares structurally, so `[{ a: 1 }, { a: 1 }]` is a duplicate.
+The property counts read the raw input's own keys. On arrays, uniqueness compares structurally, so `[{ a: 1 }, { a: 1 }]` is a duplicate.
 
 ```ts
 z.fromJSONSchema({ type: "array", uniqueItems: true }).parse([{ a: 1 }, { a: 1 }]); // ❌
@@ -120,19 +133,6 @@ z.fromJSONSchema({
   minContains: 2,
 }).parse(["a", 2]);               // ❌ only one number
 ```
-
-## Faster failures
-
-Zod 4.5 made failing parses about 7.5x faster by skipping the stack trace. Zod 4.6 takes the next piece: `safeParse()` no longer finalizes issues or constructs the `ZodError` until something actually reads `result.error`. A caller that only branches on `success` never pays for either. ([#6519](https://github.com/colinhacks/zod/pull/6519), [#6509](https://github.com/colinhacks/zod/pull/6509))
-
-```ts
-const result = Player.safeParse({ username: 42, bio: "hello", xp: "12" });
-result.success; // false — 1.10µs in 4.5, 236ns in 4.6
-```
-
-Reading the error costs what it always did, plus a little: the same work now happens behind an accessor, which measures about 1.4x slower than building it eagerly. The trade favors the overwhelmingly common case, where a failing parse is counted, logged by code, or turned into a boolean.
-
-The Standard Schema surface got the same treatment from the other direction. A failing `~standard.validate` reports its issues straight off the raw payload and never builds a `ZodError` at all.
 
 ## Bug fixes
 
@@ -146,7 +146,7 @@ z.config(z.locales.fr());
 result.error.issues[0].message; // French in 4.6, English in 4.5
 ```
 
-An error map with a side effect never runs at all if nothing reads the error. `.parse()` is unaffected: it builds and throws its error on the spot and never takes the lazy path, so its stack still points at your call site.
+An error map with a side effect never runs at all if nothing reads the error. Throwing parses are unaffected: `.parse()` builds and throws its error on the spot and never takes the lazy path, so its stack still points at your call site.
 
 ### ⚠️ `z.emoji()` rejects component-only strings
 
