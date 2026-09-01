@@ -55,7 +55,7 @@ const okResponse = z.instanceof(Response).check(
 </Tab>
 </Tabs>
 
-The input comes back untouched — the same object, not a copy. That is the part `z.object()` cannot do: it would hand back a new plain object and the `Response` would be gone.
+The input comes back untouched, so the prototype survives and the methods still work. That is the part `z.object()` cannot do: it would hand back a plain object and the `Response` would be gone.
 
 ```ts
 const res = await fetch("/api/user");
@@ -95,7 +95,7 @@ Without compilation it is up to 6.3x faster. The saving is the result object: `.
 </Accordion>
 </Accordions>
 
-Both charts measure the failure path. The key feature of `.validate()` is that, once compiled, it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
+Both charts measure the failure path. The key feature of `.validate()` is that it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
 
 > **Note** — Async refinements are covered by `.validateAsync()`.
 
@@ -174,8 +174,9 @@ Two consequences. Composing `z.base64()` into a template literal now checks the 
 
 ## Commits
 
-Zod 4.6 rolls up 52 commits.
+Zod 4.6 rolls up 53 commits.
 
+- [`764ac59f`](https://github.com/colinhacks/zod/commit/764ac59f) perf(v4): settle z.validate on the first failure in parse order ([#6544](https://github.com/colinhacks/zod/pull/6544)) by [@colinhacks](https://github.com/colinhacks)
 - [`07917f4c`](https://github.com/colinhacks/zod/commit/07917f4c) test(v4): pin the lazy safeParse error's stack behavior ([#6548](https://github.com/colinhacks/zod/pull/6548)) by [@colinhacks](https://github.com/colinhacks)
 - [`62e6624b`](https://github.com/colinhacks/zod/commit/62e6624b) feat(v4): add .validate() and .validateAsync() to Zod Classic ([#6547](https://github.com/colinhacks/zod/pull/6547)) by [@colinhacks](https://github.com/colinhacks)
 - [`cafbee47`](https://github.com/colinhacks/zod/commit/cafbee47) fix(v4): parse recursive schemas built by a factory ([#6530](https://github.com/colinhacks/zod/pull/6530)) by [@colinhacks](https://github.com/colinhacks)
