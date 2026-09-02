@@ -288,8 +288,11 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
       bag.format = def.format;
-      bag.minimum = minimum;
-      bag.maximum = maximum;
+      // narrow against bounds an earlier .min()/.max() already stored, rather than overwriting them with this format's (wider) range
+      const curMin = (bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
+      if (minimum > curMin) bag.minimum = minimum;
+      const curMax = (bag.maximum ?? Number.POSITIVE_INFINITY) as number;
+      if (maximum < curMax) bag.maximum = maximum;
       if (isInt) bag.pattern = regexes.integer;
     });
 
