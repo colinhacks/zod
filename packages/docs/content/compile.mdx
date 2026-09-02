@@ -100,7 +100,7 @@ Under the hood, `z.compile()` walks the entire schema once and produces a hypero
 
 On invalid input the fallback runs the uncompiled schema, so the error is the uncompiled schema's error. Two consequences:
 
-- Invalid inputs pay for both the fast path and the fallback, so compilation does not speed up failures.
+- Invalid inputs pay for both the fast path and the fallback, so compilation barely speeds up failures. Nearly all of that cost is the fallback, which is what produces the errors.
 - Refinements and transforms run once on valid input, and at most twice on invalid input.
 
 ## Unsupported schemas
