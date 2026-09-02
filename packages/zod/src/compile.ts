@@ -15,9 +15,10 @@ import * as core from "./v4/core/index.js";
 
 let compiling = false;
 
-// experiment knob: ZOD_COMPILE_ISSUES=single|dual runs global mode with compiled issue generation, so the whole test corpus doubles as a parity harness
-const issuesEnv =
-  typeof process !== "undefined" ? (process.env?.ZOD_COMPILE_ISSUES as "single" | "dual" | undefined) : undefined;
+// experiment knob: ZOD_COMPILE_ISSUES=single|dual runs global mode with compiled issue generation, so the whole test corpus doubles as a parity harness; read off globalThis so bundler process polyfills cannot collide
+const issuesEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[
+  "ZOD_COMPILE_ISSUES"
+];
 const issuesMode = issuesEnv === "single" || issuesEnv === "dual" ? issuesEnv : undefined;
 
 core.globalConfig.postProcessor = (inst: any) => {
