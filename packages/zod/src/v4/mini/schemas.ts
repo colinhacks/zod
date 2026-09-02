@@ -1692,11 +1692,17 @@ export const ZodMiniPipe: core.$constructor<ZodMiniPipe> = /*@__PURE__*/ core.$c
   }
 );
 
-// @__NO_SIDE_EFFECTS__
 export function pipe<
   const A extends SomeType,
   B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
->(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodMiniPipe<A, B> {
+>(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodMiniPipe<A, B>;
+export function pipe<const A extends SomeType, const B extends SomeType>(
+  in_: A,
+  out: B,
+  ...rest: core.output<A> extends core.input<B> ? [] : ["Incompatible pipe target"]
+): ZodMiniPipe<A, B>;
+// @__NO_SIDE_EFFECTS__
+export function pipe(in_: SomeType, out: SomeType): ZodMiniPipe {
   return new ZodMiniPipe({
     type: "pipe",
     in: in_ as any as core.$ZodType,
