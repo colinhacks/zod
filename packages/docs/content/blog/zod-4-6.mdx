@@ -85,15 +85,6 @@ In conjunction with [`z.compile()`](/compile), this can be up to 38x faster than
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
-That chart compares two compiled calls. Against a plain, uncompiled `.safeParse().success` — the upgrade most callers are actually making — it is up to 36x faster.
-
-<ThemedImage
-  lightSrc="/blog/validate-compiled-vs-plain-invalid-light.svg"
-  darkSrc="/blog/validate-compiled-vs-plain-invalid-dark.svg"
-  alt="Time per call on invalid input, .safeParse().success on a plain schema as a gray bar with z.validate() on a compiled schema as a blue bar inside it: a union of 3 objects 32 ns (36.1x faster), an array of 10 strings 22 ns (23.1x), a 3-element tuple 28 ns (15.5x), a discriminated union of 3 22 ns (15.1x), a 5-key object 20 ns (15.6x), z.number() 18 ns (14.2x), z.string() 18 ns (14.2x), z.boolean() 18 ns (14.0x); up to 36.1x faster"
-  caption={<>Time per call on invalid input, compiled z.validate() against plain .safeParse().success — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
-/>
-
 <Accordions type="single">
 <Accordion title="Uncompiled schemas">
 Without compilation it is up to 6.4x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
@@ -107,7 +98,7 @@ Without compilation it is up to 6.4x faster. The saving is the result object: `.
 </Accordion>
 </Accordions>
 
-All three charts measure the failure path. The key feature of `.validate()` is that it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
+Both charts measure the failure path. The key feature of `.validate()` is that it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
 
 > **Note** — Async refinements are covered by `.validateAsync()`.
 
