@@ -196,8 +196,11 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     if (issueParser) clone._zod.bag.issueParser = issueParser;
     clone._zod.run = wrapped;
 
-    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip. Issue mode skips them too: their failure path is a whole-schema re-parse, which is exactly what the issue parser replaces.
-    if (!liveRun.__originalRun && !issueParser) installCompiledUserMethods(clone, schema, parser);
+    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip. Dual issue mode keeps them but falls back through the CLONE's own methods, so a rejection lands in the wrapper's issue parser instead of a whole-schema re-parse. Single mode skips them: its contract is one issue-parser pass per parse.
+    if (!liveRun.__originalRun) {
+      if (!issueParser) installCompiledUserMethods(clone, schema, parser);
+      else if (options?.issues === "dual") installCompiledUserMethods(clone, clone, parser);
+    }
 
     return clone;
   } catch (err) {
