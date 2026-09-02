@@ -757,6 +757,26 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("number constraints order independence with int()", () => {
+    // .int() applied last should not overwrite the tighter bounds .min()/.max() already stored
+    expect(z.toJSONSchema(z.number().int().min(0).max(23))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maximum": 23,
+        "minimum": 0,
+        "type": "integer",
+      }
+    `);
+    expect(z.toJSONSchema(z.number().min(0).max(23).int())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maximum": 23,
+        "minimum": 0,
+        "type": "integer",
+      }
+    `);
+  });
+
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
 
