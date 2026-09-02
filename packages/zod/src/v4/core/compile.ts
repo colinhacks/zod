@@ -265,7 +265,21 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     const rootType = schema._zod.def.type as SupportedSchemaType;
     if (
       !ISSUE_LEAF_TYPES.has(rootType) &&
-      !["never", "object", "array", "optional", "nullable", "default", "prefault", "nonoptional", "readonly", "success", "pipe", "transform", "union"].includes(rootType)
+      ![
+        "never",
+        "object",
+        "array",
+        "optional",
+        "nullable",
+        "default",
+        "prefault",
+        "nonoptional",
+        "readonly",
+        "success",
+        "pipe",
+        "transform",
+        "union",
+      ].includes(rootType)
     ) {
       throw new ZodCompileUnsupportedError(`schema type ${rootType} at the root of an issue-mode compile`);
     }
@@ -929,9 +943,7 @@ function generateStringFormatCheck(
       doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) ${fail()}`);
       break;
     case "includes":
-      doc.write(
-        `if (!${accessor}.includes(${util.esc((def as checks.$ZodCheckIncludesDef).includes)})) ${fail()}`
-      );
+      doc.write(`if (!${accessor}.includes(${util.esc((def as checks.$ZodCheckIncludesDef).includes)})) ${fail()}`);
       break;
     case "starts_with": {
       const prefix = (def as checks.$ZodCheckStartsWithDef).prefix;
@@ -2222,16 +2234,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// Issue mode ("apply" codegen): the generated parser pushes the same raw issues
-// the interpreter pushes instead of returning INVALID. Failure sites never
-// hand-build issue objects — they cold-call the hoisted runtime parse/check of
-// the failing node so the canonical issue comes from runtime code, and the
-// generated code owns only the walk plumbing: path prefixes, abort/continue
-// gating, sibling continuation, partial output assembly. Nodes with no native
-// emission are handled by a node-scoped rerun island: the failing subtree runs
-// through its own runtime parser and its issues merge in, which is exact parity
-// at the cost of re-running that subtree's user callbacks (bounded at 2x, the
-// same bound the whole-schema fallback has today).
+// Issue mode ("apply" codegen): the generated parser pushes the same raw issues the interpreter pushes instead of returning INVALID. Failure sites never hand-build issue objects — they cold-call the hoisted runtime parse/check of the failing node so the canonical issue comes from runtime code, and the generated code owns only the walk plumbing: path prefixes, abort/continue gating, sibling continuation, partial output assembly. Nodes with no native emission are handled by a node-scoped rerun island: the failing subtree runs through its own runtime parser and its issues merge in, which is exact parity at the cost of re-running that subtree's user callbacks (bounded at 2x, the same bound the whole-schema fallback has today).
 //////////////////////////////////////////////////////////////////////////////
 
 // mirrors util.prefixIssues, but from an index and applying a whole path prefix at once — same resulting arrays as the interpreter's per-level unshift
@@ -2355,7 +2358,8 @@ function generateChecksIssues(
   // a stopped pipe reads as aborted (explicitly too) whatever its issues' continue flags say, matching util.aborted's payload.aborted short-circuit on the runtime's returned payload
   const pre = abOverride ? `${abOverride} || ` : "";
   doc.write(`let ${gate.ab} = ${pre}(payload.issues.length > ${nodeMark} && ${abt}(payload, ${nodeMark}));`);
-  if (gate.ex) doc.write(`let ${gate.ex} = ${pre}(payload.issues.length > ${nodeMark} && ${eabt}(payload, ${nodeMark}));`);
+  if (gate.ex)
+    doc.write(`let ${gate.ex} = ${pre}(payload.issues.length > ${nodeMark} && ${eabt}(payload, ${nodeMark}));`);
 
   for (const check of list) {
     const def = check._zod.def as { check: string; when?: (p: unknown) => boolean };
@@ -2372,7 +2376,11 @@ function generateChecksIssues(
         const c = check as CustomCheck;
         const fn = c._zod.check ?? c._zod.def.fn;
         if (!fn) throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
-        if (isAsyncFunction(fn) || (c._zod.def.fn && isAsyncFunction(c._zod.def.fn)) || (c._zod.check && isAsyncFunction(c._zod.check))) {
+        if (
+          isAsyncFunction(fn) ||
+          (c._zod.def.fn && isAsyncFunction(c._zod.def.fn)) ||
+          (c._zod.check && isAsyncFunction(c._zod.check))
+        ) {
           throw new ZodCompileAsyncError();
         }
         const checkConst = addConstant(ctx, c._zod.check);
@@ -2423,7 +2431,9 @@ function generateChecksIssues(
             d2.write(`return true;`);
           });
           d.write(`})();`);
-          d.write(`if (${r} === INVALID) ${checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label)}`);
+          d.write(
+            `if (${r} === INVALID) ${checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label)}`
+          );
         });
         doc.write(`}`);
         break;
@@ -2725,7 +2735,13 @@ function generateCheckIssues(
   return chainVar;
 }
 
-function generateLeafIssues(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+function generateLeafIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath
+): string {
   const failCond = leafFailCondition(ctx, schema, accessor);
   const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
   // a def-level format with no check trait would silently skip its own validation
@@ -2831,7 +2847,13 @@ function generateOptionalIssues(
   return v;
 }
 
-function generateArrayIssues(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+function generateArrayIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath
+): string {
   const def = schema._zod.def as unknown as { element: SomeType };
   const v = newVar(ctx);
   doc.write(`let ${v} = ${accessor};`);
@@ -2856,7 +2878,13 @@ function generateArrayIssues(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   return v;
 }
 
-function generateObjectIssues(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+function generateObjectIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath
+): string {
   const def = schema._zod.def as unknown as { shape: Record<string, SomeType>; catchall?: SomeType };
   const shape = def.shape;
   const keys = Object.keys(shape);
@@ -2906,7 +2934,9 @@ function generateObjectIssues(doc: Doc, ctx: CompileContext, schema: SomeType, a
         );
         d.write(`if (${present}) ${out}[${kx}] = ${kv};`);
       } else {
-        d.write(`if (${kv} === undefined) { if (${kx} in ${accessor}) ${out}[${kx}] = undefined; } else ${out}[${kx}] = ${kv};`);
+        d.write(
+          `if (${kv} === undefined) { if (${kx} in ${accessor}) ${out}[${kx}] = undefined; } else ${out}[${kx}] = ${kv};`
+        );
       }
     }
 
