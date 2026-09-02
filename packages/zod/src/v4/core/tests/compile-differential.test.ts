@@ -95,6 +95,29 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
       expect(b.error.issues, `issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
     }
   }
+  // Issue-mode differential: the compiled issue parser must reproduce the interpreter's error byte for byte — codes, paths, messages, order — in both wrapper configurations.
+  for (const mode of ["single", "dual"] as const) {
+    const issueCompiled = compile(schema, { issues: mode });
+    for (const input of inputs) {
+      const at = attempt(() => schema.safeParse(input));
+      const bt = attempt(() => issueCompiled.safeParse(input));
+      expect(
+        bt.threw,
+        `issue-mode(${mode}) throw mismatch for input ${describe(input)}: runtime ${at.threw ?? "did not throw"}, compiled ${bt.threw ?? "did not throw"}`
+      ).toBe(at.threw);
+      if (at.threw) continue;
+      const a = at.value!;
+      const b = bt.value!;
+      expect(b.success, `issue-mode(${mode}) success mismatch for input ${describe(input)}`).toBe(a.success);
+      if (a.success && b.success) {
+        assertIdentical(b.data, a.data, "$");
+      } else if (!a.success && !b.success) {
+        expect(b.error.issues, `issue-mode(${mode}) issues mismatch for input ${describe(input)}`).toEqual(
+          a.error.issues
+        );
+      }
+    }
+  }
   assertUnionSound(schema, inputs);
 }
 

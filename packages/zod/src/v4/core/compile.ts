@@ -32,6 +32,8 @@ interface CompileFnOptions {
   debug?: boolean | undefined;
   /** Emit a validator instead of a parser: skip building the output value where nothing reads it. */
   assertOnly?: boolean | undefined;
+  /** Emit an issue-collecting parser: failures push the same raw issues the interpreter pushes instead of returning INVALID. */
+  issues?: boolean | undefined;
 }
 
 type CompiledFn<T> = ((input: unknown) => T | INVALID) & {
@@ -109,6 +111,10 @@ function compileValidator(schema: SomeType, parser: CompiledFn<unknown>): Compil
 export interface CompileOptions {
   /** Throw the refusal instead of returning the schema uncompiled. */
   strict?: boolean | undefined;
+  /**
+   * Experimental: compile the failure path too, so invalid input produces its issues from generated code instead of a runtime re-parse. `"single"` runs one issue-collecting parser for every parse; `"dual"` keeps the current fast parser for the hot path and runs the issue parser only after it rejects. Falls back to the default fallback model when the schema has no issue-mode compile.
+   */
+  issues?: "single" | "dual" | undefined;
 }
 
 /**
@@ -126,6 +132,16 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
   try {
     const parser = compileFn(schema);
     const clone = util.clone(schema as any) as T;
+
+    type IssueParser = (input: unknown, payload: ParsePayload, pctx: ParseContextInternal) => unknown;
+    let issueParser: IssueParser | null = null;
+    if (options?.issues) {
+      try {
+        issueParser = compileFn(schema, { issues: true }) as unknown as IssueParser;
+      } catch (err) {
+        if (!(err instanceof ZodCompileUnsupportedError || err instanceof ZodCompileAsyncError)) throw err;
+      }
+    }
 
     // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
     const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
@@ -154,9 +170,19 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
         return originalRun(payload, ctx);
       }
 
+      if (issueParser && options?.issues === "single") {
+        payload.value = issueParser(payload.value, payload, ctx);
+        return payload;
+      }
+
       const out = parser(payload.value);
       if (out !== INVALID) {
         payload.value = out;
+        return payload;
+      }
+      if (issueParser) {
+        // dual: the issue parser replaces the runtime fallback
+        payload.value = issueParser(payload.value, payload, ctx);
         return payload;
       }
       // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
@@ -167,10 +193,11 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fallbackRun = originalRun;
     clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
+    if (issueParser) clone._zod.bag.issueParser = issueParser;
     clone._zod.run = wrapped;
 
-    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
-    if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, parser);
+    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip. Issue mode skips them too: their failure path is a whole-schema re-parse, which is exactly what the issue parser replaces.
+    if (!liveRun.__originalRun && !issueParser) installCompiledUserMethods(clone, schema, parser);
 
     return clone;
   } catch (err) {
@@ -232,10 +259,24 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     definite: true,
   };
 
-  const doc = new Doc(["input"]);
-  const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
-  // In assert mode a root that built nothing has already returned INVALID on every failure, so reaching the end means valid.
-  doc.write(outputAccessor === null ? `return true;` : `return ${outputAccessor};`);
+  const doc = new Doc(options?.issues ? ["input", "payload", "pctx"] : ["input"]);
+  if (options?.issues) {
+    // a root that would compile to a bare self-island is just the interpreter with extra steps — refuse so the wrapper keeps the fallback model instead
+    const rootType = schema._zod.def.type as SupportedSchemaType;
+    if (
+      !ISSUE_LEAF_TYPES.has(rootType) &&
+      !["never", "object", "array", "optional", "nullable", "default", "prefault", "nonoptional", "readonly", "success", "pipe", "transform", "union"].includes(rootType)
+    ) {
+      throw new ZodCompileUnsupportedError(`schema type ${rootType} at the root of an issue-mode compile`);
+    }
+    doc.write(`let _sp;`);
+    const outputAccessor = generateCheckIssues(doc, ctx, schema, "input", [], true);
+    doc.write(`return ${outputAccessor};`);
+  } else {
+    const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
+    // In assert mode a root that built nothing has already returned INVALID on every failure, so reaching the end means valid.
+    doc.write(outputAccessor === null ? `return true;` : `return ${outputAccessor};`);
+  }
 
   // Build the function with hoisted constants Always include INVALID as the first constant
   const constantNames = ["INVALID", ...ctx.constants.keys()];
@@ -249,7 +290,8 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     : "";
 
   const F = Function;
-  const factoryCode = `return (input) => {\n${code}\n}`;
+  const params = options?.issues ? "(input, payload, pctx)" : "(input)";
+  const factoryCode = `return ${params} => {\n${code}\n}`;
   let fn: CompiledFn<core.output<T>>;
   try {
     const factory = new F(...constantNames, factoryCode);
@@ -357,6 +399,82 @@ const WHEN_DEFAULTED_CHECKS = new Set([
   "length_equals",
 ]);
 
+/** Emits the statement run when a check's predicate fails. Fast mode returns INVALID; issue mode writes a cold block that pushes the canonical issue. Called once per failure site, so implementations may allocate fresh vars. */
+type FailEmitter = () => string;
+const RETURN_INVALID: FailEmitter = () => "return INVALID;";
+
+// Emits the predicate for one non-structural check (everything but custom/overwrite/property/properties), calling `fail()` at each failure site. Returns the accessor holding the post-check value.
+function emitCheckPredicate(
+  doc: Doc,
+  ctx: CompileContext,
+  check: SupportedCheck,
+  accessor: string,
+  fail: FailEmitter
+): string {
+  const def = check._zod.def;
+  switch (def.check) {
+    case "greater_than":
+      generateGreaterThanCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    case "less_than":
+      generateLessThanCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    case "multiple_of":
+      generateMultipleOfCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    case "number_format":
+      generateNumberFormatCheck(doc, def, accessor, fail);
+      return accessor;
+    case "min_length": {
+      const min = numericOperand(def.minimum, "min_length");
+      const len = codePointLengthVar(
+        doc,
+        ctx,
+        accessor,
+        `${accessor}.length >= ${min} && ${accessor}.length < ${def.minimum * 2}`
+      );
+      doc.write(`if (${len} < ${min}) ${fail()}`);
+      return accessor;
+    }
+    case "max_length": {
+      const max = numericOperand(def.maximum, "max_length");
+      const len = codePointLengthVar(doc, ctx, accessor, `${accessor}.length > ${max}`);
+      doc.write(`if (${len} > ${max}) ${fail()}`);
+      return accessor;
+    }
+    case "length_equals": {
+      const exact = numericOperand(def.length, "length_equals");
+      const len = codePointLengthVar(
+        doc,
+        ctx,
+        accessor,
+        `${accessor}.length >= ${exact} && ${accessor}.length <= ${def.length * 2}`
+      );
+      doc.write(`if (${len} !== ${exact}) ${fail()}`);
+      return accessor;
+    }
+    case "min_size":
+      doc.write(`if (${accessor}.size < ${numericOperand(def.minimum, "min_size")}) ${fail()}`);
+      return accessor;
+    case "max_size":
+      doc.write(`if (${accessor}.size > ${numericOperand(def.maximum, "max_size")}) ${fail()}`);
+      return accessor;
+    case "size_equals":
+      doc.write(`if (${accessor}.size !== ${numericOperand(def.size, "size_equals")}) ${fail()}`);
+      return accessor;
+    case "string_format":
+      return generateStringFormatCheck(doc, ctx, def, accessor, fail);
+    case "bigint_format":
+      generateBigIntFormatCheck(doc, def, accessor, fail);
+      return accessor;
+    case "mime_type":
+      generateMimeTypeCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    default:
+      throw new ZodCompileUnsupportedError(`check type ${(def as { check: string }).check}`);
+  }
+}
+
 function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const schemaChecks = schema._zod.def.checks as SupportedCheck[] | undefined;
   if (!schemaChecks || schemaChecks.length === 0) return accessor;
@@ -371,66 +489,8 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
       throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
     }
     switch (def.check) {
-      case "greater_than":
-        generateGreaterThanCheck(doc, ctx, def, currentAccessor);
-        break;
-      case "less_than":
-        generateLessThanCheck(doc, ctx, def, currentAccessor);
-        break;
-      case "multiple_of":
-        generateMultipleOfCheck(doc, ctx, def, currentAccessor);
-        break;
-      case "number_format":
-        generateNumberFormatCheck(doc, def, currentAccessor);
-        break;
-      case "min_length": {
-        const min = numericOperand(def.minimum, "min_length");
-        const len = codePointLengthVar(
-          doc,
-          ctx,
-          currentAccessor,
-          `${currentAccessor}.length >= ${min} && ${currentAccessor}.length < ${def.minimum * 2}`
-        );
-        doc.write(`if (${len} < ${min}) return INVALID;`);
-        break;
-      }
-      case "max_length": {
-        const max = numericOperand(def.maximum, "max_length");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length > ${max}`);
-        doc.write(`if (${len} > ${max}) return INVALID;`);
-        break;
-      }
-      case "length_equals": {
-        const exact = numericOperand(def.length, "length_equals");
-        const len = codePointLengthVar(
-          doc,
-          ctx,
-          currentAccessor,
-          `${currentAccessor}.length >= ${exact} && ${currentAccessor}.length <= ${def.length * 2}`
-        );
-        doc.write(`if (${len} !== ${exact}) return INVALID;`);
-        break;
-      }
-      case "min_size":
-        doc.write(`if (${currentAccessor}.size < ${numericOperand(def.minimum, "min_size")}) return INVALID;`);
-        break;
-      case "max_size":
-        doc.write(`if (${currentAccessor}.size > ${numericOperand(def.maximum, "max_size")}) return INVALID;`);
-        break;
-      case "size_equals":
-        doc.write(`if (${currentAccessor}.size !== ${numericOperand(def.size, "size_equals")}) return INVALID;`);
-        break;
-      case "string_format":
-        currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
-        break;
       case "custom":
         currentAccessor = generateCustomRefineCheck(doc, ctx, check as CustomCheck, currentAccessor);
-        break;
-      case "bigint_format":
-        generateBigIntFormatCheck(doc, def, currentAccessor);
-        break;
-      case "mime_type":
-        generateMimeTypeCheck(doc, ctx, def, currentAccessor);
         break;
       case "property":
         generatePropertyCheck(doc, ctx, def, currentAccessor);
@@ -445,10 +505,8 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         currentAccessor = newAccessor;
         break;
       }
-      default: {
-        void (def satisfies never);
-        throw new ZodCompileUnsupportedError(`check type ${(def as { check: string }).check}`);
-      }
+      default:
+        currentAccessor = emitCheckPredicate(doc, ctx, check, currentAccessor, RETURN_INVALID);
     }
   }
 
@@ -497,64 +555,72 @@ function generateGreaterThanCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckGreaterThanDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   const op = def.inclusive ? "<" : "<=";
-  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) ${fail()}`);
 }
 
 function generateLessThanCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckLessThanDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   const op = def.inclusive ? ">" : ">=";
-  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) ${fail()}`);
 }
 
 function generateMultipleOfCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckMultipleOfDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   if (typeof def.value === "bigint") {
     // a zero divisor has no compiled form: `x % 0n` throws
     if (def.value === BigInt(0)) throw new ZodCompileUnsupportedError("multiple_of check with a zero divisor");
-    doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
+    doc.write(`if (${accessor} % ${def.value}n !== 0n) ${fail()}`);
   } else {
     // Float `%` has well-known precision issues for sub-integer steps
     // (`1.5 % 0.1`, `2.5e-7 % 1e-7`). Defer to util.floatSafeRemainder so the
     // exact tolerance logic stays in one place — single function call is fine
     // since `multipleOf` runs at most once per number.
     const remainder = addConstant(ctx, util.floatSafeRemainder);
-    doc.write(`if (${remainder}(${accessor}, ${numericOperand(def.value, "multiple_of")}) !== 0) return INVALID;`);
+    doc.write(`if (${remainder}(${accessor}, ${numericOperand(def.value, "multiple_of")}) !== 0) ${fail()}`);
   }
 }
 
-function generateNumberFormatCheck(doc: Doc, def: checks.$ZodCheckNumberFormatDef, accessor: string): void {
+function generateNumberFormatCheck(
+  doc: Doc,
+  def: checks.$ZodCheckNumberFormatDef,
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
+): void {
   const format = def.format;
   switch (format) {
     case "safeint":
-      doc.write(`if (!Number.isSafeInteger(${accessor})) return INVALID;`);
+      doc.write(`if (!Number.isSafeInteger(${accessor})) ${fail()}`);
       break;
     case "int32":
       doc.write(
-        `if (!Number.isInteger(${accessor}) || ${accessor} < -2147483648 || ${accessor} > 2147483647) return INVALID;`
+        `if (!Number.isInteger(${accessor}) || ${accessor} < -2147483648 || ${accessor} > 2147483647) ${fail()}`
       );
       break;
     case "uint32":
-      doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < 0 || ${accessor} > 4294967295) return INVALID;`);
+      doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < 0 || ${accessor} > 4294967295) ${fail()}`);
       break;
     case "float32":
       // Float32 range per util.NUMBER_FORMAT_RANGES
       doc.write(
-        `if (!Number.isFinite(${accessor}) || ${accessor} < -3.4028234663852886e38 || ${accessor} > 3.4028234663852886e38) return INVALID;`
+        `if (!Number.isFinite(${accessor}) || ${accessor} < -3.4028234663852886e38 || ${accessor} > 3.4028234663852886e38) ${fail()}`
       );
       break;
     case "float64":
-      doc.write(`if (!Number.isFinite(${accessor})) return INVALID;`);
+      doc.write(`if (!Number.isFinite(${accessor})) ${fail()}`);
       break;
     default: {
       void (format satisfies never);
@@ -563,15 +629,20 @@ function generateNumberFormatCheck(doc: Doc, def: checks.$ZodCheckNumberFormatDe
   }
 }
 
-function generateBigIntFormatCheck(doc: Doc, def: checks.$ZodCheckBigIntFormatDef, accessor: string): void {
+function generateBigIntFormatCheck(
+  doc: Doc,
+  def: checks.$ZodCheckBigIntFormatDef,
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
+): void {
   const format = def.format;
   if (!format) return; // undefined format means no range check
   switch (format) {
     case "int64":
-      doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) return INVALID;`);
+      doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) ${fail()}`);
       break;
     case "uint64":
-      doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) return INVALID;`);
+      doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) ${fail()}`);
       break;
     default: {
       void (format satisfies never);
@@ -584,12 +655,13 @@ function generateMimeTypeCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckMimeTypeDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   const mimeTypes = def.mime;
   if (mimeTypes && mimeTypes.length > 0) {
     const mimeSet = addConstant(ctx, new Set(mimeTypes));
-    doc.write(`if (!${mimeSet}.has(${accessor}.type)) return INVALID;`);
+    doc.write(`if (!${mimeSet}.has(${accessor}.type)) ${fail()}`);
   }
 }
 
@@ -758,38 +830,44 @@ const PATTERN_IS_COMPLETE: Set<string> = new Set([
 ]);
 
 // Returns the accessor holding the (possibly normalized) value after the check — url/normalize formats produce a new value like overwrite does. Never assigns to the incoming accessor: it may be a `const` or a property expression on user input.
-function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string {
+function generateStringFormatCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: StringFormatDef,
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
+): string {
   // Some string formats do runtime validation beyond their advertised pattern. For cheap pure utility checks, hoist the runtime function and call it so the fast path stays correct without cloning the utility logic into codegen.
   const fmt = def.format;
   if (fmt === "base64") {
     const validator = addConstant(ctx, isValidBase64);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "base64url") {
     const validator = addConstant(ctx, isValidBase64URL);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "jwt") {
     const validator = addConstant(ctx, isValidJWT);
     const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
-    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor}, ${alg})) ${fail()}`);
     return accessor;
   }
   if (fmt === "ipv6") {
     const validator = addConstant(ctx, isValidIPv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "cidrv6") {
     const validator = addConstant(ctx, isValidCIDRv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "credit_card") {
     const validator = addConstant(ctx, isValidCreditCard);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
@@ -807,14 +885,14 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     const urlVar = newVar(ctx);
     doc.write(`const ${trimVar} = ${accessor}.trim();`);
     doc.write(`const ${urlVar} = ${parseConst}(${trimVar}, ${defConst});`);
-    doc.write(`if (typeof ${urlVar} === "number") return INVALID;`);
+    doc.write(`if (typeof ${urlVar} === "number") ${fail()}`);
     if (formatDef.hostname !== undefined) {
       const hostnameConst = addConstant(ctx, urlHostnameOk);
-      doc.write(`if (!${hostnameConst}(${urlVar}, ${defConst}.hostname)) return INVALID;`);
+      doc.write(`if (!${hostnameConst}(${urlVar}, ${defConst}.hostname)) ${fail()}`);
     }
     if (formatDef.protocol !== undefined) {
       const protocolConst = addConstant(ctx, urlProtocolOk);
-      doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
+      doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) ${fail()}`);
     }
     const outputVar = newVar(ctx);
     const outputExpr = formatDef.normalize ? `${urlVar}.href` : `${addConstant(ctx, stripTabAndNewline)}(${trimVar})`;
@@ -827,7 +905,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   if (customFn) {
     if (isAsyncFunction(customFn)) throw new ZodCompileUnsupportedError(`async string format ${fmt}`);
     const fnConst = addConstant(ctx, customFn);
-    doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
+    doc.write(`if (!${fnConst}(${accessor})) ${fail()}`);
     return accessor;
   }
 
@@ -835,7 +913,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   if (PATTERN_IS_COMPLETE.has(fmt) && def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
+    doc.write(`if (!${patternConst}.test(${accessor})) ${fail()}`);
     return accessor;
   }
 
@@ -845,24 +923,24 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       // A regex check with a pattern returned above. Reaching here means there is no pattern to test, and accepting unconditionally would pass every input, so hand the schema back to the runtime.
       throw new ZodCompileUnsupportedError("regex format without a pattern");
     case "lowercase":
-      doc.write(`if (${accessor} !== ${accessor}.toLowerCase()) return INVALID;`);
+      doc.write(`if (${accessor} !== ${accessor}.toLowerCase()) ${fail()}`);
       break;
     case "uppercase":
-      doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) return INVALID;`);
+      doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) ${fail()}`);
       break;
     case "includes":
       doc.write(
-        `if (!${accessor}.includes(${util.esc((def as checks.$ZodCheckIncludesDef).includes)})) return INVALID;`
+        `if (!${accessor}.includes(${util.esc((def as checks.$ZodCheckIncludesDef).includes)})) ${fail()}`
       );
       break;
     case "starts_with": {
       const prefix = (def as checks.$ZodCheckStartsWithDef).prefix;
-      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${util.esc(prefix)}) return INVALID;`);
+      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${util.esc(prefix)}) ${fail()}`);
       break;
     }
     case "ends_with": {
       const suffix = (def as checks.$ZodCheckEndsWithDef).suffix;
-      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${util.esc(suffix)}) return INVALID;`);
+      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${util.esc(suffix)}) ${fail()}`);
       break;
     }
     default: {
@@ -2141,6 +2219,830 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
     // No transform - validate output type on same value
     return generateCheck(doc, ctx, def.out, inputOutput);
   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Issue mode ("apply" codegen): the generated parser pushes the same raw issues
+// the interpreter pushes instead of returning INVALID. Failure sites never
+// hand-build issue objects — they cold-call the hoisted runtime parse/check of
+// the failing node so the canonical issue comes from runtime code, and the
+// generated code owns only the walk plumbing: path prefixes, abort/continue
+// gating, sibling continuation, partial output assembly. Nodes with no native
+// emission are handled by a node-scoped rerun island: the failing subtree runs
+// through its own runtime parser and its issues merge in, which is exact parity
+// at the cost of re-running that subtree's user callbacks (bounded at 2x, the
+// same bound the whole-schema fallback has today).
+//////////////////////////////////////////////////////////////////////////////
+
+// mirrors util.prefixIssues, but from an index and applying a whole path prefix at once — same resulting arrays as the interpreter's per-level unshift
+function prefixIssuesFrom(issues: unknown[], start: number, path: unknown[]): void {
+  for (let i = start; i < issues.length; i++) {
+    const iss = issues[i] as { path?: unknown[] };
+    iss.path = iss.path ? [...path, ...iss.path] : path.slice();
+  }
+}
+
+// Runs a node through its own runtime parser, merging its issues into the caller's payload — the issue path's escape hatch for constructs it doesn't model natively. A promise means an async member reached a sync parse, which the interpreter answers with a throw. `shared` marks a node whose runtime payload is the caller's own, so the abort flag a pipe or codec sets has to carry across.
+function rerunNodeForIssues(
+  schema: SomeType,
+  value: unknown,
+  payload: ParsePayload,
+  pctx: ParseContextInternal | undefined,
+  shared: boolean
+): unknown {
+  // unwrap a compiled wrapper or global-mode shim: the island wants the interpreter, and under global mode `_zod.run` is the wrapper whose issue parser is the very code calling this
+  const live = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+  };
+  const run = live.__originalRun ?? live;
+  const r = run({ value, issues: [] }, pctx ?? ({} as ParseContextInternal));
+  if (r && typeof (r as Promise<unknown>).then === "function") throw new $ZodAsyncError();
+  if (r.issues.length) payload.issues.push(...r.issues);
+  if (shared && r.aborted) payload.aborted = true;
+  return r.value;
+}
+
+// mirrors handlePipeResult's stop rule: any issue except unrecognized_keys halts the pipe, continuable or not
+function pipeStops(issues: unknown[], start: number): boolean {
+  for (let i = start; i < issues.length; i++) {
+    if ((issues[i] as { code?: string }).code !== "unrecognized_keys") return true;
+  }
+  return false;
+}
+
+// mirrors handleNonOptionalResult's push; kept as a runtime helper so the shape lives in one place on this side
+function pushNonOptionalIssue(issues: unknown[], input: unknown, inst: unknown): void {
+  (issues as { push: (i: unknown) => void }).push({ code: "invalid_type", expected: "nonoptional", input, inst });
+}
+
+/** JS expressions for the path from the root to the current node — string literals for static keys, variable names for loop indices, constant names for symbols. */
+type IssuePath = string[];
+
+function issueConsts(ctx: CompileContext) {
+  return {
+    pfx: addConstant(ctx, prefixIssuesFrom),
+    abt: addConstant(ctx, util.aborted),
+    eabt: addConstant(ctx, util.explicitlyAborted),
+    att: addConstant(ctx, util.attachSchema),
+  };
+}
+
+const SP_INIT = `(_sp ??= { value: null, issues: payload.issues })`;
+
+// Cold block for a failed leaf type test: re-run the node's runtime parse so it pushes the canonical issue, then prefix. The parse re-evaluates a trivial predicate; the price of never hand-building an issue shape.
+function leafFailBlock(ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const { pfx } = issueConsts(ctx);
+  const parseConst = addConstant(ctx, schema._zod.parse);
+  const m = newVar(ctx);
+  const prefix = path.length ? ` ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);` : "";
+  return `{ ${SP_INIT}.value = ${accessor}; const ${m} = payload.issues.length; ${parseConst}(_sp, pctx);${prefix} }`;
+}
+
+interface ChainGate {
+  ab: string;
+  ex: string | null;
+}
+
+// Cold block for a failed check predicate: re-run the runtime check so it pushes canonically, stamp the owning schema, prefix, and update the abort gates. `label` breaks out of the check's remaining hot statements (multi-site checks like url).
+function checkFailBlock(
+  ctx: CompileContext,
+  check: { _zod: { check?: unknown } },
+  ownerConst: string,
+  accessor: string,
+  path: IssuePath,
+  gate: ChainGate,
+  label: string
+): string {
+  const { pfx, abt, eabt, att } = issueConsts(ctx);
+  const checkFn = (check._zod as { check?: unknown }).check;
+  if (typeof checkFn !== "function") throw new ZodCompileUnsupportedError("check without a runtime check function");
+  const checkConst = addConstant(ctx, checkFn);
+  const m = newVar(ctx);
+  const prefix = path.length ? ` ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);` : "";
+  const exUpd = gate.ex ? ` if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});` : "";
+  return `{ ${SP_INIT}.value = ${accessor}; const ${m} = payload.issues.length; ${checkConst}(_sp); ${att}(payload.issues, ${m}, ${ownerConst});${prefix} if (!${gate.ab}) ${gate.ab} = ${abt}(payload, ${m});${exUpd} break ${label}; }`;
+}
+
+/**
+ * Issue-mode check chain. Mirrors the runChecks loop in $ZodType.init: a check
+ * runs unless the chain is aborted, a when-carrying check consults its `when`
+ * instead (and skips only on explicit abort), and every failure recomputes the
+ * gates from the issues it pushed. `valueVar` must be a reassignable binding —
+ * overwrite/url/refine rewrite it in place.
+ */
+function generateChecksIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  valueVar: string,
+  path: IssuePath,
+  nodeMark: string,
+  abOverride: string | null = null
+): void {
+  const defChecks = (schema._zod.def.checks as SupportedCheck[] | undefined) ?? [];
+  const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
+  const list: SupportedCheck[] = isOwnCheck ? [schema as unknown as SupportedCheck, ...defChecks] : defChecks;
+  if (list.length === 0) return;
+
+  const { pfx, abt, eabt, att } = issueConsts(ctx);
+  const ownerConst = addConstant(ctx, schema);
+  const hasWhen = list.some((c) => {
+    const d = c._zod.def as { when?: unknown; check: string };
+    return !!d.when;
+  });
+
+  const gate: ChainGate = { ab: newVar(ctx), ex: hasWhen ? newVar(ctx) : null };
+  // a stopped pipe reads as aborted (explicitly too) whatever its issues' continue flags say, matching util.aborted's payload.aborted short-circuit on the runtime's returned payload
+  const pre = abOverride ? `${abOverride} || ` : "";
+  doc.write(`let ${gate.ab} = ${pre}(payload.issues.length > ${nodeMark} && ${abt}(payload, ${nodeMark}));`);
+  if (gate.ex) doc.write(`let ${gate.ex} = ${pre}(payload.issues.length > ${nodeMark} && ${eabt}(payload, ${nodeMark}));`);
+
+  for (const check of list) {
+    const def = check._zod.def as { check: string; when?: (p: unknown) => boolean };
+    if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
+      throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
+    }
+    const guard = def.when
+      ? `(!${gate.ab} || (!${gate.ex} && ${addConstant(ctx, def.when)}((${SP_INIT}.value = ${valueVar}, _sp))))`
+      : `!${gate.ab}`;
+
+    switch (def.check) {
+      case "custom": {
+        // the check function runs hot — it IS the user callback, and it pushes its own canonical issue (with the normalizing addIssue for superRefine), so there is no cold re-run and the callback executes exactly once
+        const c = check as CustomCheck;
+        const fn = c._zod.check ?? c._zod.def.fn;
+        if (!fn) throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
+        if (isAsyncFunction(fn) || (c._zod.def.fn && isAsyncFunction(c._zod.def.fn)) || (c._zod.check && isAsyncFunction(c._zod.check))) {
+          throw new ZodCompileAsyncError();
+        }
+        const checkConst = addConstant(ctx, c._zod.check);
+        const throwAsyncConst = addConstant(ctx, throwAsync);
+        const m = newVar(ctx);
+        const r = newVar(ctx);
+        doc.write(`if (${guard}) {`);
+        doc.indented((d) => {
+          d.write(`${SP_INIT}.value = ${valueVar};`);
+          d.write(`const ${m} = payload.issues.length;`);
+          d.write(`const ${r} = ${checkConst}(_sp);`);
+          d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
+          d.write(`if (payload.issues.length > ${m}) {`);
+          d.indented((d2) => {
+            d2.write(`${att}(payload.issues, ${m}, ${ownerConst});`);
+            if (path.length) d2.write(`${pfx}(payload.issues, ${m}, [${path.join(", ")}]);`);
+            d2.write(`if (!${gate.ab}) ${gate.ab} = ${abt}(payload, ${m});`);
+            if (gate.ex) d2.write(`if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});`);
+          });
+          d.write(`}`);
+          d.write(`${valueVar} = _sp.value;`);
+        });
+        doc.write(`}`);
+        break;
+      }
+      case "overwrite": {
+        const tx = (check as checks.$ZodCheckOverwrite)._zod.def.tx;
+        if (!tx) throw new ZodCompileUnsupportedError("overwrite check without a transform function");
+        if (isAsyncFunction(tx)) throw new ZodCompileAsyncError();
+        const txConst = addConstant(ctx, tx);
+        doc.write(`if (${guard}) ${valueVar} = ${txConst}(${valueVar});`);
+        break;
+      }
+      case "property":
+      case "properties": {
+        // hot: the fast-mode emission inside an IIFE; cold: re-run the whole check so it pushes canonically (it re-walks its children through the runtime)
+        const r = newVar(ctx);
+        const label = `c${newVar(ctx)}`;
+        doc.write(`if (${guard}) ${label}: {`);
+        doc.indented((d) => {
+          d.write(`const ${r} = (() => {`);
+          d.indented((d2) => {
+            if (def.check === "property") {
+              generatePropertyCheck(d2, ctx, check._zod.def as checks.$ZodCheckPropertyDef, valueVar);
+            } else {
+              generatePropertiesChecks(d2, ctx, check._zod.def as unknown as $ZodPropertiesDef, valueVar, false);
+            }
+            d2.write(`return true;`);
+          });
+          d.write(`})();`);
+          d.write(`if (${r} === INVALID) ${checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label)}`);
+        });
+        doc.write(`}`);
+        break;
+      }
+      default: {
+        const label = `c${newVar(ctx)}`;
+        doc.write(`if (${guard}) ${label}: {`);
+        doc.indented((d) => {
+          const fail = () =>
+            checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label);
+          const out = emitCheckPredicate(d, ctx, check, valueVar, fail);
+          if (out !== valueVar) d.write(`${valueVar} = ${out};`);
+        });
+        doc.write(`}`);
+      }
+    }
+  }
+}
+
+function emitIssueIsland(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const { pfx } = issueConsts(ctx);
+  const schemaConst = addConstant(ctx, schema);
+  const rerunConst = addConstant(ctx, rerunNodeForIssues);
+  const m = newVar(ctx);
+  const v = newVar(ctx);
+  doc.write(`const ${m} = payload.issues.length;`);
+  doc.write(`const ${v} = ${rerunConst}(${schemaConst}, ${accessor}, payload, pctx, ${shared});`);
+  if (path.length) doc.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);`);
+  return v;
+}
+
+// Issue-mode counterpart of compileChild: try the native emission, roll back and island on an islandable refusal.
+function compileChildIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const contentLen = doc.content.length;
+  const constantCount = ctx.constants.size;
+  const constantCounter = ctx.constantCounter;
+  const varCounter = ctx.varCounter;
+  try {
+    return generateCheckIssues(doc, ctx, schema, accessor, path, shared);
+  } catch (err) {
+    if (!(err instanceof ZodCompileUnsupportedError) || !err.islandable) throw err;
+    doc.content.length = contentLen;
+    if (ctx.constants.size > constantCount) {
+      const trailing = Array.from(ctx.constants.keys()).slice(constantCount);
+      for (const k of trailing) ctx.constants.delete(k);
+    }
+    ctx.constantCounter = constantCounter;
+    ctx.varCounter = varCounter;
+    return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  }
+}
+
+// inverted type predicates for the simple-parse leaves; keep in lock-step with the generate*Check emissions above
+function leafFailCondition(ctx: CompileContext, schema: SomeType, accessor: string): string | null {
+  const def = schema._zod.def as { type: string; values?: unknown[] };
+  switch (def.type) {
+    case "string":
+      return `typeof ${accessor} !== "string"`;
+    case "number":
+      return `typeof ${accessor} !== "number" || !Number.isFinite(${accessor})`;
+    case "boolean":
+      return `typeof ${accessor} !== "boolean"`;
+    case "bigint":
+      return `typeof ${accessor} !== "bigint"`;
+    case "symbol":
+      return `typeof ${accessor} !== "symbol"`;
+    case "undefined":
+    case "void":
+      return `${accessor} !== undefined`;
+    case "null":
+      return `${accessor} !== null`;
+    case "nan":
+      return `typeof ${accessor} !== "number" || !Number.isNaN(${accessor})`;
+    case "date":
+      return `!(${accessor} instanceof Date) || Number.isNaN(${accessor}.getTime())`;
+    case "file":
+      return `!(${accessor} instanceof File)`;
+    case "template_literal": {
+      const pattern = (schema._zod as unknown as { pattern: RegExp }).pattern;
+      if (!pattern) throw new ZodCompileUnsupportedError("template literal without a pattern");
+      const patternConst = addConstant(ctx, pattern);
+      return `typeof ${accessor} !== "string" || (${patternConst}.lastIndex = 0, !${patternConst}.test(${accessor}))`;
+    }
+    case "enum": {
+      const values = (schema._zod as unknown as { values?: Set<unknown> }).values;
+      if (!values) throw new ZodCompileUnsupportedError("enum schema without enumerated values");
+      return `!${addConstant(ctx, values)}.has(${accessor})`;
+    }
+    case "literal": {
+      const values = def.values!;
+      if (values.length !== 1 || (typeof values[0] === "number" && Number.isNaN(values[0]))) {
+        return `!${addConstant(ctx, new Set(values))}.has(${accessor})`;
+      }
+      const value = values[0];
+      if (typeof value === "string") return `${accessor} !== ${util.esc(value)}`;
+      if (typeof value === "number" || typeof value === "boolean") return `${accessor} !== ${value}`;
+      if (value === null) return `${accessor} !== null`;
+      if (value === undefined) return `${accessor} !== undefined`;
+      if (typeof value === "bigint") return `${accessor} !== ${value}n`;
+      throw new ZodCompileUnsupportedError(`literal type ${typeof value}`);
+    }
+    case "any":
+    case "unknown":
+    case "custom":
+    case "transform":
+      return null;
+    default:
+      throw new ZodCompileUnsupportedError(`schema type ${def.type} as an issue-mode leaf`);
+  }
+}
+
+const ISSUE_LEAF_TYPES = new Set([
+  "string",
+  "number",
+  "boolean",
+  "bigint",
+  "symbol",
+  "undefined",
+  "void",
+  "null",
+  "nan",
+  "date",
+  "file",
+  "template_literal",
+  "enum",
+  "literal",
+  "any",
+  "unknown",
+  "custom",
+]);
+
+// Central issue-mode dispatch. Every native node shares the pattern: take a mark, emit the node body, then run the node's own check chain against the mark — the chain lives HERE (not per node) because any schema type can carry checks. Island cases return before the chain; their rerun covers checks.
+function generateCheckIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const def = schema._zod.def;
+  const type = def.type as SupportedSchemaType;
+
+  // coercion rewrites the value before the type test — the interpreter models it, so island the node
+  if ((def as { coerce?: boolean }).coerce) {
+    return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  }
+
+  const defChecks = (schema._zod.def.checks as unknown[] | undefined) ?? [];
+  const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
+  const hasChain = defChecks.length > 0 || isOwnCheck;
+
+  const mark = newVar(ctx);
+  doc.write(`const ${mark} = payload.issues.length;`);
+
+  let value: string;
+  let abOverride: string | null = null;
+
+  if (ISSUE_LEAF_TYPES.has(type)) {
+    value = generateLeafIssues(doc, ctx, schema, accessor, path);
+  } else {
+    switch (type) {
+      case "never": {
+        // unconditional canonical push; value stays the input, like the interpreter
+        doc.write(leafFailBlock(ctx, schema, accessor, path));
+        value = accessor;
+        break;
+      }
+      case "object":
+        value = generateObjectIssues(doc, ctx, schema, accessor, path);
+        break;
+      case "array":
+        value = generateArrayIssues(doc, ctx, schema, accessor, path);
+        break;
+      case "optional":
+        value = generateOptionalIssues(doc, ctx, schema, accessor, path, shared);
+        break;
+      case "nullable": {
+        const inner = (def as unknown as { innerType: SomeType }).innerType;
+        const v = newVar(ctx);
+        doc.write(`let ${v} = null;`);
+        doc.write(`if (${accessor} !== null) {`);
+        doc.indented((d) => {
+          const iv = compileChildIssues(d, ctx, inner, accessor, path, shared);
+          d.write(`${v} = ${iv};`);
+        });
+        doc.write(`}`);
+        value = v;
+        break;
+      }
+      case "default":
+      case "prefault":
+        value = generateDefaultIssues(doc, ctx, schema, accessor, path, shared);
+        break;
+      case "nonoptional": {
+        const inner = (def as unknown as { innerType: SomeType }).innerType;
+        const { pfx } = issueConsts(ctx);
+        const iv = compileChildIssues(doc, ctx, inner, accessor, path, shared);
+        const v = newVar(ctx);
+        doc.write(`const ${v} = ${iv};`);
+        const pushConst = addConstant(ctx, pushNonOptionalIssue);
+        const instConst = addConstant(ctx, schema);
+        const m2 = newVar(ctx);
+        const prefix = path.length ? ` ${pfx}(payload.issues, ${m2}, [${path.join(", ")}]);` : "";
+        doc.write(
+          `if (payload.issues.length === ${mark} && ${v} === undefined) { const ${m2} = payload.issues.length; ${pushConst}(payload.issues, ${v}, ${instConst});${prefix} }`
+        );
+        value = v;
+        break;
+      }
+      case "readonly": {
+        const inner = (def as unknown as { innerType: SomeType }).innerType;
+        const iv = compileChildIssues(doc, ctx, inner, accessor, path, shared);
+        const v = newVar(ctx);
+        doc.write(`const ${v} = Object.freeze(${iv});`);
+        value = v;
+        break;
+      }
+      case "success": {
+        const inner = (def as unknown as { innerType: SomeType }).innerType;
+        compileChildIssues(doc, ctx, inner, accessor, path, shared);
+        const v = newVar(ctx);
+        doc.write(`const ${v} = payload.issues.length === ${mark};`);
+        value = v;
+        break;
+      }
+      case "pipe": {
+        const pdef = def as unknown as { in: SomeType; out: SomeType; transform?: unknown };
+        if (pdef.transform) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+        const stopsConst = addConstant(ctx, pipeStops);
+        const iv = compileChildIssues(doc, ctx, pdef.in, accessor, path, shared);
+        const v = newVar(ctx);
+        const stopped = newVar(ctx);
+        doc.write(`let ${v} = ${iv};`);
+        // handlePipeResult: ANY in-stage issue but unrecognized_keys stops the pipe, continuable or not, and marks the payload aborted
+        doc.write(`const ${stopped} = payload.issues.length > ${mark} && ${stopsConst}(payload.issues, ${mark});`);
+        doc.write(`if (!${stopped}) {`);
+        doc.indented((d) => {
+          const ov = compileChildIssues(d, ctx, pdef.out, iv, path, shared);
+          d.write(`${v} = ${ov};`);
+        });
+        doc.write(`}`);
+        if (shared) doc.write(`else payload.aborted = true;`);
+        value = v;
+        abOverride = stopped;
+        break;
+      }
+      case "transform": {
+        // the runtime parse runs the user transform against the shared scratch payload, installing its own normalizing addIssue — canonical issues, callback runs once
+        const tdef = def as unknown as { transform?: (v: unknown, p: unknown) => unknown };
+        if (!tdef.transform) {
+          value = accessor;
+          break;
+        }
+        if (isAsyncFunction(tdef.transform)) throw new ZodCompileAsyncError();
+        const { pfx } = issueConsts(ctx);
+        const parseConst = addConstant(ctx, schema._zod.parse);
+        const throwAsyncConst = addConstant(ctx, throwAsync);
+        const r = newVar(ctx);
+        doc.write(`${SP_INIT}.value = ${accessor};`);
+        doc.write(`const ${r} = ${parseConst}(_sp, pctx);`);
+        doc.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
+        if (path.length) {
+          doc.write(`if (payload.issues.length > ${mark}) ${pfx}(payload.issues, ${mark}, [${path.join(", ")}]);`);
+        }
+        const v = newVar(ctx);
+        doc.write(`const ${v} = _sp.value;`);
+        value = v;
+        break;
+      }
+      case "union":
+        value = generateUnionIssues(doc, ctx, schema, accessor, path, shared);
+        break;
+      default:
+        // intersection, record, map, set, lazy, catch, properties, tuple, …: exact parity through the node-scoped runtime rerun
+        return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+    }
+  }
+
+  if (!hasChain) return value;
+  // the chain mutates its accessor, so alias non-let values
+  const chainVar = newVar(ctx);
+  doc.write(`let ${chainVar} = ${value};`);
+  generateChecksIssues(doc, ctx, schema, chainVar, path, mark, abOverride);
+  return chainVar;
+}
+
+function generateLeafIssues(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const failCond = leafFailCondition(ctx, schema, accessor);
+  const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
+  // a def-level format with no check trait would silently skip its own validation
+  const anyDef = schema._zod.def as { format?: unknown; check?: unknown; type: string };
+  if (!isOwnCheck && (anyDef.check !== undefined || (anyDef.format !== undefined && anyDef.type !== "literal"))) {
+    throw new ZodCompileUnsupportedError(`def-level format on a non-check ${anyDef.type} schema`);
+  }
+  if (failCond) doc.write(`if (${failCond}) ${leafFailBlock(ctx, schema, accessor, path)}`);
+  return accessor;
+}
+
+function generateDefaultIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const def = schema._zod.def as unknown as { innerType: SomeType; type: string };
+  const descriptor = Object.getOwnPropertyDescriptor(schema._zod.def, "defaultValue");
+  const defaultGetter = descriptor
+    ? () => (schema._zod.def as unknown as { defaultValue: unknown }).defaultValue
+    : undefined;
+
+  if (def.type === "prefault") {
+    if (!defaultGetter) return compileChildIssues(doc, ctx, def.innerType, accessor, path, shared);
+    const defaultFn = addConstant(ctx, defaultGetter);
+    const inputVar = newVar(ctx);
+    doc.write(`let ${inputVar} = ${accessor};`);
+    doc.write(`if (${accessor} === undefined) ${inputVar} = ${defaultFn}();`);
+    return compileChildIssues(doc, ctx, def.innerType, inputVar, path, shared);
+  }
+
+  const v = newVar(ctx);
+  doc.write(`let ${v};`);
+  if (defaultGetter) {
+    const defaultFn = addConstant(ctx, defaultGetter);
+    const cloneFn = addConstant(ctx, util.shallowClone);
+    doc.write(`if (${accessor} === undefined) {`);
+    doc.indented((d) => {
+      d.write(`${v} = ${cloneFn}(${defaultFn}());`);
+    });
+    doc.write(`} else {`);
+    doc.indented((d) => {
+      const iv = compileChildIssues(d, ctx, def.innerType, accessor, path, shared);
+      // like handleDefaultResult, the substitution applies whether or not the inner pushed issues
+      d.write(`${v} = ${iv} === undefined ? ${cloneFn}(${defaultFn}()) : ${iv};`);
+    });
+    doc.write(`}`);
+  } else {
+    doc.write(`if (${accessor} !== undefined) {`);
+    doc.indented((d) => {
+      const iv = compileChildIssues(d, ctx, def.innerType, accessor, path, shared);
+      d.write(`${v} = ${iv};`);
+    });
+    doc.write(`}`);
+  }
+  return v;
+}
+
+function generateOptionalIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const def = schema._zod.def as unknown as { innerType: SomeType };
+  if (isExactOptional(schema)) {
+    return compileChildIssues(doc, ctx, def.innerType, accessor, path, shared);
+  }
+
+  const v = newVar(ctx);
+  doc.write(`let ${v};`);
+  if (def.innerType._zod.optin === "defaulted") {
+    const m = newVar(ctx);
+    doc.write(`if (${accessor} === undefined) {`);
+    doc.indented((d) => {
+      d.write(`const ${m} = payload.issues.length;`);
+      // the substituting branch runs on a payload of its own in the interpreter, so it is never shared
+      const iv = compileChildIssues(d, ctx, def.innerType, accessor, path, false);
+      // handleOptionalResult: a substituting schema that still failed yields undefined and its issues are dropped
+      d.write(`if (payload.issues.length > ${m}) payload.issues.length = ${m};`);
+      d.write(`else ${v} = ${iv};`);
+    });
+    doc.write(`} else {`);
+    doc.indented((d) => {
+      const iv = compileChildIssues(d, ctx, def.innerType, accessor, path, shared);
+      d.write(`${v} = ${iv};`);
+    });
+    doc.write(`}`);
+    return v;
+  }
+
+  doc.write(`if (${accessor} !== undefined) {`);
+  doc.indented((d) => {
+    const iv = compileChildIssues(d, ctx, def.innerType, accessor, path, shared);
+    d.write(`${v} = ${iv};`);
+  });
+  doc.write(`}`);
+  return v;
+}
+
+function generateArrayIssues(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const def = schema._zod.def as unknown as { element: SomeType };
+  const v = newVar(ctx);
+  doc.write(`let ${v} = ${accessor};`);
+  doc.write(`if (!Array.isArray(${accessor})) ${leafFailBlock(ctx, schema, accessor, path)}`);
+  doc.write(`else {`);
+  doc.indented((d) => {
+    const out = newVar(ctx);
+    const iVar = newVar(ctx);
+    const elemVar = newVar(ctx);
+    d.write(`const ${out} = new Array(${accessor}.length);`);
+    d.write(`for (let ${iVar} = 0; ${iVar} < ${accessor}.length; ${iVar}++) {`);
+    d.indented((d2) => {
+      d2.write(`const ${elemVar} = ${accessor}[${iVar}];`);
+      const ev = compileChildIssues(d2, ctx, def.element, elemVar, [...path, iVar], false);
+      // like handleArrayResult, the element's value lands in the output even when it pushed issues
+      d2.write(`${out}[${iVar}] = ${ev};`);
+    });
+    d.write(`}`);
+    d.write(`${v} = ${out};`);
+  });
+  doc.write(`}`);
+  return v;
+}
+
+function generateObjectIssues(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const def = schema._zod.def as unknown as { shape: Record<string, SomeType>; catchall?: SomeType };
+  const shape = def.shape;
+  const keys = Object.keys(shape);
+  const symbolKeys = Object.getOwnPropertySymbols(shape);
+  const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
+  const keyExpr = (k: string | symbol) => (typeof k === "symbol" ? addConstant(ctx, k) : util.esc(k));
+  const propShape = shape as Record<string | symbol, SomeType>;
+  if (keys.includes("__proto__")) {
+    throw new ZodCompileUnsupportedError('object shape key "__proto__"');
+  }
+
+  const v = newVar(ctx);
+  doc.write(`let ${v} = ${accessor};`);
+  doc.write(
+    `if (typeof ${accessor} !== "object" || ${accessor} === null || Array.isArray(${accessor})) ${leafFailBlock(ctx, schema, accessor, path)}`
+  );
+  doc.write(`else {`);
+  doc.indented((d) => {
+    const out = newVar(ctx);
+    d.write(`const ${out} = {};`);
+
+    for (const key of allKeys) {
+      if (key === "__proto__") continue;
+      const propSchema = propShape[key]!;
+      const kx = keyExpr(key);
+      const childPath = [...path, kx];
+      const inputVar = newVar(ctx);
+      const mk = newVar(ctx);
+      d.write(`const ${inputVar} = ${accessor}[${kx}];`);
+      d.write(`const ${mk} = payload.issues.length;`);
+      const kv = compileChildIssues(d, ctx, propSchema, inputVar, childPath, false);
+      const optin = propSchema._zod.optin;
+      const optout = propSchema._zod.optout;
+
+      if (optin !== undefined && optout === "optional") {
+        // absent key + issues: the middle rung discards both, like handlePropertyResult
+        const present = newVar(ctx);
+        d.write(`const ${present} = ${kx} in ${accessor};`);
+        const assignCond = optin === "optional" ? present : `${kv} !== undefined || ${present}`;
+        d.write(`if (payload.issues.length > ${mk} && !${present}) payload.issues.length = ${mk};`);
+        d.write(`else if (${assignCond}) ${out}[${kx}] = ${kv};`);
+      } else if (optin === undefined) {
+        const present = newVar(ctx);
+        d.write(`const ${present} = ${kx} in ${accessor};`);
+        d.write(
+          `if (!${present} && payload.issues.length === ${mk}) payload.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, path: [${childPath.join(", ")}] });`
+        );
+        d.write(`if (${present}) ${out}[${kx}] = ${kv};`);
+      } else {
+        d.write(`if (${kv} === undefined) { if (${kx} in ${accessor}) ${out}[${kx}] = undefined; } else ${out}[${kx}] = ${kv};`);
+      }
+    }
+
+    // catchall, mirroring handleCatchall
+    const catchall = def.catchall;
+    if (catchall) {
+      const catchallType = catchall._zod.def.type;
+      if (catchallType === "never") {
+        const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ") || "true";
+        const unrec = newVar(ctx);
+        d.write(`let ${unrec};`);
+        d.write(`for (const k in ${accessor}) {`);
+        d.indented((d2) => {
+          d2.write(`if (${condition}) (${unrec} ??= []).push(k);`);
+        });
+        d.write(`}`);
+        const instConst = addConstant(ctx, schema);
+        const pathProp = path.length ? `, path: [${path.join(", ")}]` : "";
+        d.write(
+          `if (${unrec}) payload.issues.push({ code: "unrecognized_keys", keys: ${unrec}, input: ${accessor}, inst: ${instConst}, continue: true${pathProp} });`
+        );
+      } else if ((catchallType === "unknown" || catchallType === "any") && !catchall._zod.def.checks?.length) {
+        const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
+        d.write(`for (const k in ${accessor}) {`);
+        d.indented((d2) => {
+          d2.write(`if (k === "__proto__") continue;`);
+          if (knownSet) d2.write(`if (${knownSet}.has(k)) continue;`);
+          d2.write(`${out}[k] = ${accessor}[k];`);
+        });
+        d.write(`}`);
+      } else {
+        const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
+        d.write(`for (const k in ${accessor}) {`);
+        d.indented((d2) => {
+          d2.write(`if (k === "__proto__") continue;`);
+          if (knownSet) d2.write(`if (${knownSet}.has(k)) continue;`);
+          const valVar = newVar(ctx);
+          d2.write(`const ${valVar} = ${accessor}[k];`);
+          const cv = compileChildIssues(d2, ctx, catchall, valVar, [...path, "k"], false);
+          d2.write(`${out}[k] = ${cv};`);
+        });
+        d.write(`}`);
+      }
+    }
+
+    d.write(`${v} = ${out};`);
+  });
+  doc.write(`}`);
+  return v;
+}
+
+function generateUnionIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const def = schema._zod.def as unknown as {
+    options: SomeType[];
+    inclusive?: boolean;
+    discriminator?: string;
+    unionFallback?: boolean;
+  };
+  // xor and unionFallback change match semantics; the interpreter owns them wholesale
+  if (def.inclusive === false || def.unionFallback) {
+    return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  }
+  const options = def.options;
+  if (options.length === 0) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  if (options.length === 1) return compileChildIssues(doc, ctx, options[0]!, accessor, path, shared);
+
+  // ordered branch-trying is wrong for a discriminated union — a value carrying branch A's discriminator but branch B's shape must fail, not match B — so phase 1 is the fast discriminator dispatch
+  if (def.discriminator) {
+    const v = newVar(ctx);
+    doc.write(`${"let"} ${v} = (() => {`);
+    doc.indented((d) => {
+      const out = generateDiscriminatedUnionCheck(
+        d,
+        ctx,
+        def as { options: SomeType[]; discriminator: string; unionFallback?: boolean },
+        accessor
+      );
+      d.write(`return ${out};`);
+    });
+    doc.write(`})();`);
+    doc.write(`if (${v} === INVALID) {`);
+    doc.indented((d) => {
+      const iv = emitIssueIsland(d, ctx, schema, accessor, path, shared);
+      d.write(`${v} = ${iv};`);
+    });
+    doc.write(`}`);
+    return v;
+  }
+
+  const allLiterals = options.every(
+    (opt) => opt._zod.def.type === "literal" && !(opt._zod.def.checks as unknown[] | undefined)?.length
+  );
+  if (allLiterals) {
+    const values = new Set(options.flatMap((opt) => (opt._zod.def as unknown as { values: unknown[] }).values));
+    const valuesConst = addConstant(ctx, values);
+    const v = newVar(ctx);
+    doc.write(`let ${v} = ${accessor};`);
+    doc.write(`if (!${valuesConst}.has(${accessor})) {`);
+    doc.indented((d) => {
+      const iv = emitIssueIsland(d, ctx, schema, accessor, path, shared);
+      d.write(`${v} = ${iv};`);
+    });
+    doc.write(`}`);
+    return v;
+  }
+
+  // two-phase: the fast-mode branch attempts decide the match on the hot path; the cold rerun reproduces the canonical invalid_union (finalized per-branch errors and all)
+  const v = newVar(ctx);
+  doc.write(`let ${v};`);
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i]!;
+    if (i === 0) {
+      doc.write(`${v} = (() => {`);
+    } else {
+      doc.write(`if (${v} === INVALID) ${v} = (() => {`);
+    }
+    doc.indented((d) => {
+      const branchOutput = generateCheck(d, ctx, opt, accessor);
+      d.write(`return ${branchOutput};`);
+    });
+    doc.write(`})();`);
+  }
+  doc.write(`if (${v} === INVALID) {`);
+  doc.indented((d) => {
+    const iv = emitIssueIsland(d, ctx, schema, accessor, path, shared);
+    d.write(`${v} = ${iv};`);
+  });
+  doc.write(`}`);
+  return v;
 }
 
 function isAsyncFunction(fn: unknown): boolean {

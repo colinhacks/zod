@@ -15,6 +15,11 @@ import * as core from "./v4/core/index.js";
 
 let compiling = false;
 
+// experiment knob: ZOD_COMPILE_ISSUES=single|dual runs global mode with compiled issue generation, so the whole test corpus doubles as a parity harness
+const issuesEnv =
+  typeof process !== "undefined" ? (process.env?.ZOD_COMPILE_ISSUES as "single" | "dual" | undefined) : undefined;
+const issuesMode = issuesEnv === "single" || issuesEnv === "dual" ? issuesEnv : undefined;
+
 core.globalConfig.postProcessor = (inst: any) => {
   if (compiling) return;
   const originalRun = inst._zod?.run;
@@ -34,7 +39,7 @@ core.globalConfig.postProcessor = (inst: any) => {
         return originalRun(payload, ctx);
       }
       // Strict: the shim owns its own fallback below, and a non-strict compile would hand back `inst` — whose run is this shim — and reinstall it on itself.
-      const compiled = compile(inst, { strict: true });
+      const compiled = compile(inst, { strict: true, issues: issuesMode });
       // Only the run wrapper. Copying the compiled parse/safeParse closures would make their fallback re-enter this instance and run user callbacks a third time.
       inst._zod.run = compiled._zod.run;
       inst._zod.bag.fallbackRun = compiled._zod.bag.fallbackRun;

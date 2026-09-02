@@ -31,6 +31,8 @@ test("schemas constructed after import are compiled on first parse", () => {
 });
 
 test("user callbacks run at most twice on invalid input", () => {
+  // single-pass issue mode needs no fallback re-parse, so the failing callback runs exactly once there
+  const expected = process.env.ZOD_COMPILE_ISSUES === "single" ? 1 : 2;
   let refines = 0;
   const schema = z.object({
     a: z.string().refine((v) => {
@@ -42,13 +44,13 @@ test("user callbacks run at most twice on invalid input", () => {
 
   refines = 0;
   expect(schema.safeParse({ a: "x" }).success).toBe(false);
-  expect(refines).toBe(2);
+  expect(refines).toBe(expected);
 
   refines = 0;
   expect(() => schema.parse({ a: "x" })).toThrow();
-  expect(refines).toBe(2);
+  expect(refines).toBe(expected);
 
-  // Explicit z.compile of a shim-managed schema keeps the same contract.
+  // Explicit z.compile of a shim-managed schema keeps the same contract — and takes no issues option here, so its bound stays 2 whatever the shim runs.
   const compiled = z.compile(schema);
   refines = 0;
   expect(compiled.safeParse({ a: "x" }).success).toBe(false);
