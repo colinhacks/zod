@@ -231,6 +231,10 @@ test("a hand-written getter member accepts assignment", () => {
   derived.minValue = 99;
   expect(derived.minValue).toBe(99);
   expect(Object.keys(derived)).toContain("minValue");
+
+  // and, like every prototype member, recomputes after deletion rather than staying absent
+  delete (derived as any).minValue;
+  expect(derived.minValue).toBe(2);
 });
 
 test("shape is lazy and stays out of Object.keys", () => {
