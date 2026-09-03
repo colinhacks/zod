@@ -777,6 +777,57 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("chained multipleOf divisors emit the whole conjunction", () => {
+    // runtime rejects 4 (not a multiple of 3), so the emitted schema must too
+    expect(z.toJSONSchema(z.number().multipleOf(2).multipleOf(3))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "multipleOf": 3,
+          },
+        ],
+        "multipleOf": 2,
+        "type": "number",
+      }
+    `);
+  });
+
+  test("length() does not overwrite a tighter earlier bound", () => {
+    // min(8) + length(5) matches nothing at runtime; the emitted bounds stay honest about that
+    expect(z.toJSONSchema(z.string().min(8).length(5))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maxLength": 5,
+        "minLength": 8,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("a custom check contributing via onattach still lands", () => {
+    // third-party checks have no converter handler; their bag writes are merged in as a fallback
+    const check = {
+      _zod: {
+        def: { check: "custom_range" },
+        onattach: [
+          (inst: any) => {
+            const bag = inst._zod.bag;
+            if (bag.minimum === undefined || 5 > bag.minimum) bag.minimum = 5;
+          },
+        ],
+        check: () => {},
+      },
+    };
+    expect(z.toJSONSchema(z.number().check(check as any))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+  });
+
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
 

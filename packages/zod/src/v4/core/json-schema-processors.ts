@@ -19,7 +19,98 @@ import {
   isTransforming,
   processSchema,
 } from "./to-json-schema.js";
-import { assignProp, getEnumValues } from "./util.js";
+import { NUMBER_FORMAT_RANGES, assignProp, getEnumValues } from "./util.js";
+
+// ==================== CHECK AGGREGATION ====================
+
+// constraint metadata comes from folding `def.checks` here, not from trusting `_zod.bag`: the bag is written by each check's own `onattach` in chain order, which has repeatedly produced order-dependent and lossy values (#6550). runtime checks are a conjunction, so every merge below is the conjunction's — tightest bound wins, patterns union, divisors collect, mime lists intersect
+interface CheckAggregate {
+  minimum?: number | bigint | Date;
+  maximum?: number | bigint | Date;
+  exclusiveMinimum?: number | bigint | Date;
+  exclusiveMaximum?: number | bigint | Date;
+  multipleOf?: number[];
+  format?: string;
+  patterns?: Set<RegExp>;
+  mime?: string[];
+}
+
+const narrowMin = (agg: CheckAggregate, key: "minimum" | "exclusiveMinimum", value: number | bigint | Date): void => {
+  if (agg[key] === undefined || value > agg[key]!) agg[key] = value;
+};
+const narrowMax = (agg: CheckAggregate, key: "maximum" | "exclusiveMaximum", value: number | bigint | Date): void => {
+  if (agg[key] === undefined || value < agg[key]!) agg[key] = value;
+};
+
+const narrowBoth = (agg: CheckAggregate, value: number): void => {
+  narrowMin(agg, "minimum", value);
+  narrowMax(agg, "maximum", value);
+};
+
+const minContributor = (agg: CheckAggregate, def: any): void => narrowMin(agg, "minimum", def.minimum);
+const maxContributor = (agg: CheckAggregate, def: any): void => narrowMax(agg, "maximum", def.maximum);
+
+const contributors: Record<string, (agg: CheckAggregate, def: any) => void> = {
+  greater_than: (agg, def) => narrowMin(agg, def.inclusive ? "minimum" : "exclusiveMinimum", def.value),
+  less_than: (agg, def) => narrowMax(agg, def.inclusive ? "maximum" : "exclusiveMaximum", def.value),
+  multiple_of: (agg, def) => {
+    agg.multipleOf ??= [];
+    if (!agg.multipleOf.includes(def.value)) agg.multipleOf.push(def.value);
+  },
+  number_format: (agg, def) => {
+    // last-wins, matching the bag's historical write order
+    agg.format = def.format;
+    const [minimum, maximum] = NUMBER_FORMAT_RANGES[def.format as checks.$ZodNumberFormats];
+    narrowMin(agg, "minimum", minimum);
+    narrowMax(agg, "maximum", maximum);
+  },
+  min_length: minContributor,
+  max_length: maxContributor,
+  length_equals: (agg, def) => narrowBoth(agg, def.length),
+  min_size: minContributor,
+  max_size: maxContributor,
+  size_equals: (agg, def) => narrowBoth(agg, def.size),
+  string_format: (agg, def) => {
+    agg.format = def.format;
+    if (def.pattern) {
+      agg.patterns ??= new Set();
+      agg.patterns.add(def.pattern);
+    }
+  },
+  mime_type: (agg, def) => {
+    agg.mime = agg.mime ? agg.mime.filter((m) => def.mime.includes(m)) : [...def.mime];
+  },
+};
+
+function aggregateChecks(schema: schemas.$ZodType): CheckAggregate {
+  const agg: CheckAggregate = {};
+  const def = schema._zod.def;
+  // a format schema is its own first check, same rule as $ZodType init
+  const list: checks.$ZodCheck[] = schema._zod.traits.has("$ZodCheck")
+    ? [schema as unknown as checks.$ZodCheck, ...(def.checks ?? [])]
+    : (def.checks ?? []);
+  for (const ch of list) contributors[ch._zod.def.check]?.(agg, ch._zod.def);
+
+  // reconcile with the bag so third-party onattach contributions still land; first-party residue is never tighter than the fold, so merging it back is idempotent for one and additive for the other
+  const bag = schema._zod.bag as Omit<CheckAggregate, "multipleOf"> & { multipleOf?: number };
+  for (const key of ["minimum", "exclusiveMinimum"] as const) {
+    if (bag[key] !== undefined) narrowMin(agg, key, bag[key]!);
+  }
+  for (const key of ["maximum", "exclusiveMaximum"] as const) {
+    if (bag[key] !== undefined) narrowMax(agg, key, bag[key]!);
+  }
+  if (bag.multipleOf !== undefined) {
+    agg.multipleOf ??= [];
+    if (!agg.multipleOf.includes(bag.multipleOf)) agg.multipleOf.push(bag.multipleOf);
+  }
+  if (agg.format === undefined && bag.format !== undefined) agg.format = bag.format;
+  if (agg.mime === undefined && bag.mime !== undefined) agg.mime = bag.mime;
+  if (bag.patterns) {
+    agg.patterns ??= new Set();
+    for (const p of bag.patterns) agg.patterns.add(p);
+  }
+  return agg;
+}
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
@@ -41,8 +132,8 @@ const exactPattern = (p: RegExp): RegExp => exactPatterns.get(p) ?? p;
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding, laxFormat } = schema._zod
-    .bag as schemas.$ZodStringInternals<unknown>["bag"];
+  const { contentEncoding, laxFormat } = schema._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
+  const { minimum, maximum, format, patterns } = aggregateChecks(schema);
   if (typeof minimum === "number") json.minLength = minimum;
   if (typeof maximum === "number") json.maxLength = maximum;
   // custom pattern overrides format
@@ -74,7 +165,9 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
 
 export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.NumberSchema | JSONSchema.IntegerSchema;
-  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
+  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = aggregateChecks(
+    schema
+  ) as CheckAggregate & { minimum?: number; maximum?: number; exclusiveMinimum?: number; exclusiveMaximum?: number };
   if (typeof format === "string" && format.includes("int")) json.type = "integer";
   else json.type = "number";
 
@@ -105,17 +198,24 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
     json.maximum = maximum;
   }
 
-  if (typeof multipleOf === "number") {
+  if (multipleOf) {
     // JSON Schema requires a divisor strictly greater than zero, and a non-finite one does not survive JSON at all. A negative divisor accepts exactly what its absolute value accepts, so it still maps; zero, NaN and Infinity have no keyword form.
-    if (Number.isFinite(multipleOf) && multipleOf !== 0) json.multipleOf = Math.abs(multipleOf);
-    else
-      handleUnrepresentable(
-        schema,
-        ctx,
-        json,
-        params,
-        `A multipleOf divisor of ${multipleOf} cannot be represented in JSON Schema`
-      );
+    const divisors = new Set<number>();
+    for (const divisor of multipleOf) {
+      if (Number.isFinite(divisor) && divisor !== 0) divisors.add(Math.abs(divisor));
+      else
+        handleUnrepresentable(
+          schema,
+          ctx,
+          json,
+          params,
+          `A multipleOf divisor of ${divisor} cannot be represented in JSON Schema`
+        );
+    }
+    // chained divisors are a conjunction the keyword cannot carry alone, so extras ride an allOf, same as stacked patterns
+    const [first, ...rest] = [...divisors];
+    if (first !== undefined) json.multipleOf = first;
+    if (rest.length) json.allOf = [...(json.allOf ?? []), ...rest.map((m) => ({ multipleOf: m }))];
   }
 };
 
@@ -244,10 +344,10 @@ export const fileProcessor: Processor<schemas.$ZodFile> = (schema, _ctx, json, _
     contentEncoding: "binary",
   };
 
-  const { minimum, maximum, mime } = schema._zod.bag as schemas.$ZodFileInternals["bag"];
-  if (minimum !== undefined) file.minLength = minimum;
-  if (maximum !== undefined) file.maxLength = maximum;
-  if (mime) {
+  const { minimum, maximum, mime } = aggregateChecks(schema);
+  if (typeof minimum === "number") file.minLength = minimum;
+  if (typeof maximum === "number") file.maxLength = maximum;
+  if (mime?.length) {
     if (mime.length === 1) {
       file.contentMediaType = mime[0]!;
       Object.assign(_json, file);
@@ -289,7 +389,7 @@ export const setProcessor: Processor<schemas.$ZodSet> = (schema, ctx, json, para
 export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ArraySchema;
   const def = schema._zod.def as schemas.$ZodArrayDef;
-  const { minimum, maximum } = schema._zod.bag;
+  const { minimum, maximum } = aggregateChecks(schema);
   if (typeof minimum === "number") json.minItems = minimum;
   if (typeof maximum === "number") json.maxItems = maximum;
 
@@ -526,10 +626,7 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
   }
 
   // explicit user-defined length checks take precedence
-  const { minimum, maximum } = schema._zod.bag as {
-    minimum?: number;
-    maximum?: number;
-  };
+  const { minimum, maximum } = aggregateChecks(schema);
   if (typeof minimum === "number") json.minItems = minimum;
   if (typeof maximum === "number") json.maxItems = maximum;
 };
@@ -620,8 +717,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;
-  const keyBag = keyType._zod.bag as schemas.$ZodStringInternals<unknown>["bag"] | undefined;
-  const patterns = keyBag?.patterns;
+  const patterns = aggregateChecks(keyType).patterns;
 
   if (def.mode === "loose" && patterns && patterns.size > 0) {
     // Use patternProperties for looseRecord with regex patterns
