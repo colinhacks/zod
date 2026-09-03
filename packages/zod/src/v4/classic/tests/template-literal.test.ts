@@ -796,4 +796,9 @@ test("part patterns fold checks through wrappers and unions", () => {
   // an empty length range matches nothing rather than building an invalid quantifier
   const empty = z.templateLiteral(["", z.string().min(8).length(5)]);
   expect(empty.safeParse("abcde").success).toBe(false);
+
+  // lazy resolves its inner schema on the internals, not the def
+  const lazy = z.templateLiteral(["", z.lazy(() => z.string().min(2)).optional()]);
+  expect(lazy.safeParse("x").success).toBe(false);
+  expect(lazy.safeParse("xy").success).toBe(true);
 });

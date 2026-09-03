@@ -393,15 +393,24 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
     inst._zod.processJSONSchema = (ctx, json, params) => processors.stringProcessor(inst, ctx, json, params);
   },
   {
-    // derived from the checks on first read, then shadowed as own data
+    // derived from the checks on first read, then shadowed as own data; the setters keep assignment shadowing the same way, as when these were own properties
     get format() {
       return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+    },
+    set format(v) {
+      util.own(this, "format", v);
     },
     get minLength() {
       return util.own(this, "minLength", (processors.aggregateChecks(this).minimum as number | undefined) ?? null);
     },
+    set minLength(v) {
+      util.own(this, "minLength", v);
+    },
     get maxLength() {
       return util.own(this, "maxLength", (processors.aggregateChecks(this).maximum as number | undefined) ?? null);
+    },
+    set maxLength(v) {
+      util.own(this, "maxLength", v);
     },
     regex(...args) {
       return this.check((checks.regex as any)(...args));
@@ -1156,12 +1165,24 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
         Math.min(agg.maximum ?? Number.POSITIVE_INFINITY, agg.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null
       );
     },
+    set minValue(v) {
+      util.own(this, "minValue", v);
+    },
+    set maxValue(v) {
+      util.own(this, "maxValue", v);
+    },
     get isInt() {
       const agg = processors.aggregateChecks(this);
       return util.own(this, "isInt", !!agg.isInt || !!agg.multipleOf?.some(Number.isSafeInteger));
     },
+    set isInt(v) {
+      util.own(this, "isInt", v);
+    },
     get format() {
       return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+    },
+    set format(v) {
+      util.own(this, "format", v);
     },
     gt(value, params) {
       return this.check(checks.gt(value, params));
@@ -1304,11 +1325,20 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
     get minValue() {
       return util.own(this, "minValue", (processors.aggregateChecks(this).minimum as bigint | undefined) ?? null);
     },
+    set minValue(v) {
+      util.own(this, "minValue", v);
+    },
     get maxValue() {
       return util.own(this, "maxValue", (processors.aggregateChecks(this).maximum as bigint | undefined) ?? null);
     },
+    set maxValue(v) {
+      util.own(this, "maxValue", v);
+    },
     get format() {
       return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+    },
+    set format(v) {
+      util.own(this, "format", v);
     },
     gte(value, params) {
       return this.check(checks.gte(value, params));
@@ -1493,9 +1523,15 @@ export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$construct
       const { minimum } = processors.aggregateChecks(this);
       return util.own(this, "minDate", minimum ? new Date(minimum as Date) : null);
     },
+    set minDate(v) {
+      util.own(this, "minDate", v);
+    },
     get maxDate() {
       const { maximum } = processors.aggregateChecks(this);
       return util.own(this, "maxDate", maximum ? new Date(maximum as Date) : null);
+    },
+    set maxDate(v) {
+      util.own(this, "maxDate", v);
     },
   }
 );

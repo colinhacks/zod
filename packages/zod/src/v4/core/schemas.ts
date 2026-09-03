@@ -4633,11 +4633,12 @@ function partPattern(schema: $ZodType): RegExp | string | undefined {
     checks?: checks.$ZodCheck[];
   };
   const src = (p: RegExp | string) => (p instanceof RegExp ? p.source : p);
-  // a wrapper's pattern embeds its inner pattern's source verbatim, so the check-aware form is substituted in place without knowing the wrapper's own composition
-  if (def.innerType) {
+  // a wrapper's pattern embeds its inner pattern's source verbatim, so the check-aware form is substituted in place without knowing the wrapper's own composition. lazy resolves its inner on the internals, not the def
+  const inner = def.innerType ?? (schema._zod as { innerType?: $ZodType }).innerType;
+  if (inner) {
     const own = schema._zod.pattern;
-    const before = def.innerType._zod.pattern;
-    const after = partPattern(def.innerType);
+    const before = inner._zod.pattern;
+    const after = partPattern(inner);
     if (own && before && after && after !== before) {
       return own.source.replace(util.cleanRegex(before.source), () => util.cleanRegex(src(after)));
     }

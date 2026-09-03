@@ -225,6 +225,12 @@ test("a hand-written getter member accepts assignment", () => {
   const mini: any = zm.string();
   mini.with = () => "WITH";
   expect(mini.with()).toBe("WITH");
+
+  // a derived metadata member accepts assignment before its first read, as it did as an own property
+  const derived = z.number().min(2);
+  derived.minValue = 99;
+  expect(derived.minValue).toBe(99);
+  expect(Object.keys(derived)).toContain("minValue");
 });
 
 test("shape is lazy and stays out of Object.keys", () => {
