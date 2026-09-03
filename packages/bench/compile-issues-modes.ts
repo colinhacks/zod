@@ -63,6 +63,31 @@ const cases: Case[] = [
     iters: 50_000,
   },
   { name: "leaf-243", schema: big, valid: bigValid, invalid: bigInvalid, iters: 2_000 },
+  {
+    name: "tuple-4",
+    schema: z.tuple([z.string(), z.number(), z.boolean(), z.string()]),
+    valid: ["a", 1, true, "b"],
+    invalid: ["a", "no", true, "b"],
+    iters: 100_000,
+  },
+  {
+    name: "union-3obj",
+    schema: z.union([z.object({ a: z.string() }), z.object({ b: z.number() }), z.object({ c: z.boolean() })]),
+    valid: { c: true },
+    invalid: { c: "wrong" },
+    iters: 50_000,
+  },
+  {
+    name: "discunion-3",
+    schema: z.discriminatedUnion("t", [
+      z.object({ t: z.literal("a"), x: z.string() }),
+      z.object({ t: z.literal("b"), y: z.number() }),
+      z.object({ t: z.literal("c"), z: z.boolean() }),
+    ]),
+    valid: { t: "b", y: 1 },
+    invalid: { t: "b", y: "no" },
+    iters: 100_000,
+  },
 ];
 
 type Variant = { name: string; schema: z.ZodType };
