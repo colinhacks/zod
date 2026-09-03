@@ -153,9 +153,13 @@ test("a live member keeps the descriptor a prototype member had", () => {
   expect(Object.getOwnPropertyDescriptor(proto, "description")?.enumerable).toBe(false);
   expect(Object.getOwnPropertyDescriptor(proto, "_def")?.enumerable).toBe(false);
 
+  // the derived metadata members live on the prototype and shadow as own data on first read
+  const schema = z.string();
   const keys: string[] = [];
-  for (const k in z.string()) keys.push(k);
-  expect(keys).toEqual(["def", "type", "format", "minLength", "maxLength"]);
+  for (const k in schema) keys.push(k);
+  expect(keys).toEqual(["def", "type"]);
+  expect(schema.minLength).toBe(null);
+  expect(Object.keys(schema)).toContain("minLength");
 });
 
 test("a live member is not cached per instance", () => {

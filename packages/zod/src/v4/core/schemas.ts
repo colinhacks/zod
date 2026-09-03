@@ -399,7 +399,8 @@ export interface $ZodString<Input = unknown> extends _$ZodType<$ZodStringInterna
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = [...(inst?._zod.bag?.patterns ?? [])].pop() ?? regexes.string(inst._zod.bag);
+  // a format's own pattern, else unbounded; a template literal derives the check-aware form itself
+  inst._zod.pattern = (def as { pattern?: RegExp }).pattern ?? regexes.anyString;
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -788,14 +789,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
-
-    // these two drop the offset or seconds `date-time` requires — on the bag not the def, since `z.string().check(...)` lands the format on a different schema
-    if (def.local || def.precision === -1) {
-      inst._zod.bag.laxFormat = true;
-      inst._zod.onattach.push((s) => {
-        (s._zod.bag as $ZodStringInternals<unknown>["bag"]).laxFormat = true;
-      });
-    }
   }
 );
 
@@ -872,8 +865,6 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `ipv4`;
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -908,8 +899,6 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
 
-  inst._zod.bag.format = `ipv6`;
-
   inst._zod.check = (payload) => {
     if (!isValidIPv6(payload.value)) {
       payload.issues.push({
@@ -939,8 +928,6 @@ export interface $ZodMAC extends $ZodType {
 export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
   def.pattern ??= regexes.mac(def.delimiter);
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `mac`;
 });
 
 //////////////////////////////   ZodCIDRv4   //////////////////////////////
@@ -1041,8 +1028,6 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= base64Charset;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.bag.contentEncoding = "base64";
-
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
 
@@ -1080,8 +1065,6 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
   (inst, def): void => {
     def.pattern ??= base64urlCharset;
     $ZodStringFormat.init(inst, def);
-
-    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -1277,7 +1260,7 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
 
-  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
+  inst._zod.pattern = regexes.number;
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
@@ -4640,6 +4623,53 @@ export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [
       : never
     : never;
 
+// a part's pattern with its checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. read off the defs since checks no longer write the bag; options recurse so a union of constrained parts keeps its precision
+function partPattern(schema: $ZodType): RegExp | string | undefined {
+  const def = schema._zod.def as {
+    pattern?: RegExp;
+    format?: string;
+    innerType?: $ZodType;
+    options?: $ZodType[];
+    checks?: checks.$ZodCheck[];
+  };
+  const src = (p: RegExp | string) => (p instanceof RegExp ? p.source : p);
+  // a wrapper's pattern embeds its inner pattern's source verbatim, so the check-aware form is substituted in place without knowing the wrapper's own composition
+  if (def.innerType) {
+    const own = schema._zod.pattern;
+    const before = def.innerType._zod.pattern;
+    const after = partPattern(def.innerType);
+    if (own && before && after && after !== before) {
+      return own.source.replace(util.cleanRegex(before.source), () => util.cleanRegex(src(after)));
+    }
+    return own;
+  }
+  if (def.options) {
+    const patterns = def.options.map(partPattern);
+    if (patterns.every(Boolean)) {
+      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(src(p!))).join("|")})$`);
+    }
+  }
+  let pattern = def.pattern;
+  let isInt = !!def.format?.includes("int");
+  let minimum: number | undefined;
+  let maximum: number | undefined;
+  for (const ch of def.checks ?? []) {
+    const d = ch._zod.def as { pattern?: RegExp; format?: string; minimum?: number; maximum?: number; length?: number };
+    if (d.pattern) pattern = d.pattern;
+    isInt ||= !!d.format?.includes("int");
+    const lo = d.minimum ?? d.length;
+    const hi = d.maximum ?? d.length;
+    if (lo !== undefined && !(minimum! > lo)) minimum = lo;
+    if (hi !== undefined && !(maximum! < hi)) maximum = hi;
+  }
+  if (pattern) return pattern;
+  // an empty range matches nothing at runtime, and `{8,5}` is not a legal quantifier
+  if (minimum !== undefined && maximum !== undefined && minimum > maximum) return /(?!)/;
+  if (minimum !== undefined || maximum !== undefined) return regexes.string({ minimum, maximum });
+  const own = schema._zod.pattern;
+  return isInt && own === regexes.number ? regexes.integer : own;
+}
+
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
   "$ZodTemplateLiteral",
   (inst, def) => {
@@ -4648,12 +4678,13 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
     for (const part of def.parts) {
       if (typeof part === "object" && part !== null) {
         // is Zod schema
-        if (!part._zod.pattern) {
+        const pattern = partPattern(part);
+        if (!pattern) {
           // if (!source)
           throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
         }
 
-        const source = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
+        const source = pattern instanceof RegExp ? pattern.source : pattern;
 
         if (!source) throw new Error(`Invalid template literal part: ${part._zod.traits}`);
 

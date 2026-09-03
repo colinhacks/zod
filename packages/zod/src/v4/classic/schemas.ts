@@ -391,13 +391,18 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
     ZodType.init(inst, def);
 
     inst._zod.processJSONSchema = (ctx, json, params) => processors.stringProcessor(inst, ctx, json, params);
-
-    const bag = inst._zod.bag;
-    inst.format = bag.format ?? null;
-    inst.minLength = bag.minimum ?? null;
-    inst.maxLength = bag.maximum ?? null;
   },
   {
+    // derived from the checks on first read, then shadowed as own data
+    get format() {
+      return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+    },
+    get minLength() {
+      return util.own(this, "minLength", (processors.aggregateChecks(this).minimum as number | undefined) ?? null);
+    },
+    get maxLength() {
+      return util.own(this, "maxLength", (processors.aggregateChecks(this).maximum as number | undefined) ?? null);
+    },
     regex(...args) {
       return this.check((checks.regex as any)(...args));
     },
@@ -1131,17 +1136,33 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
     ZodType.init(inst, def);
 
     inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
-
-    const bag = inst._zod.bag;
-    inst.minValue =
-      Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
-    inst.maxValue =
-      Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
-    inst.isInt = (bag.format ?? "").includes("int") || Number.isSafeInteger(bag.multipleOf ?? 0.5);
     inst.isFinite = true;
-    inst.format = bag.format ?? null;
   },
   {
+    // derived from the checks on first read, then shadowed as own data
+    get minValue() {
+      const agg = processors.aggregateChecks(this) as { minimum?: number; exclusiveMinimum?: number };
+      return util.own(
+        this,
+        "minValue",
+        Math.max(agg.minimum ?? Number.NEGATIVE_INFINITY, agg.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null
+      );
+    },
+    get maxValue() {
+      const agg = processors.aggregateChecks(this) as { maximum?: number; exclusiveMaximum?: number };
+      return util.own(
+        this,
+        "maxValue",
+        Math.min(agg.maximum ?? Number.POSITIVE_INFINITY, agg.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null
+      );
+    },
+    get isInt() {
+      const agg = processors.aggregateChecks(this);
+      return util.own(this, "isInt", !!agg.isInt || !!agg.multipleOf?.some(Number.isSafeInteger));
+    },
+    get format() {
+      return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+    },
     gt(value, params) {
       return this.check(checks.gt(value, params));
     },
@@ -1277,13 +1298,18 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
     core.$ZodBigInt.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
-
-    const bag = inst._zod.bag;
-    inst.minValue = bag.minimum ?? null;
-    inst.maxValue = bag.maximum ?? null;
-    inst.format = bag.format ?? null;
   },
   {
+    // derived from the checks on first read, then shadowed as own data
+    get minValue() {
+      return util.own(this, "minValue", (processors.aggregateChecks(this).minimum as bigint | undefined) ?? null);
+    },
+    get maxValue() {
+      return util.own(this, "maxValue", (processors.aggregateChecks(this).maximum as bigint | undefined) ?? null);
+    },
+    get format() {
+      return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+    },
     gte(value, params) {
       return this.check(checks.gte(value, params));
     },
@@ -1451,18 +1477,28 @@ export interface _ZodDate<T extends core.$ZodDateInternals = core.$ZodDateIntern
 }
 
 export interface ZodDate extends _ZodDate<core.$ZodDateInternals<Date>> {}
-export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$constructor("ZodDate", (inst, def) => {
-  core.$ZodDate.init(inst, def);
-  ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.dateProcessor(inst, ctx, json, params);
+export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$constructor<ZodDate>(
+  "ZodDate",
+  (inst, def) => {
+    core.$ZodDate.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.dateProcessor(inst, ctx, json, params);
 
-  inst.min = (value, params) => inst.check(checks.gte(value, params));
-  inst.max = (value, params) => inst.check(checks.lte(value, params));
-
-  const c = inst._zod.bag;
-  inst.minDate = c.minimum ? new Date(c.minimum) : null;
-  inst.maxDate = c.maximum ? new Date(c.maximum) : null;
-});
+    inst.min = (value, params) => inst.check(checks.gte(value, params));
+    inst.max = (value, params) => inst.check(checks.lte(value, params));
+  },
+  {
+    // derived from the checks on first read, then shadowed as own data
+    get minDate() {
+      const { minimum } = processors.aggregateChecks(this);
+      return util.own(this, "minDate", minimum ? new Date(minimum as Date) : null);
+    },
+    get maxDate() {
+      const { maximum } = processors.aggregateChecks(this);
+      return util.own(this, "maxDate", maximum ? new Date(maximum as Date) : null);
+    },
+  }
+);
 
 export function date(params?: string | core.$ZodDateParams): ZodDate {
   return core._date(ZodDate, params);

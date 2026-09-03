@@ -147,6 +147,9 @@ export function datetime(args: {
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }
 
+// the unbounded form of `string()` as a literal, so every plain string shares one instance instead of building its own
+export const anyString: RegExp = /^[\s\S]{0,}$/;
+
 export const string = (params?: { minimum?: number | undefined; maximum?: number | undefined }): RegExp => {
   const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
   return new RegExp(`^${regex}$`);

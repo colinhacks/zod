@@ -19,7 +19,7 @@ import {
   isTransforming,
   processSchema,
 } from "./to-json-schema.js";
-import { NUMBER_FORMAT_RANGES, assignProp, getEnumValues } from "./util.js";
+import { BIGINT_FORMAT_RANGES, NUMBER_FORMAT_RANGES, assignProp, getEnumValues } from "./util.js";
 
 // ==================== CHECK AGGREGATION ====================
 
@@ -35,6 +35,9 @@ interface CheckAggregate {
   isInt?: boolean;
   patterns?: Set<RegExp>;
   mime?: string[];
+  contentEncoding?: string;
+  // a datetime that drops the offset or the seconds accepts what `date-time` forbids, so the keyword is withheld
+  laxFormat?: boolean;
 }
 
 const narrowMin = (agg: CheckAggregate, key: "minimum" | "exclusiveMinimum", value: number | bigint | Date): void => {
@@ -73,19 +76,27 @@ const contributors: Record<string, (agg: CheckAggregate, def: any) => void> = {
   min_size: minContributor,
   max_size: maxContributor,
   size_equals: (agg, def) => narrowBoth(agg, def.size),
+  bigint_format: (agg, def) => {
+    agg.format = def.format;
+    const [minimum, maximum] = BIGINT_FORMAT_RANGES[def.format as checks.$ZodBigIntFormats];
+    narrowMin(agg, "minimum", minimum);
+    narrowMax(agg, "maximum", maximum);
+  },
   string_format: (agg, def) => {
     agg.format = def.format;
     if (def.pattern) {
       agg.patterns ??= new Set();
       agg.patterns.add(def.pattern);
     }
+    if (def.format === "base64" || def.format === "base64url") agg.contentEncoding = def.format;
+    if (def.local || def.precision === -1) agg.laxFormat = true;
   },
   mime_type: (agg, def) => {
     agg.mime = agg.mime ? agg.mime.filter((m) => def.mime.includes(m)) : [...def.mime];
   },
 };
 
-function aggregateChecks(schema: schemas.$ZodType): CheckAggregate {
+export function aggregateChecks(schema: schemas.$ZodType): CheckAggregate {
   const agg: CheckAggregate = {};
   const def = schema._zod.def;
   // a format schema is its own first check, same rule as $ZodType init
@@ -135,8 +146,7 @@ const exactPattern = (p: RegExp): RegExp => exactPatterns.get(p) ?? p;
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
-  const { contentEncoding, laxFormat } = schema._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-  const { minimum, maximum, format, patterns } = aggregateChecks(schema);
+  const { minimum, maximum, format, patterns, contentEncoding, laxFormat } = aggregateChecks(schema);
   if (typeof minimum === "number") json.minLength = minimum;
   if (typeof maximum === "number") json.maxLength = maximum;
   // custom pattern overrides format
