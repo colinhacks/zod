@@ -1,6 +1,6 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
-import { $ZodAsyncError } from "./core.js";
+import { $ZodAsyncError, config } from "./core.js";
 import { Doc } from "./doc.js";
 import { isBackEdge, isRecursiveSchema } from "./memoizer.js";
 import * as regexes from "./regexes.js";
@@ -272,6 +272,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
         "never",
         "object",
         "array",
+        "tuple",
         "optional",
         "nullable",
         "default",
@@ -2268,6 +2269,34 @@ function rerunNodeForIssues(
   return r.value;
 }
 
+// mirrors handleUnionResults for the all-branches-failed case: adopt the lone non-aborted branch outright, else aggregate every branch's finalized issues into one invalid_union
+function unionIssuesForCompiled(
+  inst: SomeType,
+  input: unknown,
+  payload: ParsePayload,
+  results: ParsePayload[],
+  pctx: ParseContextInternal | undefined,
+  shared: boolean
+): unknown {
+  for (const r of results) {
+    if (r.issues.length === 0) return r.value;
+  }
+  const nonaborted = results.filter((r) => !util.aborted(r));
+  if (nonaborted.length === 1) {
+    const r = nonaborted[0]!;
+    payload.issues.push(...r.issues);
+    if (shared && r.aborted) payload.aborted = true;
+    return r.value;
+  }
+  payload.issues.push({
+    code: "invalid_union",
+    input,
+    inst,
+    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss as never, pctx, config()))),
+  } as never);
+  return input;
+}
+
 // mirrors handlePipeResult's stop rule: any issue except unrecognized_keys halts the pipe, continuable or not
 function pipeStops(issues: unknown[], start: number): boolean {
   for (let i = start; i < issues.length; i++) {
@@ -2724,6 +2753,9 @@ function generateCheckIssues(
       case "union":
         value = generateUnionIssues(doc, ctx, schema, accessor, path, shared);
         break;
+      case "tuple":
+        value = generateTupleIssues(doc, ctx, schema, accessor, path);
+        break;
       default:
         // intersection, record, map, set, lazy, catch, properties, tuple, …: exact parity through the node-scoped runtime rerun
         return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
@@ -2991,6 +3023,123 @@ function generateObjectIssues(
   return v;
 }
 
+// Mirrors $ZodTuple.parse + handleTupleResults: invalid_type and too_small push-and-return inside the runtime parse (cold call is safe), too_big is hand-built because the runtime pushes it and keeps walking, and the optional-out tail truncates instead of reporting absent-slot issues.
+function generateTupleIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath
+): string {
+  const def = schema._zod.def as unknown as { items: SomeType[]; rest: SomeType | null };
+  const items = def.items;
+  const rest = def.rest;
+  const optinStart = getTupleOptStart(items, "optin");
+  const optoutStart = getTupleOptStart(items, "optout");
+
+  const { pfx } = issueConsts(ctx);
+  const v = newVar(ctx);
+  doc.write(`let ${v} = ${accessor};`);
+  const label = `t${newVar(ctx)}`;
+  doc.write(`${label}: {`);
+  doc.indented((d) => {
+    d.write(
+      `if (!Array.isArray(${accessor})) { ${trimBlock(leafFailBlock(ctx, schema, accessor, path))} break ${label}; }`
+    );
+    if (!rest) {
+      d.write(
+        `if (${accessor}.length < ${optinStart}) { ${trimBlock(leafFailBlock(ctx, schema, accessor, path))} break ${label}; }`
+      );
+      const instConst = addConstant(ctx, schema);
+      const m = newVar(ctx);
+      const pathStmt = path.length ? ` ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);` : "";
+      // copied from $ZodTuple.parse's too_big push: the runtime pushes this and keeps walking the items
+      d.write(
+        `if (${accessor}.length > ${items.length}) { const ${m} = payload.issues.length; payload.issues.push({ code: "too_big", maximum: ${items.length}, inclusive: true, input: ${accessor}, inst: ${instConst}, origin: "array" });${pathStmt} }`
+      );
+    }
+
+    const out = newVar(ctx);
+    d.write(`const ${out} = [];`);
+    const hasTail = optoutStart < items.length;
+    const trunc = hasTail ? newVar(ctx) : null;
+    if (trunc) d.write(`let ${trunc} = false;`);
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]!;
+      if (i < optoutStart) {
+        const el = newVar(ctx);
+        d.write(`const ${el} = ${accessor}[${i}];`);
+        const iv = compileChildIssues(d, ctx, item, el, [...path, `${i}`], false);
+        d.write(`${out}[${i}] = ${iv};`);
+      } else {
+        d.write(`if (!${trunc}) {`);
+        d.indented((d2) => {
+          d2.write(`if (${i} < ${accessor}.length) {`);
+          d2.indented((d3) => {
+            const el = newVar(ctx);
+            d3.write(`const ${el} = ${accessor}[${i}];`);
+            const iv = compileChildIssues(d3, ctx, item, el, [...path, `${i}`], false);
+            d3.write(`${out}[${i}] = ${iv};`);
+          });
+          if (item._zod.optin === "optional") {
+            // absent middle rung: truncate the tail without running the item, like handleTupleResults' early break
+            d2.write(`} else ${trunc} = true;`);
+          } else {
+            d2.write(`} else {`);
+            d2.indented((d3) => {
+              const m = newVar(ctx);
+              d3.write(`const ${m} = payload.issues.length;`);
+              const iv = compileChildIssues(d3, ctx, item, "undefined", [...path, `${i}`], false);
+              // an absent optional-out slot that failed truncates and discards its issues; one that produced a value fills the slot
+              d3.write(`if (payload.issues.length > ${m}) { payload.issues.length = ${m}; ${trunc} = true; }`);
+              d3.write(`else ${out}[${i}] = ${iv};`);
+            });
+            d2.write(`}`);
+          }
+        });
+        d.write(`}`);
+      }
+    }
+
+    if (rest) {
+      const iVar = newVar(ctx);
+      const el = newVar(ctx);
+      d.write(`for (let ${iVar} = ${items.length}; ${iVar} < ${accessor}.length; ${iVar}++) {`);
+      d.indented((d2) => {
+        d2.write(`const ${el} = ${accessor}[${iVar}];`);
+        const iv = compileChildIssues(d2, ctx, rest, el, [...path, iVar], false);
+        d2.write(`${out}[${iVar}] = ${iv};`);
+      });
+      d.write(`}`);
+    }
+
+    // trailing absent optional-out slots that produced undefined truncate, mirroring handleTupleResults' final loop
+    if (items.some((it) => it._zod.optout === "optional")) {
+      const optConst = addConstant(
+        ctx,
+        items.map((it) => it._zod.optout === "optional")
+      );
+      const iVar = newVar(ctx);
+      d.write(`for (let ${iVar} = ${out}.length - 1; ${iVar} >= ${accessor}.length && ${iVar} >= 0; ${iVar}--) {`);
+      d.indented((d2) => {
+        d2.write(`if (${optConst}[${iVar}] && ${out}[${iVar}] === undefined) ${out}.length = ${iVar};`);
+        d2.write(`else break;`);
+      });
+      d.write(`}`);
+    }
+
+    d.write(`${v} = ${out};`);
+  });
+  doc.write(`}`);
+  return v;
+}
+
+// strips the outer braces off a fail block so it can inline before a labeled break
+function trimBlock(block: string): string {
+  return block.slice(1, -1).trim();
+}
+
 function generateUnionIssues(
   doc: Doc,
   ctx: CompileContext,
@@ -3005,36 +3154,58 @@ function generateUnionIssues(
     discriminator?: string;
     unionFallback?: boolean;
   };
-  // xor and unionFallback change match semantics; the interpreter owns them wholesale
-  if (def.inclusive === false || def.unionFallback) {
-    return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
-  }
   const options = def.options;
-  if (options.length === 0) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
-  if (options.length === 1) return compileChildIssues(doc, ctx, options[0]!, accessor, path, shared);
 
-  // ordered branch-trying is wrong for a discriminated union — a value carrying branch A's discriminator but branch B's shape must fail, not match B — so phase 1 is the fast discriminator dispatch
+  // the runtime dispatches on the discriminator and runs the matched option on the SHARED payload, so branch children compile in issue mode directly — no island, no re-walk. Non-object input and a missing discriminator both push-and-return inside the runtime parse, so the cold call is safe. Checked before the xor gate: a discriminated union also carries inclusive: false.
   if (def.discriminator) {
+    if (def.unionFallback || options.length === 0) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
     const v = newVar(ctx);
-    doc.write(`${"let"} ${v} = (() => {`);
+    const discVar = newVar(ctx);
+    const label = `d${newVar(ctx)}`;
+    doc.write(`let ${v} = ${accessor};`);
+    doc.write(`${label}: {`);
     doc.indented((d) => {
-      const out = generateDiscriminatedUnionCheck(
-        d,
-        ctx,
-        def as { options: SomeType[]; discriminator: string; unionFallback?: boolean },
-        accessor
-      );
-      d.write(`return ${out};`);
-    });
-    doc.write(`})();`);
-    doc.write(`if (${v} === INVALID) {`);
-    doc.indented((d) => {
-      const iv = emitIssueIsland(d, ctx, schema, accessor, path, shared);
-      d.write(`${v} = ${iv};`);
+      d.write(`if (typeof ${accessor} === "object" && ${accessor} !== null && !Array.isArray(${accessor})) {`);
+      d.indented((d2) => {
+        d2.write(`const ${discVar} = ${accessor}[${util.esc(def.discriminator!)}];`);
+        let firstBranch = true;
+        const claimed = new Set<util.Primitive>();
+        for (const option of options) {
+          const values = option._zod.propValues?.[def.discriminator!];
+          if (!values || values.size === 0) {
+            throw new ZodCompileUnsupportedError("discriminated union option without static discriminator values");
+          }
+          for (const value of values) {
+            if (claimed.has(value)) {
+              throw new ZodCompileUnsupportedError(`duplicate discriminator value ${String(value)}`);
+            }
+            claimed.add(value);
+          }
+          const conditions = Array.from(values, (value) => literalEquality(ctx, discVar, value));
+          const prefix = firstBranch ? "if" : "else if";
+          d2.write(`${prefix} (${conditions.join(" || ")}) {`);
+          d2.indented((d3) => {
+            const bv = compileChildIssues(d3, ctx, option, accessor, path, shared);
+            d3.write(`${v} = ${bv};`);
+            d3.write(`break ${label};`);
+          });
+          d2.write(`}`);
+          firstBranch = false;
+        }
+      });
+      d.write(`}`);
+      d.write(leafFailBlock(ctx, schema, accessor, path));
     });
     doc.write(`}`);
     return v;
   }
+
+  // xor and unionFallback change match semantics; the interpreter owns them wholesale
+  if (def.inclusive === false || def.unionFallback) {
+    return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  }
+  if (options.length === 0) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  if (options.length === 1) return compileChildIssues(doc, ctx, options[0]!, accessor, path, shared);
 
   const allLiterals = options.every(
     (opt) => opt._zod.def.type === "literal" && !(opt._zod.def.checks as unknown[] | undefined)?.length
@@ -3053,7 +3224,7 @@ function generateUnionIssues(
     return v;
   }
 
-  // two-phase: the fast-mode branch attempts decide the match on the hot path; the cold rerun reproduces the canonical invalid_union (finalized per-branch errors and all)
+  // two-phase: the fast-mode branch attempts decide the match on the hot path; on total failure each branch re-runs as a compiled issue parser against a payload of its own (the interpreter gives branches fresh payloads too), and a helper mirroring handleUnionResults aggregates them
   const v = newVar(ctx);
   doc.write(`let ${v};`);
   for (let i = 0; i < options.length; i++) {
@@ -3071,8 +3242,26 @@ function generateUnionIssues(
   }
   doc.write(`if (${v} === INVALID) {`);
   doc.indented((d) => {
-    const iv = emitIssueIsland(d, ctx, schema, accessor, path, shared);
-    d.write(`${v} = ${iv};`);
+    const { pfx } = issueConsts(ctx);
+    const helperConst = addConstant(ctx, unionIssuesForCompiled);
+    const instConst = addConstant(ctx, schema);
+    const rsVar = newVar(ctx);
+    const m = newVar(ctx);
+    d.write(`const ${rsVar} = [];`);
+    for (const opt of options) {
+      // the shadowed `payload` and fresh `_sp` confine the branch's pushes to its own local payload, exactly like the interpreter's per-branch payloads; `shared` is true relative to that payload so a branch pipe's abort flag lands on it for the nonaborted filter
+      d.write(`${rsVar}.push(((payload) => {`);
+      d.indented((d2) => {
+        d2.write(`let _sp;`);
+        const bv = compileChildIssues(d2, ctx, opt, "payload.value", [], true);
+        d2.write(`payload.value = ${bv};`);
+        d2.write(`return payload;`);
+      });
+      d.write(`})({ value: ${accessor}, issues: [] }));`);
+    }
+    d.write(`const ${m} = payload.issues.length;`);
+    d.write(`${v} = ${helperConst}(${instConst}, ${accessor}, payload, ${rsVar}, pctx, ${shared});`);
+    if (path.length) d.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);`);
   });
   doc.write(`}`);
   return v;
