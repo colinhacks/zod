@@ -805,6 +805,46 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("an integer format keeps the emitted type integer whatever format lands last", () => {
+    // runtime rejects 1.5 in both orders, so both must emit type integer
+    const after = z.number().int().check(z.float32());
+    expect(after.safeParse(1.5).success).toBe(false);
+    expect(z.toJSONSchema(after).type).toBe("integer");
+    expect(z.toJSONSchema(z.number().check(z.float32()).int()).type).toBe("integer");
+  });
+
+  test("disjoint mime checks emit a false schema, not an unconstrained file", () => {
+    const file = z.file().mime("image/png").mime("text/plain");
+    expect(z.toJSONSchema(file)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "contentEncoding": "binary",
+        "format": "binary",
+        "not": {},
+        "type": "string",
+      }
+    `);
+  });
+
+  test("a custom mime narrowing via onattach intersects with built-in mime checks", () => {
+    const check = {
+      _zod: {
+        def: { check: "custom_mime" },
+        onattach: [
+          (inst: any) => {
+            inst._zod.bag.mime = ["text/plain"];
+          },
+        ],
+        check: () => {},
+      },
+    };
+    const file = z
+      .file()
+      .mime(["image/png", "text/plain"])
+      .check(check as any);
+    expect(z.toJSONSchema(file).contentMediaType).toBe("text/plain");
+  });
+
   test("a custom check contributing via onattach still lands", () => {
     // third-party checks have no converter handler; their bag writes are merged in as a fallback
     const check = {

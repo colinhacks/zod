@@ -31,6 +31,8 @@ interface CheckAggregate {
   exclusiveMaximum?: number | bigint | Date;
   multipleOf?: number[];
   format?: string;
+  // ORed across formats: any integer format keeps the conjunction integer, whatever format lands last
+  isInt?: boolean;
   patterns?: Set<RegExp>;
   mime?: string[];
 }
@@ -60,6 +62,7 @@ const contributors: Record<string, (agg: CheckAggregate, def: any) => void> = {
   number_format: (agg, def) => {
     // last-wins, matching the bag's historical write order
     agg.format = def.format;
+    if ((def.format as string).includes("int")) agg.isInt = true;
     const [minimum, maximum] = NUMBER_FORMAT_RANGES[def.format as checks.$ZodNumberFormats];
     narrowMin(agg, "minimum", minimum);
     narrowMax(agg, "maximum", maximum);
@@ -104,7 +107,7 @@ function aggregateChecks(schema: schemas.$ZodType): CheckAggregate {
     if (!agg.multipleOf.includes(bag.multipleOf)) agg.multipleOf.push(bag.multipleOf);
   }
   if (agg.format === undefined && bag.format !== undefined) agg.format = bag.format;
-  if (agg.mime === undefined && bag.mime !== undefined) agg.mime = bag.mime;
+  if (bag.mime !== undefined) agg.mime = agg.mime ? agg.mime.filter((m) => bag.mime!.includes(m)) : bag.mime;
   if (bag.patterns) {
     agg.patterns ??= new Set();
     for (const p of bag.patterns) agg.patterns.add(p);
@@ -165,10 +168,10 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
 
 export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.NumberSchema | JSONSchema.IntegerSchema;
-  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = aggregateChecks(
+  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum, isInt } = aggregateChecks(
     schema
   ) as CheckAggregate & { minimum?: number; maximum?: number; exclusiveMinimum?: number; exclusiveMaximum?: number };
-  if (typeof format === "string" && format.includes("int")) json.type = "integer";
+  if (isInt || (typeof format === "string" && format.includes("int"))) json.type = "integer";
   else json.type = "number";
 
   // when both minimum and exclusiveMinimum exist, pick the more restrictive one
@@ -347,7 +350,11 @@ export const fileProcessor: Processor<schemas.$ZodFile> = (schema, _ctx, json, _
   const { minimum, maximum, mime } = aggregateChecks(schema);
   if (typeof minimum === "number") file.minLength = minimum;
   if (typeof maximum === "number") file.maxLength = maximum;
-  if (mime?.length) {
+  // an empty intersection means the mime checks share no value, so nothing passes at runtime; `anyOf` must be non-empty, so the false schema is `not: {}`
+  if (mime && mime.length === 0) {
+    Object.assign(_json, file);
+    _json.not = {};
+  } else if (mime?.length) {
     if (mime.length === 1) {
       file.contentMediaType = mime[0]!;
       Object.assign(_json, file);
