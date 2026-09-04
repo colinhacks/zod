@@ -1843,6 +1843,17 @@ test("compiling and rejecting never runs a default or prefault factory for a pre
   );
   expect(compile(z.object({ withRaw, bad: z.string() })).safeParse({ withRaw: "ok", bad: 1 }).success).toBe(false);
   expect(reads).toBe(0);
+  // nor an accessor nested in a plain object a custom def carries
+  const metadata = Object.defineProperty({}, "nested", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw new Error("nested getter ran");
+    },
+  });
+  const withMeta = new Custom({ type: "string", metadata } as never);
+  expect(compile(z.object({ withMeta, bad: z.string() })).safeParse({ withMeta: "ok", bad: 1 }).success).toBe(false);
+  expect(reads).toBe(0);
   // while a pick() shape, lazy until its first read, still classifies the callback behind it
   const picked = z.object({ c: z.string().superRefine(() => {}), d: z.number() }).pick({ c: true });
   expect(Object.getOwnPropertyDescriptor(picked._zod.def, "shape")?.get).toBeDefined();

@@ -1512,8 +1512,10 @@ function childrenReachCallbacks(def: object): boolean {
     if ((value as Partial<ZodNode>)._zod) {
       if (subtreeRunsCallbacks(value as ZodNode)) return true;
     } else if (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype) {
-      for (const el of Object.values(value)) {
-        if ((el as Partial<ZodNode> | null)?._zod && subtreeRunsCallbacks(el as ZodNode)) return true;
+      // the entries by descriptor too: a plain object in a def can carry accessors of its own
+      for (const k of Object.keys(value)) {
+        const el = Object.getOwnPropertyDescriptor(value, k);
+        if (el && !el.get && (el.value as Partial<ZodNode> | null)?._zod && subtreeRunsCallbacks(el.value)) return true;
       }
     }
   }
