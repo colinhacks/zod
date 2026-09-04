@@ -26,6 +26,7 @@ import {
   mayOutputUndefined,
   newVar,
   pipeStops,
+  pushInvalidKey,
   pushIssue,
   pushNonOptionalIssue,
   requiresPresenceCheck,
@@ -1660,6 +1661,125 @@ function generateUnionIssues(
   return v;
 }
 
+// Mirrors $ZodRecord.parse. An enumerable key schema walks the declared keys and reports extras as unrecognized; any other key schema is a constraint every own enumerable key must satisfy, with the runtime's numeric-string retry. A rejected key is pushed cold through `pushInvalidKey` (loose keeps it unvalidated, a partial record with enumerable keys counts it as unrecognized); values compile in issue mode so the walk continues past a bad one.
+function generateRecordIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const def = schema._zod.def as unknown as {
+    keyType: SomeType;
+    valueType: SomeType;
+    mode?: string;
+    partial?: boolean;
+  };
+  const isLoose = def.mode === "loose";
+  const keyValues = (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
+  const isPlainObjectConst = addConstant(ctx, util.isPlainObject);
+  const instConst = addConstant(ctx, schema);
+  const pathProp = path.length ? `, path: [${path.join(", ")}]` : "";
+  const v = newVar(ctx);
+  doc.write(`let ${v} = ${accessor};`);
+  doc.write(`if (!${isPlainObjectConst}(${accessor})) ${leafFailBlock(ctx, schema, accessor, path)}`);
+  doc.write(`else {`);
+  doc.indented((d) => {
+    const out = newVar(ctx);
+    const unrec = newVar(ctx);
+    d.write(`const ${out} = {};`);
+    d.write(`let ${unrec};`);
+    const pushUnrecognized = () =>
+      d.write(
+        `if (${unrec}) payload.issues.push({ code: "unrecognized_keys", input: ${accessor}, inst: ${instConst}, keys: ${unrec}, continue: true${pathProp} });`
+      );
+    if (keyValues && !def.partial) {
+      const keyFast = addConstant(ctx, compileFn(def.keyType));
+      const badKeyConst = addConstant(ctx, pushInvalidKey);
+      const keyTypeConst = addConstant(ctx, def.keyType);
+      const knownKeys: Array<string | symbol> = [];
+      for (const key of keyValues) {
+        if (!(typeof key === "string" || typeof key === "number" || typeof key === "symbol")) {
+          throw new ZodCompileUnsupportedError(`record key value ${String(key)}`);
+        }
+        knownKeys.push(typeof key === "number" ? key.toString() : key);
+        // a declared __proto__ is stripped but is not an unrecognized key
+        if (key === "__proto__") continue;
+        const keyConst = addConstant(ctx, key);
+        const outKey = newVar(ctx);
+        const label = `r${newVar(ctx)}`;
+        d.write(`${label}: {`);
+        d.indented((d2) => {
+          d2.write(`const ${outKey} = ${keyFast}(${keyConst});`);
+          d2.write(
+            `if (${outKey} === INVALID) { ${badKeyConst}(${keyTypeConst}, ${keyConst}, payload, pctx, ${instConst}, [${path.join(", ")}]); break ${label}; }`
+          );
+          d2.write(`if (${outKey} === "__proto__") break ${label};`);
+          const valueVar = newVar(ctx);
+          // the path element is the declared key as declared: a numeric key stays a number, like util.prefixIssues(key, …) in the runtime
+          const pathExpr = typeof key === "number" ? String(key) : literalPropertyKey(ctx, key);
+          d2.write(`const ${valueVar} = ${accessor}[${pathExpr}];`);
+          const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, pathExpr], shared);
+          d2.write(`${out}[${outKey}] = ${val};`);
+        });
+        d.write(`}`);
+      }
+      const knownConst = addConstant(ctx, new Set(knownKeys));
+      const k = newVar(ctx);
+      d.write(`for (const ${k} in ${accessor}) {`);
+      d.indented((d2) => {
+        d2.write(`if (${knownConst}.has(${k})) continue;`);
+        if (isLoose) d2.write(`if (${k} !== "__proto__") ${out}[${k}] = ${accessor}[${k}];`);
+        else d2.write(`(${unrec} ??= []).push(${k});`);
+      });
+      d.write(`}`);
+      pushUnrecognized();
+    } else {
+      const keyDef = def.keyType._zod.def as { type: string; format?: string; coerce?: boolean; checks?: unknown[] };
+      const keyIsBareString =
+        keyDef.type === "string" && keyDef.format === undefined && !keyDef.coerce && (keyDef.checks?.length ?? 0) === 0;
+      const keyFast = keyIsBareString ? null : addConstant(ctx, compileFn(def.keyType));
+      const numericConst = addConstant(ctx, regexes.number);
+      const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
+      const badKeyConst = addConstant(ctx, pushInvalidKey);
+      const keyTypeConst = addConstant(ctx, def.keyType);
+      const k = newVar(ctx);
+      const outKey = newVar(ctx);
+      d.write(`for (const ${k} of Reflect.ownKeys(${accessor})) {`);
+      d.indented((d2) => {
+        d2.write(`if (${k} === "__proto__") continue;`);
+        d2.write(`if (!${propIsEnumerableConst}.call(${accessor}, ${k})) continue;`);
+        if (keyFast) {
+          d2.write(`let ${outKey} = ${keyFast}(${k});`);
+          d2.write(
+            `if (${outKey} === INVALID && typeof ${k} === "string" && ${numericConst}.test(${k})) ${outKey} = ${keyFast}(Number(${k}));`
+          );
+        } else {
+          d2.write(`const ${outKey} = typeof ${k} === "string" ? ${k} : INVALID;`);
+        }
+        const onBadKey = isLoose
+          ? `${out}[${k}] = ${accessor}[${k}];`
+          : keyValues
+            ? `(${unrec} ??= []).push(${k});`
+            : `${badKeyConst}(${keyTypeConst}, ${k}, payload, pctx, ${instConst}, [${path.join(", ")}]);`;
+        d2.write(`if (${outKey} === INVALID) { ${onBadKey} continue; }`);
+        // the key schema can normalize an ordinary key into __proto__; re-check the one actually written under
+        d2.write(`if (${outKey} === "__proto__") continue;`);
+        const valueVar = newVar(ctx);
+        d2.write(`const ${valueVar} = ${accessor}[${k}];`);
+        const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, k], shared);
+        d2.write(`${out}[${outKey}] = ${val};`);
+      });
+      d.write(`}`);
+      pushUnrecognized();
+    }
+    d.write(`${v} = ${out};`);
+  });
+  doc.write(`}`);
+  return v;
+}
+
 type Codegen = (doc: Doc, ctx: CompileContext, inst: SomeType, accessor: string, buildsValue: boolean) => string | null;
 
 /** A core subclass's two emitters: `fast` writes the reject-on-first-failure path, `issues` the path that pushes the interpreter's issues. A class without `issues` islands through the interpreter in issue mode. */
@@ -1885,7 +2005,10 @@ const emitters: Record<string, Emitter> = {
     issues: generateUnionIssues,
   },
   $ZodIntersection: { fast: (doc, ctx, inst, accessor) => generateIntersectionCheck(doc, ctx, inst, accessor) },
-  $ZodRecord: { fast: (doc, ctx, inst, accessor) => generateRecordCheck(doc, ctx, inst, accessor) },
+  $ZodRecord: {
+    fast: (doc, ctx, inst, accessor) => generateRecordCheck(doc, ctx, inst, accessor),
+    issues: generateRecordIssues,
+  },
   $ZodMap: { fast: (doc, ctx, inst, accessor) => generateMapCheck(doc, ctx, inst, accessor) },
   $ZodSet: { fast: (doc, ctx, inst, accessor) => generateSetCheck(doc, ctx, inst, accessor) },
   $ZodLazy: { fast: (doc, ctx, inst, accessor) => generateLazyCheck(doc, ctx, inst, accessor) },

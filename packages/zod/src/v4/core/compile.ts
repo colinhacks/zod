@@ -1176,6 +1176,30 @@ export function unionIssuesForCompiled(
   return input;
 }
 
+// mirrors $ZodRecord's invalid_key push for a key its schema rejects: the key schema re-runs so the nested issues are the interpreter's own, finalized the way the runtime finalizes them
+export function pushInvalidKey(
+  keyType: SomeType,
+  key: PropertyKey,
+  payload: ParsePayload,
+  pctx: ParseContextInternal | undefined,
+  inst: SomeType,
+  path: unknown[]
+): void {
+  const live = keyType._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+  };
+  const r = (live.__originalRun ?? live)({ value: key, issues: [] }, pctx ?? ({} as ParseContextInternal));
+  if (r instanceof Promise) throw new Error("Async schemas not supported in object keys currently");
+  payload.issues.push({
+    code: "invalid_key",
+    origin: "record",
+    issues: r.issues.map((iss: never) => util.finalizeIssue(iss, pctx, config())),
+    input: key,
+    path: [...path, key],
+    inst,
+  } as never);
+}
+
 // mirrors handlePipeResult's stop rule: any issue except unrecognized_keys halts the pipe, continuable or not
 export function pipeStops(issues: unknown[], start: number): boolean {
   for (let i = start; i < issues.length; i++) {

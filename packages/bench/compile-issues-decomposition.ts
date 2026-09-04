@@ -1,4 +1,4 @@
-// Decomposes a failing safeParse into walk vs error construction, per wrapper mode. `walk` = _zod.run returning raw issues (no finalizeIssue, no ZodError, no result object); error construction = total − walk, and it is contractually identical in every mode. The theoretical ceiling column is the speedup with a FREE walk — what any compiler tops out at while the error contract stands.
+// Decomposes a failing safeParse into walk vs everything after it, per wrapper mode. `walk` = _zod.run returning raw issues; `err-cost` = total − walk is what safeParse adds around the walk (the result object; the ZodError itself is built lazily on the first read of `.error`), identical in every mode. `ceiling` is the speedup with a FREE walk. The last three columns read `.error.issues` too, which is what a caller that reports the failure pays.
 import * as z from "zod";
 import { compile } from "../zod/src/v4/core/compile.js";
 
@@ -99,6 +99,16 @@ function sampleSafe(schema: z.ZodType, input: unknown, iters: number): number {
   }
   return Number(process.hrtime.bigint() - t0) / iters;
 }
+// the error is built on the first read of `.error` (finalizeIssue per issue + the ZodError), so a caller that reports the failure pays this on top of the `.success`-only figure
+function sampleSafeRead(schema: z.ZodType, input: unknown, iters: number): number {
+  globalThis.gc!();
+  const t0 = process.hrtime.bigint();
+  for (let i = 0; i < iters; i++) {
+    const r = schema.safeParse(input) as any;
+    if (r.success || r.error.issues.length === 0) sink++;
+  }
+  return Number(process.hrtime.bigint() - t0) / iters;
+}
 function sampleRun(schema: z.ZodType, input: unknown, iters: number): number {
   const run = (schema as any)._zod.run;
   const zod = (schema as any)._zod;
@@ -112,7 +122,9 @@ function sampleRun(schema: z.ZodType, input: unknown, iters: number): number {
 }
 
 const ROUNDS = 7;
-console.log("shape           issues  rt-total  rt-walk  err-cost  ceiling  dual-total  dual-walk  achieved");
+console.log(
+  "shape           issues  rt-total  rt-walk  err-cost  ceiling  dual-total  dual-walk  achieved | rt+error  dual+error  achieved"
+);
 for (const c of cases) {
   const dual = compile(c.schema as any) as z.ZodType;
   const rtRes = c.schema.safeParse(c.invalid) as any;
@@ -127,6 +139,8 @@ for (const c of cases) {
     ["B", () => sampleRun(c.schema, c.invalid, c.iters)],
     ["C", () => sampleSafe(dual, c.invalid, c.iters)],
     ["D", () => sampleRun(dual, c.invalid, c.iters)],
+    ["E", () => sampleSafeRead(c.schema, c.invalid, c.iters)],
+    ["F", () => sampleSafeRead(dual, c.invalid, c.iters)],
   ];
   // warmup
   for (const [, f] of kinds) f();
@@ -141,10 +155,12 @@ for (const c of cases) {
   const B = mins.get("B")!;
   const C = mins.get("C")!;
   const D = mins.get("D")!;
+  const E = mins.get("E")!;
+  const F = mins.get("F")!;
   const err = A - B;
   const ceiling = A / Math.max(err, 1);
   console.log(
-    `${c.name.padEnd(15)} ${String(nIssues).padStart(5)}  ${A.toFixed(0).padStart(8)}  ${B.toFixed(0).padStart(7)}  ${err.toFixed(0).padStart(8)}  ${ceiling.toFixed(2).padStart(6)}x  ${C.toFixed(0).padStart(9)}  ${D.toFixed(0).padStart(9)}  ${(A / C).toFixed(2).padStart(7)}x`
+    `${c.name.padEnd(15)} ${String(nIssues).padStart(5)}  ${A.toFixed(0).padStart(8)}  ${B.toFixed(0).padStart(7)}  ${err.toFixed(0).padStart(8)}  ${ceiling.toFixed(2).padStart(6)}x  ${C.toFixed(0).padStart(9)}  ${D.toFixed(0).padStart(9)}  ${(A / C).toFixed(2).padStart(7)}x | ${E.toFixed(0).padStart(8)}  ${F.toFixed(0).padStart(10)}  ${(E / F).toFixed(2).padStart(7)}x`
   );
 }
 console.log(`sink=${sink}`);
