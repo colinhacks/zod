@@ -1440,12 +1440,10 @@ function generateTupleIssues(
   const label = `t${newVar(ctx)}`;
   doc.write(`${label}: {`);
   doc.indented((d) => {
-    d.write(
-      `if (!Array.isArray(${accessor})) { ${trimBlock(leafFailBlock(ctx, schema, accessor, path))} break ${label}; }`
-    );
+    d.write(`if (!Array.isArray(${accessor})) { ${leafFailBlock(ctx, schema, accessor, path)} break ${label}; }`);
     if (!rest) {
       d.write(
-        `if (${accessor}.length < ${optinStart}) { ${trimBlock(leafFailBlock(ctx, schema, accessor, path))} break ${label}; }`
+        `if (${accessor}.length < ${optinStart}) { ${leafFailBlock(ctx, schema, accessor, path)} break ${label}; }`
       );
       const instConst = addConstant(ctx, schema);
       const m = newVar(ctx);
@@ -1530,11 +1528,6 @@ function generateTupleIssues(
   });
   doc.write(`}`);
   return v;
-}
-
-// strips the outer braces off a fail block so it can inline before a labeled break
-function trimBlock(block: string): string {
-  return block.slice(1, -1).trim();
 }
 
 function generateUnionIssues(

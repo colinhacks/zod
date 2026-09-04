@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
+import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile, compileFn } from "../compile.js";
 import { $ZodAsyncError } from "../core.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
@@ -1684,4 +1684,29 @@ test("compiled parse methods run user callbacks at most twice on invalid input",
   // the params still reach the failure path
   const mapped = compiled.safeParse({ a: "x" }, { error: () => "mapped" });
   expect(!mapped.success && mapped.error.issues[0]!.message).toBe("mapped");
+});
+
+test("issue parsers compile natively for every emitter-backed shape", () => {
+  // a refused issue compile falls back to the runtime re-parse silently, so parity tests stay green while the shape quietly loses its compiled issues; the tuple emitter shipped that way once
+  const shapes: Record<string, z.ZodType> = {
+    tuple: z.tuple([z.string(), z.number()]),
+    tupleRest: z.tuple([z.string()], z.number()),
+    tupleOptional: z.tuple([z.string(), z.number().optional()]),
+    nestedTuple: z.object({ t: z.array(z.tuple([z.string()])) }),
+    object: z.object({ a: z.string() }),
+    array: z.array(z.number()),
+    union: z.union([z.string(), z.number()]),
+    discriminated: z.discriminatedUnion("t", [z.object({ t: z.literal("a") }), z.object({ t: z.literal("b") })]),
+    record: z.record(z.string(), z.number()),
+    wrappers: z.string().default("x").nullable().optional().nonoptional(),
+    checked: z.string().min(2),
+    pipe: z.string().pipe(z.string().min(1)),
+    readonly: z.array(z.string()).readonly(),
+    enumeration: z.enum(["a", "b"]),
+    literal: z.literal("a"),
+    never: z.never(),
+  };
+  for (const [name, schema] of Object.entries(shapes)) {
+    expect(() => compileFn(schema, { issues: true }), name).not.toThrow();
+  }
 });
