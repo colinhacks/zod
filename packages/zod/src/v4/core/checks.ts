@@ -253,6 +253,13 @@ export interface $ZodCheckNumberFormat<Format extends $ZodNumberFormats = $ZodNu
   _zod: $ZodCheckNumberFormatInternals<Format>;
 }
 
+// a check's pattern becomes the schema's own on attach, so wrappers and template literals compose it like any other pattern; the last attached wins
+const attachPattern = (inst: $ZodCheck, def: { pattern?: RegExp | undefined }): void => {
+  inst._zod.onattach.push((s) => {
+    if (def.pattern) s._zod.bag.pattern = def.pattern;
+  });
+};
+
 export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckNumberFormat",
   (inst, def) => {
@@ -262,6 +269,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
     const isInt = def.format?.includes("int");
     const origin = isInt ? "int" : "number";
     const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format];
+    if (isInt) attachPattern(inst, { pattern: regexes.integer });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -564,6 +572,11 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
     $ZodCheck.init(inst, def);
 
     inst._zod.def.when ??= _whenHasLength;
+    // tightest bound wins, so the string's pattern is the same whatever the chain order
+    inst._zod.onattach.push((s) => {
+      const bag = s._zod.bag as { maximum?: number };
+      if (bag.maximum === undefined || def.maximum < bag.maximum) bag.maximum = def.maximum;
+    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -609,6 +622,10 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
     $ZodCheck.init(inst, def);
 
     inst._zod.def.when ??= _whenHasLength;
+    inst._zod.onattach.push((s) => {
+      const bag = s._zod.bag as { minimum?: number };
+      if (bag.minimum === undefined || def.minimum > bag.minimum) bag.minimum = def.minimum;
+    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -658,6 +675,11 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
     $ZodCheck.init(inst, def);
 
     inst._zod.def.when ??= _whenHasLength;
+    inst._zod.onattach.push((s) => {
+      const bag = s._zod.bag as { minimum?: number; maximum?: number };
+      if (bag.minimum === undefined || def.length > bag.minimum) bag.minimum = def.length;
+      if (bag.maximum === undefined || def.length < bag.maximum) bag.maximum = def.length;
+    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -737,6 +759,7 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
   "$ZodCheckStringFormat",
   (inst, def) => {
     $ZodCheck.init(inst, def);
+    attachPattern(inst, def);
 
     if (def.pattern)
       inst._zod.check ??= (payload) => {
@@ -902,6 +925,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
     // (`{N,}`), not exactly `position` chars (`{N}`).
     const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position},}${escapedRegex}` : escapedRegex);
     def.pattern = pattern;
+    attachPattern(inst, def);
     inst._zod.check = (payload) => {
       if (payload.value.includes(def.includes, def.position)) return;
       payload.issues.push({
@@ -940,6 +964,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
 
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
+    attachPattern(inst, def);
     inst._zod.check = (payload) => {
       if (payload.value.startsWith(def.prefix)) return;
       payload.issues.push({
@@ -978,6 +1003,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
 
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
+    attachPattern(inst, def);
     inst._zod.check = (payload) => {
       if (payload.value.endsWith(def.suffix)) return;
       payload.issues.push({
