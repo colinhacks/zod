@@ -29,7 +29,7 @@ export type INVALID = typeof INVALID;
 const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
 // raised by a compiled method that already rejected, naming the schema whose runtime method it is about to enter: the fast parser has run, go straight to the issue parser. Module state rather than a parse-context entry, so the fallback takes no context spread and no flag reads; only that schema's own wrapper consumes it, so a route that reaches a nested wrapper first cannot skip that wrapper's checks, and the method clears it either way.
 let skipFastFor: unknown = null;
-// set on the parse context once a wrapper's fast pass has failed, so a nested wrapper reached through an island or a cold call skips its own: user callbacks run at most twice on invalid input
+// set on the parse context where the issue path hands a subtree to the interpreter, so a compiled wrapper the interpreter reaches inside it skips its own fast pass: user callbacks run at most twice on invalid input
 const SKIP_FAST: unique symbol = Symbol.for("zod.compile.skipfast");
 
 interface CompileFnOptions {
@@ -192,7 +192,6 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
           }
         }
       }
-      if (ctx) (ctx as Record<symbol, unknown>)[SKIP_FAST] = true;
       // The issue parser replaces the runtime fallback. `validate` asks for the first failure only (abortEarly); the issue parser walks everything, so that answer still comes from the runtime.
       const issues = ctx?.abortEarly ? null : issueParserFor();
       if (issues) {
@@ -1168,7 +1167,9 @@ export function rerunNodeForIssues(
     __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
   };
   const run = live.__originalRun ?? live;
-  const r = run({ value, issues: [] }, pctx ?? ({} as ParseContextInternal));
+  const ctx = pctx ?? ({} as ParseContextInternal);
+  (ctx as Record<symbol, unknown>)[SKIP_FAST] = true;
+  const r = run({ value, issues: [] }, ctx);
   if (r && typeof (r as Promise<unknown>).then === "function") throw new $ZodAsyncError();
   if (r.issues.length) payload.issues.push(...r.issues);
   if (shared && r.aborted) payload.aborted = true;
@@ -1215,7 +1216,9 @@ export function pushInvalidKey(
   const live = keyType._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
     __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
   };
-  const r = (live.__originalRun ?? live)({ value: key, issues: [] }, pctx ?? ({} as ParseContextInternal));
+  const ctx = pctx ?? ({} as ParseContextInternal);
+  (ctx as Record<symbol, unknown>)[SKIP_FAST] = true;
+  const r = (live.__originalRun ?? live)({ value: key, issues: [] }, ctx);
   if (r instanceof Promise) throw new Error("Async schemas not supported in object keys currently");
   payload.issues.push({
     code: "invalid_key",
