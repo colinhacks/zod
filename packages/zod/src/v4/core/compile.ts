@@ -1340,8 +1340,7 @@ export function generateChecksIssues(
   valueVar: string,
   path: IssuePath,
   nodeMark: string,
-  abOverride: string | null,
-  shared: boolean
+  abOverride: string | null = null
 ): void {
   const defChecks = (schema._zod.def.checks as SupportedCheck[] | undefined) ?? [];
   const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
@@ -1367,10 +1366,8 @@ export function generateChecksIssues(
     if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
       throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
     }
-    // a node the interpreter parses on a payload of its own (an object property, an array element) shows its callbacks only its own issues: a local payload seeded with what this node pushed so far, merged back afterwards. a node on the shared spine hands over the scratch payload, whose issues array is the caller's
-    const ownPayload = `{ value: ${valueVar}, issues: ${nodeMark ? `payload.issues.slice(${nodeMark})` : "[]"} }`;
     const guard = def.when
-      ? `(!${gate.ab} || (!${gate.ex} && ${addConstant(ctx, def.when)}(${shared ? `(${SP_INIT}.value = ${valueVar}, _sp)` : ownPayload})))`
+      ? `(!${gate.ab} || (!${gate.ex} && ${addConstant(ctx, def.when)}((${SP_INIT}.value = ${valueVar}, _sp))))`
       : `!${gate.ab}`;
 
     switch (def.check) {
@@ -1392,23 +1389,10 @@ export function generateChecksIssues(
         const r = newVar(ctx);
         doc.write(`if (${guard}) {`);
         doc.indented((d) => {
-          if (shared) {
-            d.write(`${SP_INIT}.value = ${valueVar};`);
-            d.write(`const ${m} = payload.issues.length;`);
-            d.write(`const ${r} = ${checkConst}(_sp);`);
-            d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
-          } else {
-            const p = newVar(ctx);
-            const n = newVar(ctx);
-            d.write(`const ${p} = ${ownPayload};`);
-            d.write(`const ${n} = ${p}.issues.length;`);
-            d.write(`const ${r} = ${checkConst}(${p});`);
-            d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
-            d.write(`const ${m} = payload.issues.length;`);
-            const i = newVar(ctx);
-            d.write(`for (let ${i} = ${n}; ${i} < ${p}.issues.length; ${i}++) payload.issues.push(${p}.issues[${i}]);`);
-            d.write(`${valueVar} = ${p}.value;`);
-          }
+          d.write(`${SP_INIT}.value = ${valueVar};`);
+          d.write(`const ${m} = payload.issues.length;`);
+          d.write(`const ${r} = ${checkConst}(_sp);`);
+          d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
           d.write(`if (payload.issues.length > ${m}) {`);
           d.indented((d2) => {
             d2.write(`${att}(payload.issues, ${m}, ${ownerConst});`);
@@ -1417,7 +1401,7 @@ export function generateChecksIssues(
             if (gate.ex) d2.write(`if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});`);
           });
           d.write(`}`);
-          if (shared) d.write(`${valueVar} = _sp.value;`);
+          d.write(`${valueVar} = _sp.value;`);
         });
         doc.write(`}`);
         break;
@@ -1498,6 +1482,59 @@ export function emitIssueIsland(
   return v;
 }
 
+const CHILD_KEYS = ["innerType", "element", "rest", "in", "out", "left", "right", "keyType", "valueType"] as const;
+const runsCallbacks = new WeakMap<object, boolean>();
+
+// Whether an issue-mode walk of this subtree runs user code that can read its parse payload: a custom check, a `when` predicate, a transform. A lazy stays out because issue mode islands it, and the interpreter hands the island its own payloads.
+export function subtreeRunsCallbacks(schema: SomeType): boolean {
+  const known = runsCallbacks.get(schema);
+  if (known !== undefined) return known;
+  // an assumed answer for a subtree still being scanned
+  runsCallbacks.set(schema, false);
+  const def = schema._zod.def as Record<string, unknown> & { type: string; checks?: unknown[] };
+  let out = def.type === "custom" || def.type === "transform" || !!def.transform;
+  if (!out && def.checks) {
+    out = def.checks.some((c) => {
+      const cdef = (c as { _zod: { def: { check: string; when?: unknown } } })._zod.def;
+      return cdef.check === "custom" || !!cdef.when;
+    });
+  }
+  if (!out) {
+    const children: unknown[] = [];
+    for (const key of CHILD_KEYS) if (def[key]) children.push(def[key]);
+    if (Array.isArray(def.items)) children.push(...(def.items as unknown[]));
+    if (Array.isArray(def.options)) children.push(...(def.options as unknown[]));
+    if (def.shape) children.push(...Object.values(def.shape as Record<string, unknown>));
+    out = children.some((child) => !!(child as SomeType)?._zod && subtreeRunsCallbacks(child as SomeType));
+  }
+  runsCallbacks.set(schema, out);
+  return out;
+}
+
+// the child parsed on its own payload: its issues join the parent's with the child's path in front, as handlePropertyResult and the array walk do
+export function mergeChildIssues(payload: ParsePayload, child: ParsePayload, path: unknown[]): void {
+  if (!child.issues.length) return;
+  const m = payload.issues.length;
+  payload.issues.push(...child.issues);
+  if (path.length) prefixIssuesFrom(payload.issues, m, path);
+}
+
+// A subtree whose callbacks could read the payload runs inside one of its own, as the interpreter gives every object property, array element and record value: the callbacks see only the child's issues, with child-relative paths, and the parent takes the issues afterwards. A subtree without callbacks pushes straight into the parent's array with its path prefixed at the site, which is the same result without the payload and the closure.
+function emitIsolatedChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const mergeConst = addConstant(ctx, mergeChildIssues);
+  const r = newVar(ctx);
+  doc.write(`const ${r} = ((payload) => {`);
+  doc.indented((d) => {
+    d.write(`let _sp;`);
+    const value = compileChildIssues(d, ctx, schema, "payload.value", [], true);
+    d.write(`payload.value = ${value};`);
+    d.write(`return payload;`);
+  });
+  doc.write(`})({ value: ${accessor}, issues: [] });`);
+  doc.write(`${mergeConst}(payload, ${r}, ${path.length ? pathExpr(ctx, path) : "[]"});`);
+  return `${r}.value`;
+}
+
 // Issue-mode counterpart of compileChild: try the native emission, roll back and island on an islandable refusal.
 export function compileChildIssues(
   doc: Doc,
@@ -1507,6 +1544,7 @@ export function compileChildIssues(
   path: IssuePath,
   shared: boolean
 ): string {
+  if (!shared && subtreeRunsCallbacks(schema)) return emitIsolatedChild(doc, ctx, schema, accessor, path);
   const contentLen = doc.content.length;
   const constantCount = ctx.constants.size;
   const constantCounter = ctx.constantCounter;
@@ -1586,7 +1624,7 @@ function generateCheckIssues(
   // the chain mutates its accessor, so alias non-let values
   const chainVar = newVar(ctx);
   doc.write(`let ${chainVar} = ${value};`);
-  generateChecksIssues(doc, ctx, schema, chainVar, path, mark, abOverride, shared);
+  generateChecksIssues(doc, ctx, schema, chainVar, path, mark, abOverride);
   return chainVar;
 }
 

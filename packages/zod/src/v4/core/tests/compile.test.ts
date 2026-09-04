@@ -1721,6 +1721,31 @@ test("compiled issue parsers isolate child payloads and keep unions at two callb
   });
   const seen = compile(sibling).safeParse({ a: 1, b: "ok" });
   expect(!seen.success && seen.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+  // the same for a transform
+  const transformed = z.object({
+    a: z.string(),
+    b: z.string().transform((value, ctx) => {
+      if (ctx.issues.length) ctx.addIssue({ code: "custom", message: "saw sibling" });
+      return value;
+    }),
+  });
+  const viaTransform = compile(transformed).safeParse({ a: 1, b: "ok" });
+  expect(!viaTransform.success && viaTransform.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+  // and a child's own issues reach its callbacks exactly as the interpreter hands them over: unprefixed, the parent's path added only on the way out
+  const captured: unknown[] = [];
+  const own = z.object({
+    b: z
+      .string()
+      .min(3)
+      .superRefine((_v, ctx) => {
+        captured.push(structuredClone(ctx.issues.map((i) => i.path)));
+      }),
+  });
+  own.safeParse({ b: "x" });
+  const viaOwn = compile(own).safeParse({ b: "x" });
+  expect(!viaOwn.success && viaOwn.error.issues.map((i) => i.path)).toEqual([["b"]]);
+  expect(captured).toHaveLength(2);
+  expect(captured[1]).toEqual(captured[0]);
 
   // a record value's stopped pipe aborts the value, not the record, so the record's own refinement still runs
   const value = z
