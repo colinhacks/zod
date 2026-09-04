@@ -390,7 +390,10 @@ export interface ShapeGetter {
  */
 export function rawShape(def: any): Record<PropertyKey, any> | undefined {
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
-  return desc?.get ? (desc.get as ShapeGetter).raw : desc?.value;
+  if (!desc?.get) return desc?.value;
+  // zod's own getter carries `raw` as data; a foreign getter's `raw` could be an accessor, and reading it would break the no-invocation promise
+  const raw = Object.getOwnPropertyDescriptor(desc.get, "raw");
+  return raw && !raw.get ? raw.value : undefined;
 }
 
 // where a builder reads its source's keys and descriptors, resolving only a shape a def answers for itself. A shape resolves by object spread, so only its enumerable keys are ever part of it.

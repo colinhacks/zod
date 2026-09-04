@@ -1830,6 +1830,19 @@ test("compiling and rejecting never runs a default or prefault factory for a pre
   const withGetter = compile(z.object({ child, bad: z.string() }));
   expect(withGetter.safeParse({ child: "ok", bad: 1 }).success).toBe(false);
   expect(reads).toBe(0);
+  // nor is an accessor hung on a foreign getter function under the name of zod's own `raw`
+  const foreignGetter = () => ({});
+  Object.defineProperty(foreignGetter, "raw", {
+    get() {
+      reads++;
+      throw new Error("raw getter ran");
+    },
+  });
+  const withRaw = new Custom(
+    Object.defineProperty({ type: "string" }, "shape", { get: foreignGetter, enumerable: true }) as never
+  );
+  expect(compile(z.object({ withRaw, bad: z.string() })).safeParse({ withRaw: "ok", bad: 1 }).success).toBe(false);
+  expect(reads).toBe(0);
   // while a pick() shape, lazy until its first read, still classifies the callback behind it
   const picked = z.object({ c: z.string().superRefine(() => {}), d: z.number() }).pick({ c: true });
   expect(Object.getOwnPropertyDescriptor(picked._zod.def, "shape")?.get).toBeDefined();
