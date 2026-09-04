@@ -152,6 +152,8 @@ test("a live member keeps the descriptor a prototype member had", () => {
   const proto = Object.getPrototypeOf(z.string());
   expect(Object.getOwnPropertyDescriptor(proto, "description")?.enumerable).toBe(false);
   expect(Object.getOwnPropertyDescriptor(proto, "_def")?.enumerable).toBe(false);
+  // a derived member installs like a literal's accessor: not enumerable, still configurable
+  expect(Object.getOwnPropertyDescriptor(proto, "minLength")).toMatchObject({ enumerable: false, configurable: true });
 
   // the derived metadata members live on the prototype and shadow as own data on first read
   const schema = z.string();

@@ -1144,7 +1144,9 @@ export /*@__NO_SIDE_EFFECTS__*/ function derived<T>(
 ): ProtoOf<T> {
   for (const key in computes) {
     const compute = computes[key]!;
+    // an object literal's accessor is configurable and enumerable, and `members` copies the descriptor as written
     Object.defineProperty(table, key, {
+      configurable: true,
       enumerable: true,
       get(this: T) {
         return own(this as object, key, compute(this));
