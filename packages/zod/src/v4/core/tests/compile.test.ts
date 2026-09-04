@@ -1690,6 +1690,19 @@ test("compiled parse methods run user callbacks at most twice on invalid input",
   // the params still reach the failure path
   const mapped = compiled.safeParse({ a: "x" }, { error: () => "mapped" });
   expect(!mapped.success && mapped.error.issues[0]!.message).toBe("mapped");
+  // a compiled schema reached through an island's runtime parse is a nested wrapper on the same context; it must not run its own fast pass again
+  const inner = compile(schema);
+  const outer = compile(z.object({ m: z.map(z.string(), inner) }));
+  const bad = { m: new Map([["k", { a: "x" }]]) };
+  for (const [name, run] of [
+    ["island via safeParse", () => outer.safeParse(bad)],
+    ["island via parse", () => expect(() => outer.parse(bad)).toThrow()],
+    ["island via _zod.run", () => outer._zod.run({ value: bad, issues: [] }, { async: false } as never)],
+  ] as const) {
+    refines = 0;
+    run();
+    expect(refines, name).toBe(2);
+  }
 });
 
 test("issue parsers compile natively for every emitter-backed shape", () => {
