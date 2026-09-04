@@ -385,6 +385,7 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
   bag: util.LoosePartial<{
     minimum: number;
     maximum: number;
+    pattern: RegExp;
     patterns: Set<RegExp>;
     format: string;
     contentEncoding: string;
@@ -399,7 +400,9 @@ export interface $ZodString<Input = unknown> extends _$ZodType<$ZodStringInterna
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = [...(inst?._zod.bag?.patterns ?? [])].pop() ?? regexes.string(inst._zod.bag);
+  // the checks declare their pattern and length bounds on attach; a pattern wins, else the bounds narrow the catch-all
+  const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+  inst._zod.pattern = bag.pattern ?? regexes.string(bag);
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -788,14 +791,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
-
-    // these two drop the offset or seconds `date-time` requires — on the bag not the def, since `z.string().check(...)` lands the format on a different schema
-    if (def.local || def.precision === -1) {
-      inst._zod.bag.laxFormat = true;
-      inst._zod.onattach.push((s) => {
-        (s._zod.bag as $ZodStringInternals<unknown>["bag"]).laxFormat = true;
-      });
-    }
   }
 );
 
@@ -872,8 +867,6 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `ipv4`;
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -908,8 +901,6 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
 
-  inst._zod.bag.format = `ipv6`;
-
   inst._zod.check = (payload) => {
     if (!isValidIPv6(payload.value)) {
       payload.issues.push({
@@ -939,8 +930,6 @@ export interface $ZodMAC extends $ZodType {
 export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
   def.pattern ??= regexes.mac(def.delimiter);
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `mac`;
 });
 
 //////////////////////////////   ZodCIDRv4   //////////////////////////////
@@ -1041,8 +1030,6 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= base64Charset;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.bag.contentEncoding = "base64";
-
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
 
@@ -1080,8 +1067,6 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
   (inst, def): void => {
     def.pattern ??= base64urlCharset;
     $ZodStringFormat.init(inst, def);
-
-    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -4648,18 +4633,11 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
     for (const part of def.parts) {
       if (typeof part === "object" && part !== null) {
         // is Zod schema
-        if (!part._zod.pattern) {
-          // if (!source)
+        const source = part._zod.pattern?.source;
+        if (!source) {
           throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
         }
-
-        const source = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
-
-        if (!source) throw new Error(`Invalid template literal part: ${part._zod.traits}`);
-
-        const start = source.startsWith("^") ? 1 : 0;
-        const end = source.endsWith("$") ? source.length - 1 : source.length;
-        regexParts.push(source.slice(start, end));
+        regexParts.push(util.cleanRegex(source));
       } else if (part === null || util.primitiveTypes.has(typeof part)) {
         regexParts.push(util.escapeRegex(`${part}`));
       } else {

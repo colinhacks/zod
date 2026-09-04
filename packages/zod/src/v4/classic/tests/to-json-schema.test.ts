@@ -777,6 +777,97 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("chained multipleOf divisors emit the whole conjunction", () => {
+    // runtime rejects 4 (not a multiple of 3), so the emitted schema must too
+    expect(z.toJSONSchema(z.number().multipleOf(2).multipleOf(3))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "multipleOf": 3,
+          },
+        ],
+        "multipleOf": 2,
+        "type": "number",
+      }
+    `);
+  });
+
+  test("length() does not overwrite a tighter earlier bound", () => {
+    // min(8) + length(5) matches nothing at runtime; the emitted bounds stay honest about that
+    expect(z.toJSONSchema(z.string().min(8).length(5))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maxLength": 5,
+        "minLength": 8,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("an integer format keeps the emitted type integer whatever format lands last", () => {
+    // runtime rejects 1.5 in both orders, so both must emit type integer
+    const after = z.number().int().check(z.float32());
+    expect(after.safeParse(1.5).success).toBe(false);
+    expect(z.toJSONSchema(after).type).toBe("integer");
+    expect(z.toJSONSchema(z.number().check(z.float32()).int()).type).toBe("integer");
+  });
+
+  test("disjoint mime checks emit a false schema, not an unconstrained file", () => {
+    const file = z.file().mime("image/png").mime("text/plain");
+    expect(z.toJSONSchema(file)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "contentEncoding": "binary",
+        "format": "binary",
+        "not": {},
+        "type": "string",
+      }
+    `);
+  });
+
+  test("a custom mime narrowing via onattach intersects with built-in mime checks", () => {
+    const check = {
+      _zod: {
+        def: { check: "custom_mime" },
+        onattach: [
+          (inst: any) => {
+            inst._zod.bag.mime = ["text/plain"];
+          },
+        ],
+        check: () => {},
+      },
+    };
+    const file = z
+      .file()
+      .mime(["image/png", "text/plain"])
+      .check(check as any);
+    expect(z.toJSONSchema(file).contentMediaType).toBe("text/plain");
+  });
+
+  test("a custom check contributing via onattach still lands", () => {
+    // third-party checks have no converter handler; their bag writes are merged in as a fallback
+    const check = {
+      _zod: {
+        def: { check: "custom_range" },
+        onattach: [
+          (inst: any) => {
+            const bag = inst._zod.bag;
+            if (bag.minimum === undefined || 5 > bag.minimum) bag.minimum = 5;
+          },
+        ],
+        check: () => {},
+      },
+    };
+    expect(z.toJSONSchema(z.number().check(check as any))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+  });
+
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
 

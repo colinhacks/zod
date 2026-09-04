@@ -152,10 +152,16 @@ test("a live member keeps the descriptor a prototype member had", () => {
   const proto = Object.getPrototypeOf(z.string());
   expect(Object.getOwnPropertyDescriptor(proto, "description")?.enumerable).toBe(false);
   expect(Object.getOwnPropertyDescriptor(proto, "_def")?.enumerable).toBe(false);
+  // a derived member installs like a literal's accessor: not enumerable, still configurable
+  expect(Object.getOwnPropertyDescriptor(proto, "minLength")).toMatchObject({ enumerable: false, configurable: true });
 
+  // the derived metadata members live on the prototype and shadow as own data on first read
+  const schema = z.string();
   const keys: string[] = [];
-  for (const k in z.string()) keys.push(k);
-  expect(keys).toEqual(["def", "type", "format", "minLength", "maxLength"]);
+  for (const k in schema) keys.push(k);
+  expect(keys).toEqual(["def", "type"]);
+  expect(schema.minLength).toBe(null);
+  expect(Object.keys(schema)).toContain("minLength");
 });
 
 test("a live member is not cached per instance", () => {
@@ -221,6 +227,16 @@ test("a hand-written getter member accepts assignment", () => {
   const mini: any = zm.string();
   mini.with = () => "WITH";
   expect(mini.with()).toBe("WITH");
+
+  // a derived metadata member accepts assignment before its first read, as it did as an own property
+  const derived = z.number().min(2);
+  derived.minValue = 99;
+  expect(derived.minValue).toBe(99);
+  expect(Object.keys(derived)).toContain("minValue");
+
+  // and, like every prototype member, recomputes after deletion rather than staying absent
+  delete (derived as any).minValue;
+  expect(derived.minValue).toBe(2);
 });
 
 test("shape is lazy and stays out of Object.keys", () => {

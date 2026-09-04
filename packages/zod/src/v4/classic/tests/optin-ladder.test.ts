@@ -222,7 +222,8 @@ test("ladder: the rung values themselves", () => {
 
 test("exactOptional overrides the values and pattern optional installs", () => {
   expect(z.exactOptional(z.enum(["a", "b"]))._zod.values).toEqual(new Set(["a", "b"]));
-  expect(z.exactOptional(z.string().regex(/^abc$/))._zod.pattern).toEqual(/^abc$/);
+  // a format carries its pattern on its def; a chained `.regex()` no longer folds into the inner `_zod.pattern`, the template literal derives that itself
+  expect(z.exactOptional(z.stringFormat("abc", /^abc$/))._zod.pattern).toEqual(/^abc$/);
   expect(z.templateLiteral(["a", z.exactOptional(z.literal("b"))]).safeParse("a").success).toEqual(false);
 });
 
@@ -230,5 +231,5 @@ test("exactOptional overrides the values and pattern optional installs", () => {
 test("exactOptional's override holds for later instances", () => {
   z.exactOptional(z.enum(["a", "b"]));
   expect(z.exactOptional(z.enum(["c", "d"]))._zod.values).toEqual(new Set(["c", "d"]));
-  expect(z.exactOptional(z.string().regex(/^xyz$/))._zod.pattern).toEqual(/^xyz$/);
+  expect(z.exactOptional(z.stringFormat("xyz", /^xyz$/))._zod.pattern).toEqual(/^xyz$/);
 });

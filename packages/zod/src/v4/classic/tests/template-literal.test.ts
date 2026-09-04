@@ -778,3 +778,27 @@ test("template literal parsing - failure - issue format", () => {
     }
   `);
 });
+
+test("part patterns fold checks through wrappers and unions", () => {
+  // a constrained string keeps its bounds under a wrapper and inside a union
+  const wrapped = z.templateLiteral(["a-", z.string().min(2).max(3).optional()]);
+  expect(wrapped.safeParse("a-").success).toBe(true);
+  expect(wrapped.safeParse("a-xy").success).toBe(true);
+  expect(wrapped.safeParse("a-x").success).toBe(false);
+  expect(wrapped.safeParse("a-wxyz").success).toBe(false);
+
+  const union = z.templateLiteral(["", z.union([z.string().regex(/^[a-c]+$/), z.number().int()])]);
+  expect(union.safeParse("abc").success).toBe(true);
+  expect(union.safeParse("12").success).toBe(true);
+  expect(union.safeParse("xyz").success).toBe(false);
+  expect(union.safeParse("1.5").success).toBe(false);
+
+  // an empty length range matches nothing rather than building an invalid quantifier
+  const empty = z.templateLiteral(["", z.string().min(8).length(5)]);
+  expect(empty.safeParse("abcde").success).toBe(false);
+
+  // lazy resolves its inner schema on the internals, not the def
+  const lazy = z.templateLiteral(["", z.lazy(() => z.string().min(2)).optional()]);
+  expect(lazy.safeParse("x").success).toBe(false);
+  expect(lazy.safeParse("xy").success).toBe(true);
+});
