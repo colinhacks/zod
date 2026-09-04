@@ -251,7 +251,6 @@ const _messageDesc: PropertyDescriptor = {
   enumerable: true,
   configurable: true,
 };
-const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 const _issuesDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
 /* Prototypes that already carry the lazy `toString`. Seeded with the
@@ -261,12 +260,10 @@ const _installedToString = /* @__PURE__ */ new WeakSet<object>([Object.prototype
 
 const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
   inst.name = "$ZodError";
-  _zodDesc.value = inst._zod;
-  Object.defineProperty(inst, "_zod", _zodDesc);
+  // `_zod` is already non-enumerable: $constructor's init defined it with this same descriptor
   _issuesDesc.value = def;
   Object.defineProperty(inst, "issues", _issuesDesc);
-  // Clear the shared slots; a retained `value` pins the last error's issues.
-  _zodDesc.value = undefined;
+  // Clear the shared slot; a retained `value` pins the last error's issues.
   _issuesDesc.value = undefined;
   Object.defineProperty(inst, "message", _messageDesc);
 
