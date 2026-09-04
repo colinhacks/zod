@@ -27,7 +27,7 @@ export type INVALID = typeof INVALID;
 
 // Set on the parse ctx when a compiled wrapper falls back to the runtime, so nested compiled wrappers skip their fast paths for the rest of that parse.
 const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
-// raised by a compiled method that already rejected, naming the schema whose runtime method it is about to enter: the fast parser has run, go straight to the issue parser. Module state rather than a parse-context entry, so the fallback takes no context spread and no flag reads; only that schema's own wrapper consumes it, so a route that reaches a nested wrapper first cannot skip that wrapper's checks, and the method clears it either way.
+// raised by a compiled method that already rejected, naming the schema whose runtime method it is about to enter: the fast parser has run, go straight to the issue parser. Module state rather than a parse-context entry, so the fallback takes no context spread and no flag reads; only that schema's own wrapper consumes it, so a route that reaches a nested wrapper first cannot skip that wrapper's checks, and the method restores whatever it found there, so a re-entrant call from a params getter evaluated on the way in cannot clear an outer signal.
 let skipFastFor: unknown = null;
 // set on the parse context where the issue path hands a subtree to the interpreter, so a compiled wrapper the interpreter reaches inside it skips its own fast pass: user callbacks run at most twice on invalid input
 const SKIP_FAST: unique symbol = Symbol.for("zod.compile.skipfast");
@@ -229,11 +229,12 @@ function installCompiledUserMethods<T extends SomeType>(target: T, parser: Compi
       if (out !== INVALID) {
         return { success: true, data: out };
       }
+      const outer = skipFastFor;
       skipFastFor = target;
       try {
         return originalSafeParse(data, params);
       } finally {
-        skipFastFor = null;
+        skipFastFor = outer;
       }
     };
   }
@@ -245,11 +246,12 @@ function installCompiledUserMethods<T extends SomeType>(target: T, parser: Compi
       if (out !== INVALID) {
         return out;
       }
+      const outer = skipFastFor;
       skipFastFor = target;
       try {
         return originalParse(data, params);
       } finally {
-        skipFastFor = null;
+        skipFastFor = outer;
       }
     };
   }

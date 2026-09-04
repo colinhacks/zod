@@ -1675,17 +1675,32 @@ test("compiled parse methods run user callbacks at most twice on invalid input",
   });
   const compiled = compile(schema);
   // every route to the failure path: the fast method rejects once, then the wrapper builds the issues without a second fast pass
-  const routes: Array<[string, () => unknown]> = [
+  const routes: Array<[string, () => unknown, number?]> = [
     ["safeParse", () => compiled.safeParse({ a: "x" })],
     ["parse", () => expect(() => compiled.parse({ a: "x" })).toThrow()],
     ["safeParse with params", () => compiled.safeParse({ a: "x" }, { error: () => "mapped" })],
     ["z.safeParse", () => z.safeParse(compiled, { a: "x" })],
     ["issues: false", () => compile(schema, { issues: false }).safeParse({ a: "x" })],
+    // a params getter the runtime method evaluates on the way in re-enters the compiled method; the inner call accounts for two runs and must leave the outer signal in place
+    [
+      "re-entering params getter",
+      () =>
+        compiled.safeParse(
+          { a: "x" },
+          {
+            get error() {
+              compiled.safeParse({ a: "x" });
+              return () => undefined;
+            },
+          }
+        ),
+      4,
+    ],
   ];
-  for (const [name, run] of routes) {
+  for (const [name, run, expected = 2] of routes) {
     refines = 0;
     run();
-    expect(refines, name).toBe(2);
+    expect(refines, name).toBe(expected);
   }
   // the params still reach the failure path
   const mapped = compiled.safeParse({ a: "x" }, { error: () => "mapped" });
