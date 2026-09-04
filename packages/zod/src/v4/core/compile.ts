@@ -1340,7 +1340,8 @@ export function generateChecksIssues(
   valueVar: string,
   path: IssuePath,
   nodeMark: string,
-  abOverride: string | null = null
+  abOverride: string | null,
+  shared: boolean
 ): void {
   const defChecks = (schema._zod.def.checks as SupportedCheck[] | undefined) ?? [];
   const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
@@ -1366,8 +1367,10 @@ export function generateChecksIssues(
     if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
       throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
     }
+    // a node the interpreter parses on a payload of its own (an object property, an array element) shows its callbacks only its own issues: a local payload seeded with what this node pushed so far, merged back afterwards. a node on the shared spine hands over the scratch payload, whose issues array is the caller's
+    const ownPayload = `{ value: ${valueVar}, issues: ${nodeMark ? `payload.issues.slice(${nodeMark})` : "[]"} }`;
     const guard = def.when
-      ? `(!${gate.ab} || (!${gate.ex} && ${addConstant(ctx, def.when)}((${SP_INIT}.value = ${valueVar}, _sp))))`
+      ? `(!${gate.ab} || (!${gate.ex} && ${addConstant(ctx, def.when)}(${shared ? `(${SP_INIT}.value = ${valueVar}, _sp)` : ownPayload})))`
       : `!${gate.ab}`;
 
     switch (def.check) {
@@ -1389,10 +1392,23 @@ export function generateChecksIssues(
         const r = newVar(ctx);
         doc.write(`if (${guard}) {`);
         doc.indented((d) => {
-          d.write(`${SP_INIT}.value = ${valueVar};`);
-          d.write(`const ${m} = payload.issues.length;`);
-          d.write(`const ${r} = ${checkConst}(_sp);`);
-          d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
+          if (shared) {
+            d.write(`${SP_INIT}.value = ${valueVar};`);
+            d.write(`const ${m} = payload.issues.length;`);
+            d.write(`const ${r} = ${checkConst}(_sp);`);
+            d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
+          } else {
+            const p = newVar(ctx);
+            const n = newVar(ctx);
+            d.write(`const ${p} = ${ownPayload};`);
+            d.write(`const ${n} = ${p}.issues.length;`);
+            d.write(`const ${r} = ${checkConst}(${p});`);
+            d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
+            d.write(`const ${m} = payload.issues.length;`);
+            const i = newVar(ctx);
+            d.write(`for (let ${i} = ${n}; ${i} < ${p}.issues.length; ${i}++) payload.issues.push(${p}.issues[${i}]);`);
+            d.write(`${valueVar} = ${p}.value;`);
+          }
           d.write(`if (payload.issues.length > ${m}) {`);
           d.indented((d2) => {
             d2.write(`${att}(payload.issues, ${m}, ${ownerConst});`);
@@ -1401,7 +1417,7 @@ export function generateChecksIssues(
             if (gate.ex) d2.write(`if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});`);
           });
           d.write(`}`);
-          d.write(`${valueVar} = _sp.value;`);
+          if (shared) d.write(`${valueVar} = _sp.value;`);
         });
         doc.write(`}`);
         break;
@@ -1570,7 +1586,7 @@ function generateCheckIssues(
   // the chain mutates its accessor, so alias non-let values
   const chainVar = newVar(ctx);
   doc.write(`let ${chainVar} = ${value};`);
-  generateChecksIssues(doc, ctx, schema, chainVar, path, mark, abOverride);
+  generateChecksIssues(doc, ctx, schema, chainVar, path, mark, abOverride, shared);
   return chainVar;
 }
 

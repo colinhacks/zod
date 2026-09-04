@@ -1615,31 +1615,20 @@ function generateUnionIssues(
     return v;
   }
 
-  // two-phase: the fast-mode branch attempts decide the match on the hot path; on total failure each branch re-runs as a compiled issue parser against a payload of its own (the interpreter gives branches fresh payloads too), and a helper mirroring handleUnionResults aggregates them
+  // each branch runs as a compiled issue parser against a payload of its own and the walk stops at the first clean branch, like $ZodUnion.parse; a helper mirroring handleUnionResults aggregates the rest. no fast pre-pass here: the outer fast parser already ran the branches once, and a second pass would run every branch callback a third time
   const v = newVar(ctx);
+  const { pfx } = issueConsts(ctx);
+  const helperConst = addConstant(ctx, unionIssuesForCompiled);
+  const instConst = addConstant(ctx, schema);
+  const rsVar = newVar(ctx);
+  const m = newVar(ctx);
+  const label = `u${newVar(ctx)}`;
   doc.write(`let ${v};`);
-  for (let i = 0; i < options.length; i++) {
-    const opt = options[i]!;
-    if (i === 0) {
-      doc.write(`${v} = (() => {`);
-    } else {
-      doc.write(`if (${v} === INVALID) ${v} = (() => {`);
-    }
-    doc.indented((d) => {
-      const branchOutput = generateCheck(d, ctx, opt, accessor);
-      d.write(`return ${branchOutput};`);
-    });
-    doc.write(`})();`);
-  }
-  doc.write(`if (${v} === INVALID) {`);
+  doc.write(`const ${rsVar} = [];`);
+  doc.write(`${label}: {`);
   doc.indented((d) => {
-    const { pfx } = issueConsts(ctx);
-    const helperConst = addConstant(ctx, unionIssuesForCompiled);
-    const instConst = addConstant(ctx, schema);
-    const rsVar = newVar(ctx);
-    const m = newVar(ctx);
-    d.write(`const ${rsVar} = [];`);
-    for (const opt of options) {
+    for (let i = 0; i < options.length; i++) {
+      const opt = options[i]!;
       // the shadowed `payload` and fresh `_sp` confine the branch's pushes to its own local payload, exactly like the interpreter's per-branch payloads; `shared` is true relative to that payload so a branch pipe's abort flag lands on it for the nonaborted filter
       d.write(`${rsVar}.push(((payload) => {`);
       d.indented((d2) => {
@@ -1649,12 +1638,13 @@ function generateUnionIssues(
         d2.write(`return payload;`);
       });
       d.write(`})({ value: ${accessor}, issues: [] }));`);
+      if (i < options.length - 1) d.write(`if (${rsVar}[${i}].issues.length === 0) break ${label};`);
     }
-    d.write(`const ${m} = payload.issues.length;`);
-    d.write(`${v} = ${helperConst}(${instConst}, ${accessor}, payload, ${rsVar}, pctx, ${shared});`);
-    if (path.length) d.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
   });
   doc.write(`}`);
+  doc.write(`const ${m} = payload.issues.length;`);
+  doc.write(`${v} = ${helperConst}(${instConst}, ${accessor}, payload, ${rsVar}, pctx, ${shared});`);
+  if (path.length) doc.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
   return v;
 }
 
@@ -1665,7 +1655,7 @@ function generateRecordIssues(
   schema: SomeType,
   accessor: string,
   path: IssuePath,
-  shared: boolean
+  _shared: boolean
 ): string {
   const def = schema._zod.def as unknown as {
     keyType: SomeType;
@@ -1717,7 +1707,7 @@ function generateRecordIssues(
           // the path element is the declared key as declared: a numeric key stays a number, like util.prefixIssues(key, …) in the runtime
           const keyExpr = typeof key === "number" ? String(key) : literalPropertyKey(ctx, key);
           d2.write(`const ${valueVar} = ${accessor}[${keyExpr}];`);
-          const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, keyExpr], shared);
+          const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, keyExpr], false);
           d2.write(`${out}[${outKey}] = ${val};`);
         });
         d.write(`}`);
@@ -1765,7 +1755,7 @@ function generateRecordIssues(
         d2.write(`if (${outKey} === "__proto__") continue;`);
         const valueVar = newVar(ctx);
         d2.write(`const ${valueVar} = ${accessor}[${k}];`);
-        const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, k], shared);
+        const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, k], false);
         d2.write(`${out}[${outKey}] = ${val};`);
       });
       d.write(`}`);

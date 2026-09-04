@@ -1710,3 +1710,57 @@ test("issue parsers compile natively for every emitter-backed shape", () => {
     expect(() => compileFn(schema, { issues: true }), name).not.toThrow();
   }
 });
+
+test("compiled issue parsers isolate child payloads and keep unions at two callback runs", () => {
+  // a property's superRefine sees only its own issues, like the interpreter's per-property payload
+  const sibling = z.object({
+    a: z.string(),
+    b: z.string().superRefine((_v, ctx) => {
+      if (ctx.issues.length) ctx.addIssue({ code: "custom", message: "saw sibling" });
+    }),
+  });
+  const seen = compile(sibling).safeParse({ a: 1, b: "ok" });
+  expect(!seen.success && seen.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+
+  // a record value's stopped pipe aborts the value, not the record, so the record's own refinement still runs
+  const value = z
+    .string()
+    .refine(() => false)
+    .pipe(z.string());
+  const rec = z.record(z.string(), value).refine(() => false);
+  const compiledRec = compile(rec).safeParse({ a: "x" });
+  const runtimeRec = rec.safeParse({ a: "x" });
+  expect(!compiledRec.success && compiledRec.error.issues).toEqual(!runtimeRec.success && runtimeRec.error.issues);
+
+  // a failing union runs each branch callback once in the fast parser and once in the issue parser, never a third time
+  let calls = 0;
+  const failing = () => {
+    calls++;
+    return false;
+  };
+  const passing = () => {
+    calls++;
+    return true;
+  };
+  const union = compile(z.union([z.string().refine(failing), z.number()]));
+  union.safeParse("x");
+  expect(calls).toBe(2);
+  // and inside the issue parser a matching branch ends the walk, like $ZodUnion.parse: a sibling failure forces the issue walk, the second branch matches, the third never runs
+  let third = 0;
+  calls = 0;
+  const later = compile(
+    z.object({
+      u: z.union([
+        z.number(),
+        z.string().refine(passing),
+        z.string().refine(() => {
+          third++;
+          return true;
+        }),
+      ]),
+      k: z.string(),
+    })
+  );
+  expect(later.safeParse({ u: "x", k: 1 }).success).toBe(false);
+  expect([calls, third]).toEqual([2, 0]);
+});
