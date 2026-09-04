@@ -26,6 +26,8 @@ export type INVALID = typeof INVALID;
 
 // Set on the parse ctx when a compiled wrapper falls back to the runtime, so nested compiled wrappers skip their fast paths for the rest of that parse.
 const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
+// set on a parse context by a compiled method that already rejected: the wrapper goes straight to the failure path
+const SKIP_FAST = /* @__PURE__ */ Symbol.for("zod.compile.skipfast");
 
 interface CompileFnOptions {
   debug?: boolean | undefined;
@@ -131,14 +133,19 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     const clone = util.clone(schema as any) as T;
 
     type IssueParser = (input: unknown, payload: ParsePayload, pctx: ParseContextInternal) => unknown;
-    let issueParser: IssueParser | null = null;
-    if (options?.issues !== false) {
-      try {
-        issueParser = compileFn(schema, { issues: true }) as unknown as IssueParser;
-      } catch (err) {
-        if (!(err instanceof ZodCompileUnsupportedError || err instanceof ZodCompileAsyncError)) throw err;
+    // Compiled on the first rejection: a schema that never fails never pays for its issue parser, whose source alone can outweigh the schema, and z.compile stays a fast-path-only cost up front. A refusal falls back to the runtime re-parse for good.
+    let issueParser: IssueParser | null | undefined = options?.issues === false ? null : undefined;
+    const issueParserFor = (): IssueParser | null => {
+      if (issueParser === undefined) {
+        try {
+          issueParser = compileFn(schema, { issues: true }) as unknown as IssueParser;
+        } catch (err) {
+          if (!(err instanceof ZodCompileUnsupportedError || err instanceof ZodCompileAsyncError)) throw err;
+          issueParser = null;
+        }
       }
-    }
+      return issueParser;
+    };
 
     // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
     const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
@@ -167,14 +174,18 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
         return originalRun(payload, ctx);
       }
 
-      const out = parser(payload.value);
-      if (out !== INVALID) {
-        payload.value = out;
-        return payload;
+      // a compiled parse/safeParse method that already rejected comes back through here to build the failure; running the fast parser again would only run user callbacks once more
+      if (!(ctx as Record<symbol, unknown> | undefined)?.[SKIP_FAST]) {
+        const out = parser(payload.value);
+        if (out !== INVALID) {
+          payload.value = out;
+          return payload;
+        }
       }
       // The issue parser replaces the runtime fallback. `validate` asks for the first failure only (abortEarly); the issue parser walks everything, so that answer still comes from the runtime.
-      if (issueParser && !ctx?.abortEarly) {
-        payload.value = issueParser(payload.value, payload, ctx);
+      const issues = ctx?.abortEarly ? null : issueParserFor();
+      if (issues) {
+        payload.value = issues(payload.value, payload, ctx);
         return payload;
       }
       // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
@@ -185,11 +196,10 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fallbackRun = originalRun;
     clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
-    if (issueParser) clone._zod.bag.issueParser = issueParser;
     clone._zod.run = wrapped;
 
-    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip. With an issue parser they fall back through the CLONE's own methods, so a rejection lands in the wrapper's issue parser instead of a whole-schema re-parse.
-    if (!liveRun.__originalRun) installCompiledUserMethods(clone, issueParser ? clone : schema, parser);
+    // The fast parse/safeParse closures fall back through the clone's own methods with the skip-fast flag, so a rejection lands in the wrapper's issue parser (or its runtime fallback) without running the fast parser a second time: user callbacks run at most twice on invalid input. If the source is shim-managed, its methods already route into a compiled run, so skip.
+    if (!liveRun.__originalRun) installCompiledUserMethods(clone, parser);
 
     return clone;
   } catch (err) {
@@ -199,33 +209,32 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
   }
 }
 
-function installCompiledUserMethods<T extends SomeType>(
-  target: T,
-  source: T,
-  parser: CompiledFn<core.output<T>>
-): void {
-  const targetAny = target as any;
-  const sourceAny = source as any;
+// parse params spread into the parse context, so the flag rides along to the wrapper
+const SKIP_FAST_PARAMS = { [SKIP_FAST]: true };
+const skipFast = (params: unknown) => (params ? { ...(params as object), [SKIP_FAST]: true } : SKIP_FAST_PARAMS);
 
-  if (typeof sourceAny.safeParse === "function") {
-    const originalSafeParse = sourceAny.safeParse;
+function installCompiledUserMethods<T extends SomeType>(target: T, parser: CompiledFn<core.output<T>>): void {
+  const targetAny = target as any;
+
+  if (typeof targetAny.safeParse === "function") {
+    const originalSafeParse = targetAny.safeParse;
     targetAny.safeParse = (data: unknown, params?: unknown) => {
       const out = parser(data);
       if (out !== INVALID) {
         return { success: true, data: out };
       }
-      return originalSafeParse(data, params);
+      return originalSafeParse(data, skipFast(params));
     };
   }
 
-  if (typeof sourceAny.parse === "function") {
-    const originalParse = sourceAny.parse;
+  if (typeof targetAny.parse === "function") {
+    const originalParse = targetAny.parse;
     targetAny.parse = (data: unknown, params?: unknown) => {
       const out = parser(data);
       if (out !== INVALID) {
         return out;
       }
-      return originalParse(data, params);
+      return originalParse(data, skipFast(params));
     };
   }
 }
@@ -1227,13 +1236,38 @@ export function issueConsts(ctx: CompileContext) {
 
 export const SP_INIT = `(_sp ??= { value: null, issues: payload.issues })`;
 
-// Cold block for a failed leaf type test: re-run the node's runtime parse so it pushes the canonical issue, then prefix. The parse re-evaluates a trivial predicate; the price of never hand-building an issue shape.
+// Cold call for a failed leaf type test: the node's own runtime parse pushes the canonical issue onto the caller's issues array, then the pushed issues get their root-relative path. The parse re-evaluates a trivial predicate; the price of never hand-building an issue shape.
+export function coldParse(
+  value: unknown,
+  parse: (p: ParsePayload, c: ParseContextInternal) => unknown,
+  payload: ParsePayload,
+  pctx: ParseContextInternal | undefined,
+  path?: unknown[]
+): void {
+  const m = payload.issues.length;
+  parse({ value, issues: payload.issues }, pctx as ParseContextInternal);
+  if (path && payload.issues.length > m) prefixIssuesFrom(payload.issues, m, path);
+}
+
+// Cold call for a failed check predicate: the runtime check pushes canonically, the owning schema is stamped, and the pushed issues get their path. The chain's abort gates are recomputed by the caller from the node mark.
+export function coldCheck(
+  value: unknown,
+  check: (p: ParsePayload) => unknown,
+  payload: ParsePayload,
+  owner: unknown,
+  path?: unknown[]
+): void {
+  const m = payload.issues.length;
+  check({ value, issues: payload.issues });
+  util.attachSchema(payload.issues, m, owner as never);
+  if (path && payload.issues.length > m) prefixIssuesFrom(payload.issues, m, path);
+}
+
 export function leafFailBlock(ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
-  const { pfx } = issueConsts(ctx);
+  const coldConst = addConstant(ctx, coldParse);
   const parseConst = addConstant(ctx, schema._zod.parse);
-  const m = newVar(ctx);
-  const prefix = path.length ? ` ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);` : "";
-  return `{ ${SP_INIT}.value = ${accessor}; const ${m} = payload.issues.length; ${parseConst}(_sp, pctx);${prefix} }`;
+  const pathArg = path.length ? `, [${path.join(", ")}]` : "";
+  return `${coldConst}(${accessor}, ${parseConst}, payload, pctx${pathArg});`;
 }
 
 interface ChainGate {
@@ -1241,7 +1275,7 @@ interface ChainGate {
   ex: string | null;
 }
 
-// Cold block for a failed check predicate: re-run the runtime check so it pushes canonically, stamp the owning schema, prefix, and update the abort gates. `label` breaks out of the check's remaining hot statements (multi-site checks like url).
+// Cold block for a failed check predicate: `coldCheck` pushes canonically, then the gates are recomputed from the node mark (every issue of this node sits after it, so "aborted since the mark" is exactly the accumulated gate). `label` breaks out of the check's remaining hot statements (multi-site checks like url).
 function checkFailBlock(
   ctx: CompileContext,
   check: { _zod: { check?: unknown } },
@@ -1249,16 +1283,18 @@ function checkFailBlock(
   accessor: string,
   path: IssuePath,
   gate: ChainGate,
-  label: string
+  label: string,
+  nodeMark: string,
+  pre: string
 ): string {
-  const { pfx, abt, eabt, att } = issueConsts(ctx);
+  const { abt, eabt } = issueConsts(ctx);
   const checkFn = (check._zod as { check?: unknown }).check;
   if (typeof checkFn !== "function") throw new ZodCompileUnsupportedError("check without a runtime check function");
+  const coldConst = addConstant(ctx, coldCheck);
   const checkConst = addConstant(ctx, checkFn);
-  const m = newVar(ctx);
-  const prefix = path.length ? ` ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);` : "";
-  const exUpd = gate.ex ? ` if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});` : "";
-  return `{ ${SP_INIT}.value = ${accessor}; const ${m} = payload.issues.length; ${checkConst}(_sp); ${att}(payload.issues, ${m}, ${ownerConst});${prefix} if (!${gate.ab}) ${gate.ab} = ${abt}(payload, ${m});${exUpd} break ${label}; }`;
+  const pathArg = path.length ? `, [${path.join(", ")}]` : "";
+  const exUpd = gate.ex ? ` ${gate.ex} = ${pre}${eabt}(payload, ${nodeMark});` : "";
+  return `{ ${coldConst}(${accessor}, ${checkConst}, payload, ${ownerConst}${pathArg}); ${gate.ab} = ${pre}${abt}(payload, ${nodeMark});${exUpd} break ${label}; }`;
 }
 
 /**
@@ -1367,7 +1403,7 @@ export function generateChecksIssues(
           });
           d.write(`})();`);
           d.write(
-            `if (${r} === INVALID) ${checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label)}`
+            `if (${r} === INVALID) ${checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label, nodeMark, pre)}`
           );
         });
         doc.write(`}`);
@@ -1378,7 +1414,17 @@ export function generateChecksIssues(
         doc.write(`if (${guard}) ${label}: {`);
         doc.indented((d) => {
           const fail = () =>
-            checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label);
+            checkFailBlock(
+              ctx,
+              check as { _zod: { check?: unknown } },
+              ownerConst,
+              valueVar,
+              path,
+              gate,
+              label,
+              nodeMark,
+              pre
+            );
           const out = emitCheckPredicate(d, ctx, check, valueVar, fail);
           if (out !== valueVar) d.write(`${valueVar} = ${out};`);
         });
@@ -1435,7 +1481,7 @@ export function compileChildIssues(
   }
 }
 
-/** An issue-mode emitter for one node: writes the node's body against `accessor`, pushing canonical issues (prefixed with `path`) into `payload.issues`, and returns the accessor holding the node's value. `mark` is `payload.issues.length` before the node; a pipe also hands back the gate that stops its check chain. */
+/** An issue-mode emitter for one node: writes the node's body against `accessor`, pushing canonical issues (prefixed with `path`) into `payload.issues`, and returns the accessor holding the node's value. `mark` is `payload.issues.length` before the node, present only for an entry that declares `marks`; a pipe also hands back the gate that stops its check chain. */
 export type IssueCodegen = (
   doc: Doc,
   ctx: CompileContext,
@@ -1475,15 +1521,17 @@ function generateCheckIssues(
   const def = schema._zod.def;
 
   // coercion rewrites the value before the type test — the interpreter models it, so island the node
-  const emit = (def as { coerce?: boolean }).coerce ? undefined : emitterFor(schema)?.issues;
+  const entry = (def as { coerce?: boolean }).coerce ? undefined : emitterFor(schema);
+  const emit = entry?.issues;
   if (!emit) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
 
   const defChecks = (def.checks as unknown[] | undefined) ?? [];
   const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
   const hasChain = defChecks.length > 0 || isOwnCheck;
 
-  const mark = newVar(ctx);
-  doc.write(`const ${mark} = payload.issues.length;`);
+  // the mark costs a statement per node, so only a node whose chain or emitter reads it takes one
+  const mark = hasChain || entry.marks ? newVar(ctx) : "";
+  if (mark) doc.write(`const ${mark} = payload.issues.length;`);
 
   const out = emit(doc, ctx, schema, accessor, path, shared, mark);
   const value = typeof out === "string" ? out : out.value;

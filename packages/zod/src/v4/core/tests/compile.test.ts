@@ -1658,3 +1658,30 @@ test("strict is per-call, so a supported schema compiles either way", () => {
     invalid(aot, { a: 1, b: 1 });
   }
 });
+
+test("compiled parse methods run user callbacks at most twice on invalid input", () => {
+  let refines = 0;
+  const schema = z.object({
+    a: z.string().refine(() => {
+      refines++;
+      return false;
+    }),
+  });
+  const compiled = compile(schema);
+  // every route to the failure path: the fast method rejects once, then the wrapper builds the issues without a second fast pass
+  const routes: Array<[string, () => unknown]> = [
+    ["safeParse", () => compiled.safeParse({ a: "x" })],
+    ["parse", () => expect(() => compiled.parse({ a: "x" })).toThrow()],
+    ["safeParse with params", () => compiled.safeParse({ a: "x" }, { error: () => "mapped" })],
+    ["z.safeParse", () => z.safeParse(compiled, { a: "x" })],
+    ["issues: false", () => compile(schema, { issues: false }).safeParse({ a: "x" })],
+  ];
+  for (const [name, run] of routes) {
+    refines = 0;
+    run();
+    expect(refines, name).toBe(2);
+  }
+  // the params still reach the failure path
+  const mapped = compiled.safeParse({ a: "x" }, { error: () => "mapped" });
+  expect(!mapped.success && mapped.error.issues[0]!.message).toBe("mapped");
+});

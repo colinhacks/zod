@@ -1786,6 +1786,8 @@ type Codegen = (doc: Doc, ctx: CompileContext, inst: SomeType, accessor: string,
 interface Emitter {
   fast: Codegen;
   issues?: IssueCodegen;
+  /** The issue emitter reads `mark` (the issue count before the node). */
+  marks?: true;
 }
 
 // One emitter per core subclass, keyed by the trait name its constructor records. A class without an entry inherits its nearest ancestor's; a class without any compilable ancestor is unsupported. Only `compile()` reads this, so a bundle that never compiles keeps none of it.
@@ -1983,6 +1985,7 @@ const emitters: Record<string, Emitter> = {
   $ZodNonOptional: {
     fast: (doc, ctx, inst, accessor) => generateNonOptionalCheck(doc, ctx, inst, accessor),
     issues: nonOptionalIssues,
+    marks: true,
   },
   $ZodDefault: {
     fast: (doc, ctx, inst, accessor) => generateDefaultCheck(doc, ctx, inst, accessor),
@@ -2012,11 +2015,20 @@ const emitters: Record<string, Emitter> = {
   $ZodMap: { fast: (doc, ctx, inst, accessor) => generateMapCheck(doc, ctx, inst, accessor) },
   $ZodSet: { fast: (doc, ctx, inst, accessor) => generateSetCheck(doc, ctx, inst, accessor) },
   $ZodLazy: { fast: (doc, ctx, inst, accessor) => generateLazyCheck(doc, ctx, inst, accessor) },
-  $ZodPipe: { fast: (doc, ctx, inst, accessor) => generatePipeCheck(doc, ctx, inst, accessor), issues: pipeIssues },
-  $ZodCodec: { fast: (doc, ctx, inst, accessor) => generatePipeCheck(doc, ctx, inst, accessor), issues: pipeIssues },
+  $ZodPipe: {
+    fast: (doc, ctx, inst, accessor) => generatePipeCheck(doc, ctx, inst, accessor),
+    issues: pipeIssues,
+    marks: true,
+  },
+  $ZodCodec: {
+    fast: (doc, ctx, inst, accessor) => generatePipeCheck(doc, ctx, inst, accessor),
+    issues: pipeIssues,
+    marks: true,
+  },
   $ZodPreprocess: {
     fast: (doc, ctx, inst, accessor) => generatePipeCheck(doc, ctx, inst, accessor),
     issues: pipeIssues,
+    marks: true,
   },
   $ZodCustom: {
     fast: (doc, ctx, inst, accessor) => generateCustomCheck(doc, ctx, inst, accessor),
@@ -2031,6 +2043,7 @@ const emitters: Record<string, Emitter> = {
   $ZodTransform: {
     fast: (doc, ctx, inst, accessor) => generateTransformCheck(doc, ctx, inst, accessor),
     issues: transformIssues,
+    marks: true,
   },
   $ZodCatch: { fast: (doc, ctx, inst, accessor) => generateCatchCheck(doc, ctx, inst, accessor) },
   $ZodReadonly: {
@@ -2050,6 +2063,7 @@ const emitters: Record<string, Emitter> = {
       return "true";
     },
     issues: successIssues,
+    marks: true,
   },
 };
 
