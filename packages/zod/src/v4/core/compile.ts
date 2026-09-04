@@ -1486,40 +1486,39 @@ export function emitIssueIsland(
 const runsCallbacks = new WeakMap<object, boolean>();
 type ZodNode = { _zod: { def: unknown } };
 
-// Whether an issue-mode walk of this subtree runs user code that receives its parse payload: a def carrying a user function (`fn`, `transform`) or a `when` other than the guards the size and length checks install themselves. Structural, so a schema or check class this compiler has never met is classified by what its def holds: children are whatever `_zod`-bearing values its def's own data properties reach, directly, in an array, or in a shape. Accessors stay unread, since one can run user code or throw. A lazy's getter is a function, so it stays out; issue mode islands it and the interpreter hands the island its own payloads.
+// Whether an issue-mode walk of this subtree runs user code that receives its parse payload. Three def shapes do: a custom check whose check function is the user's (superRefine, `.check(fn)`: kind "custom" with no value-only `fn` — a refine or a string format keeps its `fn`, which sees the value alone), a `transform`, and a `when` other than the guards the size and length checks install themselves. Structural, so a schema or check class this compiler has never met is classified by what its def holds: children are whatever `_zod`-bearing values the def reaches directly, in an array, or in a shape. A lazy's getter is a function, so it stays out; issue mode islands it and the interpreter hands the island its own payloads.
 export function subtreeRunsCallbacks(node: ZodNode): boolean {
   const known = runsCallbacks.get(node);
   if (known !== undefined) return known;
   // an assumed answer for a node still being scanned
   runsCallbacks.set(node, false);
   const def = node._zod.def as Record<string, unknown>;
-  // a bare custom check (superRefine, .check(fn)) keeps its user function on `_zod.check`, and "custom" is the one check kind that means user code
   let out =
-    def.check === "custom" ||
-    typeof def.fn === "function" ||
+    (def.check === "custom" && typeof def.fn !== "function") ||
     typeof def.transform === "function" ||
     (typeof def.when === "function" && def.when !== _whenHasSize && def.when !== _whenHasLength);
-  if (!out) {
-    for (const key in def) {
-      const desc = Object.getOwnPropertyDescriptor(def, key);
-      if (desc && !desc.get && reachesCallbacks(desc.value)) {
-        out = true;
-        break;
-      }
-    }
-  }
+  if (!out) out = childrenReachCallbacks(def);
   runsCallbacks.set(node, out);
   return out;
 }
 
-function reachesCallbacks(value: unknown): boolean {
-  if (!value || typeof value !== "object") return false;
-  if ((value as Partial<ZodNode>)._zod) return subtreeRunsCallbacks(value as ZodNode);
-  if (Array.isArray(value)) return value.some(reachesCallbacks);
-  for (const key in value) {
-    const desc = Object.getOwnPropertyDescriptor(value, key);
-    if (desc && !desc.get && (desc.value as Partial<ZodNode> | undefined)?._zod && subtreeRunsCallbacks(desc.value))
+// the def's values, one level deep: a node recurses, an array or a shape is scanned for nodes, and anything else (a default value, a regex, a locale map) stays opaque. an accessor is read too — a derived shape is one until its first read, so skipping it would make the answer depend on what was read before — and one that throws counts as callbacks, the conservative answer
+function childrenReachCallbacks(def: object): boolean {
+  for (const key in def) {
+    let value: unknown;
+    try {
+      value = (def as Record<string, unknown>)[key];
+    } catch {
       return true;
+    }
+    if (!value || typeof value !== "object") continue;
+    if ((value as Partial<ZodNode>)._zod) {
+      if (subtreeRunsCallbacks(value as ZodNode)) return true;
+    } else if (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype) {
+      for (const el of Object.values(value)) {
+        if ((el as Partial<ZodNode> | null)?._zod && subtreeRunsCallbacks(el as ZodNode)) return true;
+      }
+    }
   }
   return false;
 }
