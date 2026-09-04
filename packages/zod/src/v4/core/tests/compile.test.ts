@@ -1854,6 +1854,16 @@ test("compiling and rejecting never runs a default or prefault factory for a pre
   const withMeta = new Custom({ type: "string", metadata } as never);
   expect(compile(z.object({ withMeta, bad: z.string() })).safeParse({ withMeta: "ok", bad: 1 }).success).toBe(false);
   expect(reads).toBe(0);
+  // an unread accessor that does hold a callback lands on the isolated path anyway: the check behind it sees only its own issues
+  const check = z.string().superRefine((_v, ctx) => {
+    if (ctx.issues.length) ctx.addIssue({ code: "custom", message: "saw sibling" });
+  })._zod.def.checks![0];
+  const checks: unknown[] = [];
+  Object.defineProperty(checks, "0", { enumerable: true, get: () => check });
+  checks.length = 1;
+  const behindAccessor = z.object({ a: z.string(), b: new Custom({ type: "string", checks } as never) });
+  const viaAccessor = compile(behindAccessor).safeParse({ a: 1, b: "ok" });
+  expect(!viaAccessor.success && viaAccessor.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
   // while a pick() shape, lazy until its first read, still classifies the callback behind it
   const picked = z.object({ c: z.string().superRefine(() => {}), d: z.number() }).pick({ c: true });
   expect(Object.getOwnPropertyDescriptor(picked._zod.def, "shape")?.get).toBeDefined();

@@ -1502,20 +1502,28 @@ export function subtreeRunsCallbacks(node: ZodNode): boolean {
   return out;
 }
 
-// the def's values, one level deep: a node recurses, an array or a shape is scanned for nodes, and anything else (a default value, a regex, a locale map) stays opaque. no accessor is invoked — `defaultValue` runs the user's factory — and zod's own lazy shape is read through `rawShape`, which answers from the getter's data without calling it, so the answer is the same before and after the first read; a `shape` accessor a subclass supplied stays unread like any other
+// accessors zod installs on its own defs that hold no callback-bearing child: `defaultValue` runs the user's factory and answers a value; `catchall` (after extend) answers a schema, and a catchall value is a child boundary of its own, so it classifies from its own def
+const INERT_DEF_ACCESSORS = new Set(["defaultValue", "catchall"]);
+
+// the def's values, one level deep: a node recurses, an array or a shape is scanned for nodes, and anything else (a default value, a regex, a locale map) stays opaque. no accessor is invoked: zod's own lazy shape is read through `rawShape`, which answers from the getter's data without calling it, so the answer is the same before and after the first read; any other accessor, on the def or on an entry, counts as callbacks — unread, and on the isolated path, which is safe either way
 function childrenReachCallbacks(def: object): boolean {
   for (const key in def) {
     const desc = Object.getOwnPropertyDescriptor(def, key);
     if (!desc) continue;
-    const value: unknown = desc.get ? (key === "shape" ? util.rawShape(def) : undefined) : desc.value;
+    let value: unknown;
+    if (!desc.get) value = desc.value;
+    else if (key === "shape") value = util.rawShape(def);
+    else if (INERT_DEF_ACCESSORS.has(key)) continue;
+    else return true;
     if (!value || typeof value !== "object") continue;
     if ((value as Partial<ZodNode>)._zod) {
       if (subtreeRunsCallbacks(value as ZodNode)) return true;
     } else if (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype) {
-      // the entries by descriptor too: a plain object in a def can carry accessors of its own
       for (const k of Object.keys(value)) {
         const el = Object.getOwnPropertyDescriptor(value, k);
-        if (el && !el.get && (el.value as Partial<ZodNode> | null)?._zod && subtreeRunsCallbacks(el.value)) return true;
+        if (!el) continue;
+        if (el.get) return true;
+        if ((el.value as Partial<ZodNode> | null)?._zod && subtreeRunsCallbacks(el.value)) return true;
       }
     }
   }
