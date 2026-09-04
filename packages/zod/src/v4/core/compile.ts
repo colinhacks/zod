@@ -1572,6 +1572,7 @@ function hoistFn(ctx: CompileContext, params: string, body: string[], ...tail: s
 
 // V8 sizes a function's optimization budget by its bytecode, so one huge issue parser stays unoptimized for thousands of rejections and loses to the interpreter until then; a subtree above this many characters of source becomes a function of its own, which tiers up on its own. Small schemas stay one function and pay no call.
 const HOIST_THRESHOLD = 4000;
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
 
 // Issue-mode counterpart of compileChild: try the native emission, roll back and island on an islandable refusal. The body generates against a local of its own, detached from the caller's doc, so a large one on a static path can hoist as a function; the rest splices in place.
 export function compileChildIssues(
@@ -1587,7 +1588,8 @@ export function compileChildIssues(
   const constantCounter = ctx.constantCounter;
   const varCounter = ctx.varCounter;
   const preludeLen = ctx.prelude.length;
-  const local = newVar(ctx);
+  // a plain identifier is read in place and doubles as the hoisted function's parameter name; anything else is aliased once
+  const local = IDENTIFIER.test(accessor) ? accessor : newVar(ctx);
   const sub = new Doc();
   let out: string;
   try {
@@ -1612,7 +1614,7 @@ export function compileChildIssues(
     );
     return r;
   }
-  doc.write(`const ${local} = ${accessor};`);
+  if (local !== accessor) doc.write(`const ${local} = ${accessor};`);
   const pad = " ".repeat(doc.indent * 2);
   for (const line of body) doc.content.push(pad + line);
   return out;
