@@ -1737,6 +1737,51 @@ test("compiled records walk own enumerable keys without Reflect.ownKeys", () => 
   expect(emailKeys.parse({ "a@b.co": 1 })).toEqual({ "a@b.co": 1 });
   expect(emailKeys.safeParse({ "a@b.co": 1, [sym]: 2 }).success).toBe(false);
   expect(compile(z.record(z.number(), z.string())).parse({ 1: "a" })).toEqual({ 1: "a" });
+  // keys are snapshotted before any value is read and rechecked when visited, like the runtime's Reflect.ownKeys walk: a getter that adds a key mid-walk is not visited, one that hides a later key skips it
+  const mutating = (effect: (o: Record<PropertyKey, unknown>) => void) => {
+    const o: Record<PropertyKey, unknown> = {};
+    Object.defineProperty(o, "a", {
+      enumerable: true,
+      get() {
+        effect(o);
+        return 1;
+      },
+    });
+    o.b = 2;
+    return o;
+  };
+  const both = z.record(z.union([z.string(), z.symbol()]), z.number());
+  for (const [schema, effect] of [
+    [
+      both,
+      (o: Record<PropertyKey, unknown>) => {
+        o[sym] = 2;
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => {
+        o[sym] = "bad";
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => {
+        o.z = "bad";
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => Object.defineProperty(o, "b", { enumerable: false }),
+    ],
+  ] as const) {
+    const expected = schema.safeParse(mutating(effect));
+    const actual = compile(schema).safeParse(mutating(effect));
+    expect(actual.success).toBe(expected.success);
+    if (expected.success)
+      expect(Reflect.ownKeys(actual.data as object)).toEqual(Reflect.ownKeys(expected.data as object));
+    else expect(actual.error!.issues).toEqual(expected.error!.issues);
+  }
 });
 
 test("wide issue parsers split into hoisted per-subtree functions", () => {
