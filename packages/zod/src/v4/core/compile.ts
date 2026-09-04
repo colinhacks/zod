@@ -1,4 +1,5 @@
 import type * as checks from "./checks.js";
+import { _whenHasLength, _whenHasSize } from "./checks.js";
 import type * as core from "./core.js";
 import { $ZodAsyncError, config } from "./core.js";
 import { Doc } from "./doc.js";
@@ -1482,33 +1483,45 @@ export function emitIssueIsland(
   return v;
 }
 
-const CHILD_KEYS = ["innerType", "element", "rest", "in", "out", "left", "right", "keyType", "valueType"] as const;
 const runsCallbacks = new WeakMap<object, boolean>();
+type ZodNode = { _zod: { def: unknown } };
 
-// Whether an issue-mode walk of this subtree runs user code that can read its parse payload: a custom check, a `when` predicate, a transform. A lazy stays out because issue mode islands it, and the interpreter hands the island its own payloads.
-export function subtreeRunsCallbacks(schema: SomeType): boolean {
-  const known = runsCallbacks.get(schema);
+// Whether an issue-mode walk of this subtree runs user code that receives its parse payload: a def carrying a user function (`fn`, `transform`) or a `when` other than the guards the size and length checks install themselves. Structural, so a schema or check class this compiler has never met is classified by what its def holds: children are whatever `_zod`-bearing values its def's own data properties reach, directly, in an array, or in a shape. Accessors stay unread, since one can run user code or throw. A lazy's getter is a function, so it stays out; issue mode islands it and the interpreter hands the island its own payloads.
+export function subtreeRunsCallbacks(node: ZodNode): boolean {
+  const known = runsCallbacks.get(node);
   if (known !== undefined) return known;
-  // an assumed answer for a subtree still being scanned
-  runsCallbacks.set(schema, false);
-  const def = schema._zod.def as Record<string, unknown> & { type: string; checks?: unknown[] };
-  let out = def.type === "custom" || def.type === "transform" || !!def.transform;
-  if (!out && def.checks) {
-    out = def.checks.some((c) => {
-      const cdef = (c as { _zod: { def: { check: string; when?: unknown } } })._zod.def;
-      return cdef.check === "custom" || !!cdef.when;
-    });
-  }
+  // an assumed answer for a node still being scanned
+  runsCallbacks.set(node, false);
+  const def = node._zod.def as Record<string, unknown>;
+  // a bare custom check (superRefine, .check(fn)) keeps its user function on `_zod.check`, and "custom" is the one check kind that means user code
+  let out =
+    def.check === "custom" ||
+    typeof def.fn === "function" ||
+    typeof def.transform === "function" ||
+    (typeof def.when === "function" && def.when !== _whenHasSize && def.when !== _whenHasLength);
   if (!out) {
-    const children: unknown[] = [];
-    for (const key of CHILD_KEYS) if (def[key]) children.push(def[key]);
-    if (Array.isArray(def.items)) children.push(...(def.items as unknown[]));
-    if (Array.isArray(def.options)) children.push(...(def.options as unknown[]));
-    if (def.shape) children.push(...Object.values(def.shape as Record<string, unknown>));
-    out = children.some((child) => !!(child as SomeType)?._zod && subtreeRunsCallbacks(child as SomeType));
+    for (const key in def) {
+      const desc = Object.getOwnPropertyDescriptor(def, key);
+      if (desc && !desc.get && reachesCallbacks(desc.value)) {
+        out = true;
+        break;
+      }
+    }
   }
-  runsCallbacks.set(schema, out);
+  runsCallbacks.set(node, out);
   return out;
+}
+
+function reachesCallbacks(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  if ((value as Partial<ZodNode>)._zod) return subtreeRunsCallbacks(value as ZodNode);
+  if (Array.isArray(value)) return value.some(reachesCallbacks);
+  for (const key in value) {
+    const desc = Object.getOwnPropertyDescriptor(value, key);
+    if (desc && !desc.get && (desc.value as Partial<ZodNode> | undefined)?._zod && subtreeRunsCallbacks(desc.value))
+      return true;
+  }
+  return false;
 }
 
 // the child parsed on its own payload: its issues join the parent's with the child's path in front, as handlePropertyResult and the array walk do

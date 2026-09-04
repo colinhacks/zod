@@ -39,13 +39,13 @@ export const $ZodCheck: core.$constructor<$ZodCheck<any>> = /*@__PURE__*/ core.$
 );
 
 /** Default `when` for size-based checks: run only on non-nullish values with a `size`. */
-const _whenHasSize = (payload: schemas.ParsePayload): boolean => {
+export const _whenHasSize = (payload: schemas.ParsePayload): boolean => {
   const val = payload.value;
   return !util.nullish(val) && (val as any).size !== undefined;
 };
 
 /** Default `when` for length-based checks: run only on non-nullish values with a `length`. */
-const _whenHasLength = (payload: schemas.ParsePayload): boolean => {
+export const _whenHasLength = (payload: schemas.ParsePayload): boolean => {
   const val = payload.value;
   return !util.nullish(val) && (val as any).length !== undefined;
 };
