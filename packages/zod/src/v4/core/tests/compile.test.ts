@@ -1,7 +1,13 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile, compileFn } from "../compile.js";
+import {
+  ZodCompileAsyncError,
+  ZodCompileUnsupportedError,
+  compile,
+  compileFn,
+  subtreeRunsCallbacks,
+} from "../compile.js";
 import { $ZodAsyncError } from "../core.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
@@ -1810,4 +1816,22 @@ test("compiling and rejecting never runs a default or prefault factory for a pre
   expect([defaults, prefaults]).toEqual([0, 0]);
   expect(compiled.safeParse({ b: "ok" })).toEqual({ success: true, data: { a: "fallback", p: "fallback", b: "ok" } });
   expect([defaults, prefaults]).toEqual([1, 1]);
+
+  // a `shape` accessor a subclass supplies is not zod's lazy shape and stays unread too
+  let reads = 0;
+  const Custom = class extends z.ZodString {};
+  const child = new Custom({
+    type: "string",
+    get shape() {
+      reads++;
+      throw new Error("shape");
+    },
+  } as never);
+  const withGetter = compile(z.object({ child, bad: z.string() }));
+  expect(withGetter.safeParse({ child: "ok", bad: 1 }).success).toBe(false);
+  expect(reads).toBe(0);
+  // while a pick() shape, lazy until its first read, still classifies the callback behind it
+  const picked = z.object({ c: z.string().superRefine(() => {}), d: z.number() }).pick({ c: true });
+  expect(Object.getOwnPropertyDescriptor(picked._zod.def, "shape")?.get).toBeDefined();
+  expect(subtreeRunsCallbacks(picked)).toBe(true);
 });

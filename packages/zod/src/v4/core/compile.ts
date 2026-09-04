@@ -1502,21 +1502,12 @@ export function subtreeRunsCallbacks(node: ZodNode): boolean {
   return out;
 }
 
-// the def's values, one level deep: a node recurses, an array or a shape is scanned for nodes, and anything else (a default value, a regex, a locale map) stays opaque. accessors stay unread — `defaultValue` runs the user's factory — except `shape`, zod's own lazily derived one, which is read so the answer is the same before and after its first read; a shape getter that throws counts as callbacks, the conservative answer
+// the def's values, one level deep: a node recurses, an array or a shape is scanned for nodes, and anything else (a default value, a regex, a locale map) stays opaque. no accessor is invoked — `defaultValue` runs the user's factory — and zod's own lazy shape is read through `rawShape`, which answers from the getter's data without calling it, so the answer is the same before and after the first read; a `shape` accessor a subclass supplied stays unread like any other
 function childrenReachCallbacks(def: object): boolean {
   for (const key in def) {
     const desc = Object.getOwnPropertyDescriptor(def, key);
     if (!desc) continue;
-    let value: unknown;
-    if (!desc.get) value = desc.value;
-    else if (key !== "shape") continue;
-    else {
-      try {
-        value = (def as Record<string, unknown>)[key];
-      } catch {
-        return true;
-      }
-    }
+    const value: unknown = desc.get ? (key === "shape" ? util.rawShape(def) : undefined) : desc.value;
     if (!value || typeof value !== "object") continue;
     if ((value as Partial<ZodNode>)._zod) {
       if (subtreeRunsCallbacks(value as ZodNode)) return true;
