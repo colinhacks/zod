@@ -3044,7 +3044,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
-function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
+export function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
   for (let i = items.length - 1; i >= 0; i--) {
     // optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
     const omittable = key === "optin" ? items[i]._zod.optin !== undefined : items[i]._zod.optout === "optional";

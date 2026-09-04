@@ -95,6 +95,24 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
       expect(b.error.issues, `issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
     }
   }
+  // `compiled` above answers a rejection from the generated issue parser; the runtime re-parse fallback is still a supported configuration and must agree too.
+  const fallback = compile(schema, { issues: false });
+  for (const input of inputs) {
+    const at = attempt(() => schema.safeParse(input));
+    const bt = attempt(() => fallback.safeParse(input));
+    expect(
+      bt.threw,
+      `fallback throw mismatch for input ${describe(input)}: runtime ${at.threw ?? "did not throw"}, compiled ${bt.threw ?? "did not throw"}`
+    ).toBe(at.threw);
+    if (at.threw) continue;
+    const a = at.value!;
+    const b = bt.value!;
+    expect(b.success, `fallback success mismatch for input ${describe(input)}`).toBe(a.success);
+    if (a.success && b.success) assertIdentical(b.data, a.data, "$");
+    else if (!a.success && !b.success) {
+      expect(b.error.issues, `fallback issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
+    }
+  }
   assertUnionSound(schema, inputs);
 }
 
