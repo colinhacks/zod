@@ -400,7 +400,7 @@ export interface $ZodString<Input = unknown> extends _$ZodType<$ZodStringInterna
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
   // a format's own pattern, else unbounded; a template literal derives the check-aware form itself
-  inst._zod.pattern = (def as { pattern?: RegExp }).pattern ?? regexes.anyString;
+  inst._zod.pattern = (def as $ZodStringFormatDef).pattern ?? regexes.anyString;
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -4623,8 +4623,8 @@ export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [
       : never
     : never;
 
-// a part's pattern with its checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. read off the defs since checks no longer write the bag; options recurse so a union of constrained parts keeps its precision
-function partPattern(schema: $ZodType): RegExp | string | undefined {
+// a part's pattern source with its checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. read off the defs since checks no longer write the bag; options recurse so a union of constrained parts keeps its precision
+function partPattern(schema: $ZodType): string | undefined {
   const def = schema._zod.def as {
     pattern?: RegExp;
     format?: string;
@@ -4632,23 +4632,20 @@ function partPattern(schema: $ZodType): RegExp | string | undefined {
     options?: $ZodType[];
     checks?: checks.$ZodCheck[];
   };
-  const src = (p: RegExp | string) => (p instanceof RegExp ? p.source : p);
+  const own = schema._zod.pattern;
   // a wrapper's pattern embeds its inner pattern's source verbatim, so the check-aware form is substituted in place without knowing the wrapper's own composition. lazy resolves its inner on the internals, not the def
   const inner = def.innerType ?? (schema._zod as { innerType?: $ZodType }).innerType;
   if (inner) {
-    const own = schema._zod.pattern;
     const before = inner._zod.pattern;
     const after = partPattern(inner);
-    if (own && before && after && after !== before) {
-      return own.source.replace(util.cleanRegex(before.source), () => util.cleanRegex(src(after)));
+    if (own && before && after && after !== before.source) {
+      return own.source.replace(util.cleanRegex(before.source), () => util.cleanRegex(after));
     }
-    return own;
+    return own?.source;
   }
   if (def.options) {
-    const patterns = def.options.map(partPattern);
-    if (patterns.every(Boolean)) {
-      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(src(p!))).join("|")})$`);
-    }
+    const sources = def.options.map(partPattern);
+    if (sources.every(Boolean)) return `^(${sources.map((s) => util.cleanRegex(s!)).join("|")})$`;
   }
   let pattern = def.pattern;
   let isInt = !!def.format?.includes("int");
@@ -4660,15 +4657,14 @@ function partPattern(schema: $ZodType): RegExp | string | undefined {
     isInt ||= !!d.format?.includes("int");
     const lo = d.minimum ?? d.length;
     const hi = d.maximum ?? d.length;
-    if (lo !== undefined && !(minimum! > lo)) minimum = lo;
-    if (hi !== undefined && !(maximum! < hi)) maximum = hi;
+    if (lo !== undefined && (minimum === undefined || lo > minimum)) minimum = lo;
+    if (hi !== undefined && (maximum === undefined || hi < maximum)) maximum = hi;
   }
-  if (pattern) return pattern;
+  if (pattern) return pattern.source;
   // an empty range matches nothing at runtime, and `{8,5}` is not a legal quantifier
-  if (minimum !== undefined && maximum !== undefined && minimum > maximum) return /(?!)/;
-  if (minimum !== undefined || maximum !== undefined) return regexes.string({ minimum, maximum });
-  const own = schema._zod.pattern;
-  return isInt && own === regexes.number ? regexes.integer : own;
+  if (minimum !== undefined && maximum !== undefined && minimum > maximum) return "(?!)";
+  if (minimum !== undefined || maximum !== undefined) return regexes.string({ minimum, maximum }).source;
+  return (isInt && own === regexes.number ? regexes.integer : own)?.source;
 }
 
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
@@ -4679,19 +4675,11 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
     for (const part of def.parts) {
       if (typeof part === "object" && part !== null) {
         // is Zod schema
-        const pattern = partPattern(part);
-        if (!pattern) {
-          // if (!source)
+        const source = partPattern(part);
+        if (!source) {
           throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
         }
-
-        const source = pattern instanceof RegExp ? pattern.source : pattern;
-
-        if (!source) throw new Error(`Invalid template literal part: ${part._zod.traits}`);
-
-        const start = source.startsWith("^") ? 1 : 0;
-        const end = source.endsWith("$") ? source.length - 1 : source.length;
-        regexParts.push(source.slice(start, end));
+        regexParts.push(util.cleanRegex(source));
       } else if (part === null || util.primitiveTypes.has(typeof part)) {
         regexParts.push(util.escapeRegex(`${part}`));
       } else {

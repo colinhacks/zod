@@ -1137,6 +1137,26 @@ export function hide<T>(inst: object, key: PropertyKey, value: T): T {
   return own(inst, key, value, false);
 }
 
+/** Adds members a table derives from the instance: each builds on first read and shadows as own data, and assignment shadows the same way, as when these were own properties. */
+export /*@__NO_SIDE_EFFECTS__*/ function derived<T>(
+  computes: { [K in keyof T]?: (inst: T) => T[K] },
+  table: ProtoOf<T>
+): ProtoOf<T> {
+  for (const key in computes) {
+    const compute = computes[key]!;
+    Object.defineProperty(table, key, {
+      enumerable: true,
+      get(this: T) {
+        return own(this as object, key, compute(this));
+      },
+      set(this: T, value: T[typeof key]) {
+        own(this as object, key, value);
+      },
+    });
+  }
+  return table;
+}
+
 function defineBound(proto: object, key: PropertyKey, fn: AnyFunc): void {
   Object.defineProperty(proto, key, {
     configurable: true,

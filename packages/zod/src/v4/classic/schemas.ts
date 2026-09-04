@@ -392,72 +392,60 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
 
     inst._zod.processJSONSchema = (ctx, json, params) => processors.stringProcessor(inst, ctx, json, params);
   },
-  {
-    // derived from the checks on first read, then shadowed as own data; the setters keep assignment shadowing the same way, as when these were own properties
-    get format() {
-      return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
+  /*@__PURE__*/ util.derived<_ZodString>(
+    {
+      format: (inst) => processors.aggregateChecks(inst).format ?? null,
+      minLength: (inst) => processors.aggregateChecks<number>(inst).minimum ?? null,
+      maxLength: (inst) => processors.aggregateChecks<number>(inst).maximum ?? null,
     },
-    set format(v) {
-      util.own(this, "format", v);
-    },
-    get minLength() {
-      return util.own(this, "minLength", (processors.aggregateChecks(this).minimum as number | undefined) ?? null);
-    },
-    set minLength(v) {
-      util.own(this, "minLength", v);
-    },
-    get maxLength() {
-      return util.own(this, "maxLength", (processors.aggregateChecks(this).maximum as number | undefined) ?? null);
-    },
-    set maxLength(v) {
-      util.own(this, "maxLength", v);
-    },
-    regex(...args) {
-      return this.check((checks.regex as any)(...args));
-    },
-    includes(...args) {
-      return this.check((checks.includes as any)(...args));
-    },
-    startsWith(...args) {
-      return this.check((checks.startsWith as any)(...args));
-    },
-    endsWith(...args) {
-      return this.check((checks.endsWith as any)(...args));
-    },
-    min(...args) {
-      return this.check((checks.minLength as any)(...args));
-    },
-    max(...args) {
-      return this.check((checks.maxLength as any)(...args));
-    },
-    length(...args) {
-      return this.check((checks.length as any)(...args));
-    },
-    nonempty(...args) {
-      return this.check((checks.minLength as any)(1, ...args));
-    },
-    lowercase(params) {
-      return this.check(checks.lowercase(params));
-    },
-    uppercase(params) {
-      return this.check(checks.uppercase(params));
-    },
-    trim() {
-      return this.check(checks.trim());
-    },
-    normalize(...args) {
-      return this.check(checks.normalize(...args));
-    },
-    toLowerCase() {
-      return this.check(checks.toLowerCase());
-    },
-    toUpperCase() {
-      return this.check(checks.toUpperCase());
-    },
-    slugify() {
-      return this.check(checks.slugify());
-    },
-  }
+    {
+      regex(...args) {
+        return this.check((checks.regex as any)(...args));
+      },
+      includes(...args) {
+        return this.check((checks.includes as any)(...args));
+      },
+      startsWith(...args) {
+        return this.check((checks.startsWith as any)(...args));
+      },
+      endsWith(...args) {
+        return this.check((checks.endsWith as any)(...args));
+      },
+      min(...args) {
+        return this.check((checks.minLength as any)(...args));
+      },
+      max(...args) {
+        return this.check((checks.maxLength as any)(...args));
+      },
+      length(...args) {
+        return this.check((checks.length as any)(...args));
+      },
+      nonempty(...args) {
+        return this.check((checks.minLength as any)(1, ...args));
+      },
+      lowercase(params) {
+        return this.check(checks.lowercase(params));
+      },
+      uppercase(params) {
+        return this.check(checks.uppercase(params));
+      },
+      trim() {
+        return this.check(checks.trim());
+      },
+      normalize(...args) {
+        return this.check(checks.normalize(...args));
+      },
+      toLowerCase() {
+        return this.check(checks.toLowerCase());
+      },
+      toUpperCase() {
+        return this.check(checks.toUpperCase());
+      },
+      slugify() {
+        return this.check(checks.slugify());
+      },
+    }
+  )
 );
 
 export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> {
@@ -1147,89 +1135,70 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
     inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
     inst.isFinite = true;
   },
-  {
-    // derived from the checks on first read, then shadowed as own data
-    get minValue() {
-      const agg = processors.aggregateChecks(this) as { minimum?: number; exclusiveMinimum?: number };
-      return util.own(
-        this,
-        "minValue",
-        Math.max(agg.minimum ?? Number.NEGATIVE_INFINITY, agg.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null
-      );
+  /*@__PURE__*/ util.derived<ZodNumber>(
+    {
+      minValue: (inst) => {
+        const { minimum, exclusiveMinimum } = processors.aggregateChecks<number>(inst);
+        return Math.max(minimum ?? Number.NEGATIVE_INFINITY, exclusiveMinimum ?? Number.NEGATIVE_INFINITY);
+      },
+      maxValue: (inst) => {
+        const { maximum, exclusiveMaximum } = processors.aggregateChecks<number>(inst);
+        return Math.min(maximum ?? Number.POSITIVE_INFINITY, exclusiveMaximum ?? Number.POSITIVE_INFINITY);
+      },
+      isInt: (inst) => {
+        const { isInt, multipleOf } = processors.aggregateChecks(inst);
+        return !!isInt || !!multipleOf?.some(Number.isSafeInteger);
+      },
+      format: (inst) => processors.aggregateChecks(inst).format ?? null,
     },
-    get maxValue() {
-      const agg = processors.aggregateChecks(this) as { maximum?: number; exclusiveMaximum?: number };
-      return util.own(
-        this,
-        "maxValue",
-        Math.min(agg.maximum ?? Number.POSITIVE_INFINITY, agg.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null
-      );
-    },
-    set minValue(v) {
-      util.own(this, "minValue", v);
-    },
-    set maxValue(v) {
-      util.own(this, "maxValue", v);
-    },
-    get isInt() {
-      const agg = processors.aggregateChecks(this);
-      return util.own(this, "isInt", !!agg.isInt || !!agg.multipleOf?.some(Number.isSafeInteger));
-    },
-    set isInt(v) {
-      util.own(this, "isInt", v);
-    },
-    get format() {
-      return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
-    },
-    set format(v) {
-      util.own(this, "format", v);
-    },
-    gt(value, params) {
-      return this.check(checks.gt(value, params));
-    },
-    gte(value, params) {
-      return this.check(checks.gte(value, params));
-    },
-    min(value, params) {
-      return this.check(checks.gte(value, params));
-    },
-    lt(value, params) {
-      return this.check(checks.lt(value, params));
-    },
-    lte(value, params) {
-      return this.check(checks.lte(value, params));
-    },
-    max(value, params) {
-      return this.check(checks.lte(value, params));
-    },
-    int(params) {
-      return this.check(int(params));
-    },
-    safe(params) {
-      return this.check(int(params));
-    },
-    positive(params) {
-      return this.check(checks.gt(0, params));
-    },
-    nonnegative(params) {
-      return this.check(checks.gte(0, params));
-    },
-    negative(params) {
-      return this.check(checks.lt(0, params));
-    },
-    nonpositive(params) {
-      return this.check(checks.lte(0, params));
-    },
-    multipleOf(value, params) {
-      return this.check(checks.multipleOf(value, params));
-    },
-    step(value, params) {
-      return this.check(checks.multipleOf(value, params));
-    },
-    finite() {
-      return this;
-    },
-  }
+    {
+      gt(value, params) {
+        return this.check(checks.gt(value, params));
+      },
+      gte(value, params) {
+        return this.check(checks.gte(value, params));
+      },
+      min(value, params) {
+        return this.check(checks.gte(value, params));
+      },
+      lt(value, params) {
+        return this.check(checks.lt(value, params));
+      },
+      lte(value, params) {
+        return this.check(checks.lte(value, params));
+      },
+      max(value, params) {
+        return this.check(checks.lte(value, params));
+      },
+      int(params) {
+        return this.check(int(params));
+      },
+      safe(params) {
+        return this.check(int(params));
+      },
+      positive(params) {
+        return this.check(checks.gt(0, params));
+      },
+      nonnegative(params) {
+        return this.check(checks.gte(0, params));
+      },
+      negative(params) {
+        return this.check(checks.lt(0, params));
+      },
+      nonpositive(params) {
+        return this.check(checks.lte(0, params));
+      },
+      multipleOf(value, params) {
+        return this.check(checks.multipleOf(value, params));
+      },
+      step(value, params) {
+        return this.check(checks.multipleOf(value, params));
+      },
+      finite() {
+        return this;
+      },
+    }
+  )
 );
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
@@ -1320,60 +1289,48 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
   },
-  {
-    // derived from the checks on first read, then shadowed as own data
-    get minValue() {
-      return util.own(this, "minValue", (processors.aggregateChecks(this).minimum as bigint | undefined) ?? null);
+  /*@__PURE__*/ util.derived<ZodBigInt>(
+    {
+      minValue: (inst) => processors.aggregateChecks<bigint>(inst).minimum ?? null,
+      maxValue: (inst) => processors.aggregateChecks<bigint>(inst).maximum ?? null,
+      format: (inst) => processors.aggregateChecks(inst).format ?? null,
     },
-    set minValue(v) {
-      util.own(this, "minValue", v);
-    },
-    get maxValue() {
-      return util.own(this, "maxValue", (processors.aggregateChecks(this).maximum as bigint | undefined) ?? null);
-    },
-    set maxValue(v) {
-      util.own(this, "maxValue", v);
-    },
-    get format() {
-      return util.own(this, "format", processors.aggregateChecks(this).format ?? null);
-    },
-    set format(v) {
-      util.own(this, "format", v);
-    },
-    gte(value, params) {
-      return this.check(checks.gte(value, params));
-    },
-    min(value, params) {
-      return this.check(checks.gte(value, params));
-    },
-    gt(value, params) {
-      return this.check(checks.gt(value, params));
-    },
-    lt(value, params) {
-      return this.check(checks.lt(value, params));
-    },
-    lte(value, params) {
-      return this.check(checks.lte(value, params));
-    },
-    max(value, params) {
-      return this.check(checks.lte(value, params));
-    },
-    positive(params) {
-      return this.check(checks.gt(BigInt(0), params));
-    },
-    negative(params) {
-      return this.check(checks.lt(BigInt(0), params));
-    },
-    nonpositive(params) {
-      return this.check(checks.lte(BigInt(0), params));
-    },
-    nonnegative(params) {
-      return this.check(checks.gte(BigInt(0), params));
-    },
-    multipleOf(value, params) {
-      return this.check(checks.multipleOf(value, params));
-    },
-  }
+    {
+      gte(value, params) {
+        return this.check(checks.gte(value, params));
+      },
+      min(value, params) {
+        return this.check(checks.gte(value, params));
+      },
+      gt(value, params) {
+        return this.check(checks.gt(value, params));
+      },
+      lt(value, params) {
+        return this.check(checks.lt(value, params));
+      },
+      lte(value, params) {
+        return this.check(checks.lte(value, params));
+      },
+      max(value, params) {
+        return this.check(checks.lte(value, params));
+      },
+      positive(params) {
+        return this.check(checks.gt(BigInt(0), params));
+      },
+      negative(params) {
+        return this.check(checks.lt(BigInt(0), params));
+      },
+      nonpositive(params) {
+        return this.check(checks.lte(BigInt(0), params));
+      },
+      nonnegative(params) {
+        return this.check(checks.gte(BigInt(0), params));
+      },
+      multipleOf(value, params) {
+        return this.check(checks.multipleOf(value, params));
+      },
+    }
+  )
 );
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
@@ -1517,23 +1474,19 @@ export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$construct
     inst.min = (value, params) => inst.check(checks.gte(value, params));
     inst.max = (value, params) => inst.check(checks.lte(value, params));
   },
-  {
-    // derived from the checks on first read, then shadowed as own data
-    get minDate() {
-      const { minimum } = processors.aggregateChecks(this);
-      return util.own(this, "minDate", minimum ? new Date(minimum as Date) : null);
+  /*@__PURE__*/ util.derived<ZodDate>(
+    {
+      minDate: (inst) => {
+        const { minimum } = processors.aggregateChecks<Date>(inst);
+        return minimum ? new Date(minimum) : null;
+      },
+      maxDate: (inst) => {
+        const { maximum } = processors.aggregateChecks<Date>(inst);
+        return maximum ? new Date(maximum) : null;
+      },
     },
-    set minDate(v) {
-      util.own(this, "minDate", v);
-    },
-    get maxDate() {
-      const { maximum } = processors.aggregateChecks(this);
-      return util.own(this, "maxDate", maximum ? new Date(maximum as Date) : null);
-    },
-    set maxDate(v) {
-      util.own(this, "maxDate", v);
-    },
-  }
+    {}
+  )
 );
 
 export function date(params?: string | core.$ZodDateParams): ZodDate {
