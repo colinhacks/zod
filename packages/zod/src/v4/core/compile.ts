@@ -27,8 +27,8 @@ export type INVALID = typeof INVALID;
 
 // Set on the parse ctx when a compiled wrapper falls back to the runtime, so nested compiled wrappers skip their fast paths for the rest of that parse.
 const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
-// set on a parse context by a compiled method that already rejected: the wrapper goes straight to the failure path
-const SKIP_FAST = /* @__PURE__ */ Symbol.for("zod.compile.skipfast");
+// raised by a compiled method that already rejected, for the wrapper its runtime method is about to enter: the fast parser has run, go straight to the issue parser. A module flag rather than a parse-context entry, so the fallback takes no context spread and no flag reads; it is consumed synchronously by the first wrapper entered and cleared by the method either way.
+let skipFast = false;
 
 interface CompileFnOptions {
   debug?: boolean | undefined;
@@ -165,22 +165,23 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     // would push issues with `inst === clone`, producing diverging error
     // messages from the original schema.
     const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
-      if (
-        ctx?.async ||
-        ctx?.direction === "backward" ||
-        ctx?.skipChecks ||
-        (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
-      ) {
-        return originalRun(payload, ctx);
-      }
-
-      // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
-      if (ctx && isBackEdge(ctx, payload.value)) {
-        return originalRun(payload, ctx);
-      }
-
       // a compiled parse/safeParse method that already rejected comes back through here to build the failure; running the fast parser again would only run user callbacks once more
-      if (!(ctx as Record<symbol, unknown> | undefined)?.[SKIP_FAST]) {
+      if (skipFast) skipFast = false;
+      else {
+        if (
+          ctx?.async ||
+          ctx?.direction === "backward" ||
+          ctx?.skipChecks ||
+          (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
+        ) {
+          return originalRun(payload, ctx);
+        }
+
+        // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
+        if (ctx && isBackEdge(ctx, payload.value)) {
+          return originalRun(payload, ctx);
+        }
+
         const out = parser(payload.value);
         if (out !== INVALID) {
           payload.value = out;
@@ -214,10 +215,6 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
   }
 }
 
-// parse params spread into the parse context, so the flag rides along to the wrapper
-const SKIP_FAST_PARAMS = { [SKIP_FAST]: true };
-const skipFast = (params: unknown) => (params ? { ...(params as object), [SKIP_FAST]: true } : SKIP_FAST_PARAMS);
-
 function installCompiledUserMethods<T extends SomeType>(target: T, parser: CompiledFn<core.output<T>>): void {
   const targetAny = target as any;
 
@@ -228,7 +225,12 @@ function installCompiledUserMethods<T extends SomeType>(target: T, parser: Compi
       if (out !== INVALID) {
         return { success: true, data: out };
       }
-      return originalSafeParse(data, skipFast(params));
+      skipFast = true;
+      try {
+        return originalSafeParse(data, params);
+      } finally {
+        skipFast = false;
+      }
     };
   }
 
@@ -239,7 +241,12 @@ function installCompiledUserMethods<T extends SomeType>(target: T, parser: Compi
       if (out !== INVALID) {
         return out;
       }
-      return originalParse(data, skipFast(params));
+      skipFast = true;
+      try {
+        return originalParse(data, params);
+      } finally {
+        skipFast = false;
+      }
     };
   }
 }
