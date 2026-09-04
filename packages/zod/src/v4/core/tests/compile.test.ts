@@ -1789,3 +1789,25 @@ test("compiled issue parsers isolate child payloads and keep unions at two callb
   expect(later.safeParse({ u: "x", k: 1 }).success).toBe(false);
   expect([calls, third]).toEqual([2, 0]);
 });
+
+test("compiling and rejecting never runs a default or prefault factory for a present value", () => {
+  // `defaultValue` is an accessor that runs the factory, so a compile-time scan of the def must not read it
+  let defaults = 0;
+  let prefaults = 0;
+  const schema = z.object({
+    a: z.string().default(() => {
+      defaults++;
+      return "fallback";
+    }),
+    p: z.string().prefault(() => {
+      prefaults++;
+      return "fallback";
+    }),
+    b: z.string(),
+  });
+  const compiled = compile(schema);
+  expect(compiled.safeParse({ a: "present", p: "present", b: 1 }).success).toBe(false);
+  expect([defaults, prefaults]).toEqual([0, 0]);
+  expect(compiled.safeParse({ b: "ok" })).toEqual({ success: true, data: { a: "fallback", p: "fallback", b: "ok" } });
+  expect([defaults, prefaults]).toEqual([1, 1]);
+});
