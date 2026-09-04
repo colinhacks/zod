@@ -67,6 +67,47 @@ function sharedDescriptor(iss: any[], c: any): any {
   return r;
 }
 
+// 2b. own accessor + a NON-enumerable slot, both defined in one defineProperties call (spread and Reflect.ownKeys no longer see the slot's value)
+const twoDescs: PropertyDescriptorMap = {
+  [STATE]: { value: undefined, writable: true, enumerable: false, configurable: true },
+  error: sharedDesc,
+};
+function sharedDescriptors(iss: any[], c: any): any {
+  const r: any = { success: false };
+  (twoDescs[STATE as any] as PropertyDescriptor).value = { issues: iss, ctx: c, error: undefined };
+  Object.defineProperties(r, twoDescs);
+  (twoDescs[STATE as any] as PropertyDescriptor).value = undefined;
+  return r;
+}
+
+// 2c. own accessor via the shared descriptor; state in a WeakMap keyed by the result
+const states = new WeakMap<object, { issues: any[] | undefined; ctx: any; error: any }>();
+const weakDesc: PropertyDescriptor = {
+  enumerable: true,
+  configurable: true,
+  get(this: any) {
+    const st = states.get(this)!;
+    if (st.error === undefined) {
+      st.error = new Err(st.issues!.map(finalize));
+      st.issues = undefined;
+      st.ctx = undefined;
+    }
+    return st.error;
+  },
+  set(this: any, e: any) {
+    const st = states.get(this)!;
+    st.error = e;
+    st.issues = undefined;
+    st.ctx = undefined;
+  },
+};
+function weakMapState(iss: any[], c: any): any {
+  const r: any = { success: false };
+  states.set(r, { issues: iss, ctx: c, error: undefined });
+  Object.defineProperty(r, "error", weakDesc);
+  return r;
+}
+
 // 3. prototype accessor (NOT own: changes Object.keys / spread / JSON) — reference only
 class Failure {
   success = false as const;
@@ -120,6 +161,8 @@ function sample(fn: () => any, readError: boolean, iters: number): number {
 const variants: Array<[string, () => any]> = [
   ["literal accessors (shipped)", () => literalAccessors(issues, ctx)],
   ["shared descriptor + slot", () => sharedDescriptor(issues, ctx)],
+  ["defineProperties + hidden slot", () => sharedDescriptors(issues, ctx)],
+  ["shared descriptor + WeakMap", () => weakMapState(issues, ctx)],
   ["prototype accessor (ref)", () => prototypeAccessor(issues, ctx)],
   ["eager object (ref)", () => eager(issues, ctx)],
   ["z.string().safeParse(42)", zodSafeParse],
