@@ -23,7 +23,8 @@ const cases: Record<string, () => unknown> = {
   "5-key constructed": fiveKey,
   "5-key compiled": () => compile(fiveKey() as never),
   "5-key compiled, rejected once": () => rejected(compile(fiveKey() as never)),
-  "5-key compiled, issues:false, rejected once": () => rejected(compile(fiveKey() as never, { issues: false } as never)),
+  "5-key compiled, issues:false, rejected once": () =>
+    rejected(compile(fiveKey() as never, { issues: false } as never)),
   "243-leaf constructed": big,
   "243-leaf compiled": () => compile(big() as never),
   "243-leaf compiled, rejected once": () => rejected(compile(big() as never)),
@@ -47,9 +48,13 @@ if (which) {
   const rows = Object.keys(cases).map((label) => {
     const samples: number[] = [];
     for (let r = 0; r < 5; r++) {
-      const c = spawnSync(process.execPath, ["--expose-gc", "--import", "tsx", "--conditions=@zod/source", self, label], {
-        encoding: "utf8",
-      });
+      const c = spawnSync(
+        process.execPath,
+        ["--expose-gc", "--import", "tsx", "--conditions=@zod/source", self, label],
+        {
+          encoding: "utf8",
+        }
+      );
       if (c.status !== 0) throw new Error(`${label}: ${c.stderr}`);
       samples.push(Number(c.stdout.trim()));
     }

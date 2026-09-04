@@ -28,14 +28,14 @@ function literalAccessors(iss: any[], c: any): any {
       if (!error) {
         error = new Err(iss.map(finalize));
         iss = undefined as any;
-        c = undefined as any;
+        c = undefined;
       }
       return error;
     },
     set error(e: any) {
       error = e;
       iss = undefined as any;
-      c = undefined as any;
+      c = undefined;
     },
   };
 }
