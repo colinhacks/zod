@@ -14,14 +14,20 @@ function nested(depth: number, fanout: number): z.ZodType {
 const fiveKey = () => z.object({ a: z.string(), b: z.number(), c: z.boolean(), d: z.string(), e: z.number() });
 const big = () => nested(5, 3);
 
-// `issues: false` is unknown to the baseline compiler, which ignores the option; both rows then read the same there
+// the issue parser compiles on the first rejection, so the "rejected once" rows hold what a schema that has failed at least once retains. `issues: false` is unknown to the baseline compiler, which ignores the option; its rows then read like the plain compiled ones there
+const rejected = (schema: z.ZodType) => {
+  schema.safeParse(undefined);
+  return schema;
+};
 const cases: Record<string, () => unknown> = {
   "5-key constructed": fiveKey,
   "5-key compiled": () => compile(fiveKey() as never),
-  "5-key compiled, issues:false": () => compile(fiveKey() as never, { issues: false } as never),
+  "5-key compiled, rejected once": () => rejected(compile(fiveKey() as never)),
+  "5-key compiled, issues:false, rejected once": () => rejected(compile(fiveKey() as never, { issues: false } as never)),
   "243-leaf constructed": big,
   "243-leaf compiled": () => compile(big() as never),
-  "243-leaf compiled, issues:false": () => compile(big() as never, { issues: false } as never),
+  "243-leaf compiled, rejected once": () => rejected(compile(big() as never)),
+  "243-leaf compiled, issues:false, rejected once": () => rejected(compile(big() as never, { issues: false } as never)),
 };
 
 const which = process.argv[2];

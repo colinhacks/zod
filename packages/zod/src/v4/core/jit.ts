@@ -25,9 +25,12 @@ import {
   leafIssues,
   mayOutputUndefined,
   newVar,
+  pathExpr,
+  pathLiteral,
   pipeStops,
   pushInvalidKey,
   pushIssue,
+  pushMissingKey,
   pushNonOptionalIssue,
   requiresPresenceCheck,
   throwAsync,
@@ -1121,7 +1124,7 @@ const nonOptionalIssues: IssueCodegen = (doc, ctx, inst, accessor, path, shared,
   const pushConst = addConstant(ctx, pushNonOptionalIssue);
   const instConst = addConstant(ctx, inst);
   const m2 = newVar(ctx);
-  const prefix = path.length ? ` ${pfx}(payload.issues, ${m2}, [${path.join(", ")}]);` : "";
+  const prefix = path.length ? ` ${pfx}(payload.issues, ${m2}, ${pathExpr(ctx, path)});` : "";
   doc.write(
     `if (payload.issues.length === ${mark} && ${v} === undefined) { const ${m2} = payload.issues.length; ${pushConst}(payload.issues, ${v}, ${instConst});${prefix} }`
   );
@@ -1178,7 +1181,7 @@ const transformIssues: IssueCodegen = (doc, ctx, inst, accessor, path, _shared, 
   doc.write(`const ${r} = ${parseConst}(_sp, pctx);`);
   doc.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
   if (path.length) {
-    doc.write(`if (payload.issues.length > ${mark}) ${pfx}(payload.issues, ${mark}, [${path.join(", ")}]);`);
+    doc.write(`if (payload.issues.length > ${mark}) ${pfx}(payload.issues, ${mark}, ${pathExpr(ctx, path)});`);
   }
   const v = newVar(ctx);
   doc.write(`const ${v} = _sp.value;`);
@@ -1361,8 +1364,9 @@ function generateObjectIssues(
       } else if (optin === undefined) {
         const present = newVar(ctx);
         d.write(`const ${present} = ${kx} in ${accessor};`);
+        const missConst = addConstant(ctx, pushMissingKey);
         d.write(
-          `if (!${present} && payload.issues.length === ${mk}) payload.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, path: [${childPath.join(", ")}] });`
+          `if (!${present} && payload.issues.length === ${mk}) ${missConst}(payload, ${pathExpr(ctx, childPath)});`
         );
         d.write(`if (${present}) ${out}[${kx}] = ${kv};`);
       } else {
@@ -1386,7 +1390,7 @@ function generateObjectIssues(
         });
         d.write(`}`);
         const instConst = addConstant(ctx, schema);
-        const pathProp = path.length ? `, path: [${path.join(", ")}]` : "";
+        const pathProp = path.length ? `, path: ${pathLiteral(ctx, path)}` : "";
         d.write(
           `if (${unrec}) payload.issues.push({ code: "unrecognized_keys", keys: ${unrec}, input: ${accessor}, inst: ${instConst}, continue: true${pathProp} });`
         );
@@ -1447,7 +1451,7 @@ function generateTupleIssues(
       );
       const instConst = addConstant(ctx, schema);
       const m = newVar(ctx);
-      const pathStmt = path.length ? ` ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);` : "";
+      const pathStmt = path.length ? ` ${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});` : "";
       // copied from $ZodTuple.parse's too_big push: the runtime pushes this and keeps walking the items
       d.write(
         `if (${accessor}.length > ${items.length}) { const ${m} = payload.issues.length; payload.issues.push({ code: "too_big", maximum: ${items.length}, inclusive: true, input: ${accessor}, inst: ${instConst}, origin: "array" });${pathStmt} }`
@@ -1648,7 +1652,7 @@ function generateUnionIssues(
     }
     d.write(`const ${m} = payload.issues.length;`);
     d.write(`${v} = ${helperConst}(${instConst}, ${accessor}, payload, ${rsVar}, pctx, ${shared});`);
-    if (path.length) d.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);`);
+    if (path.length) d.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
   });
   doc.write(`}`);
   return v;
@@ -1673,7 +1677,7 @@ function generateRecordIssues(
   const keyValues = (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
   const isPlainObjectConst = addConstant(ctx, util.isPlainObject);
   const instConst = addConstant(ctx, schema);
-  const pathProp = path.length ? `, path: [${path.join(", ")}]` : "";
+  const pathProp = path.length ? `, path: ${pathLiteral(ctx, path)}` : "";
   const v = newVar(ctx);
   doc.write(`let ${v} = ${accessor};`);
   doc.write(`if (!${isPlainObjectConst}(${accessor})) ${leafFailBlock(ctx, schema, accessor, path)}`);
@@ -1706,14 +1710,14 @@ function generateRecordIssues(
         d.indented((d2) => {
           d2.write(`const ${outKey} = ${keyFast}(${keyConst});`);
           d2.write(
-            `if (${outKey} === INVALID) { ${badKeyConst}(${keyTypeConst}, ${keyConst}, payload, pctx, ${instConst}, [${path.join(", ")}]); break ${label}; }`
+            `if (${outKey} === INVALID) { ${badKeyConst}(${keyTypeConst}, ${keyConst}, payload, pctx, ${instConst}, ${pathExpr(ctx, path)}); break ${label}; }`
           );
           d2.write(`if (${outKey} === "__proto__") break ${label};`);
           const valueVar = newVar(ctx);
           // the path element is the declared key as declared: a numeric key stays a number, like util.prefixIssues(key, …) in the runtime
-          const pathExpr = typeof key === "number" ? String(key) : literalPropertyKey(ctx, key);
-          d2.write(`const ${valueVar} = ${accessor}[${pathExpr}];`);
-          const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, pathExpr], shared);
+          const keyExpr = typeof key === "number" ? String(key) : literalPropertyKey(ctx, key);
+          d2.write(`const ${valueVar} = ${accessor}[${keyExpr}];`);
+          const val = compileChildIssues(d2, ctx, def.valueType, valueVar, [...path, keyExpr], shared);
           d2.write(`${out}[${outKey}] = ${val};`);
         });
         d.write(`}`);
@@ -1755,7 +1759,7 @@ function generateRecordIssues(
           ? `${out}[${k}] = ${accessor}[${k}];`
           : keyValues
             ? `(${unrec} ??= []).push(${k});`
-            : `${badKeyConst}(${keyTypeConst}, ${k}, payload, pctx, ${instConst}, [${path.join(", ")}]);`;
+            : `${badKeyConst}(${keyTypeConst}, ${k}, payload, pctx, ${instConst}, ${pathExpr(ctx, path)});`;
         d2.write(`if (${outKey} === INVALID) { ${onBadKey} continue; }`);
         // the key schema can normalize an ordinary key into __proto__; re-check the one actually written under
         d2.write(`if (${outKey} === "__proto__") continue;`);

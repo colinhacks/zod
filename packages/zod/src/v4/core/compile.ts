@@ -74,6 +74,8 @@ export interface CompileContext {
   varCounter: number;
   /** Cleared when a construct can return INVALID for something the interpreter throws on, so `validate` keeps its fallback. */
   definite: boolean;
+  /** Hoisted static issue paths, keyed by their source text. */
+  pathConstants?: Map<string, string>;
 }
 
 // Union of all check types we support in AOT compilation
@@ -1263,10 +1265,37 @@ export function coldCheck(
   if (path && payload.issues.length > m) prefixIssuesFrom(payload.issues, m, path);
 }
 
+const STATIC_PATH_ELEMENT = /^(?:"(?:[^"\\]|\\.)*"|-?\d+)$/;
+
+// Source for a path array that is only read (a cold call's prefix). A path of two or more literals hoists into one shared constant: on a wide schema the literal repeated at every leaf is a large share of the generated issue code, which is retained for the schema's lifetime. Paths carrying a runtime element (an array index, a record key) stay inline.
+export function pathExpr(ctx: CompileContext, path: IssuePath): string {
+  const literal = `[${path.join(", ")}]`;
+  if (path.length < 2 || !path.every((p) => STATIC_PATH_ELEMENT.test(p))) return literal;
+  ctx.pathConstants ??= new Map();
+  const cache = ctx.pathConstants;
+  let name = cache.get(literal);
+  if (!name) {
+    name = addConstant(ctx, JSON.parse(literal));
+    cache.set(literal, name);
+  }
+  return name;
+}
+
+// Source for a path array that lands on an issue, which the caller may mutate: a hoisted constant is copied
+export function pathLiteral(ctx: CompileContext, path: IssuePath): string {
+  const expr = pathExpr(ctx, path);
+  return expr.startsWith("[") ? expr : `${expr}.slice()`;
+}
+
+// the synthetic issue for a required key that is absent when the value schema pushed nothing, as $ZodObject's handlePropertyResult pushes it
+export function pushMissingKey(payload: ParsePayload, path: unknown[]): void {
+  payload.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, path: path.slice() } as never);
+}
+
 export function leafFailBlock(ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
   const coldConst = addConstant(ctx, coldParse);
   const parseConst = addConstant(ctx, schema._zod.parse);
-  const pathArg = path.length ? `, [${path.join(", ")}]` : "";
+  const pathArg = path.length ? `, ${pathExpr(ctx, path)}` : "";
   return `${coldConst}(${accessor}, ${parseConst}, payload, pctx${pathArg});`;
 }
 
@@ -1292,7 +1321,7 @@ function checkFailBlock(
   if (typeof checkFn !== "function") throw new ZodCompileUnsupportedError("check without a runtime check function");
   const coldConst = addConstant(ctx, coldCheck);
   const checkConst = addConstant(ctx, checkFn);
-  const pathArg = path.length ? `, [${path.join(", ")}]` : "";
+  const pathArg = path.length ? `, ${pathExpr(ctx, path)}` : "";
   const exUpd = gate.ex ? ` ${gate.ex} = ${pre}${eabt}(payload, ${nodeMark});` : "";
   return `{ ${coldConst}(${accessor}, ${checkConst}, payload, ${ownerConst}${pathArg}); ${gate.ab} = ${pre}${abt}(payload, ${nodeMark});${exUpd} break ${label}; }`;
 }
@@ -1367,7 +1396,7 @@ export function generateChecksIssues(
           d.write(`if (payload.issues.length > ${m}) {`);
           d.indented((d2) => {
             d2.write(`${att}(payload.issues, ${m}, ${ownerConst});`);
-            if (path.length) d2.write(`${pfx}(payload.issues, ${m}, [${path.join(", ")}]);`);
+            if (path.length) d2.write(`${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
             d2.write(`if (!${gate.ab}) ${gate.ab} = ${abt}(payload, ${m});`);
             if (gate.ex) d2.write(`if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});`);
           });
@@ -1449,7 +1478,7 @@ export function emitIssueIsland(
   const v = newVar(ctx);
   doc.write(`const ${m} = payload.issues.length;`);
   doc.write(`const ${v} = ${rerunConst}(${schemaConst}, ${accessor}, payload, pctx, ${shared});`);
-  if (path.length) doc.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, [${path.join(", ")}]);`);
+  if (path.length) doc.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
   return v;
 }
 
