@@ -1717,6 +1717,43 @@ test("issue parsers compile natively for every emitter-backed shape", () => {
   }
 });
 
+test("wide issue parsers split into hoisted per-subtree functions", () => {
+  // one huge function stays unoptimized for thousands of rejections and loses to the interpreter until then; a subtree over the size threshold becomes a function of its own, small schemas stay one function, and union branches are hoisted rather than closed over per parse
+  const nested = (depth: number): z.ZodType =>
+    depth === 0
+      ? z.string()
+      : z.object({
+          k0: nested(depth - 1),
+          k1: nested(depth - 1),
+          k2: nested(depth - 1),
+          k3: nested(depth - 1),
+          k4: nested(depth - 1),
+        });
+  const wide = nested(3);
+  const fns = (schema: z.ZodType) =>
+    compileFn(schema, { issues: true, debug: true }).code!.match(/^function fv\d+\(/gm) ?? [];
+  expect(fns(wide).length).toBeGreaterThan(1);
+  expect(fns(z.object({ a: z.string() }))).toEqual([]);
+  expect(fns(z.union([z.string(), z.number()]))).toHaveLength(2);
+  const fill = (depth: number, leaf: unknown): any =>
+    depth === 0
+      ? leaf
+      : {
+          k0: fill(depth - 1, leaf),
+          k1: fill(depth - 1, leaf),
+          k2: fill(depth - 1, leaf),
+          k3: fill(depth - 1, leaf),
+          k4: fill(depth - 1, leaf),
+        };
+  const bad = fill(3, "x");
+  bad.k0.k0.k0 = 1;
+  bad.k2.k4 = null;
+  delete bad.k4.k4.k4;
+  const compiled = compile(wide);
+  expect(compiled.safeParse(bad).error!.issues).toEqual(wide.safeParse(bad).error!.issues);
+  expect(compiled.safeParse(fill(3, "x"))).toEqual(wide.safeParse(fill(3, "x")));
+});
+
 test("compiled issue parsers isolate child payloads and keep unions at two callback runs", () => {
   // a property's superRefine sees only its own issues, like the interpreter's per-property payload
   const sibling = z.object({

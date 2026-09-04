@@ -14,6 +14,7 @@ import {
   compileChildIssues,
   compileFn,
   dropsWhenAbsent,
+  emitBranchFn,
   generateCheck,
   generateNumberFormatCheck,
   generatePropertiesChecks,
@@ -1629,15 +1630,8 @@ function generateUnionIssues(
   doc.indented((d) => {
     for (let i = 0; i < options.length; i++) {
       const opt = options[i]!;
-      // the shadowed `payload` and fresh `_sp` confine the branch's pushes to its own local payload, exactly like the interpreter's per-branch payloads; `shared` is true relative to that payload so a branch pipe's abort flag lands on it for the nonaborted filter
-      d.write(`${rsVar}.push(((payload) => {`);
-      d.indented((d2) => {
-        d2.write(`let _sp;`);
-        const bv = compileChildIssues(d2, ctx, opt, "payload.value", [], true);
-        d2.write(`payload.value = ${bv};`);
-        d2.write(`return payload;`);
-      });
-      d.write(`})({ value: ${accessor}, issues: [] }));`);
+      // each branch is a hoisted function over a payload of its own, exactly like the interpreter's per-branch payloads
+      d.write(`${rsVar}.push(${emitBranchFn(ctx, opt)}({ value: ${accessor}, issues: [] }, pctx));`);
       if (i < options.length - 1) d.write(`if (${rsVar}[${i}].issues.length === 0) break ${label};`);
     }
   });

@@ -77,6 +77,8 @@ export interface CompileContext {
   definite: boolean;
   /** Hoisted static issue paths, keyed by their source text. */
   pathConstants?: Map<string, string>;
+  /** Function declarations hoisted above the generated parser, in the factory's scope. */
+  prelude: string[];
 }
 
 // Union of all check types we support in AOT compilation
@@ -261,6 +263,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     constantCounter: 0,
     varCounter: 0,
     definite: true,
+    prelude: [],
   };
 
   const doc = new Doc(options?.issues ? ["input", "payload", "pctx"] : ["input"]);
@@ -283,15 +286,15 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
   const constantValues = [INVALID, ...ctx.constants.values()];
 
   const code = doc.content.join("\n");
+  // hoisted subtree and branch functions sit in the factory's scope, next to the constants
+  const prelude = ctx.prelude.length ? `${ctx.prelude.join("\n")}\n` : "";
   const fullCode = options?.debug
-    ? constantNames.length > 0
-      ? `// Constants: ${constantNames.join(", ")}\n${code}`
-      : code
+    ? `${constantNames.length > 0 ? `// Constants: ${constantNames.join(", ")}\n` : ""}${prelude}${code}`
     : "";
 
   const F = Function;
   const params = options?.issues ? "(input, payload, pctx)" : "(input)";
-  const factoryCode = `return ${params} => {\n${code}\n}`;
+  const factoryCode = `${prelude}return ${params} => {\n${code}\n}`;
   let fn: CompiledFn<core.output<T>>;
   try {
     const factory = new F(...constantNames, factoryCode);
@@ -1541,20 +1544,36 @@ export function mergeChildIssues(payload: ParsePayload, child: ParsePayload, pat
 // A subtree whose callbacks could read the payload runs inside one of its own, as the interpreter gives every object property, array element and record value: the callbacks see only the child's issues, with child-relative paths, and the parent takes the issues afterwards. A subtree without callbacks pushes straight into the parent's array with its path prefixed at the site, which is the same result without the payload and the closure.
 function emitIsolatedChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
   const mergeConst = addConstant(ctx, mergeChildIssues);
+  const fn = emitBranchFn(ctx, schema);
   const r = newVar(ctx);
-  doc.write(`const ${r} = ((payload) => {`);
-  doc.indented((d) => {
-    d.write(`let _sp;`);
-    const value = compileChildIssues(d, ctx, schema, "payload.value", [], true);
-    d.write(`payload.value = ${value};`);
-    d.write(`return payload;`);
-  });
-  doc.write(`})({ value: ${accessor}, issues: [] });`);
+  doc.write(`const ${r} = ${fn}({ value: ${accessor}, issues: [] }, pctx);`);
   doc.write(`${mergeConst}(payload, ${r}, ${path.length ? pathExpr(ctx, path) : "[]"});`);
   return `${r}.value`;
 }
 
-// Issue-mode counterpart of compileChild: try the native emission, roll back and island on an islandable refusal.
+// A body that parses `payload.value` on a payload of its own — a union branch, an isolated child — hoisted into the factory's scope as `(payload, pctx) => payload` with the value written back, so no closure is allocated per parse. `shared` is true relative to that payload, so a branch pipe's abort flag lands on it.
+export function emitBranchFn(ctx: CompileContext, schema: SomeType): string {
+  const sub = new Doc();
+  const out = compileChildIssues(sub, ctx, schema, "payload.value", [], true);
+  return hoistFn(ctx, "payload, pctx", sub.content, `payload.value = ${out};`, `return payload;`);
+}
+
+function hoistFn(ctx: CompileContext, params: string, body: string[], ...tail: string[]): string {
+  const name = `f${newVar(ctx)}`;
+  ctx.prelude.push(
+    `function ${name}(${params}) {`,
+    `  let _sp;`,
+    ...body.map((line) => `  ${line}`),
+    ...tail.map((line) => `  ${line}`),
+    `}`
+  );
+  return name;
+}
+
+// V8 sizes a function's optimization budget by its bytecode, so one huge issue parser stays unoptimized for thousands of rejections and loses to the interpreter until then; a subtree above this many characters of source becomes a function of its own, which tiers up on its own. Small schemas stay one function and pay no call.
+const HOIST_THRESHOLD = 4000;
+
+// Issue-mode counterpart of compileChild: try the native emission, roll back and island on an islandable refusal. The body generates against a local of its own, detached from the caller's doc, so a large one on a static path can hoist as a function; the rest splices in place.
 export function compileChildIssues(
   doc: Doc,
   ctx: CompileContext,
@@ -1564,23 +1583,39 @@ export function compileChildIssues(
   shared: boolean
 ): string {
   if (!shared && subtreeRunsCallbacks(schema)) return emitIsolatedChild(doc, ctx, schema, accessor, path);
-  const contentLen = doc.content.length;
   const constantCount = ctx.constants.size;
   const constantCounter = ctx.constantCounter;
   const varCounter = ctx.varCounter;
+  const preludeLen = ctx.prelude.length;
+  const local = newVar(ctx);
+  const sub = new Doc();
+  let out: string;
   try {
-    return generateCheckIssues(doc, ctx, schema, accessor, path, shared);
+    out = generateCheckIssues(sub, ctx, schema, local, path, shared);
   } catch (err) {
     if (!(err instanceof ZodCompileUnsupportedError) || !err.islandable) throw err;
-    doc.content.length = contentLen;
     if (ctx.constants.size > constantCount) {
       const trailing = Array.from(ctx.constants.keys()).slice(constantCount);
       for (const k of trailing) ctx.constants.delete(k);
     }
     ctx.constantCounter = constantCounter;
     ctx.varCounter = varCounter;
+    ctx.prelude.length = preludeLen;
     return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
   }
+  const body = sub.content;
+  // a dynamic path element (an array index, a record key) is a variable of the caller's, which a hoisted body could not see
+  if (body.join("\n").length > HOIST_THRESHOLD && path.every((p) => STATIC_PATH_ELEMENT.test(p))) {
+    const r = newVar(ctx);
+    doc.write(
+      `const ${r} = ${hoistFn(ctx, `${local}, payload, pctx`, body, `return ${out};`)}(${accessor}, payload, pctx);`
+    );
+    return r;
+  }
+  doc.write(`const ${local} = ${accessor};`);
+  const pad = " ".repeat(doc.indent * 2);
+  for (const line of body) doc.content.push(pad + line);
+  return out;
 }
 
 /** An issue-mode emitter for one node: writes the node's body against `accessor`, pushing canonical issues (prefixed with `path`) into `payload.issues`, and returns the accessor holding the node's value. `mark` is `payload.issues.length` before the node, present only for an entry that declares `marks`; a pipe also hands back the gate that stops its check chain. */
