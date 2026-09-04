@@ -95,6 +95,24 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
       expect(b.error.issues, `issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
     }
   }
+  // `compiled` above answers a rejection from the generated issue parser; the runtime re-parse fallback is still a supported configuration and must agree too.
+  const fallback = compile(schema, { issues: false });
+  for (const input of inputs) {
+    const at = attempt(() => schema.safeParse(input));
+    const bt = attempt(() => fallback.safeParse(input));
+    expect(
+      bt.threw,
+      `fallback throw mismatch for input ${describe(input)}: runtime ${at.threw ?? "did not throw"}, compiled ${bt.threw ?? "did not throw"}`
+    ).toBe(at.threw);
+    if (at.threw) continue;
+    const a = at.value!;
+    const b = bt.value!;
+    expect(b.success, `fallback success mismatch for input ${describe(input)}`).toBe(a.success);
+    if (a.success && b.success) assertIdentical(b.data, a.data, "$");
+    else if (!a.success && !b.success) {
+      expect(b.error.issues, `fallback issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
+    }
+  }
   assertUnionSound(schema, inputs);
 }
 
@@ -408,6 +426,26 @@ test("record dynamic key rejects enumerable symbol keys", () => {
 
 test("record enum key", () => {
   differential(z.record(z.enum(["a", "b"]), z.number()), [{ a: 1, b: 2 }, { a: 1, c: 3 }, {}]);
+});
+
+test("record issue paths, key modes and bad keys", () => {
+  const sym = Symbol("k");
+  const symInput = { a: 1, [sym]: 2 };
+  // constraint keys: a rejected key is invalid_key (strict), kept (loose), and the numeric retry accepts "1" for a number key
+  differential(z.record(z.string().regex(/^[a-z]+$/), z.number()), [{ ab: 1, A1: 2, cd: "x" }, {}]);
+  differential(z.looseRecord(z.string().regex(/^[a-z]+$/), z.number()), [{ ab: 1, A1: "kept", cd: "x" }]);
+  differential(z.record(z.number(), z.string()), [{ 1: "a", 2: 3, x: "b" }, { 1: "a" }]);
+  // enumerable keys: missing, extra, bad value, declared numeric key, symbol keys
+  differential(z.record(z.enum(["a", "b"]), z.number()), [{ a: 1 }, { a: 1, b: 2, c: 3 }, { a: "x", b: 2 }, symInput]);
+  differential(z.partialRecord(z.enum(["a", "b"]), z.number()), [{ a: 1 }, { a: "x", c: 3 }, {}]);
+  differential(z.looseRecord(z.enum(["a", "b"]), z.number()), [{ a: 1, c: "kept" }, { a: "x" }]);
+  differential(z.record(z.literal([1, 2]), z.string()), [{ 1: "a", 2: "b" }, { 1: 3 }, {}]);
+  // nested: paths through a record into an object and back
+  differential(z.object({ r: z.record(z.string(), z.object({ n: z.number() })) }), [
+    { r: { a: { n: 1 }, b: { n: "x" } } },
+    { r: { a: 1 } },
+    { r: [] },
+  ]);
 });
 
 test("record enum key transform applies to output keys", () => {

@@ -390,7 +390,10 @@ export interface ShapeGetter {
  */
 export function rawShape(def: any): Record<PropertyKey, any> | undefined {
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
-  return desc?.get ? (desc.get as ShapeGetter).raw : desc?.value;
+  if (!desc?.get) return desc?.value;
+  // zod's own getter carries `raw` as data; a foreign getter's `raw` could be an accessor, and reading it would break the no-invocation promise
+  const raw = Object.getOwnPropertyDescriptor(desc.get, "raw");
+  return raw && !raw.get ? raw.value : undefined;
 }
 
 // where a builder reads its source's keys and descriptors, resolving only a shape a def answers for itself. A shape resolves by object spread, so only its enumerable keys are ever part of it.
@@ -964,13 +967,18 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
-  rest.path ??= [];
-  rest.message = message;
-  if (ctx?.reportInput) {
-    rest.input = _input;
+  // an explicit copy beats object rest with excluded keys, which v8 routes through a generic runtime call
+  const full: any = {};
+  for (const k in iss) {
+    if (k === "inst" || k === "schema" || k === "continue" || k === "input") continue;
+    full[k] = (iss as any)[k];
   }
-  return rest;
+  full.path ??= [];
+  full.message = message;
+  if (ctx?.reportInput) {
+    full.input = iss.input;
+  }
+  return full;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {

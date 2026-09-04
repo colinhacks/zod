@@ -1,9 +1,10 @@
 import type * as checks from "./checks.js";
+import { _whenHasLength, _whenHasSize } from "./checks.js";
 import type * as core from "./core.js";
-import { $ZodAsyncError } from "./core.js";
+import { $ZodAsyncError, config } from "./core.js";
 import { Doc } from "./doc.js";
+import { codegenFor, emitterFor } from "./jit.js";
 import { isBackEdge, isRecursiveSchema } from "./memoizer.js";
-import * as regexes from "./regexes.js";
 import {
   isValidBase64,
   isValidBase64URL,
@@ -11,7 +12,6 @@ import {
   isValidCreditCard,
   isValidIPv6,
   isValidJWT,
-  mergeValues,
   parseURLObject,
   stripTabAndNewline,
   urlHostnameOk,
@@ -27,11 +27,17 @@ export type INVALID = typeof INVALID;
 
 // Set on the parse ctx when a compiled wrapper falls back to the runtime, so nested compiled wrappers skip their fast paths for the rest of that parse.
 const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
+// raised by a compiled method that already rejected, naming the schema whose runtime method it is about to enter: the fast parser has run, go straight to the issue parser. Module state rather than a parse-context entry, so the fallback takes no context spread and no flag reads; only that schema's own wrapper consumes it, so a route that reaches a nested wrapper first cannot skip that wrapper's checks, and the method evaluates params getters before raising it and restores whatever it found afterwards, so no other invocation can run between the raise and the consume.
+let skipFastFor: unknown = null;
+// set on the parse context where the issue path hands a subtree to the interpreter, so a compiled wrapper the interpreter reaches inside it skips its own fast pass: user callbacks run at most twice on invalid input
+const SKIP_FAST: unique symbol = Symbol.for("zod.compile.skipfast");
 
 interface CompileFnOptions {
   debug?: boolean | undefined;
   /** Emit a validator instead of a parser: skip building the output value where nothing reads it. */
   assertOnly?: boolean | undefined;
+  /** Emit an issue-collecting parser: failures push the same raw issues the interpreter pushes instead of returning INVALID. */
+  issues?: boolean | undefined;
 }
 
 type CompiledFn<T> = ((input: unknown) => T | INVALID) & {
@@ -65,12 +71,16 @@ export class ZodCompileUnsupportedError extends Error {
   }
 }
 
-interface CompileContext {
+export interface CompileContext {
   constants: Map<string, unknown>;
   constantCounter: number;
   varCounter: number;
   /** Cleared when a construct can return INVALID for something the interpreter throws on, so `validate` keeps its fallback. */
   definite: boolean;
+  /** Hoisted static issue paths, keyed by their source text. */
+  pathConstants?: Map<string, string>;
+  /** Function declarations hoisted above the generated parser, in the factory's scope. */
+  prelude: string[];
 }
 
 // Union of all check types we support in AOT compilation
@@ -109,6 +119,8 @@ function compileValidator(schema: SomeType, parser: CompiledFn<unknown>): Compil
 export interface CompileOptions {
   /** Throw the refusal instead of returning the schema uncompiled. */
   strict?: boolean | undefined;
+  /** Compile the failure path too (the default): after the fast parser rejects, a second generated parser pushes the interpreter's issues instead of re-parsing through the runtime. `false` keeps the runtime re-parse. */
+  issues?: boolean | undefined;
 }
 
 /**
@@ -127,6 +139,21 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     const parser = compileFn(schema);
     const clone = util.clone(schema as any) as T;
 
+    type IssueParser = (input: unknown, payload: ParsePayload, pctx: ParseContextInternal) => unknown;
+    // Compiled on the first rejection: a schema that never fails never pays for its issue parser, whose source alone can outweigh the schema, and z.compile stays a fast-path-only cost up front. A refusal falls back to the runtime re-parse for good.
+    let issueParser: IssueParser | null | undefined = options?.issues === false ? null : undefined;
+    const issueParserFor = (): IssueParser | null => {
+      if (issueParser === undefined) {
+        try {
+          issueParser = compileFn(schema, { issues: true }) as unknown as IssueParser;
+        } catch (err) {
+          if (!(err instanceof ZodCompileUnsupportedError || err instanceof ZodCompileAsyncError)) throw err;
+          issueParser = null;
+        }
+      }
+      return issueParser;
+    };
+
     // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
     const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
       __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
@@ -140,23 +167,35 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     // would push issues with `inst === clone`, producing diverging error
     // messages from the original schema.
     const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
-      if (
-        ctx?.async ||
-        ctx?.direction === "backward" ||
-        ctx?.skipChecks ||
-        (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
-      ) {
-        return originalRun(payload, ctx);
-      }
+      // a compiled parse/safeParse method that already rejected comes back through here to build the failure; running the fast parser again would only run user callbacks once more
+      if (skipFastFor === clone) skipFastFor = null;
+      else {
+        if (
+          ctx?.async ||
+          ctx?.direction === "backward" ||
+          ctx?.skipChecks ||
+          (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
+        ) {
+          return originalRun(payload, ctx);
+        }
 
-      // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
-      if (ctx && isBackEdge(ctx, payload.value)) {
-        return originalRun(payload, ctx);
-      }
+        // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
+        if (ctx && isBackEdge(ctx, payload.value)) {
+          return originalRun(payload, ctx);
+        }
 
-      const out = parser(payload.value);
-      if (out !== INVALID) {
-        payload.value = out;
+        if (!(ctx as Record<symbol, unknown> | undefined)?.[SKIP_FAST]) {
+          const out = parser(payload.value);
+          if (out !== INVALID) {
+            payload.value = out;
+            return payload;
+          }
+        }
+      }
+      // The issue parser replaces the runtime fallback. `validate` asks for the first failure only (abortEarly); the issue parser walks everything, so that answer still comes from the runtime.
+      const issues = ctx?.abortEarly ? null : issueParserFor();
+      if (issues) {
+        payload.value = issues(payload.value, payload, ctx);
         return payload;
       }
       // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
@@ -169,8 +208,8 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
     clone._zod.run = wrapped;
 
-    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
-    if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, parser);
+    // The fast parse/safeParse closures fall back through the clone's own methods with the skip-fast flag, so a rejection lands in the wrapper's issue parser (or its runtime fallback) without running the fast parser a second time: user callbacks run at most twice on invalid input. If the source is shim-managed, its methods already route into a compiled run, so skip.
+    if (!liveRun.__originalRun) installCompiledUserMethods(clone, parser);
 
     return clone;
   } catch (err) {
@@ -180,33 +219,44 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
   }
 }
 
-function installCompiledUserMethods<T extends SomeType>(
-  target: T,
-  source: T,
-  parser: CompiledFn<core.output<T>>
-): void {
+function installCompiledUserMethods<T extends SomeType>(target: T, parser: CompiledFn<core.output<T>>): void {
   const targetAny = target as any;
-  const sourceAny = source as any;
 
-  if (typeof sourceAny.safeParse === "function") {
-    const originalSafeParse = sourceAny.safeParse;
+  if (typeof targetAny.safeParse === "function") {
+    const originalSafeParse = targetAny.safeParse;
     targetAny.safeParse = (data: unknown, params?: unknown) => {
       const out = parser(data);
       if (out !== INVALID) {
         return { success: true, data: out };
       }
-      return originalSafeParse(data, params);
+      // params are copied here so a getter on them runs now, not between raising the signal and the wrapper consuming it, where a same-schema re-entry would take it
+      if (params) params = { ...(params as object) };
+      const outer = skipFastFor;
+      skipFastFor = target;
+      try {
+        return originalSafeParse(data, params);
+      } finally {
+        skipFastFor = outer;
+      }
     };
   }
 
-  if (typeof sourceAny.parse === "function") {
-    const originalParse = sourceAny.parse;
+  if (typeof targetAny.parse === "function") {
+    const originalParse = targetAny.parse;
     targetAny.parse = (data: unknown, params?: unknown) => {
       const out = parser(data);
       if (out !== INVALID) {
         return out;
       }
-      return originalParse(data, params);
+      // params are copied here so a getter on them runs now, not between raising the signal and the wrapper consuming it, where a same-schema re-entry would take it
+      if (params) params = { ...(params as object) };
+      const outer = skipFastFor;
+      skipFastFor = target;
+      try {
+        return originalParse(data, params);
+      } finally {
+        skipFastFor = outer;
+      }
     };
   }
 }
@@ -230,26 +280,38 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     constantCounter: 0,
     varCounter: 0,
     definite: true,
+    prelude: [],
   };
 
-  const doc = new Doc(["input"]);
-  const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
-  // In assert mode a root that built nothing has already returned INVALID on every failure, so reaching the end means valid.
-  doc.write(outputAccessor === null ? `return true;` : `return ${outputAccessor};`);
+  const doc = new Doc(options?.issues ? ["input", "payload", "pctx"] : ["input"]);
+  if (options?.issues) {
+    // a root that would compile to a bare self-island is just the interpreter with extra steps — refuse so the wrapper keeps the fallback model instead
+    if ((schema._zod.def as { coerce?: boolean }).coerce || !emitterFor(schema)?.issues) {
+      throw new ZodCompileUnsupportedError(`schema type ${schema._zod.def.type} at the root of an issue-mode compile`);
+    }
+    doc.write(`let _sp;`);
+    const outputAccessor = generateCheckIssues(doc, ctx, schema, "input", [], true);
+    doc.write(`return ${outputAccessor};`);
+  } else {
+    const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
+    // In assert mode a root that built nothing has already returned INVALID on every failure, so reaching the end means valid.
+    doc.write(outputAccessor === null ? `return true;` : `return ${outputAccessor};`);
+  }
 
   // Build the function with hoisted constants Always include INVALID as the first constant
   const constantNames = ["INVALID", ...ctx.constants.keys()];
   const constantValues = [INVALID, ...ctx.constants.values()];
 
   const code = doc.content.join("\n");
+  // hoisted subtree and branch functions sit in the factory's scope, next to the constants
+  const prelude = ctx.prelude.length ? `${ctx.prelude.join("\n")}\n` : "";
   const fullCode = options?.debug
-    ? constantNames.length > 0
-      ? `// Constants: ${constantNames.join(", ")}\n${code}`
-      : code
+    ? `${constantNames.length > 0 ? `// Constants: ${constantNames.join(", ")}\n` : ""}${prelude}${code}`
     : "";
 
   const F = Function;
-  const factoryCode = `return (input) => {\n${code}\n}`;
+  const params = options?.issues ? "(input, payload, pctx)" : "(input)";
+  const factoryCode = `${prelude}return ${params} => {\n${code}\n}`;
   let fn: CompiledFn<core.output<T>>;
   try {
     const factory = new F(...constantNames, factoryCode);
@@ -265,7 +327,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
   return fn;
 }
 
-function addConstant(ctx: CompileContext, value: unknown): string {
+export function addConstant(ctx: CompileContext, value: unknown): string {
   // Check if we already have this constant
   for (const [name, v] of ctx.constants) {
     if (v === value) return name;
@@ -276,12 +338,12 @@ function addConstant(ctx: CompileContext, value: unknown): string {
 }
 
 /** Hoists a user-supplied callback. Anything the schema's author wrote can throw, and generated code can reject an earlier sibling before ever reaching it, so this clears `definite` — a rejection is then no longer proof that the interpreter would have rejected rather than thrown. */
-function addUserConstant(ctx: CompileContext, fn: unknown): string {
+export function addUserConstant(ctx: CompileContext, fn: unknown): string {
   ctx.definite = false;
   return addConstant(ctx, fn);
 }
 
-function newVar(ctx: CompileContext): string {
+export function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
 }
 
@@ -301,8 +363,8 @@ function runtimeRun(schema: SomeType, value: unknown): unknown {
 // runtime island is emitted instead — the child schema is invoked through
 // `runtimeRun` at parse time and treated as a black box. Anything else thrown
 // propagates (e.g. `ZodCompileAsyncError`).
-function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string;
-function compileChild(
+export function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string;
+export function compileChild(
   doc: Doc,
   ctx: CompileContext,
   schema: SomeType,
@@ -310,7 +372,7 @@ function compileChild(
   needsValue: boolean
 ): string | null;
 // `null` means the node built no value because nothing reads it. The overloads keep that case out of the 20-odd callers that always want one, so only a caller passing needsValue has to handle it.
-function compileChild(
+export function compileChild(
   doc: Doc,
   ctx: CompileContext,
   schema: SomeType,
@@ -357,7 +419,83 @@ const WHEN_DEFAULTED_CHECKS = new Set([
   "length_equals",
 ]);
 
-function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+/** Emits the statement run when a check's predicate fails. Fast mode returns INVALID; issue mode writes a cold block that pushes the canonical issue. Called once per failure site, so implementations may allocate fresh vars. */
+type FailEmitter = () => string;
+const RETURN_INVALID: FailEmitter = () => "return INVALID;";
+
+// Emits the predicate for one non-structural check (everything but custom/overwrite/property/properties), calling `fail()` at each failure site. Returns the accessor holding the post-check value.
+function emitCheckPredicate(
+  doc: Doc,
+  ctx: CompileContext,
+  check: SupportedCheck,
+  accessor: string,
+  fail: FailEmitter
+): string {
+  const def = check._zod.def;
+  switch (def.check) {
+    case "greater_than":
+      generateGreaterThanCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    case "less_than":
+      generateLessThanCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    case "multiple_of":
+      generateMultipleOfCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    case "number_format":
+      generateNumberFormatCheck(doc, def, accessor, fail);
+      return accessor;
+    case "min_length": {
+      const min = numericOperand(def.minimum, "min_length");
+      const len = codePointLengthVar(
+        doc,
+        ctx,
+        accessor,
+        `${accessor}.length >= ${min} && ${accessor}.length < ${def.minimum * 2}`
+      );
+      doc.write(`if (${len} < ${min}) ${fail()}`);
+      return accessor;
+    }
+    case "max_length": {
+      const max = numericOperand(def.maximum, "max_length");
+      const len = codePointLengthVar(doc, ctx, accessor, `${accessor}.length > ${max}`);
+      doc.write(`if (${len} > ${max}) ${fail()}`);
+      return accessor;
+    }
+    case "length_equals": {
+      const exact = numericOperand(def.length, "length_equals");
+      const len = codePointLengthVar(
+        doc,
+        ctx,
+        accessor,
+        `${accessor}.length >= ${exact} && ${accessor}.length <= ${def.length * 2}`
+      );
+      doc.write(`if (${len} !== ${exact}) ${fail()}`);
+      return accessor;
+    }
+    case "min_size":
+      doc.write(`if (${accessor}.size < ${numericOperand(def.minimum, "min_size")}) ${fail()}`);
+      return accessor;
+    case "max_size":
+      doc.write(`if (${accessor}.size > ${numericOperand(def.maximum, "max_size")}) ${fail()}`);
+      return accessor;
+    case "size_equals":
+      doc.write(`if (${accessor}.size !== ${numericOperand(def.size, "size_equals")}) ${fail()}`);
+      return accessor;
+    case "string_format":
+      return generateStringFormatCheck(doc, ctx, def, accessor, fail);
+    case "bigint_format":
+      generateBigIntFormatCheck(doc, def, accessor, fail);
+      return accessor;
+    case "mime_type":
+      generateMimeTypeCheck(doc, ctx, def, accessor, fail);
+      return accessor;
+    default:
+      throw new ZodCompileUnsupportedError(`check type ${(def as { check: string }).check}`);
+  }
+}
+
+export function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const schemaChecks = schema._zod.def.checks as SupportedCheck[] | undefined;
   if (!schemaChecks || schemaChecks.length === 0) return accessor;
 
@@ -371,66 +509,8 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
       throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
     }
     switch (def.check) {
-      case "greater_than":
-        generateGreaterThanCheck(doc, ctx, def, currentAccessor);
-        break;
-      case "less_than":
-        generateLessThanCheck(doc, ctx, def, currentAccessor);
-        break;
-      case "multiple_of":
-        generateMultipleOfCheck(doc, ctx, def, currentAccessor);
-        break;
-      case "number_format":
-        generateNumberFormatCheck(doc, def, currentAccessor);
-        break;
-      case "min_length": {
-        const min = numericOperand(def.minimum, "min_length");
-        const len = codePointLengthVar(
-          doc,
-          ctx,
-          currentAccessor,
-          `${currentAccessor}.length >= ${min} && ${currentAccessor}.length < ${def.minimum * 2}`
-        );
-        doc.write(`if (${len} < ${min}) return INVALID;`);
-        break;
-      }
-      case "max_length": {
-        const max = numericOperand(def.maximum, "max_length");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length > ${max}`);
-        doc.write(`if (${len} > ${max}) return INVALID;`);
-        break;
-      }
-      case "length_equals": {
-        const exact = numericOperand(def.length, "length_equals");
-        const len = codePointLengthVar(
-          doc,
-          ctx,
-          currentAccessor,
-          `${currentAccessor}.length >= ${exact} && ${currentAccessor}.length <= ${def.length * 2}`
-        );
-        doc.write(`if (${len} !== ${exact}) return INVALID;`);
-        break;
-      }
-      case "min_size":
-        doc.write(`if (${currentAccessor}.size < ${numericOperand(def.minimum, "min_size")}) return INVALID;`);
-        break;
-      case "max_size":
-        doc.write(`if (${currentAccessor}.size > ${numericOperand(def.maximum, "max_size")}) return INVALID;`);
-        break;
-      case "size_equals":
-        doc.write(`if (${currentAccessor}.size !== ${numericOperand(def.size, "size_equals")}) return INVALID;`);
-        break;
-      case "string_format":
-        currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
-        break;
       case "custom":
         currentAccessor = generateCustomRefineCheck(doc, ctx, check as CustomCheck, currentAccessor);
-        break;
-      case "bigint_format":
-        generateBigIntFormatCheck(doc, def, currentAccessor);
-        break;
-      case "mime_type":
-        generateMimeTypeCheck(doc, ctx, def, currentAccessor);
         break;
       case "property":
         generatePropertyCheck(doc, ctx, def, currentAccessor);
@@ -445,10 +525,8 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         currentAccessor = newAccessor;
         break;
       }
-      default: {
-        void (def satisfies never);
-        throw new ZodCompileUnsupportedError(`check type ${(def as { check: string }).check}`);
-      }
+      default:
+        currentAccessor = emitCheckPredicate(doc, ctx, check, currentAccessor, RETURN_INVALID);
     }
   }
 
@@ -497,64 +575,72 @@ function generateGreaterThanCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckGreaterThanDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   const op = def.inclusive ? "<" : "<=";
-  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) ${fail()}`);
 }
 
 function generateLessThanCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckLessThanDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   const op = def.inclusive ? ">" : ">=";
-  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) ${fail()}`);
 }
 
 function generateMultipleOfCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckMultipleOfDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   if (typeof def.value === "bigint") {
     // a zero divisor has no compiled form: `x % 0n` throws
     if (def.value === BigInt(0)) throw new ZodCompileUnsupportedError("multiple_of check with a zero divisor");
-    doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
+    doc.write(`if (${accessor} % ${def.value}n !== 0n) ${fail()}`);
   } else {
     // Float `%` has well-known precision issues for sub-integer steps
     // (`1.5 % 0.1`, `2.5e-7 % 1e-7`). Defer to util.floatSafeRemainder so the
     // exact tolerance logic stays in one place — single function call is fine
     // since `multipleOf` runs at most once per number.
     const remainder = addConstant(ctx, util.floatSafeRemainder);
-    doc.write(`if (${remainder}(${accessor}, ${numericOperand(def.value, "multiple_of")}) !== 0) return INVALID;`);
+    doc.write(`if (${remainder}(${accessor}, ${numericOperand(def.value, "multiple_of")}) !== 0) ${fail()}`);
   }
 }
 
-function generateNumberFormatCheck(doc: Doc, def: checks.$ZodCheckNumberFormatDef, accessor: string): void {
+export function generateNumberFormatCheck(
+  doc: Doc,
+  def: checks.$ZodCheckNumberFormatDef,
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
+): void {
   const format = def.format;
   switch (format) {
     case "safeint":
-      doc.write(`if (!Number.isSafeInteger(${accessor})) return INVALID;`);
+      doc.write(`if (!Number.isSafeInteger(${accessor})) ${fail()}`);
       break;
     case "int32":
       doc.write(
-        `if (!Number.isInteger(${accessor}) || ${accessor} < -2147483648 || ${accessor} > 2147483647) return INVALID;`
+        `if (!Number.isInteger(${accessor}) || ${accessor} < -2147483648 || ${accessor} > 2147483647) ${fail()}`
       );
       break;
     case "uint32":
-      doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < 0 || ${accessor} > 4294967295) return INVALID;`);
+      doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < 0 || ${accessor} > 4294967295) ${fail()}`);
       break;
     case "float32":
       // Float32 range per util.NUMBER_FORMAT_RANGES
       doc.write(
-        `if (!Number.isFinite(${accessor}) || ${accessor} < -3.4028234663852886e38 || ${accessor} > 3.4028234663852886e38) return INVALID;`
+        `if (!Number.isFinite(${accessor}) || ${accessor} < -3.4028234663852886e38 || ${accessor} > 3.4028234663852886e38) ${fail()}`
       );
       break;
     case "float64":
-      doc.write(`if (!Number.isFinite(${accessor})) return INVALID;`);
+      doc.write(`if (!Number.isFinite(${accessor})) ${fail()}`);
       break;
     default: {
       void (format satisfies never);
@@ -563,15 +649,20 @@ function generateNumberFormatCheck(doc: Doc, def: checks.$ZodCheckNumberFormatDe
   }
 }
 
-function generateBigIntFormatCheck(doc: Doc, def: checks.$ZodCheckBigIntFormatDef, accessor: string): void {
+function generateBigIntFormatCheck(
+  doc: Doc,
+  def: checks.$ZodCheckBigIntFormatDef,
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
+): void {
   const format = def.format;
   if (!format) return; // undefined format means no range check
   switch (format) {
     case "int64":
-      doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) return INVALID;`);
+      doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) ${fail()}`);
       break;
     case "uint64":
-      doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) return INVALID;`);
+      doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) ${fail()}`);
       break;
     default: {
       void (format satisfies never);
@@ -584,17 +675,18 @@ function generateMimeTypeCheck(
   doc: Doc,
   ctx: CompileContext,
   def: checks.$ZodCheckMimeTypeDef,
-  accessor: string
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
 ): void {
   const mimeTypes = def.mime;
   if (mimeTypes && mimeTypes.length > 0) {
     const mimeSet = addConstant(ctx, new Set(mimeTypes));
-    doc.write(`if (!${mimeSet}.has(${accessor}.type)) return INVALID;`);
+    doc.write(`if (!${mimeSet}.has(${accessor}.type)) ${fail()}`);
   }
 }
 
 // asserts each named property in place; children compile assert-only because z.properties never rebuilds its input
-function generatePropertiesChecks(
+export function generatePropertiesChecks(
   doc: Doc,
   ctx: CompileContext,
   def: $ZodPropertiesDef,
@@ -658,12 +750,12 @@ type CustomCheck = {
   _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown };
 };
 /** A predicate that hands back a thenable is an async check reached synchronously, and the interpreter throws `$ZodAsyncError` for it. Returning INVALID instead would be a bail-out, and a union reads a bail-out as a rejected branch and answers with a later one — so the throw has to survive into generated code. */
-function throwAsync(): never {
+export function throwAsync(): never {
   throw new $ZodAsyncError();
 }
 
 /** Shared `addIssue` for the spoofed payloads a refine, check or transform receives. Allocating one per call — a fresh closure plus a `this`-bound method on a fresh literal — pinned every payload-allocating schema at ~2.7M ops/sec against 135M for a plain object literal. It captures nothing per call; it only reaches `this.issues`. */
-function pushIssue(this: { issues: unknown[] }, issue: unknown): void {
+export function pushIssue(this: { issues: unknown[] }, issue: unknown): void {
   this.issues.push(issue);
 }
 
@@ -711,7 +803,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
   throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
 }
 
-type StringFormatDef =
+export type StringFormatDef =
   | checks.$ZodCheckStringFormatDef
   | checks.$ZodCheckRegexDef
   | checks.$ZodCheckLowerCaseDef
@@ -758,38 +850,44 @@ const PATTERN_IS_COMPLETE: Set<string> = new Set([
 ]);
 
 // Returns the accessor holding the (possibly normalized) value after the check — url/normalize formats produce a new value like overwrite does. Never assigns to the incoming accessor: it may be a `const` or a property expression on user input.
-function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string {
+export function generateStringFormatCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: StringFormatDef,
+  accessor: string,
+  fail: FailEmitter = RETURN_INVALID
+): string {
   // Some string formats do runtime validation beyond their advertised pattern. For cheap pure utility checks, hoist the runtime function and call it so the fast path stays correct without cloning the utility logic into codegen.
   const fmt = def.format;
   if (fmt === "base64") {
     const validator = addConstant(ctx, isValidBase64);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "base64url") {
     const validator = addConstant(ctx, isValidBase64URL);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "jwt") {
     const validator = addConstant(ctx, isValidJWT);
     const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
-    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor}, ${alg})) ${fail()}`);
     return accessor;
   }
   if (fmt === "ipv6") {
     const validator = addConstant(ctx, isValidIPv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "cidrv6") {
     const validator = addConstant(ctx, isValidCIDRv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   if (fmt === "credit_card") {
     const validator = addConstant(ctx, isValidCreditCard);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write(`if (!${validator}(${accessor})) ${fail()}`);
     return accessor;
   }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
@@ -807,14 +905,14 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     const urlVar = newVar(ctx);
     doc.write(`const ${trimVar} = ${accessor}.trim();`);
     doc.write(`const ${urlVar} = ${parseConst}(${trimVar}, ${defConst});`);
-    doc.write(`if (typeof ${urlVar} === "number") return INVALID;`);
+    doc.write(`if (typeof ${urlVar} === "number") ${fail()}`);
     if (formatDef.hostname !== undefined) {
       const hostnameConst = addConstant(ctx, urlHostnameOk);
-      doc.write(`if (!${hostnameConst}(${urlVar}, ${defConst}.hostname)) return INVALID;`);
+      doc.write(`if (!${hostnameConst}(${urlVar}, ${defConst}.hostname)) ${fail()}`);
     }
     if (formatDef.protocol !== undefined) {
       const protocolConst = addConstant(ctx, urlProtocolOk);
-      doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
+      doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) ${fail()}`);
     }
     const outputVar = newVar(ctx);
     const outputExpr = formatDef.normalize ? `${urlVar}.href` : `${addConstant(ctx, stripTabAndNewline)}(${trimVar})`;
@@ -827,7 +925,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   if (customFn) {
     if (isAsyncFunction(customFn)) throw new ZodCompileUnsupportedError(`async string format ${fmt}`);
     const fnConst = addConstant(ctx, customFn);
-    doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
+    doc.write(`if (!${fnConst}(${accessor})) ${fail()}`);
     return accessor;
   }
 
@@ -835,7 +933,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   if (PATTERN_IS_COMPLETE.has(fmt) && def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
+    doc.write(`if (!${patternConst}.test(${accessor})) ${fail()}`);
     return accessor;
   }
 
@@ -845,24 +943,22 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       // A regex check with a pattern returned above. Reaching here means there is no pattern to test, and accepting unconditionally would pass every input, so hand the schema back to the runtime.
       throw new ZodCompileUnsupportedError("regex format without a pattern");
     case "lowercase":
-      doc.write(`if (${accessor} !== ${accessor}.toLowerCase()) return INVALID;`);
+      doc.write(`if (${accessor} !== ${accessor}.toLowerCase()) ${fail()}`);
       break;
     case "uppercase":
-      doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) return INVALID;`);
+      doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) ${fail()}`);
       break;
     case "includes":
-      doc.write(
-        `if (!${accessor}.includes(${util.esc((def as checks.$ZodCheckIncludesDef).includes)})) return INVALID;`
-      );
+      doc.write(`if (!${accessor}.includes(${util.esc((def as checks.$ZodCheckIncludesDef).includes)})) ${fail()}`);
       break;
     case "starts_with": {
       const prefix = (def as checks.$ZodCheckStartsWithDef).prefix;
-      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${util.esc(prefix)}) return INVALID;`);
+      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${util.esc(prefix)}) ${fail()}`);
       break;
     }
     case "ends_with": {
       const suffix = (def as checks.$ZodCheckEndsWithDef).suffix;
-      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${util.esc(suffix)}) return INVALID;`);
+      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${util.esc(suffix)}) ${fail()}`);
       break;
     }
     default: {
@@ -873,56 +969,15 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   return accessor;
 }
 
-// Union of all schema types we support in AOT compilation
-type SupportedSchemaType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "bigint"
-  | "symbol"
-  | "undefined"
-  | "null"
-  | "any"
-  | "unknown"
-  | "never"
-  | "void"
-  | "nan"
-  | "date"
-  | "object"
-  | "optional"
-  | "nullable"
-  | "array"
-  | "literal"
-  | "enum"
-  | "readonly"
-  | "success"
-  | "default"
-  | "prefault"
-  | "nonoptional"
-  | "tuple"
-  | "union"
-  | "intersection"
-  | "record"
-  | "map"
-  | "set"
-  | "file"
-  | "template_literal"
-  | "lazy"
-  | "pipe"
-  | "custom"
-  | "properties"
-  | "transform"
-  | "catch";
-
-function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string;
-function generateCheck(
+export function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string;
+export function generateCheck(
   doc: Doc,
   ctx: CompileContext,
   schema: SomeType,
   accessor: string,
   needsValue: boolean
 ): string | null;
-function generateCheck(
+export function generateCheck(
   doc: Doc,
   ctx: CompileContext,
   schema: SomeType,
@@ -930,7 +985,7 @@ function generateCheck(
   needsValue = true
 ): string | null {
   const def = schema._zod.def;
-  const type = def.type as SupportedSchemaType;
+  const type = def.type;
 
   // A coercing schema would compile to the bare type test and reject what it should convert; inside a union that reads as a rejected branch, so refuse at codegen.
   if ((def as { coerce?: boolean }).coerce) {
@@ -939,137 +994,12 @@ function generateCheck(
 
   // A node builds its output when its caller reads one, or when it carries checks of its own, since a check reads what was built. One polarity for the whole walk: this is what the node does, and it is what its children are told they need.
   const buildsValue = needsValue || !!def.checks?.length;
-  let typeAccessor: string | null;
 
-  switch (type) {
-    case "string":
-      typeAccessor = generateStringCheck(doc, ctx, schema, accessor);
-      break;
-    case "number":
-      typeAccessor = generateNumberCheck(doc, schema, accessor);
-      break;
-    case "boolean":
-      typeAccessor = generateBooleanCheck(doc, accessor);
-      break;
-    case "bigint":
-      typeAccessor = generateBigIntCheck(doc, schema, accessor);
-      break;
-    case "symbol":
-      typeAccessor = generateSymbolCheck(doc, accessor);
-      break;
-    case "undefined":
-      typeAccessor = generateUndefinedCheck(doc, accessor);
-      break;
-    case "null":
-      typeAccessor = generateNullCheck(doc, accessor);
-      break;
-    case "any":
-    case "unknown":
-      // No check needed - pass through
-      typeAccessor = accessor;
-      break;
-    case "never":
-      doc.write("return INVALID;");
-      typeAccessor = accessor;
-      break;
-    case "void":
-      typeAccessor = generateVoidCheck(doc, accessor);
-      break;
-    case "nan":
-      typeAccessor = generateNaNCheck(doc, accessor);
-      break;
-    case "date":
-      typeAccessor = generateDateCheck(doc, accessor);
-      break;
-    case "object":
-      typeAccessor = generateObjectCheck(doc, ctx, schema, accessor, buildsValue);
-      break;
-    case "optional":
-      typeAccessor = generateOptionalCheck(doc, ctx, schema, accessor, buildsValue);
-      break;
-    case "nullable":
-      typeAccessor = generateNullableCheck(doc, ctx, schema, accessor, buildsValue);
-      break;
-    case "array":
-      typeAccessor = generateArrayCheck(doc, ctx, schema, accessor, buildsValue);
-      break;
-    case "literal":
-      typeAccessor = generateLiteralCheck(doc, ctx, schema, accessor);
-      break;
-    case "enum":
-      typeAccessor = generateEnumCheck(doc, ctx, schema, accessor);
-      break;
-    case "readonly": {
-      const innerOut = generateWrapperCheck(doc, ctx, schema, accessor);
-      // Runtime freezes the parsed value (schemas.ts handleReadonlyResult).
-      const frozenVar = newVar(ctx);
-      doc.write(`const ${frozenVar} = Object.freeze(${innerOut});`);
-      typeAccessor = frozenVar;
-      break;
-    }
-    case "success":
-      // Runtime output is `issues.length === 0`. The fast path only reaches
-      // here when the inner check passed (failure returns INVALID and the
-      // runtime fallback reproduces the inner issues), so the output is
-      // always `true`.
-      generateWrapperCheck(doc, ctx, schema, accessor);
-      typeAccessor = "true";
-      break;
-    case "default":
-    case "prefault":
-      typeAccessor = generateDefaultCheck(doc, ctx, schema, accessor);
-      break;
-    case "nonoptional":
-      typeAccessor = generateNonOptionalCheck(doc, ctx, schema, accessor);
-      break;
-    case "tuple":
-      typeAccessor = generateTupleCheck(doc, ctx, schema, accessor);
-      break;
-    case "union":
-      typeAccessor = generateUnionCheck(doc, ctx, schema, accessor);
-      break;
-    case "intersection":
-      typeAccessor = generateIntersectionCheck(doc, ctx, schema, accessor);
-      break;
-    case "record":
-      typeAccessor = generateRecordCheck(doc, ctx, schema, accessor);
-      break;
-    case "map":
-      typeAccessor = generateMapCheck(doc, ctx, schema, accessor);
-      break;
-    case "set":
-      typeAccessor = generateSetCheck(doc, ctx, schema, accessor);
-      break;
-    case "file":
-      typeAccessor = generateFileCheck(doc, accessor);
-      break;
-    case "template_literal":
-      typeAccessor = generateTemplateLiteralCheck(doc, ctx, schema, accessor);
-      break;
-    case "lazy":
-      typeAccessor = generateLazyCheck(doc, ctx, schema, accessor);
-      break;
-    case "pipe":
-      typeAccessor = generatePipeCheck(doc, ctx, schema, accessor);
-      break;
-    case "custom":
-      typeAccessor = generateCustomCheck(doc, ctx, schema, accessor);
-      break;
-    case "properties":
-      generatePropertiesChecks(doc, ctx, (schema as $ZodProperties)._zod.def, accessor, true);
-      typeAccessor = accessor;
-      break;
-    case "transform":
-      typeAccessor = generateTransformCheck(doc, ctx, schema, accessor);
-      break;
-    case "catch":
-      typeAccessor = generateCatchCheck(doc, ctx, schema, accessor);
-      break;
-    default: {
-      void (type satisfies never);
-      throw new ZodCompileUnsupportedError(`schema type ${type}`);
-    }
+  const codegen = codegenFor(schema);
+  if (!codegen) {
+    throw new ZodCompileUnsupportedError(`schema type ${type}`);
   }
+  const typeAccessor = codegen(doc, ctx, accessor, buildsValue);
 
   // a node that built nothing has no checks to run: not building requires an empty check list
   if (typeAccessor === null) return null;
@@ -1078,289 +1008,12 @@ function generateCheck(
   return generateChecks(doc, ctx, schema, typeAccessor);
 }
 
-function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
-
-  // z.email() carries its format on the def, z.string().email() in def.checks; both route here so the format table has no second copy to drift from.
-  const def = schema._zod.def as unknown as StringFormatDef & { format?: string };
-  if (def.format === undefined) return accessor;
-  return generateStringFormatCheck(doc, ctx, def, accessor);
-}
-
-function generateNumberCheck(doc: Doc, schema: SomeType, accessor: string): string {
-  // Runtime z.number() rejects NaN and ±Infinity. Number.isFinite covers both.
-  doc.write(`if (typeof ${accessor} !== "number" || !Number.isFinite(${accessor})) return INVALID;`);
-
-  // Mini factories like z.int(), z.int32(), z.uint32(), z.float32() bake a number_format check into the schema def itself (not into def.checks). Apply the same constraint here.
-  const def = schema._zod.def as unknown as { check?: string; format?: string };
-  if (def.check === "number_format" && def.format) {
-    generateNumberFormatCheck(doc, { format: def.format } as checks.$ZodCheckNumberFormatDef, accessor);
-  }
-  return accessor;
-}
-
-function generateBooleanCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "boolean") return INVALID;`);
-  return accessor;
-}
-
-function generateBigIntCheck(doc: Doc, schema: SomeType, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "bigint") return INVALID;`);
-
-  // Handle bigint format (int64, uint64) directly on the schema def
-  const def = schema._zod.def as unknown as { format?: string };
-  if (def.format) {
-    switch (def.format) {
-      case "int64":
-        doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) return INVALID;`);
-        break;
-      case "uint64":
-        doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) return INVALID;`);
-        break;
-    }
-  }
-  return accessor;
-}
-
-function generateSymbolCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "symbol") return INVALID;`);
-  return accessor;
-}
-
-function generateUndefinedCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (${accessor} !== undefined) return INVALID;`);
-  return accessor;
-}
-
-function generateNullCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (${accessor} !== null) return INVALID;`);
-  return accessor;
-}
-
-function generateVoidCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (${accessor} !== undefined) return INVALID;`);
-  return accessor;
-}
-
-function generateNaNCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "number" || !Number.isNaN(${accessor})) return INVALID;`);
-  return accessor;
-}
-
-function generateDateCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (!(${accessor} instanceof Date) || Number.isNaN(${accessor}.getTime())) return INVALID;`);
-  return accessor;
-}
-
-function generateObjectCheck(
-  doc: Doc,
-  ctx: CompileContext,
-  schema: SomeType,
-  accessor: string,
-  buildsValue = true
-): string | null {
-  const def = schema._zod.def as unknown as { shape: Record<string, SomeType>; catchall?: SomeType };
-
-  // Check that input is a non-null, non-array object
-  doc.write(
-    `if (typeof ${accessor} !== "object" || ${accessor} === null || Array.isArray(${accessor})) return INVALID;`
-  );
-
-  const shape = def.shape;
-  const keys = Object.keys(shape);
-  const symbolKeys = Object.getOwnPropertySymbols(shape);
-  // a symbol has no source literal, so it is hoisted as a constant; `keys` stays string-only where the emitted code uses `for...in`
-  const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
-  const keyExpr = (k: string | symbol) => (typeof k === "symbol" ? addConstant(ctx, k) : util.esc(k));
-  const propKey = (k: string | symbol) => (typeof k === "symbol" ? `[${keyExpr(k)}]` : util.esc(k));
-  const propShape = shape as Record<string | symbol, SomeType>;
-
-  // `__proto__` as an own shape key can't be expressed in an output object literal (the literal form sets the prototype instead of an own property).
-  if (keys.includes("__proto__")) {
-    throw new ZodCompileUnsupportedError('object shape key "__proto__"');
-  }
-
-  // Map from key to output accessor for that property
-  const propOutputs = new Map<string | symbol, string>();
-
-  // Validate each property and collect output accessors
-  for (const key of allKeys) {
-    const propSchema = propShape[key]!;
-    const kx = keyExpr(key);
-    // Always cache the property read: the runtime reads input[key] exactly once, so a getter must not be re-read by checks or output assembly.
-    const inputVar = newVar(ctx);
-    doc.write(`const ${inputVar} = ${accessor}[${kx}];`);
-
-    if (propSchema._zod.optin !== undefined) {
-      // Any optin rung means the key may be omitted. The runtime runs the property anyway and ignores issues only when the key is genuinely absent, which is what makes exactOptional compositional.
-      const outputVar = newVar(ctx);
-      doc.write(`let ${outputVar} = (() => {`);
-      doc.indented((d) => {
-        const outputAccessor = compileChild(d, ctx, propSchema, inputVar);
-        d.write(`return ${outputAccessor};`);
-      });
-      doc.write(`})();`);
-
-      if (propSchema._zod.optout === "optional") {
-        doc.write(`if (${outputVar} === INVALID) {`);
-        doc.indented((d) => {
-          d.write(`if (${kx} in ${accessor}) return INVALID;`);
-          d.write(`${outputVar} = undefined;`);
-        });
-        doc.write(`}`);
-      } else {
-        doc.write(`if (${outputVar} === INVALID) return INVALID;`);
-      }
-      propOutputs.set(key, outputVar);
-    } else {
-      if (requiresPresenceCheck(propSchema)) {
-        doc.write(`if (!(${kx} in ${accessor})) return INVALID;`);
-      }
-
-      // Generate check and get output accessor
-      const outputAccessor = compileChild(doc, ctx, propSchema, inputVar, buildsValue);
-      if (outputAccessor !== null) propOutputs.set(key, outputAccessor);
-    }
-  }
-
-  // Handle catchall
-  const catchall = def.catchall;
-  let unknownKeysMode: "none" | "passthrough" | "schema" = "none";
-
-  if (catchall) {
-    const catchallType = catchall._zod.def.type;
-
-    if (catchallType === "never") {
-      // Strict: one `for...in`, as the runtime does, so inherited enumerable keys count. An undeclared `__proto__` is reported here and excluded only from the output (#6221); an own-key count would wrongly reject a class instance.
-      const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ") || "true";
-      doc.write(`for (const k in ${accessor}) {`);
-      doc.indented((d) => {
-        d.write(`if (${condition}) return INVALID;`);
-      });
-      doc.write(`}`);
-    } else if ((catchallType === "unknown" || catchallType === "any") && !catchall._zod.def.checks?.length) {
-      unknownKeysMode = "passthrough";
-    } else {
-      unknownKeysMode = "schema";
-    }
-  }
-  // else: strip mode (no catchall) - unknown keys ignored, only include known keys
-
-  // Shape keys in declared order, then unknown keys in for...in order. A middle-rung key is included iff present on the input, else iff its output is not undefined.
-  const outputVar = newVar(ctx);
-  const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
-
-  // Assert mode: every declared key is validated above, so the output literal and the unknown-key copy are pure waste. A `never` catchall already emitted its rejection loop; a schema catchall still has to validate the values it would otherwise have stored.
-  if (!buildsValue) {
-    if (unknownKeysMode === "schema") {
-      const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
-      doc.write(`for (const k in ${accessor}) {`);
-      doc.indented((d) => {
-        d.write(`if (k === "__proto__") continue;`);
-        if (knownSet) d.write(`if (${knownSet}.has(k)) continue;`);
-        const valVar = newVar(ctx);
-        d.write(`const ${valVar} = ${accessor}[k];`);
-        compileChild(d, ctx, catchall!, valVar, false);
-      });
-      doc.write(`}`);
-    }
-    return null;
-  }
-
-  if (!hasConditionalKeys) {
-    const propLiterals = allKeys.map((k) => `${propKey(k)}: ${propOutputs.get(k)}`).join(", ");
-    doc.write(`const ${outputVar} = { ${propLiterals} };`);
-  } else {
-    doc.write(`const ${outputVar} = {};`);
-    for (const k of allKeys) {
-      const kx = keyExpr(k);
-      const out = propOutputs.get(k);
-      if (dropsWhenAbsent(propShape[k]!)) {
-        doc.write(`if (${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
-      } else if (mayOutputUndefined(propShape[k]!)) {
-        doc.write(`if (${out} !== undefined || ${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
-      } else {
-        doc.write(`${outputVar}[${kx}] = ${out};`);
-      }
-    }
-  }
-
-  if (unknownKeysMode !== "none") {
-    // Unknown keys are written directly into the output after shape keys — for...in (like the runtime) so inherited enumerables participate.
-    const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
-    doc.write(`for (const k in ${accessor}) {`);
-    doc.indented((d) => {
-      // Skip __proto__: assigning obj["__proto__"] on a plain {} replaces the prototype via the setter rather than adding an own property. Mirrors the runtime catchall fix (#5898).
-      d.write(`if (k === "__proto__") continue;`);
-      if (knownSet) d.write(`if (${knownSet}.has(k)) continue;`);
-      if (unknownKeysMode === "passthrough") {
-        d.write(`${outputVar}[k] = ${accessor}[k];`);
-      } else {
-        const valVar = newVar(ctx);
-        d.write(`const ${valVar} = ${accessor}[k];`);
-        const catchallOut = compileChild(d, ctx, catchall!, valVar);
-        d.write(`${outputVar}[k] = ${catchallOut};`);
-      }
-    });
-    doc.write(`}`);
-  }
-
-  return outputVar;
-}
-
-function generateOptionalCheck(
-  doc: Doc,
-  ctx: CompileContext,
-  schema: SomeType,
-  accessor: string,
-  buildsValue = true
-): string | null {
-  const def = schema._zod.def as unknown as { innerType: SomeType };
-  if (isExactOptional(schema)) {
-    return generateCheck(doc, ctx, def.innerType, accessor, buildsValue);
-  }
-
-  // Same question $ZodOptional asks: only the top rung of the optin ladder substitutes a value for an absent input, so only it is worth running on `undefined`. Every other rung leaves the value intact, which is the skip branch below.
-  if (def.innerType._zod.optin === "defaulted") {
-    const outputVar = newVar(ctx);
-    const branchVar = newVar(ctx);
-    doc.write(`let ${outputVar};`);
-    doc.write(`if (${accessor} === undefined) {`);
-    doc.indented((d) => {
-      d.write(`const ${branchVar} = (() => {`);
-      d.indented((d2) => {
-        const innerOutput = generateCheck(d2, ctx, def.innerType, accessor);
-        d2.write(`return ${innerOutput};`);
-      });
-      d.write(`})();`);
-      d.write(`if (${branchVar} !== INVALID) ${outputVar} = ${branchVar};`);
-    });
-    doc.write(`} else {`);
-    doc.indented((d) => {
-      const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar} = ${innerOutput};`);
-    });
-    doc.write(`}`);
-    return outputVar;
-  }
-
-  const outputVar = buildsValue ? newVar(ctx) : null;
-  if (outputVar) doc.write(`let ${outputVar};`);
-  doc.write(`if (${accessor} !== undefined) {`);
-  doc.indented((d) => {
-    const innerOutput = generateCheck(d, ctx, def.innerType, accessor, buildsValue);
-    if (outputVar && innerOutput !== null) d.write(`${outputVar} = ${innerOutput};`);
-  });
-  doc.write(`}`);
-  return outputVar;
-}
-
-function isExactOptional(schema: SomeType): boolean {
+export function isExactOptional(schema: SomeType): boolean {
   return (schema._zod as { traits?: Set<string> }).traits?.has("$ZodExactOptional") === true;
 }
 
 // A value-level fast path reads an absent key as `undefined`, so z.undefined(), z.any() and unions containing undefined would accept a missing property the runtime rejects.
-function requiresPresenceCheck(schema: SomeType): boolean {
+export function requiresPresenceCheck(schema: SomeType): boolean {
   return schema._zod.optin === undefined && fastPathAcceptsAbsence(schema);
 }
 
@@ -1436,14 +1089,14 @@ function fastPathAcceptsAbsence(schema: SomeType): boolean {
 }
 
 /** The middle rung permits absence without supplying anything in its place, so an absent key contributes nothing — mirrors the leading gate in `handlePropertyResult`. */
-function dropsWhenAbsent(schema: SomeType): boolean {
+export function dropsWhenAbsent(schema: SomeType): boolean {
   return schema._zod.optin === "optional" && schema._zod.optout === "optional";
 }
 
 // Whether a schema's success-path output can be `undefined`. Object output
 // assembly gives such props the runtime's value-or-presence inclusion rule;
 // everything else keeps the unconditional object-literal slot.
-function mayOutputUndefined(schema: SomeType): boolean {
+export function mayOutputUndefined(schema: SomeType): boolean {
   const def = schema._zod.def as {
     type: string;
     values?: unknown[];
@@ -1495,753 +1148,567 @@ function mayOutputUndefined(schema: SomeType): boolean {
   }
 }
 
-function generateNullableCheck(
-  doc: Doc,
-  ctx: CompileContext,
+//////////////////////////////////////////////////////////////////////////////
+// Issue mode ("apply" codegen): the generated parser pushes the same raw issues the interpreter pushes instead of returning INVALID. Failure sites never hand-build issue objects — they cold-call the hoisted runtime parse/check of the failing node so the canonical issue comes from runtime code, and the generated code owns only the walk plumbing: path prefixes, abort/continue gating, sibling continuation, partial output assembly. Nodes with no native emission are handled by a node-scoped rerun island: the failing subtree runs through its own runtime parser and its issues merge in, which is exact parity at the cost of re-running that subtree's user callbacks (bounded at 2x, the same bound the whole-schema fallback has today).
+//////////////////////////////////////////////////////////////////////////////
+
+// mirrors util.prefixIssues, but from an index and applying a whole path prefix at once — same resulting arrays as the interpreter's per-level unshift
+export function prefixIssuesFrom(issues: unknown[], start: number, path: unknown[]): void {
+  for (let i = start; i < issues.length; i++) {
+    const iss = issues[i] as { path?: unknown[] };
+    iss.path = iss.path ? [...path, ...iss.path] : path.slice();
+  }
+}
+
+// Runs a node through its own runtime parser, merging its issues into the caller's payload — the issue path's escape hatch for constructs it doesn't model natively. A promise means an async member reached a sync parse, which the interpreter answers with a throw. `shared` marks a node whose runtime payload is the caller's own, so the abort flag a pipe or codec sets has to carry across.
+export function rerunNodeForIssues(
   schema: SomeType,
-  accessor: string,
-  buildsValue = true
-): string | null {
-  const def = schema._zod.def as unknown as { innerType: SomeType };
-  const outputVar = buildsValue ? newVar(ctx) : null;
-  if (outputVar) doc.write(`let ${outputVar} = null;`);
-  doc.write(`if (${accessor} !== null) {`);
-  doc.indented((d) => {
-    const innerOutput = generateCheck(d, ctx, def.innerType, accessor, buildsValue);
-    if (outputVar && innerOutput !== null) d.write(`${outputVar} = ${innerOutput};`);
-  });
-  doc.write(`}`);
-  return outputVar;
-}
-
-function generateArrayCheck(
-  doc: Doc,
-  ctx: CompileContext,
-  schema: SomeType,
-  accessor: string,
-  buildsValue = true
-): string | null {
-  const def = schema._zod.def as unknown as { element: SomeType };
-  doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
-
-  // Build a new array with validated/transformed elements.
-  const outputVar = buildsValue ? newVar(ctx) : null;
-  const iVar = newVar(ctx);
-  const elemVar = newVar(ctx);
-
-  if (outputVar) doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
-  doc.write(`for (let ${iVar} = 0; ${iVar} < ${accessor}.length; ${iVar}++) {`);
-  doc.indented((d) => {
-    d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
-    const elemOutput = compileChild(d, ctx, def.element, elemVar, buildsValue);
-    if (outputVar && elemOutput !== null) d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
-  });
-  doc.write(`}`);
-
-  return outputVar;
-}
-
-function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { values: unknown[] };
-  const values = def.values;
-
-  // Anything but a single value goes through Set.has: multi-value so every value participates, empty so nothing does — values[0] would be undefined and compile to an `!== undefined` check that accepts it. Single-value stays inlined for speed.
-  if (values.length !== 1) {
-    const literalSet = addConstant(ctx, new Set(values));
-    doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);
-    return accessor;
-  }
-
-  const value = values[0];
-  // `$ZodLiteral` matches with `values.has`, i.e. SameValueZero, so NaN matches itself. `x !== NaN` is true for every input, which would reject everything — hand it to the same Set form the multi-value path uses.
-  if (typeof value === "number" && Number.isNaN(value)) {
-    const literalSet = addConstant(ctx, new Set(values));
-    doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);
-    return accessor;
-  }
-  if (typeof value === "string") {
-    doc.write(`if (${accessor} !== ${util.esc(value)}) return INVALID;`);
-  } else if (typeof value === "number" || typeof value === "boolean") {
-    doc.write(`if (${accessor} !== ${value}) return INVALID;`);
-  } else if (value === null) {
-    doc.write(`if (${accessor} !== null) return INVALID;`);
-  } else if (value === undefined) {
-    doc.write(`if (${accessor} !== undefined) return INVALID;`);
-  } else if (typeof value === "bigint") {
-    doc.write(`if (${accessor} !== ${value}n) return INVALID;`);
-  } else {
-    throw new ZodCompileUnsupportedError(`literal type ${typeof value}`);
-  }
-  return accessor;
-}
-
-function generateEnumCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const values = (schema._zod as unknown as { values?: Set<unknown> }).values;
-  // z.partialRecord and friends clear `_zod.values`, leaving no set to test membership against. Throw rather than emit INVALID so a union falls back whole instead of counting a false rejection.
-  if (!values) {
-    throw new ZodCompileUnsupportedError("enum schema without enumerated values");
-  }
-  const enumSet = addConstant(ctx, values);
-  doc.write(`if (!${enumSet}.has(${accessor})) return INVALID;`);
-  return accessor;
-}
-
-function generateWrapperCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { innerType: SomeType };
-  return generateCheck(doc, ctx, def.innerType, accessor);
-}
-
-function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { innerType: SomeType };
-
-  // `defaultValue` is an accessor on schemas built through the classic/mini
-  // factories and a plain data property on ones rebuilt programmatically
-  // (deepPartial and friends). Read it off the def either way — taking only
-  // `descriptor.get` silently dropped the default for the second kind, so
-  // `.default(v)` compiled to `undefined` instead of `v`.
-  const descriptor = Object.getOwnPropertyDescriptor(schema._zod.def, "defaultValue");
-  const defaultGetter = descriptor
-    ? () => (schema._zod.def as unknown as { defaultValue: unknown }).defaultValue
-    : undefined;
-
-  // prefault differs from default: undefined-input is first replaced with the prefault value, then run through the inner schema.
-  if (schema._zod.def.type === "prefault") {
-    if (!defaultGetter) {
-      return generateCheck(doc, ctx, def.innerType, accessor);
-    }
-    const defaultFn = addConstant(ctx, defaultGetter);
-    const inputVar = newVar(ctx);
-    doc.write(`let ${inputVar} = ${accessor};`);
-    doc.write(`if (${accessor} === undefined) ${inputVar} = ${defaultFn}();`);
-    return generateCheck(doc, ctx, def.innerType, inputVar);
-  }
-
-  const outputVar = newVar(ctx);
-
-  // Default allows undefined (replaces with default value), otherwise validates inner type
-  if (defaultGetter) {
-    const defaultFn = addConstant(ctx, defaultGetter);
-    const cloneFn = addConstant(ctx, util.shallowClone);
-    doc.write(`let ${outputVar};`);
-    doc.write(`if (${accessor} === undefined) {`);
-    doc.indented((d) => {
-      // Shallow-clone the default so callers can mutate the result without affecting subsequent parses (#5855 — also covers Map/Set).
-      d.write(`${outputVar} = ${cloneFn}(${defaultFn}());`);
-    });
-    doc.write(`} else {`);
-    doc.indented((d) => {
-      const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar} = ${innerOutput} === undefined ? ${cloneFn}(${defaultFn}()) : ${innerOutput};`);
-    });
-    doc.write(`}`);
-  } else {
-    doc.write(`let ${outputVar};`);
-    doc.write(`if (${accessor} !== undefined) {`);
-    doc.indented((d) => {
-      const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar} = ${innerOutput};`);
-    });
-    doc.write(`}`);
-  }
-
-  return outputVar;
-}
-
-function generateNonOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { innerType: SomeType };
-  // The runtime inspects what the inner produced, not what it was given: a catch can turn a defined input into undefined, a default an absent one into a value.
-  const innerOutput = generateCheck(doc, ctx, def.innerType, accessor);
-  const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = ${innerOutput};`);
-  doc.write(`if (${outputVar} === undefined) return INVALID;`);
-  return outputVar;
-}
-
-function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { items: SomeType[]; rest: SomeType | null };
-  const items = def.items;
-  const rest = def.rest;
-
-  doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
-
-  // Mirror the runtime's getTupleOptStart: find the first index where every subsequent slot accepts `undefined` (i.e. is optional on input). Anything shorter than this is too_small; trailing absent slots are legal.
-  const optinStart = getTupleOptStart(items, "optin");
-  const optoutStart = getTupleOptStart(items, "optout");
-
-  // Length bounds
-  if (rest) {
-    // With rest: minimum length is the last required input slot
-    doc.write(`if (${accessor}.length < ${optinStart}) return INVALID;`);
-  } else {
-    // No rest: input must be in [optinStart, items.length]
-    doc.write(`if (${accessor}.length < ${optinStart} || ${accessor}.length > ${items.length}) return INVALID;`);
-  }
-
-  // Build the output in assignment order so absent optional-output tail slots can truncate while default/prefault slots still fill missing positions.
-  const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = [];`);
-
-  // Validate and collect each fixed item
-  for (let i = 0; i < items.length; i++) {
-    const itemSchema = items[i]!;
-    if (i >= optoutStart) {
-      doc.write(`if (${outputVar}.length === ${i}) {`);
-      doc.indented((d) => {
-        d.write(`if (${i} < ${accessor}.length) {`);
-        d.indented((d2) => {
-          const elemVar = newVar(ctx);
-          d2.write(`const ${elemVar} = ${accessor}[${i}];`);
-          const elemOutput = compileChild(d2, ctx, itemSchema, elemVar);
-          d2.write(`${outputVar}[${i}] = ${elemOutput};`);
-        });
-        d.write(`} else {`);
-        d.indented((d2) => {
-          // Middle rung: absence supplies nothing in its place, so truncate rather than running the item on `undefined` and keeping what it invents. Mirrors the leading gate in `handleTupleResults`.
-          if (dropsWhenAbsent(itemSchema)) {
-            d2.write(`${outputVar}.length = ${i};`);
-            return;
-          }
-          const elemVar = newVar(ctx);
-          const branchVar = newVar(ctx);
-          d2.write(`const ${elemVar} = undefined;`);
-          d2.write(`const ${branchVar} = (() => {`);
-          d2.indented((d3) => {
-            const elemOutput = compileChild(d3, ctx, itemSchema, elemVar);
-            d3.write(`return ${elemOutput};`);
-          });
-          d2.write(`})();`);
-          d2.write(`if (${branchVar} === INVALID || ${branchVar} === undefined) ${outputVar}.length = ${i};`);
-          d2.write(`else ${outputVar}[${i}] = ${branchVar};`);
-        });
-        d.write(`}`);
-      });
-      doc.write(`}`);
-    } else {
-      const elemVar = newVar(ctx);
-      doc.write(`const ${elemVar} = ${accessor}[${i}];`);
-      const elemOutput = compileChild(doc, ctx, itemSchema, elemVar);
-      doc.write(`${outputVar}[${i}] = ${elemOutput};`);
-    }
-  }
-
-  // Validate and collect rest elements if present
-  if (rest) {
-    const iVar = newVar(ctx);
-    const elemVar = newVar(ctx);
-    doc.write(`for (let ${iVar} = ${items.length}; ${iVar} < ${accessor}.length; ${iVar}++) {`);
-    doc.indented((d) => {
-      d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
-      const elemOutput = compileChild(d, ctx, rest, elemVar);
-      d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
-    });
-    doc.write(`}`);
-  }
-
-  return outputVar;
-}
-
-function getTupleOptStart(items: SomeType[], key: "optin" | "optout"): number {
-  for (let i = items.length - 1; i >= 0; i--) {
-    // Mirrors the runtime: optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
-    const omittable = key === "optin" ? items[i]!._zod.optin !== undefined : items[i]!._zod.optout === "optional";
-    if (!omittable) return i + 1;
-  }
-  return 0;
-}
-
-function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as {
-    options: SomeType[];
-    inclusive?: boolean;
-    discriminator?: string;
-    unionFallback?: boolean;
+  value: unknown,
+  payload: ParsePayload,
+  pctx: ParseContextInternal | undefined,
+  shared: boolean
+): unknown {
+  // unwrap a compiled wrapper or global-mode shim: the island wants the interpreter, and under global mode `_zod.run` is the wrapper whose issue parser is the very code calling this
+  const live = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
   };
-  const options = def.options;
-
-  if (def.discriminator) {
-    return generateDiscriminatedUnionCheck(
-      doc,
-      ctx,
-      def as { options: SomeType[]; discriminator: string; unionFallback?: boolean },
-      accessor
-    );
-  }
-
-  // z.xor requires *exactly one* option to match. Match-counting in the fast path is only sound if every branch is exactly as strict as the runtime — any falsely-rejecting branch silently turns a multi-match rejection into an accept. Force the runtime for this rare combinator.
-  if (def.inclusive === false) {
-    throw new ZodCompileUnsupportedError("exclusive unions (z.xor)");
-  }
-
-  if (options.length === 0) {
-    doc.write("return INVALID;");
-    return accessor;
-  }
-
-  if (options.length === 1) {
-    return generateCheck(doc, ctx, options[0]!, accessor);
-  }
-
-  // Check if all options are bare literals - use Set optimization. A literal option carrying checks (e.g. .refine) must take the general path or the Set would accept values its checks reject.
-  const allLiterals = options.every(
-    (opt) => opt._zod.def.type === "literal" && !(opt._zod.def.checks as unknown[] | undefined)?.length
-  );
-  if (allLiterals) {
-    const values = new Set(options.flatMap((opt) => (opt._zod.def as unknown as { values: unknown[] }).values));
-    const valuesConst = addConstant(ctx, values);
-    doc.write(`if (!${valuesConst}.has(${accessor})) return INVALID;`);
-    return accessor;
-  }
-
-  // General case: try each option until one succeeds Use IIFEs that return the output or INVALID
-  const outputVar = newVar(ctx);
-  doc.write(`let ${outputVar};`);
-
-  for (let i = 0; i < options.length; i++) {
-    const opt = options[i]!;
-
-    if (i === 0) {
-      doc.write(`${outputVar} = (() => {`);
-    } else {
-      doc.write(`if (${outputVar} === INVALID) ${outputVar} = (() => {`);
-    }
-
-    doc.indented((d) => {
-      // Generate check inside IIFE - returns INVALID on failure
-      const branchOutput = generateCheck(d, ctx, opt, accessor);
-      d.write(`return ${branchOutput};`);
-    });
-    doc.write(`})();`);
-  }
-
-  doc.write(`if (${outputVar} === INVALID) return INVALID;`);
-  return outputVar;
+  const run = live.__originalRun ?? live;
+  const ctx = pctx ?? ({} as ParseContextInternal);
+  (ctx as Record<symbol, unknown>)[SKIP_FAST] = true;
+  const r = run({ value, issues: [] }, ctx);
+  if (r && typeof (r as Promise<unknown>).then === "function") throw new $ZodAsyncError();
+  if (r.issues.length) payload.issues.push(...r.issues);
+  if (shared && r.aborted) payload.aborted = true;
+  return r.value;
 }
 
-function generateDiscriminatedUnionCheck(
-  doc: Doc,
+// mirrors handleUnionResults for the all-branches-failed case: adopt the lone non-aborted branch outright, else aggregate every branch's finalized issues into one invalid_union
+export function unionIssuesForCompiled(
+  inst: SomeType,
+  input: unknown,
+  payload: ParsePayload,
+  results: ParsePayload[],
+  pctx: ParseContextInternal | undefined,
+  shared: boolean
+): unknown {
+  for (const r of results) {
+    if (r.issues.length === 0) return r.value;
+  }
+  const nonaborted = results.filter((r) => !util.aborted(r));
+  if (nonaborted.length === 1) {
+    const r = nonaborted[0]!;
+    payload.issues.push(...r.issues);
+    if (shared && r.aborted) payload.aborted = true;
+    return r.value;
+  }
+  payload.issues.push({
+    code: "invalid_union",
+    input,
+    inst,
+    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss as never, pctx, config()))),
+  } as never);
+  return input;
+}
+
+// mirrors $ZodRecord's invalid_key push for a key its schema rejects: the key schema re-runs so the nested issues are the interpreter's own, finalized the way the runtime finalizes them
+export function pushInvalidKey(
+  keyType: SomeType,
+  key: PropertyKey,
+  payload: ParsePayload,
+  pctx: ParseContextInternal | undefined,
+  inst: SomeType,
+  path: unknown[]
+): void {
+  const live = keyType._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+  };
+  const ctx = pctx ?? ({} as ParseContextInternal);
+  (ctx as Record<symbol, unknown>)[SKIP_FAST] = true;
+  const r = (live.__originalRun ?? live)({ value: key, issues: [] }, ctx);
+  if (r instanceof Promise) throw new Error("Async schemas not supported in object keys currently");
+  payload.issues.push({
+    code: "invalid_key",
+    origin: "record",
+    issues: r.issues.map((iss: never) => util.finalizeIssue(iss, pctx, config())),
+    input: key,
+    path: [...path, key],
+    inst,
+  } as never);
+}
+
+// mirrors handlePipeResult's stop rule: any issue except unrecognized_keys halts the pipe, continuable or not
+export function pipeStops(issues: unknown[], start: number): boolean {
+  for (let i = start; i < issues.length; i++) {
+    if ((issues[i] as { code?: string }).code !== "unrecognized_keys") return true;
+  }
+  return false;
+}
+
+// mirrors handleNonOptionalResult's push; kept as a runtime helper so the shape lives in one place on this side
+export function pushNonOptionalIssue(issues: unknown[], input: unknown, inst: unknown): void {
+  (issues as { push: (i: unknown) => void }).push({ code: "invalid_type", expected: "nonoptional", input, inst });
+}
+
+/** JS expressions for the path from the root to the current node — string literals for static keys, variable names for loop indices, constant names for symbols. */
+export type IssuePath = string[];
+
+export function issueConsts(ctx: CompileContext) {
+  return {
+    pfx: addConstant(ctx, prefixIssuesFrom),
+    abt: addConstant(ctx, util.aborted),
+    eabt: addConstant(ctx, util.explicitlyAborted),
+    att: addConstant(ctx, util.attachSchema),
+  };
+}
+
+export const SP_INIT = `(_sp ??= { value: null, issues: payload.issues })`;
+
+// Cold call for a failed leaf type test: the node's own runtime parse pushes the canonical issue onto the caller's issues array, then the pushed issues get their root-relative path. The parse re-evaluates a trivial predicate; the price of never hand-building an issue shape.
+export function coldParse(
+  value: unknown,
+  parse: (p: ParsePayload, c: ParseContextInternal) => unknown,
+  payload: ParsePayload,
+  pctx: ParseContextInternal | undefined,
+  path?: unknown[]
+): void {
+  const m = payload.issues.length;
+  parse({ value, issues: payload.issues }, pctx as ParseContextInternal);
+  if (path && payload.issues.length > m) prefixIssuesFrom(payload.issues, m, path);
+}
+
+// Cold call for a failed check predicate: the runtime check pushes canonically, the owning schema is stamped, and the pushed issues get their path. The chain's abort gates are recomputed by the caller from the node mark.
+export function coldCheck(
+  value: unknown,
+  check: (p: ParsePayload) => unknown,
+  payload: ParsePayload,
+  owner: unknown,
+  path?: unknown[]
+): void {
+  const m = payload.issues.length;
+  check({ value, issues: payload.issues });
+  util.attachSchema(payload.issues, m, owner as never);
+  if (path && payload.issues.length > m) prefixIssuesFrom(payload.issues, m, path);
+}
+
+const STATIC_PATH_ELEMENT = /^(?:"(?:[^"\\]|\\.)*"|-?\d+)$/;
+
+// Source for a path array that is only read (a cold call's prefix). A path of two or more literals hoists into one shared constant: on a wide schema the literal repeated at every leaf is a large share of the generated issue code, which is retained for the schema's lifetime. Paths carrying a runtime element (an array index, a record key) stay inline.
+export function pathExpr(ctx: CompileContext, path: IssuePath): string {
+  const literal = `[${path.join(", ")}]`;
+  if (path.length < 2 || !path.every((p) => STATIC_PATH_ELEMENT.test(p))) return literal;
+  ctx.pathConstants ??= new Map();
+  const cache = ctx.pathConstants;
+  let name = cache.get(literal);
+  if (!name) {
+    name = addConstant(ctx, JSON.parse(literal));
+    cache.set(literal, name);
+  }
+  return name;
+}
+
+// Source for a path array that lands on an issue, which the caller may mutate: a hoisted constant is copied
+export function pathLiteral(ctx: CompileContext, path: IssuePath): string {
+  const expr = pathExpr(ctx, path);
+  return expr.startsWith("[") ? expr : `${expr}.slice()`;
+}
+
+// the synthetic issue for a required key that is absent when the value schema pushed nothing, as $ZodObject's handlePropertyResult pushes it
+export function pushMissingKey(payload: ParsePayload, path: unknown[]): void {
+  payload.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, path: path.slice() } as never);
+}
+
+export function leafFailBlock(ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const coldConst = addConstant(ctx, coldParse);
+  const parseConst = addConstant(ctx, schema._zod.parse);
+  const pathArg = path.length ? `, ${pathExpr(ctx, path)}` : "";
+  return `${coldConst}(${accessor}, ${parseConst}, payload, pctx${pathArg});`;
+}
+
+interface ChainGate {
+  ab: string;
+  ex: string | null;
+}
+
+// Cold block for a failed check predicate: `coldCheck` pushes canonically, then the gates are recomputed from the node mark (every issue of this node sits after it, so "aborted since the mark" is exactly the accumulated gate). `label` breaks out of the check's remaining hot statements (multi-site checks like url).
+function checkFailBlock(
   ctx: CompileContext,
-  def: { options: SomeType[]; discriminator: string; unionFallback?: boolean },
-  accessor: string
+  check: { _zod: { check?: unknown } },
+  ownerConst: string,
+  accessor: string,
+  path: IssuePath,
+  gate: ChainGate,
+  label: string,
+  nodeMark: string,
+  pre: string
 ): string {
-  if (def.unionFallback) {
-    throw new ZodCompileUnsupportedError("discriminated union with unionFallback");
-  }
+  const { abt, eabt } = issueConsts(ctx);
+  const checkFn = (check._zod as { check?: unknown }).check;
+  if (typeof checkFn !== "function") throw new ZodCompileUnsupportedError("check without a runtime check function");
+  const coldConst = addConstant(ctx, coldCheck);
+  const checkConst = addConstant(ctx, checkFn);
+  const pathArg = path.length ? `, ${pathExpr(ctx, path)}` : "";
+  const exUpd = gate.ex ? ` ${gate.ex} = ${pre}${eabt}(payload, ${nodeMark});` : "";
+  return `{ ${coldConst}(${accessor}, ${checkConst}, payload, ${ownerConst}${pathArg}); ${gate.ab} = ${pre}${abt}(payload, ${nodeMark});${exUpd} break ${label}; }`;
+}
 
-  if (def.options.length === 0) {
-    doc.write("return INVALID;");
+/**
+ * Issue-mode check chain. Mirrors the runChecks loop in $ZodType.init: a check
+ * runs unless the chain is aborted, a when-carrying check consults its `when`
+ * instead (and skips only on explicit abort), and every failure recomputes the
+ * gates from the issues it pushed. `valueVar` must be a reassignable binding —
+ * overwrite/url/refine rewrite it in place.
+ */
+export function generateChecksIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  valueVar: string,
+  path: IssuePath,
+  nodeMark: string,
+  abOverride: string | null = null
+): void {
+  const defChecks = (schema._zod.def.checks as SupportedCheck[] | undefined) ?? [];
+  const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
+  const list: SupportedCheck[] = isOwnCheck ? [schema as unknown as SupportedCheck, ...defChecks] : defChecks;
+  if (list.length === 0) return;
+
+  const { pfx, abt, eabt, att } = issueConsts(ctx);
+  const ownerConst = addConstant(ctx, schema);
+  const hasWhen = list.some((c) => {
+    const d = c._zod.def as { when?: unknown; check: string };
+    return !!d.when;
+  });
+
+  const gate: ChainGate = { ab: newVar(ctx), ex: hasWhen ? newVar(ctx) : null };
+  // a stopped pipe reads as aborted (explicitly too) whatever its issues' continue flags say, matching util.aborted's payload.aborted short-circuit on the runtime's returned payload
+  const pre = abOverride ? `${abOverride} || ` : "";
+  doc.write(`let ${gate.ab} = ${pre}(payload.issues.length > ${nodeMark} && ${abt}(payload, ${nodeMark}));`);
+  if (gate.ex)
+    doc.write(`let ${gate.ex} = ${pre}(payload.issues.length > ${nodeMark} && ${eabt}(payload, ${nodeMark}));`);
+
+  for (const check of list) {
+    const def = check._zod.def as { check: string; when?: (p: unknown) => boolean };
+    if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
+      throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
+    }
+    const guard = def.when
+      ? `(!${gate.ab} || (!${gate.ex} && ${addConstant(ctx, def.when)}((${SP_INIT}.value = ${valueVar}, _sp))))`
+      : `!${gate.ab}`;
+
+    switch (def.check) {
+      case "custom": {
+        // the check function runs hot — it IS the user callback, and it pushes its own canonical issue (with the normalizing addIssue for superRefine), so there is no cold re-run and the callback executes exactly once
+        const c = check as CustomCheck;
+        const fn = c._zod.check ?? c._zod.def.fn;
+        if (!fn) throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
+        if (
+          isAsyncFunction(fn) ||
+          (c._zod.def.fn && isAsyncFunction(c._zod.def.fn)) ||
+          (c._zod.check && isAsyncFunction(c._zod.check))
+        ) {
+          throw new ZodCompileAsyncError();
+        }
+        const checkConst = addConstant(ctx, c._zod.check);
+        const throwAsyncConst = addConstant(ctx, throwAsync);
+        const m = newVar(ctx);
+        const r = newVar(ctx);
+        doc.write(`if (${guard}) {`);
+        doc.indented((d) => {
+          d.write(`${SP_INIT}.value = ${valueVar};`);
+          d.write(`const ${m} = payload.issues.length;`);
+          d.write(`const ${r} = ${checkConst}(_sp);`);
+          d.write(`if (${r} instanceof Promise) ${throwAsyncConst}();`);
+          d.write(`if (payload.issues.length > ${m}) {`);
+          d.indented((d2) => {
+            d2.write(`${att}(payload.issues, ${m}, ${ownerConst});`);
+            if (path.length) d2.write(`${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
+            d2.write(`if (!${gate.ab}) ${gate.ab} = ${abt}(payload, ${m});`);
+            if (gate.ex) d2.write(`if (!${gate.ex}) ${gate.ex} = ${eabt}(payload, ${m});`);
+          });
+          d.write(`}`);
+          d.write(`${valueVar} = _sp.value;`);
+        });
+        doc.write(`}`);
+        break;
+      }
+      case "overwrite": {
+        const tx = (check as checks.$ZodCheckOverwrite)._zod.def.tx;
+        if (!tx) throw new ZodCompileUnsupportedError("overwrite check without a transform function");
+        if (isAsyncFunction(tx)) throw new ZodCompileAsyncError();
+        const txConst = addConstant(ctx, tx);
+        doc.write(`if (${guard}) ${valueVar} = ${txConst}(${valueVar});`);
+        break;
+      }
+      case "property":
+      case "properties": {
+        // hot: the fast-mode emission inside an IIFE; cold: re-run the whole check so it pushes canonically (it re-walks its children through the runtime)
+        const r = newVar(ctx);
+        const label = `c${newVar(ctx)}`;
+        doc.write(`if (${guard}) ${label}: {`);
+        doc.indented((d) => {
+          d.write(`const ${r} = (() => {`);
+          d.indented((d2) => {
+            if (def.check === "property") {
+              generatePropertyCheck(d2, ctx, check._zod.def as checks.$ZodCheckPropertyDef, valueVar);
+            } else {
+              generatePropertiesChecks(d2, ctx, check._zod.def as unknown as $ZodPropertiesDef, valueVar, false);
+            }
+            d2.write(`return true;`);
+          });
+          d.write(`})();`);
+          d.write(
+            `if (${r} === INVALID) ${checkFailBlock(ctx, check as { _zod: { check?: unknown } }, ownerConst, valueVar, path, gate, label, nodeMark, pre)}`
+          );
+        });
+        doc.write(`}`);
+        break;
+      }
+      default: {
+        const label = `c${newVar(ctx)}`;
+        doc.write(`if (${guard}) ${label}: {`);
+        doc.indented((d) => {
+          const fail = () =>
+            checkFailBlock(
+              ctx,
+              check as { _zod: { check?: unknown } },
+              ownerConst,
+              valueVar,
+              path,
+              gate,
+              label,
+              nodeMark,
+              pre
+            );
+          const out = emitCheckPredicate(d, ctx, check, valueVar, fail);
+          if (out !== valueVar) d.write(`${valueVar} = ${out};`);
+        });
+        doc.write(`}`);
+      }
+    }
+  }
+}
+
+export function emitIssueIsland(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const { pfx } = issueConsts(ctx);
+  const schemaConst = addConstant(ctx, schema);
+  const rerunConst = addConstant(ctx, rerunNodeForIssues);
+  const m = newVar(ctx);
+  const v = newVar(ctx);
+  doc.write(`const ${m} = payload.issues.length;`);
+  doc.write(`const ${v} = ${rerunConst}(${schemaConst}, ${accessor}, payload, pctx, ${shared});`);
+  if (path.length) doc.write(`if (payload.issues.length > ${m}) ${pfx}(payload.issues, ${m}, ${pathExpr(ctx, path)});`);
+  return v;
+}
+
+const runsCallbacks = new WeakMap<object, boolean>();
+type ZodNode = { _zod: { def: unknown } };
+
+// Whether an issue-mode walk of this subtree runs user code that receives its parse payload. Three def shapes do: a custom check whose check function is the user's (superRefine, `.check(fn)`: kind "custom" with no value-only `fn` — a refine or a string format keeps its `fn`, which sees the value alone), a `transform`, and a `when` other than the guards the size and length checks install themselves. Structural, so a schema or check class this compiler has never met is classified by what its def holds: children are whatever `_zod`-bearing values the def reaches directly, in an array, or in a shape. A lazy's getter is a function, so it stays out; issue mode islands it and the interpreter hands the island its own payloads.
+export function subtreeRunsCallbacks(node: ZodNode): boolean {
+  const known = runsCallbacks.get(node);
+  if (known !== undefined) return known;
+  // an assumed answer for a node still being scanned
+  runsCallbacks.set(node, false);
+  const def = node._zod.def as Record<string, unknown>;
+  let out =
+    (def.check === "custom" && typeof def.fn !== "function") ||
+    typeof def.transform === "function" ||
+    (typeof def.when === "function" && def.when !== _whenHasSize && def.when !== _whenHasLength);
+  if (!out) out = childrenReachCallbacks(def);
+  runsCallbacks.set(node, out);
+  return out;
+}
+
+// accessors zod installs on its own defs that hold no callback-bearing child: `defaultValue` runs the user's factory and answers a value; `catchall` (after extend) answers a schema, and a catchall value is a child boundary of its own, so it classifies from its own def
+const INERT_DEF_ACCESSORS = new Set(["defaultValue", "catchall"]);
+
+// the def's values, one level deep: a node recurses, an array or a shape is scanned for nodes, and anything else (a default value, a regex, a locale map) stays opaque. no accessor is invoked: zod's own lazy shape is read through `rawShape`, which answers from the getter's data without calling it, so the answer is the same before and after the first read; any other accessor, on the def or on an entry, counts as callbacks — unread, and on the isolated path, which is safe either way
+function childrenReachCallbacks(def: object): boolean {
+  for (const key in def) {
+    const desc = Object.getOwnPropertyDescriptor(def, key);
+    if (!desc) continue;
+    let value: unknown;
+    if (!desc.get) value = desc.value;
+    else if (key === "shape") value = util.rawShape(def);
+    else if (INERT_DEF_ACCESSORS.has(key)) continue;
+    else return true;
+    if (!value || typeof value !== "object") continue;
+    if ((value as Partial<ZodNode>)._zod) {
+      if (subtreeRunsCallbacks(value as ZodNode)) return true;
+    } else if (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype) {
+      for (const k of Object.keys(value)) {
+        const el = Object.getOwnPropertyDescriptor(value, k);
+        if (!el) continue;
+        if (el.get) return true;
+        if ((el.value as Partial<ZodNode> | null)?._zod && subtreeRunsCallbacks(el.value)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// the child parsed on its own payload: its issues join the parent's with the child's path in front, as handlePropertyResult and the array walk do
+export function mergeChildIssues(payload: ParsePayload, child: ParsePayload, path: unknown[]): void {
+  if (!child.issues.length) return;
+  const m = payload.issues.length;
+  payload.issues.push(...child.issues);
+  if (path.length) prefixIssuesFrom(payload.issues, m, path);
+}
+
+// A subtree whose callbacks could read the payload runs inside one of its own, as the interpreter gives every object property, array element and record value: the callbacks see only the child's issues, with child-relative paths, and the parent takes the issues afterwards. A subtree without callbacks pushes straight into the parent's array with its path prefixed at the site, which is the same result without the payload and the closure.
+function emitIsolatedChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, path: IssuePath): string {
+  const mergeConst = addConstant(ctx, mergeChildIssues);
+  const fn = emitBranchFn(ctx, schema);
+  const r = newVar(ctx);
+  doc.write(`const ${r} = ${fn}({ value: ${accessor}, issues: [] }, pctx);`);
+  doc.write(`${mergeConst}(payload, ${r}, ${path.length ? pathExpr(ctx, path) : "[]"});`);
+  return `${r}.value`;
+}
+
+// A body that parses `payload.value` on a payload of its own — a union branch, an isolated child — hoisted into the factory's scope as `(payload, pctx) => payload` with the value written back, so no closure is allocated per parse. `shared` is true relative to that payload, so a branch pipe's abort flag lands on it.
+export function emitBranchFn(ctx: CompileContext, schema: SomeType): string {
+  const sub = new Doc();
+  const out = compileChildIssues(sub, ctx, schema, "payload.value", [], true);
+  return hoistFn(ctx, "payload, pctx", sub.content, `payload.value = ${out};`, `return payload;`);
+}
+
+function hoistFn(ctx: CompileContext, params: string, body: string[], ...tail: string[]): string {
+  const name = `f${newVar(ctx)}`;
+  ctx.prelude.push(
+    `function ${name}(${params}) {`,
+    `  let _sp;`,
+    ...body.map((line) => `  ${line}`),
+    ...tail.map((line) => `  ${line}`),
+    `}`
+  );
+  return name;
+}
+
+// V8 sizes a function's optimization budget by its bytecode, so one huge issue parser stays unoptimized for thousands of rejections and loses to the interpreter until then; a subtree above this many characters of source becomes a function of its own, which tiers up on its own. Small schemas stay one function and pay no call.
+const HOIST_THRESHOLD = 4000;
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+
+// Issue-mode counterpart of compileChild: try the native emission, roll back and island on an islandable refusal. The body generates against a local of its own, detached from the caller's doc, so a large one on a static path can hoist as a function; the rest splices in place.
+export function compileChildIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  if (!shared && subtreeRunsCallbacks(schema)) return emitIsolatedChild(doc, ctx, schema, accessor, path);
+  const constantCount = ctx.constants.size;
+  const constantCounter = ctx.constantCounter;
+  const varCounter = ctx.varCounter;
+  const preludeLen = ctx.prelude.length;
+  // a plain identifier is read in place and doubles as the hoisted function's parameter name; anything else is aliased once
+  const local = IDENTIFIER.test(accessor) ? accessor : newVar(ctx);
+  const sub = new Doc();
+  let out: string;
+  try {
+    out = generateCheckIssues(sub, ctx, schema, local, path, shared);
+  } catch (err) {
+    if (!(err instanceof ZodCompileUnsupportedError) || !err.islandable) throw err;
+    if (ctx.constants.size > constantCount) {
+      const trailing = Array.from(ctx.constants.keys()).slice(constantCount);
+      for (const k of trailing) ctx.constants.delete(k);
+    }
+    ctx.constantCounter = constantCounter;
+    ctx.varCounter = varCounter;
+    ctx.prelude.length = preludeLen;
+    return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+  }
+  const body = sub.content;
+  // a dynamic path element (an array index, a record key) is a variable of the caller's, which a hoisted body could not see
+  if (body.join("\n").length > HOIST_THRESHOLD && path.every((p) => STATIC_PATH_ELEMENT.test(p))) {
+    const r = newVar(ctx);
+    doc.write(
+      `const ${r} = ${hoistFn(ctx, `${local}, payload, pctx`, body, `return ${out};`)}(${accessor}, payload, pctx);`
+    );
+    return r;
+  }
+  if (local !== accessor) doc.write(`const ${local} = ${accessor};`);
+  const pad = " ".repeat(doc.indent * 2);
+  for (const line of body) doc.content.push(pad + line);
+  return out;
+}
+
+/** An issue-mode emitter for one node: writes the node's body against `accessor`, pushing canonical issues (prefixed with `path`) into `payload.issues`, and returns the accessor holding the node's value. `mark` is `payload.issues.length` before the node, present only for an entry that declares `marks`; a pipe also hands back the gate that stops its check chain. */
+export type IssueCodegen = (
+  doc: Doc,
+  ctx: CompileContext,
+  inst: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean,
+  mark: string
+) => string | { value: string; abOverride: string };
+
+/** The issue emitter for a simple-parse leaf: `failCondition` is the inverted type test, or null for a leaf that accepts anything and leaves the work to its check chain. */
+export function leafIssues(
+  failCondition: ((ctx: CompileContext, inst: SomeType, accessor: string) => string | null) | null
+): IssueCodegen {
+  return (doc, ctx, inst, accessor, path) => {
+    const isOwnCheck = (inst._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
+    // a def-level format with no check trait would silently skip its own validation
+    const anyDef = inst._zod.def as { format?: unknown; check?: unknown; type: string };
+    if (!isOwnCheck && (anyDef.check !== undefined || (anyDef.format !== undefined && anyDef.type !== "literal"))) {
+      throw new ZodCompileUnsupportedError(`def-level format on a non-check ${anyDef.type} schema`);
+    }
+    const cond = failCondition?.(ctx, inst, accessor);
+    if (cond) doc.write(`if (${cond}) ${leafFailBlock(ctx, inst, accessor, path)}`);
     return accessor;
-  }
-
-  const discVar = newVar(ctx);
-  const outputVar = newVar(ctx);
-  doc.write(`const ${discVar} = ${accessor}?.[${util.esc(def.discriminator)}];`);
-  doc.write(`let ${outputVar};`);
-
-  let firstBranch = true;
-  const claimed = new Set<util.Primitive>();
-  for (const option of def.options) {
-    const values = option._zod.propValues?.[def.discriminator];
-    if (!values || values.size === 0) {
-      throw new ZodCompileUnsupportedError("discriminated union option without static discriminator values");
-    }
-
-    // Two options claiming one value are not discriminable, and the branch chain below would silently give it to the first. Declining to compile hands that back to the interpreter, whose own map build reports it.
-    for (const value of values) {
-      if (claimed.has(value)) {
-        throw new ZodCompileUnsupportedError(`duplicate discriminator value ${String(value)}`);
-      }
-      claimed.add(value);
-    }
-
-    const conditions = Array.from(values, (value) => literalEquality(ctx, discVar, value));
-    const prefix = firstBranch ? "if" : "else if";
-    doc.write(`${prefix} (${conditions.join(" || ")}) {`);
-    doc.indented((d) => {
-      const branchOutput = generateCheck(d, ctx, option, accessor);
-      d.write(`${outputVar} = ${branchOutput};`);
-    });
-    doc.write(`}`);
-    firstBranch = false;
-  }
-
-  doc.write(`else { return INVALID; }`);
-  return outputVar;
-}
-
-function literalEquality(ctx: CompileContext, accessor: string, value: unknown): string {
-  if (typeof value === "string") return `${accessor} === ${util.esc(value)}`;
-  if (typeof value === "number") {
-    if (Number.isNaN(value)) return `Number.isNaN(${accessor})`;
-    return `${accessor} === ${value}`;
-  }
-  if (typeof value === "boolean") return `${accessor} === ${value}`;
-  if (value === null) return `${accessor} === null`;
-  if (value === undefined) return `${accessor} === undefined`;
-  if (typeof value === "bigint") return `${accessor} === ${value}n`;
-  if (typeof value === "symbol") {
-    const symbolConst = addConstant(ctx, value);
-    return `${accessor} === ${symbolConst}`;
-  }
-  throw new ZodCompileUnsupportedError(`literal discriminator value ${String(value)}`);
-}
-
-function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
-  // An unmergeable merge, and a child failing before the merge is even reached, both return INVALID for a case the interpreter answers with a throw.
-  ctx.definite = false;
-  const leftOutput = compileChild(doc, ctx, def.left, accessor);
-  const rightOutput = compileChild(doc, ctx, def.right, accessor);
-
-  // Hoist the runtime merge helper so recursive object/array merge semantics stay in one place. If the merge is invalid, return INVALID and let the runtime fallback construct canonical errors.
-  const mergeConst = addConstant(ctx, mergeValues);
-  const mergedVar = newVar(ctx);
-  doc.write(`const ${mergedVar} = ${mergeConst}(${leftOutput}, ${rightOutput});`);
-  doc.write(`if (!${mergedVar}.valid) return INVALID;`);
-  return `${mergedVar}.data`;
-}
-
-function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { keyType: SomeType; valueType: SomeType };
-
-  // Use util.isPlainObject (rejects Date, Map, Set, class instances, etc.) to match runtime behavior. Hoisted call instead of inline so this stays a single source of truth with the runtime parser.
-  const isPlainObjectConst = addConstant(ctx, util.isPlainObject);
-  doc.write(`if (!${isPlainObjectConst}(${accessor})) return INVALID;`);
-
-  const outputVar = newVar(ctx);
-  const kVar = newVar(ctx);
-  const valVar = newVar(ctx);
-
-  doc.write(`const ${outputVar} = {};`);
-
-  // Exhaustive record. The runtime gates this on `values && !def.partial`, since z.partialRecord keeps its value set but makes every key optional; a loose record passes unrecognized keys through, which the per-key scan cannot express.
-  const recordDef = def as unknown as { mode?: string; partial?: boolean };
-  const keyValues = recordDef.partial ? undefined : (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
-  if (keyValues) {
-    const inputKeys: Array<string | symbol> = [];
-    for (const key of keyValues) {
-      if (!(typeof key === "string" || typeof key === "number" || typeof key === "symbol")) {
-        throw new ZodCompileUnsupportedError(`record key value ${String(key)}`);
-      }
-
-      const inputKey = typeof key === "number" ? key.toString() : key;
-      if (inputKey === "__proto__") {
-        // `out["__proto__"] = v` would hit the prototype setter on the output.
-        throw new ZodCompileUnsupportedError('record key "__proto__"');
-      }
-      inputKeys.push(inputKey);
-
-      const keyConst = addConstant(ctx, key);
-      const outKey = generateCheck(doc, ctx, def.keyType, keyConst);
-      // Read the property once. Passing the raw expression let compileChild validate one read while the output write performed a second, so a getter could hand back a value nothing had checked.
-      const valueVar = newVar(ctx);
-      doc.write(`const ${valueVar} = ${accessor}[${literalPropertyKey(ctx, inputKey)}];`);
-      const valOutput = compileChild(doc, ctx, def.valueType, valueVar);
-      doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
-    }
-
-    // `mode: "loose"` changes only what happens to unrecognized keys, so it belongs here rather than the per-present-key scan. Passing them through matches the runtime, which skips `__proto__`.
-    const knownKeysConst = addConstant(ctx, new Set(inputKeys));
-    doc.write(`for (const ${kVar} in ${accessor}) {`);
-    doc.indented((d) => {
-      d.write(`if (${knownKeysConst}.has(${kVar})) continue;`);
-      if (recordDef.mode === "loose") {
-        d.write(`if (${kVar} !== "__proto__") ${outputVar}[${kVar}] = ${accessor}[${kVar}];`);
-      } else {
-        d.write(`return INVALID;`);
-      }
-    });
-    doc.write(`}`);
-    return outputVar;
-  }
-
-  // The bare-string shortcut below only tests `typeof key === "string"`, so it
-  // is correct exclusively for a `z.string()` carrying nothing else. A string
-  // *format* lives on the def rather than in `checks` — `z.record(z.email(), …)`
-  // reads as a plain string here — and coercion rewrites the key, so both have
-  // to take the general path or the shortcut accepts keys the runtime rejects.
-  const keyDef = def.keyType._zod.def as { type: string; format?: string; coerce?: boolean; checks?: unknown[] };
-  const keyIsBareString =
-    keyDef.type === "string" && keyDef.format === undefined && !keyDef.coerce && (keyDef.checks?.length ?? 0) === 0;
-  if (!keyIsBareString) {
-    // A key schema with no value set is a constraint every key must satisfy
-    // (`z.email()`, `z.string().min(3)`, `z.number()`, a template literal).
-    // The runtime runs it against each own enumerable key and writes the value
-    // under the key it produced, so compile it once and call it per key.
-    const isLoose = (def as { mode?: string }).mode === "loose";
-    // the key compiles in its own context, so carry its verdict out: a key schema that can answer INVALID undecidably makes this validator undecidable too
-    const keyFn = compileFn(def.keyType);
-    if (keyFn.definite === false) ctx.definite = false;
-    const keyFast = addConstant(ctx, keyFn);
-    const numericConst = addConstant(ctx, regexes.number);
-    const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
-    const outKeyVar = newVar(ctx);
-
-    doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
-    doc.indented((d) => {
-      d.write(`if (${kVar} === "__proto__") continue;`);
-      d.write(`if (!${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
-      d.write(`let ${outKeyVar} = ${keyFast}(${kVar});`);
-      // Numeric-string retry, mirroring the runtime: a key the schema rejects as a string is tried again as a number, so z.record(z.number(), …) matches the numeric keys JavaScript stringified on the way in.
-      d.write(
-        `if (${outKeyVar} === INVALID && typeof ${kVar} === "string" && ${numericConst}.test(${kVar})) ${outKeyVar} = ${keyFast}(Number(${kVar}));`
-      );
-      if (isLoose) {
-        // A loose record keeps a key its schema rejects, copying the value across unvalidated rather than failing the parse.
-        d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);
-      } else {
-        d.write(`if (${outKeyVar} === INVALID) return INVALID;`);
-      }
-      // The guard above tested the input key, but the schema can normalize an ordinary key into __proto__; re-check the one actually written under.
-      d.write(`if (${outKeyVar} === "__proto__") continue;`);
-      // Read once: the raw expression would be evaluated again by the output write below, so an accessor could return an unvalidated second value.
-      const valueVar = newVar(ctx);
-      d.write(`const ${valueVar} = ${accessor}[${kVar}];`);
-      const valOutput = compileChild(d, ctx, def.valueType, valueVar);
-      d.write(`${outputVar}[${outKeyVar}] = ${valOutput};`);
-    });
-    doc.write(`}`);
-    return outputVar;
-  }
-
-  // Plain z.string() keys: iterate enumerable own keys and validate each value. Runtime uses Reflect.ownKeys so symbol keys participate in validation; matching that here prevents silently accepting objects with enumerable Symbol keys under z.record(z.string(), ...).
-  const propIsEnumerable = addConstant(ctx, Object.prototype.propertyIsEnumerable);
-  doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
-  doc.indented((d) => {
-    d.write(`if (${kVar} === "__proto__") continue;`);
-    d.write(`if (!${propIsEnumerable}.call(${accessor}, ${kVar})) continue;`);
-    d.write(`if (typeof ${kVar} !== "string") return INVALID;`);
-    d.write(`const ${valVar} = ${accessor}[${kVar}];`);
-    const valOutput = compileChild(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}[${kVar}] = ${valOutput};`);
-  });
-  doc.write(`}`);
-
-  return outputVar;
-}
-
-function literalPropertyKey(ctx: CompileContext, key: string | symbol): string {
-  if (typeof key === "string") return util.esc(key);
-  return addConstant(ctx, key);
-}
-
-function generateMapCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { keyType: SomeType; valueType: SomeType };
-
-  doc.write(`if (!(${accessor} instanceof Map)) return INVALID;`);
-
-  const outputVar = newVar(ctx);
-  const kVar = newVar(ctx);
-  const valVar = newVar(ctx);
-
-  doc.write(`const ${outputVar} = new Map();`);
-  doc.write(`for (const [${kVar}, ${valVar}] of ${accessor}) {`);
-  doc.indented((d) => {
-    const keyOutput = generateCheck(d, ctx, def.keyType, kVar);
-    const valOutput = generateCheck(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}.set(${keyOutput}, ${valOutput});`);
-  });
-  doc.write(`}`);
-
-  return outputVar;
-}
-
-function generateSetCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { valueType: SomeType };
-
-  doc.write(`if (!(${accessor} instanceof Set)) return INVALID;`);
-
-  const outputVar = newVar(ctx);
-  const valVar = newVar(ctx);
-
-  doc.write(`const ${outputVar} = new Set();`);
-  doc.write(`for (const ${valVar} of ${accessor}) {`);
-  doc.indented((d) => {
-    const valOutput = generateCheck(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}.add(${valOutput});`);
-  });
-  doc.write(`}`);
-
-  return outputVar;
-}
-
-function generateFileCheck(doc: Doc, accessor: string): string {
-  // Runtime $ZodFile is a bare `instanceof File`, including the implicit global lookup. The previous duck-typed fallback accepted arbitrary {name, size} objects in File-less environments — behavior the runtime never had.
-  doc.write(`if (!(${accessor} instanceof File)) return INVALID;`);
-  return accessor;
-}
-
-function generateTemplateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
-
-  // Template literal schemas have a pre-computed pattern in _zod.pattern
-  const pattern = (schema._zod as unknown as { pattern: RegExp }).pattern;
-  if (pattern) {
-    const patternConst = addConstant(ctx, pattern);
-    doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
-  }
-  return accessor;
-}
-
-function generateLazyCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  // For lazy schemas, we use a cached parser that falls back to runtime Zod parsing This handles recursive schemas correctly by avoiding infinite compilation loops
-  const def = schema._zod.def as unknown as { getter: () => SomeType };
-  const getterConst = addUserConstant(ctx, def.getter);
-  const cacheConst = addConstant(ctx, { parser: null as ((input: unknown) => unknown) | null });
-
-  doc.write(`if (!${cacheConst}.parser) {`);
-  doc.indented((d) => {
-    d.write(`const inner = ${getterConst}();`);
-    d.write(`${cacheConst}.parser = function(input) {`);
-    d.indented((d2) => {
-      // Use runtime Zod parsing - this correctly handles recursive schemas Pass an empty ctx like runtimeRun does — runtime parsers read ctx.skipChecks/ctx.direction unconditionally and crash on undefined.
-      d2.write(`const result = inner._zod.run({ value: input, issues: [] }, {});`);
-      d2.write(`return result.issues.length === 0 ? result.value : INVALID;`);
-    });
-    d.write(`};`);
-  });
-  doc.write(`}`);
-
-  const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = ${cacheConst}.parser(${accessor});`);
-  doc.write(`if (${outputVar} === INVALID) return INVALID;`);
-  return outputVar;
-}
-
-function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as {
-    in: SomeType;
-    out: SomeType;
-    transform?: (value: unknown, payload: unknown) => unknown;
   };
-
-  // Validate input type first
-  const inputOutput = generateCheck(doc, ctx, def.in, accessor);
-
-  if (def.transform) {
-    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime, and a plain function handing back a promise answers INVALID too — union parity, but not a decidable rejection at the top level.
-    if (isAsyncFunction(def.transform)) {
-      throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
-    }
-    const transformFn = def.transform;
-    const helperFn = (value: unknown): unknown => {
-      // `addIssue` has to be here: a transform reporting through it is reporting, not failing. Without it the call threw a TypeError that the old catch swallowed into a fallback, so every ctx.addIssue transform quietly lost its fast path and the real error was never visible.
-      const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
-      // A throw is deliberately not caught. The interpreter lets one propagate out of the whole parse; swallowing it into INVALID turned a thrown error into a merely-rejected union branch, so a later branch answered instead.
-      const result = transformFn(value, fakePayload as any);
-      if (result instanceof Promise) return INVALID;
-      return fakePayload.issues.length === 0 ? result : INVALID;
-    };
-    const helperConst = addUserConstant(ctx, helperFn);
-    const transformedVar = newVar(ctx);
-    doc.write(`const ${transformedVar} = ${helperConst}(${inputOutput});`);
-    doc.write(`if (${transformedVar} === INVALID) return INVALID;`);
-    return generateCheck(doc, ctx, def.out, transformedVar);
-  } else {
-    // No transform - validate output type on same value
-    return generateCheck(doc, ctx, def.out, inputOutput);
-  }
 }
 
-function isAsyncFunction(fn: unknown): boolean {
+// Central issue-mode dispatch. Every native node shares the pattern: take a mark, emit the node body through its class's issue emitter, then run the node's own check chain against the mark — the chain lives HERE (not per node) because any schema type can carry checks. A node whose class has no issue emitter islands, and the rerun covers its checks.
+function generateCheckIssues(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  path: IssuePath,
+  shared: boolean
+): string {
+  const def = schema._zod.def;
+
+  // coercion rewrites the value before the type test — the interpreter models it, so island the node
+  const entry = (def as { coerce?: boolean }).coerce ? undefined : emitterFor(schema);
+  const emit = entry?.issues;
+  if (!emit) return emitIssueIsland(doc, ctx, schema, accessor, path, shared);
+
+  const defChecks = (def.checks as unknown[] | undefined) ?? [];
+  const isOwnCheck = (schema._zod as { traits?: Set<string> }).traits?.has("$ZodCheck") === true;
+  const hasChain = defChecks.length > 0 || isOwnCheck;
+
+  // the mark costs a statement per node, so only a node whose chain or emitter reads it takes one
+  const mark = hasChain || entry.marks ? newVar(ctx) : "";
+  if (mark) doc.write(`const ${mark} = payload.issues.length;`);
+
+  const out = emit(doc, ctx, schema, accessor, path, shared, mark);
+  const value = typeof out === "string" ? out : out.value;
+  const abOverride = typeof out === "string" ? null : out.abOverride;
+
+  if (!hasChain) return value;
+  // the chain mutates its accessor, so alias non-let values
+  const chainVar = newVar(ctx);
+  doc.write(`let ${chainVar} = ${value};`);
+  generateChecksIssues(doc, ctx, schema, chainVar, path, mark, abOverride);
+  return chainVar;
+}
+
+export function isAsyncFunction(fn: unknown): boolean {
   return (
     typeof fn === "function" &&
     (fn.constructor.name === "AsyncFunction" ||
       (fn as { [Symbol.toStringTag]?: string })[Symbol.toStringTag] === "AsyncFunction")
   );
-}
-
-function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { fn?: (value: unknown) => boolean };
-
-  if (def.fn) {
-    // Check for async function
-    if (isAsyncFunction(def.fn)) {
-      throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
-    }
-    // Custom schema with a predicate function (e.g. z.instanceof). `isAsyncFunction` above is syntactic, so a plain function returning a promise reaches here, and a promise is truthy — it would read as a pass where the interpreter throws.
-    const fnConst = addUserConstant(ctx, def.fn);
-    const throwAsyncConst = addConstant(ctx, throwAsync);
-    const resVar = newVar(ctx);
-    doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
-    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
-    doc.write(`if (!${resVar}) return INVALID;`);
-  } else {
-    throw new ZodCompileUnsupportedError("custom schema without a predicate function");
-  }
-  return accessor;
-}
-
-// Runtime helper for a compiled `catch`: runs the inner schema once and returns its value when it succeeded. Anything else — a failure the catch would handle, or an async inner — returns INVALID so the interpreter takes over.
-function runtimeCatch(innerSchema: SomeType, catchValue: () => unknown, value: unknown): unknown {
-  const result = (innerSchema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
-    { value, issues: [] },
-    {} as ParseContextInternal
-  );
-  if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
-  const r = result as { value: unknown; issues: any[] };
-  if (r.issues.length === 0) return r.value;
-  // Only reached for a catch value that ignores the parse context — codegen refuses the rest — so there are no issues to finalize and nothing here needs the caller's error map.
-  return catchValue();
-}
-
-function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as {
-    innerType: SomeType;
-    catchValue: (ctx: any) => unknown;
-  };
-
-  // An untagged catchValue is a user callback, and one reading `ctx.error` needs the caller's per-parse error map. Catch *succeeds*, so a wrong message there is unobservable — refuse at codegen, and not islandable either, since `runtimeRun` has no context to hand it.
-  if (!(def.catchValue as { [util.CONSTANT_CATCH]?: boolean })[util.CONSTANT_CATCH]) {
-    throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)", false);
-  }
-
-  const outputVar = newVar(ctx);
-  doc.write(`let ${outputVar} = (() => {`);
-  doc.indented((d) => {
-    const innerOut = compileChild(d, ctx, def.innerType, accessor);
-    d.write(`return ${innerOut};`);
-  });
-  doc.write(`})();`);
-
-  const innerConst = addConstant(ctx, def.innerType);
-  const catchConst = addUserConstant(ctx, def.catchValue);
-  const catchHelperConst = addConstant(ctx, runtimeCatch);
-  doc.write(`if (${outputVar} === INVALID) {`);
-  doc.indented((d) => {
-    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${catchConst}, ${accessor});`);
-    d.write(`if (${outputVar} === INVALID) return INVALID;`);
-  });
-  doc.write(`}`);
-  return outputVar;
-}
-
-function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as {
-    transform: (value: unknown, payload: unknown) => unknown;
-  };
-
-  if (def.transform) {
-    // Check for async transform
-    if (isAsyncFunction(def.transform)) {
-      throw new ZodCompileAsyncError("z.compile: async transforms are not supported");
-    }
-
-    // Create a helper that runs the transform and returns the result or INVALID on error
-    const transformFn = def.transform;
-    const helperFn = (value: unknown): unknown => {
-      const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
-      // As in the pipe helper: a throw propagates, because the interpreter lets it out of the whole parse rather than treating it as a failed branch.
-      const result = transformFn(value, fakePayload);
-      if (result instanceof Promise) return INVALID;
-      return fakePayload.issues.length === 0 ? result : INVALID;
-    };
-    const helperConst = addUserConstant(ctx, helperFn);
-    const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = ${helperConst}(${accessor});`);
-    doc.write(`if (${outputVar} === INVALID) return INVALID;`);
-    return outputVar;
-  }
-
-  return accessor;
 }

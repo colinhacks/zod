@@ -1,7 +1,13 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
+import {
+  ZodCompileAsyncError,
+  ZodCompileUnsupportedError,
+  compile,
+  compileFn,
+  subtreeRunsCallbacks,
+} from "../compile.js";
 import { $ZodAsyncError } from "../core.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
@@ -1657,4 +1663,365 @@ test("strict is per-call, so a supported schema compiles either way", () => {
     expect(valid(aot, { a: "x", b: 1 })).toEqual({ a: "x", b: 1 });
     invalid(aot, { a: 1, b: 1 });
   }
+});
+
+test("compiled parse methods run user callbacks at most twice on invalid input", () => {
+  let refines = 0;
+  const schema = z.object({
+    a: z.string().refine(() => {
+      refines++;
+      return false;
+    }),
+  });
+  const compiled = compile(schema);
+  // every route to the failure path: the fast method rejects once, then the wrapper builds the issues without a second fast pass
+  const routes: Array<[string, () => unknown]> = [
+    ["safeParse", () => compiled.safeParse({ a: "x" })],
+    ["parse", () => expect(() => compiled.parse({ a: "x" })).toThrow()],
+    ["safeParse with params", () => compiled.safeParse({ a: "x" }, { error: () => "mapped" })],
+    ["z.safeParse", () => z.safeParse(compiled, { a: "x" })],
+    ["issues: false", () => compile(schema, { issues: false }).safeParse({ a: "x" })],
+  ];
+  for (const [name, run] of routes) {
+    refines = 0;
+    run();
+    expect(refines, name).toBe(2);
+  }
+  // a params getter runs while the outer invocation is between its fast pass and its failure path; a re-entry from it, through the instance method or the standalone function, is its own invocation with its own two runs, in both issue modes
+  for (const opts of [undefined, { issues: false }] as const) {
+    const events: string[] = [];
+    const tracing = compile(
+      z.string().refine((v) => {
+        events.push(v);
+        return false;
+      }),
+      opts as never
+    );
+    for (const [name, inner] of [
+      ["method", () => tracing.safeParse("inner")],
+      ["standalone", () => z.safeParse(tracing, "inner")],
+    ] as const) {
+      for (const outer of [
+        () =>
+          tracing.safeParse("outer", {
+            get error() {
+              inner();
+              return () => undefined;
+            },
+          }),
+        () =>
+          expect(() =>
+            tracing.parse("outer", {
+              get error() {
+                inner();
+                return () => undefined;
+              },
+            })
+          ).toThrow(),
+      ]) {
+        events.length = 0;
+        outer();
+        // order differs under global compilation, where the outer invocation has no compiled method and its fast pass runs after the params spread
+        expect([...events].sort(), `${name} ${JSON.stringify(opts)}`).toEqual(["inner", "inner", "outer", "outer"]);
+      }
+    }
+  }
+  // the params still reach the failure path
+  const mapped = compiled.safeParse({ a: "x" }, { error: () => "mapped" });
+  expect(!mapped.success && mapped.error.issues[0]!.message).toBe("mapped");
+  // a compiled schema reached through an island's runtime parse is a nested wrapper on the same context; it must not run its own fast pass again
+  const inner = compile(schema);
+  const outer = compile(z.object({ m: z.map(z.string(), inner) }));
+  const bad = { m: new Map([["k", { a: "x" }]]) };
+  for (const [name, run] of [
+    ["island via safeParse", () => outer.safeParse(bad)],
+    ["island via parse", () => expect(() => outer.parse(bad)).toThrow()],
+    ["island via _zod.run", () => outer._zod.run({ value: bad, issues: [] }, { async: false } as never)],
+  ] as const) {
+    refines = 0;
+    run();
+    expect(refines, name).toBe(2);
+  }
+});
+
+test("issue parsers compile natively for every emitter-backed shape", () => {
+  // a refused issue compile falls back to the runtime re-parse silently, so parity tests stay green while the shape quietly loses its compiled issues; the tuple emitter shipped that way once
+  const shapes: Record<string, z.ZodType> = {
+    tuple: z.tuple([z.string(), z.number()]),
+    tupleRest: z.tuple([z.string()], z.number()),
+    tupleOptional: z.tuple([z.string(), z.number().optional()]),
+    nestedTuple: z.object({ t: z.array(z.tuple([z.string()])) }),
+    object: z.object({ a: z.string() }),
+    array: z.array(z.number()),
+    union: z.union([z.string(), z.number()]),
+    discriminated: z.discriminatedUnion("t", [z.object({ t: z.literal("a") }), z.object({ t: z.literal("b") })]),
+    record: z.record(z.string(), z.number()),
+    wrappers: z.string().default("x").nullable().optional().nonoptional(),
+    checked: z.string().min(2),
+    pipe: z.string().pipe(z.string().min(1)),
+    readonly: z.array(z.string()).readonly(),
+    enumeration: z.enum(["a", "b"]),
+    literal: z.literal("a"),
+    never: z.never(),
+  };
+  for (const [name, schema] of Object.entries(shapes)) {
+    expect(() => compileFn(schema, { issues: true }), name).not.toThrow();
+  }
+});
+
+test("compiled records walk own enumerable keys without Reflect.ownKeys", () => {
+  // for-in plus hasOwn sees the same keys as the runtime's Reflect.ownKeys walk: inherited enumerables are skipped, symbols fail a string key schema but pass a symbol one, and the numeric-string retry still applies
+  const sym = Symbol("s");
+  const bare = compile(z.record(z.string(), z.number()));
+  const inherited = Object.assign(Object.create({ proto: 1 }), { a: 1 });
+  expect(bare.parse(inherited)).toEqual({ a: 1 });
+  const symbolic = { a: 1, [sym]: 2 };
+  expect(bare.safeParse(symbolic).error!.issues).toEqual(
+    z.record(z.string(), z.number()).safeParse(symbolic).error!.issues
+  );
+  expect(bare.safeParse({ a: 1, b: "x" }).error!.issues).toEqual(
+    z.record(z.string(), z.number()).safeParse({ a: 1, b: "x" }).error!.issues
+  );
+  const symKeys = compile(z.record(z.symbol(), z.number()));
+  expect(symKeys.parse({ [sym]: 2 })).toEqual({ [sym]: 2 });
+  expect(symKeys.safeParse({ a: 1 }).success).toBe(false);
+  const emailKeys = compile(z.record(z.email(), z.number()));
+  expect(emailKeys.parse({ "a@b.co": 1 })).toEqual({ "a@b.co": 1 });
+  expect(emailKeys.safeParse({ "a@b.co": 1, [sym]: 2 }).success).toBe(false);
+  expect(compile(z.record(z.number(), z.string())).parse({ 1: "a" })).toEqual({ 1: "a" });
+  // keys are snapshotted before any value is read and rechecked when visited, like the runtime's Reflect.ownKeys walk: a getter that adds a key mid-walk is not visited, one that hides a later key skips it
+  const mutating = (effect: (o: Record<PropertyKey, unknown>) => void) => {
+    const o: Record<PropertyKey, unknown> = {};
+    Object.defineProperty(o, "a", {
+      enumerable: true,
+      get() {
+        effect(o);
+        return 1;
+      },
+    });
+    o.b = 2;
+    return o;
+  };
+  const both = z.record(z.union([z.string(), z.symbol()]), z.number());
+  for (const [schema, effect] of [
+    [
+      both,
+      (o: Record<PropertyKey, unknown>) => {
+        o[sym] = 2;
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => {
+        o[sym] = "bad";
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => {
+        o.z = "bad";
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => Object.defineProperty(o, "b", { enumerable: false }),
+    ],
+  ] as const) {
+    const expected = schema.safeParse(mutating(effect));
+    const actual = compile(schema).safeParse(mutating(effect));
+    expect(actual.success).toBe(expected.success);
+    if (expected.success)
+      expect(Reflect.ownKeys(actual.data as object)).toEqual(Reflect.ownKeys(expected.data as object));
+    else expect(actual.error!.issues).toEqual(expected.error!.issues);
+  }
+});
+
+test("wide issue parsers split into hoisted per-subtree functions", () => {
+  // one huge function stays unoptimized for thousands of rejections and loses to the interpreter until then; a subtree over the size threshold becomes a function of its own, small schemas stay one function, and union branches are hoisted rather than closed over per parse
+  const nested = (depth: number): z.ZodType =>
+    depth === 0
+      ? z.string()
+      : z.object({
+          k0: nested(depth - 1),
+          k1: nested(depth - 1),
+          k2: nested(depth - 1),
+          k3: nested(depth - 1),
+          k4: nested(depth - 1),
+        });
+  const wide = nested(3);
+  const fns = (schema: z.ZodType) =>
+    compileFn(schema, { issues: true, debug: true }).code!.match(/^function fv\d+\(/gm) ?? [];
+  expect(fns(wide).length).toBeGreaterThan(1);
+  expect(fns(z.object({ a: z.string() }))).toEqual([]);
+  expect(fns(z.union([z.string(), z.number()]))).toHaveLength(2);
+  const fill = (depth: number, leaf: unknown): any =>
+    depth === 0
+      ? leaf
+      : {
+          k0: fill(depth - 1, leaf),
+          k1: fill(depth - 1, leaf),
+          k2: fill(depth - 1, leaf),
+          k3: fill(depth - 1, leaf),
+          k4: fill(depth - 1, leaf),
+        };
+  const bad = fill(3, "x");
+  bad.k0.k0.k0 = 1;
+  bad.k2.k4 = null;
+  delete bad.k4.k4.k4;
+  const compiled = compile(wide);
+  expect(compiled.safeParse(bad).error!.issues).toEqual(wide.safeParse(bad).error!.issues);
+  expect(compiled.safeParse(fill(3, "x"))).toEqual(wide.safeParse(fill(3, "x")));
+});
+
+test("compiled issue parsers isolate child payloads and keep unions at two callback runs", () => {
+  // a property's superRefine sees only its own issues, like the interpreter's per-property payload
+  const sibling = z.object({
+    a: z.string(),
+    b: z.string().superRefine((_v, ctx) => {
+      if (ctx.issues.length) ctx.addIssue({ code: "custom", message: "saw sibling" });
+    }),
+  });
+  const seen = compile(sibling).safeParse({ a: 1, b: "ok" });
+  expect(!seen.success && seen.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+  // the same for a transform
+  const transformed = z.object({
+    a: z.string(),
+    b: z.string().transform((value, ctx) => {
+      if (ctx.issues.length) ctx.addIssue({ code: "custom", message: "saw sibling" });
+      return value;
+    }),
+  });
+  const viaTransform = compile(transformed).safeParse({ a: 1, b: "ok" });
+  expect(!viaTransform.success && viaTransform.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+  // and a child's own issues reach its callbacks exactly as the interpreter hands them over: unprefixed, the parent's path added only on the way out
+  const captured: unknown[] = [];
+  const own = z.object({
+    b: z
+      .string()
+      .min(3)
+      .superRefine((_v, ctx) => {
+        captured.push(structuredClone(ctx.issues.map((i) => i.path)));
+      }),
+  });
+  own.safeParse({ b: "x" });
+  const viaOwn = compile(own).safeParse({ b: "x" });
+  expect(!viaOwn.success && viaOwn.error.issues.map((i) => i.path)).toEqual([["b"]]);
+  expect(captured).toHaveLength(2);
+  expect(captured[1]).toEqual(captured[0]);
+
+  // a record value's stopped pipe aborts the value, not the record, so the record's own refinement still runs
+  const value = z
+    .string()
+    .refine(() => false)
+    .pipe(z.string());
+  const rec = z.record(z.string(), value).refine(() => false);
+  const compiledRec = compile(rec).safeParse({ a: "x" });
+  const runtimeRec = rec.safeParse({ a: "x" });
+  expect(!compiledRec.success && compiledRec.error.issues).toEqual(!runtimeRec.success && runtimeRec.error.issues);
+
+  // a failing union runs each branch callback once in the fast parser and once in the issue parser, never a third time
+  let calls = 0;
+  const failing = () => {
+    calls++;
+    return false;
+  };
+  const passing = () => {
+    calls++;
+    return true;
+  };
+  const union = compile(z.union([z.string().refine(failing), z.number()]));
+  union.safeParse("x");
+  expect(calls).toBe(2);
+  // and inside the issue parser a matching branch ends the walk, like $ZodUnion.parse: a sibling failure forces the issue walk, the second branch matches, the third never runs
+  let third = 0;
+  calls = 0;
+  const later = compile(
+    z.object({
+      u: z.union([
+        z.number(),
+        z.string().refine(passing),
+        z.string().refine(() => {
+          third++;
+          return true;
+        }),
+      ]),
+      k: z.string(),
+    })
+  );
+  expect(later.safeParse({ u: "x", k: 1 }).success).toBe(false);
+  expect([calls, third]).toEqual([2, 0]);
+});
+
+test("compiling and rejecting never runs a default or prefault factory for a present value", () => {
+  // `defaultValue` is an accessor that runs the factory, so a compile-time scan of the def must not read it
+  let defaults = 0;
+  let prefaults = 0;
+  const schema = z.object({
+    a: z.string().default(() => {
+      defaults++;
+      return "fallback";
+    }),
+    p: z.string().prefault(() => {
+      prefaults++;
+      return "fallback";
+    }),
+    b: z.string(),
+  });
+  const compiled = compile(schema);
+  expect(compiled.safeParse({ a: "present", p: "present", b: 1 }).success).toBe(false);
+  expect([defaults, prefaults]).toEqual([0, 0]);
+  expect(compiled.safeParse({ b: "ok" })).toEqual({ success: true, data: { a: "fallback", p: "fallback", b: "ok" } });
+  expect([defaults, prefaults]).toEqual([1, 1]);
+
+  // a `shape` accessor a subclass supplies is not zod's lazy shape and stays unread too
+  let reads = 0;
+  const Custom = class extends z.ZodString {};
+  const child = new Custom({
+    type: "string",
+    get shape() {
+      reads++;
+      throw new Error("shape");
+    },
+  } as never);
+  const withGetter = compile(z.object({ child, bad: z.string() }));
+  expect(withGetter.safeParse({ child: "ok", bad: 1 }).success).toBe(false);
+  expect(reads).toBe(0);
+  // nor is an accessor hung on a foreign getter function under the name of zod's own `raw`
+  const foreignGetter = () => ({});
+  Object.defineProperty(foreignGetter, "raw", {
+    get() {
+      reads++;
+      throw new Error("raw getter ran");
+    },
+  });
+  const withRaw = new Custom(
+    Object.defineProperty({ type: "string" }, "shape", { get: foreignGetter, enumerable: true }) as never
+  );
+  expect(compile(z.object({ withRaw, bad: z.string() })).safeParse({ withRaw: "ok", bad: 1 }).success).toBe(false);
+  expect(reads).toBe(0);
+  // nor an accessor nested in a plain object a custom def carries
+  const metadata = Object.defineProperty({}, "nested", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw new Error("nested getter ran");
+    },
+  });
+  const withMeta = new Custom({ type: "string", metadata } as never);
+  expect(compile(z.object({ withMeta, bad: z.string() })).safeParse({ withMeta: "ok", bad: 1 }).success).toBe(false);
+  expect(reads).toBe(0);
+  // an unread accessor that does hold a callback lands on the isolated path anyway: the check behind it sees only its own issues
+  const check = z.string().superRefine((_v, ctx) => {
+    if (ctx.issues.length) ctx.addIssue({ code: "custom", message: "saw sibling" });
+  })._zod.def.checks![0];
+  const checks: unknown[] = [];
+  Object.defineProperty(checks, "0", { enumerable: true, get: () => check });
+  checks.length = 1;
+  const behindAccessor = z.object({ a: z.string(), b: new Custom({ type: "string", checks } as never) });
+  const viaAccessor = compile(behindAccessor).safeParse({ a: 1, b: "ok" });
+  expect(!viaAccessor.success && viaAccessor.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+  // while a pick() shape, lazy until its first read, still classifies the callback behind it
+  const picked = z.object({ c: z.string().superRefine(() => {}), d: z.number() }).pick({ c: true });
+  expect(Object.getOwnPropertyDescriptor(picked._zod.def, "shape")?.get).toBeDefined();
+  expect(subtreeRunsCallbacks(picked)).toBe(true);
 });

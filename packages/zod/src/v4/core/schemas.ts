@@ -1,6 +1,7 @@
 import * as checks from "./checks.js";
 import type { $ZodNumberFormats } from "./checks.js";
 import type { $ZodBigIntFormats } from "./checks.js";
+import type { CompileContext } from "./compile.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
@@ -121,6 +122,9 @@ export interface _$ZodTypeInternals {
 
   /** @internal Parses input, doesn't run checks. */
   parse(payload: ParsePayload<any>, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload>;
+
+  /** @internal Emits this schema's AOT fast path; overrides the per-subclass emitter in jit.ts. */
+  codegen?(doc: Doc, ctx: CompileContext, accessor: string, buildsValue: boolean): string | null;
 
   /** @internal  Stores identifiers for the set of traits implemented by this schema. */
   traits: Set<string>;
@@ -3040,7 +3044,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
-function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
+export function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
   for (let i = items.length - 1; i >= 0; i--) {
     // optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
     const omittable = key === "optin" ? items[i]._zod.optin !== undefined : items[i]._zod.optout === "optional";
