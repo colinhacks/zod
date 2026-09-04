@@ -27,8 +27,8 @@ export type INVALID = typeof INVALID;
 
 // Set on the parse ctx when a compiled wrapper falls back to the runtime, so nested compiled wrappers skip their fast paths for the rest of that parse.
 const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
-// raised by a compiled method that already rejected, for the wrapper its runtime method is about to enter: the fast parser has run, go straight to the issue parser. A module flag rather than a parse-context entry, so the fallback takes no context spread and no flag reads; it is consumed synchronously by the first wrapper entered and cleared by the method either way.
-let skipFast = false;
+// raised by a compiled method that already rejected, naming the schema whose runtime method it is about to enter: the fast parser has run, go straight to the issue parser. Module state rather than a parse-context entry, so the fallback takes no context spread and no flag reads; only that schema's own wrapper consumes it, so a route that reaches a nested wrapper first cannot skip that wrapper's checks, and the method clears it either way.
+let skipFastFor: unknown = null;
 
 interface CompileFnOptions {
   debug?: boolean | undefined;
@@ -166,7 +166,7 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     // messages from the original schema.
     const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
       // a compiled parse/safeParse method that already rejected comes back through here to build the failure; running the fast parser again would only run user callbacks once more
-      if (skipFast) skipFast = false;
+      if (skipFastFor === clone) skipFastFor = null;
       else {
         if (
           ctx?.async ||
@@ -225,11 +225,11 @@ function installCompiledUserMethods<T extends SomeType>(target: T, parser: Compi
       if (out !== INVALID) {
         return { success: true, data: out };
       }
-      skipFast = true;
+      skipFastFor = target;
       try {
         return originalSafeParse(data, params);
       } finally {
-        skipFast = false;
+        skipFastFor = null;
       }
     };
   }
@@ -241,11 +241,11 @@ function installCompiledUserMethods<T extends SomeType>(target: T, parser: Compi
       if (out !== INVALID) {
         return out;
       }
-      skipFast = true;
+      skipFastFor = target;
       try {
         return originalParse(data, params);
       } finally {
-        skipFast = false;
+        skipFastFor = null;
       }
     };
   }
