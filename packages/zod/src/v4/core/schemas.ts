@@ -4623,30 +4623,9 @@ export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [
       : never
     : never;
 
-// a part's pattern source with its checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. read off the defs since checks no longer write the bag; options recurse so a union of constrained parts keeps its precision
-function partPattern(schema: $ZodType): string | undefined {
-  const def = schema._zod.def as {
-    pattern?: RegExp;
-    format?: string;
-    innerType?: $ZodType;
-    options?: $ZodType[];
-    checks?: checks.$ZodCheck[];
-  };
-  const own = schema._zod.pattern;
-  // a wrapper's pattern embeds its inner pattern's source verbatim, so the check-aware form is substituted in place without knowing the wrapper's own composition. lazy resolves its inner on the internals, not the def
-  const inner = def.innerType ?? (schema._zod as { innerType?: $ZodType }).innerType;
-  if (inner) {
-    const before = inner._zod.pattern;
-    const after = partPattern(inner);
-    if (own && before && after && after !== before.source) {
-      return own.source.replace(util.cleanRegex(before.source), () => util.cleanRegex(after));
-    }
-    return own?.source;
-  }
-  if (def.options) {
-    const sources = def.options.map(partPattern);
-    if (sources.every(Boolean)) return `^(${sources.map((s) => util.cleanRegex(s!)).join("|")})$`;
-  }
+// a leaf's pattern source with its own checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. the fold lives here instead of on `_zod.pattern` so a bundle without template literals never pays for it
+function leafPattern(schema: $ZodType): string | undefined {
+  const def = schema._zod.def as { pattern?: RegExp; format?: string; checks?: checks.$ZodCheck[] };
   let pattern = def.pattern;
   let isInt = !!def.format?.includes("int");
   let minimum: number | undefined;
@@ -4664,7 +4643,29 @@ function partPattern(schema: $ZodType): string | undefined {
   // an empty range matches nothing at runtime, and `{8,5}` is not a legal quantifier
   if (minimum !== undefined && maximum !== undefined && minimum > maximum) return "(?!)";
   if (minimum !== undefined || maximum !== undefined) return regexes.string({ minimum, maximum }).source;
+  const own = schema._zod.pattern;
   return (isInt && own === regexes.number ? regexes.integer : own)?.source;
+}
+
+// a part's pattern source. a wrapper's pattern embeds its inner pattern's source verbatim, so the folded form is substituted in place without knowing the wrapper's own composition; a union's options are joined the way the union builds its own pattern
+function partPattern(schema: $ZodType): string | undefined {
+  const def = schema._zod.def as { innerType?: $ZodType; options?: $ZodType[] };
+  const own = schema._zod.pattern?.source;
+  // lazy resolves its inner on the internals, not the def
+  const inner = def.innerType ?? (schema._zod as { innerType?: $ZodType }).innerType;
+  if (inner) {
+    const before = inner._zod.pattern?.source;
+    const after = partPattern(inner);
+    if (own && before && after && after !== before) {
+      return own.replace(util.cleanRegex(before), () => util.cleanRegex(after));
+    }
+    return own;
+  }
+  if (def.options) {
+    const sources = def.options.map(partPattern);
+    if (sources.every(Boolean)) return `^(${sources.map((s) => util.cleanRegex(s!)).join("|")})$`;
+  }
+  return leafPattern(schema);
 }
 
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
