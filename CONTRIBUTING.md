@@ -26,7 +26,7 @@ The following steps will get you set up to contribute changes to this repo:
 Install [Nub](https://nubjs.com/docs) v0.8.3 first. Nub manages dependencies, runs scripts and TypeScript, and provisions the Node version in `.nvmrc`. The existing `pnpm-lock.yaml` is the lockfile format, not a requirement to install pnpm.
 
 ```sh
-curl -fsSL https://nubjs.com/install.sh | bash -s -- 0.8.3
+curl -fsSL https://raw.githubusercontent.com/nubjs/nub/0ae8783f1f93763c56dfc827892cfb679e8a0a77/install.sh | bash -s -- 0.8.3
 ```
 
 Restart the shell after installation so Nub is on `PATH`.

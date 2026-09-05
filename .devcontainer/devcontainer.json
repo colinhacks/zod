@@ -16,7 +16,7 @@
   "containerEnv": {
     "PATH": "/home/node/.nub/bin:${containerEnv:PATH}"
   },
-  "postCreateCommand": "bash -o pipefail -c 'curl -fsSL https://nubjs.com/install.sh | bash -s -- 0.8.3 && nub install --frozen-lockfile'"
+  "postCreateCommand": "bash -o pipefail -c 'curl -fsSL https://raw.githubusercontent.com/nubjs/nub/0ae8783f1f93763c56dfc827892cfb679e8a0a77/install.sh | bash -s -- 0.8.3 && nub install --frozen-lockfile'"
 
   // Configure tool-specific properties.
   // "customizations": {},
