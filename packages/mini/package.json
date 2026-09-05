@@ -66,9 +66,9 @@
   },
   "scripts": {
     "clean": "git clean -xdf . -e node_modules",
-    "build": "zshy --project tsconfig.build.json",
-    "postbuild": "pnpm biome check --write .",
-    "test": "pnpm vitest run",
-    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub exec --node biome check --write .",
+    "test": "nub exec --node vitest run",
+    "prepublishOnly": "nub ../../scripts/check-versions.ts"
   }
 }

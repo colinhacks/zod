@@ -147,7 +147,7 @@ if (violations === 0) {
   console.log(`✅ Joined ${violations} stacked comment block(s) across ${touched} file(s)`);
 } else {
   console.error(
-    `\n❌ ${violations} stacked comment block(s). Join each into one line, or run \`pnpm check:comments --fix\`.`
+    `\n❌ ${violations} stacked comment block(s). Join each into one line, or run \`nub run check:comments --fix\`.`
   );
   process.exit(1);
 }

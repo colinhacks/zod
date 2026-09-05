@@ -1,6 +1,8 @@
 import * as zod3 from "zod3";
-import * as zod4 from "zod4";
 import * as zodNext from "../zod/src/index.js";
+
+// load the published build regardless of the workspace's source condition
+const zod4: typeof import("zod4") = await import(new URL("index.js", import.meta.resolve("zod4/package.json")).href);
 
 export { zod3, zod4, zodNext };
 export function makeSchema<T>(factory: (z: typeof zod4) => T) {

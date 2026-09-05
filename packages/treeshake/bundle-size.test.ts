@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Like the other tests here, this bundles the BUILT package: esbuild is given no
 // `@zod/source` condition, so `zod/mini` resolves through `exports` to what a
 // consumer actually installs. That makes the numbers meaningful and the file
-// stale until `pnpm build` has run — fine in CI, which builds first.
+// stale until `nub run build` has run — fine in CI, which builds first.
 const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
 
 /**
@@ -33,7 +33,7 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * commit that causes it, which is the point: the number moves when someone
  * decides it should.
  *
- *   pnpm build && pnpm vitest run packages/treeshake/bundle-size.test.ts
+ *   nub run build && nub exec --node vitest run packages/treeshake/bundle-size.test.ts
  *
  * The failure message prints the measured size, so updating is mechanical.
  */
@@ -67,7 +67,7 @@ const MUST_NOT_APPEAR = ["canParse", "constantCatch"];
 
 beforeAll(() => {
   if (!existsSync(BUILT_ENTRY)) {
-    throw new Error(`${BUILT_ENTRY} is missing. Run \`pnpm build\` first.`);
+    throw new Error(`${BUILT_ENTRY} is missing. Run \`nub run build\` first.`);
   }
 });
 

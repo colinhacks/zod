@@ -18,7 +18,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
     // Check if attw is available before running the test
     try {
-      await execa("pnpm", ["attw", "--version"], {
+      await execa("nub", ["exec", "--node", "attw", "--version"], {
         cwd: __dirname,
         timeout: 5000,
       });
@@ -28,15 +28,14 @@ describe("Are The Types Wrong (attw) tests", () => {
     }
 
     const zodPackagePath = path.join(__dirname, "node_modules", "zod");
-    const result = await execa("pnpm", ["attw", "--pack", zodPackagePath, "--format", "ascii"], {
+    const result = await execa("nub", ["exec", "--node", "attw", "--pack", zodPackagePath, "--format", "ascii"], {
       cwd: __dirname,
       reject: false, // Don't throw on non-zero exit codes
     });
 
-    // drop pnpm's warnings — under CI setup-node leaves an unresolved ${NODE_AUTH_TOKEN} in the .npmrc and pnpm complains on every run
+    // exclude package-manager warnings from the attw snapshot
     const stderr = result.stderr
       .split("\n")
-      // pnpm pads WARN with U+2009 thin spaces, so \s is load-bearing — startsWith(" WARN") misses it
       .filter((line) => !/^\s*WARN\b/.test(line))
       .join("\n")
       .trim();
@@ -165,14 +164,14 @@ describe("Are The Types Wrong (attw) tests", () => {
     }
 
     try {
-      await execa("pnpm", ["attw", "--version"], { cwd: __dirname, timeout: 5000 });
+      await execa("nub", ["exec", "--node", "attw", "--version"], { cwd: __dirname, timeout: 5000 });
     } catch (_: any) {
       console.warn("attw not available, skipping test");
       return;
     }
 
     const miniPackagePath = path.join(__dirname, "node_modules", "@zod", "mini");
-    const result = await execa("pnpm", ["attw", "--pack", miniPackagePath, "--format", "ascii"], {
+    const result = await execa("nub", ["exec", "--node", "attw", "--pack", miniPackagePath, "--format", "ascii"], {
       cwd: __dirname,
       reject: false,
     });

@@ -10,8 +10,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Unlike the rest of the suite, this file bundles the BUILT package: `resolve()` knows
 // nothing about vitest's `@zod/source` condition, so `zod` resolves through `exports` to
 // `packages/zod/index.js`. That is the faithful thing to measure — it is what consumers
-// actually bundle — but it means the assertions are stale until you `pnpm build`. CI is
-// fine, since `pnpm build` precedes `pnpm test`.
+// actually bundle — but it means the assertions are stale until you `nub run build`. CI is
+// fine, since `nub run build` precedes `nub run test`.
 const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
 
 // Strings unique to a single locale. Grepping the bundle for them proves inclusion
@@ -54,7 +54,7 @@ async function bundle(code: string): Promise<string> {
 
 describe("locale tree-shaking", () => {
   beforeAll(() => {
-    if (!existsSync(BUILT_ENTRY)) throw new Error(`zod is not built — run \`pnpm build\` first (${BUILT_ENTRY})`);
+    if (!existsSync(BUILT_ENTRY)) throw new Error(`zod is not built — run \`nub run build\` first (${BUILT_ENTRY})`);
   });
 
   for (const spec of SPECIFIERS) {

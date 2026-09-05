@@ -1,8 +1,8 @@
 /**
  * Ranks open issues and PRs by a synthesized engagement signal.
  *
- *   pnpm dev scripts/triage-signal.ts
- *   pnpm dev scripts/triage-signal.ts --repo colinhacks/zod --top 40
+ *   nub run dev scripts/triage-signal.ts
+ *   nub run dev scripts/triage-signal.ts --repo colinhacks/zod --top 40
  *
  * Auth comes from the `gh` CLI (`gh auth token`).
  */

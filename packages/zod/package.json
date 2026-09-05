@@ -137,10 +137,10 @@
   },
   "scripts": {
     "clean": "git clean -xdf . -e node_modules",
-    "build": "zshy --project tsconfig.build.json",
-    "postbuild": "tsx ../../scripts/write-stub-package-jsons.ts && pnpm biome check --write .",
-    "test:watch": "pnpm vitest",
-    "test": "pnpm vitest run",
-    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub ../../scripts/write-stub-package-jsons.ts && nub exec --node biome check --write .",
+    "test:watch": "nub exec --node vitest",
+    "test": "nub exec --node vitest run",
+    "prepublishOnly": "nub ../../scripts/check-versions.ts"
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Shared measurement utilities for the memory benchmarks.
- * Run everything under `node --expose-gc`.
+ * Run everything under `nub --expose-gc`.
  */
 
 declare const gc: (() => void) | undefined;

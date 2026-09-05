@@ -6,11 +6,11 @@
   "configurations": [
     {
       "type": "node",
-      "runtimeExecutable": "node",
+      "runtimeExecutable": "nub",
       "request": "launch",
-      "name": "node",
+      "name": "Nub (plain Node)",
       "args": [],
-      "runtimeArgs": ["--experimental-strip-types"],
+      "runtimeArgs": ["--node"],
       "skipFiles": ["<node_internals>/**"],
       // "program": "${workspaceFolder}/play.ts",
       "program": "${file}",
@@ -20,7 +20,7 @@
       // "outFiles": ["${workspaceFolder}/**/*.js"]
     },
     {
-      "name": "tsx",
+      "name": "Nub (Zod source)",
       "type": "node",
       "request": "launch",
       "runtimeArgs": ["--conditions=@zod/source"],
@@ -28,11 +28,7 @@
       // Debug current file in VSCode
       "program": "${file}",
 
-      /*
-       * Path to tsx binary
-       * Assuming locally installed
-       */
-      "runtimeExecutable": "tsx",
+      "runtimeExecutable": "nub",
 
       /*
        * Open terminal when debugging starts (Optional)

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "bash -o pipefail -c 'curl -fsSL https://nubjs.com/install.sh | bash -s -- 0.8.3 && export PATH=\"$HOME/.nub/bin:$PATH\" && cd ../.. && nub install --frozen-lockfile'",
+  "buildCommand": "export PATH=\"$HOME/.nub/bin:$PATH\" && nub run build"
+}
