@@ -121,8 +121,8 @@ export interface ZodType<
   prefault(def: () => core.input<this>): ZodPrefault<this>;
   prefault(def: core.input<this>): ZodPrefault<this>;
   array(): ZodArray<this>;
-  or<T extends core.SomeType>(option: T): ZodUnion<[this, T]>;
-  and<T extends core.SomeType>(incoming: T): ZodIntersection<this, T>;
+  or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
+  and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
     transform: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
@@ -1454,7 +1454,7 @@ export function date(params?: string | core.$ZodDateParams): ZodDate {
 }
 
 // ZodArray
-export interface ZodArray<T extends core.SomeType = core.$ZodType>
+export interface ZodArray<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodArrayInternals<T>>,
     core.$ZodArray<T> {
   element: T;
@@ -1496,7 +1496,7 @@ function _zodArrayMethods(): _LazyMethodsOf<ZodArray> {
   };
 }
 
-export function array<T extends core.SomeType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
+export function array<T extends core.$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
   return core._array(ZodArray, element as any, params) as any;
 }
 
@@ -1508,7 +1508,7 @@ export function keyof<T extends ZodObject>(schema: T): ZodEnum<util.KeysEnum<T["
 
 // ZodObject
 
-export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLooseShape> = {
+export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodShape> = {
   [K in keyof Ext]: K extends keyof Base
     ? core.output<Ext[K]> extends core.output<Base[K]>
       ? core.input<Ext[K]> extends core.input<Base[K]>
@@ -1520,7 +1520,7 @@ export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLo
 
 export interface ZodObject<
   /** @ts-ignore Cast variance */
-  out Shape extends core.$ZodShape = core.$ZodLooseShape,
+  out Shape extends core.$ZodShape = core.$ZodShape,
   out Config extends core.$ZodObjectConfig = core.$strip,
 > extends _ZodType<core.$ZodObjectInternals<Shape, Config>>,
     core.$ZodObject<Shape, Config> {
@@ -1529,7 +1529,7 @@ export interface ZodObject<
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
-  catchall<T extends core.SomeType>(schema: T): ZodObject<Shape, core.$catchall<T>>;
+  catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, core.$catchall<T>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, core.$loose>;
@@ -1542,10 +1542,10 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, core.$strip>;
 
-  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
+  extend<U extends core.$ZodShape>(shape: U): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
 
-  safeExtend<U extends core.$ZodLooseShape>(
-    shape: SafeExtendShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
+  safeExtend<U extends core.$ZodShape>(
+    shape: SafeExtendShape<Shape, U> & Partial<Record<keyof Shape, core.$ZodType>>
   ): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
 
   /**
@@ -1674,7 +1674,7 @@ function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
   };
 }
 
-export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.SomeType>>>(
+export function object<T extends core.$ZodShape = Partial<Record<never, core.$ZodType>>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<util.Writeable<T>, core.$strip> {
@@ -1688,7 +1688,7 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
 
 // strictObject
 
-export function strictObject<T extends core.$ZodLooseShape>(
+export function strictObject<T extends core.$ZodShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<util.Writeable<T>, core.$strict> {
@@ -1702,7 +1702,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
 
 // looseObject
 
-export function looseObject<T extends core.$ZodLooseShape>(
+export function looseObject<T extends core.$ZodShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<util.Writeable<T>, core.$loose> {
@@ -1715,7 +1715,7 @@ export function looseObject<T extends core.$ZodLooseShape>(
 }
 
 // ZodUnion
-export interface ZodUnion<T extends readonly core.SomeType[] = readonly core.$ZodType[]>
+export interface ZodUnion<T extends readonly core.$ZodType[] = readonly core.$ZodType[]>
   extends _ZodType<core.$ZodUnionInternals<T>>,
     core.$ZodUnion<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -1728,7 +1728,7 @@ export const ZodUnion: core.$constructor<ZodUnion> = /*@__PURE__*/ core.$constru
   inst.options = def.options;
 });
 
-export function union<const T extends readonly core.SomeType[]>(
+export function union<const T extends readonly core.$ZodType[]>(
   options: T,
   params?: string | core.$ZodUnionParams
 ): ZodUnion<T> {
@@ -1740,7 +1740,7 @@ export function union<const T extends readonly core.SomeType[]>(
 }
 
 // ZodXor
-export interface ZodXor<T extends readonly core.SomeType[] = readonly core.$ZodType[]>
+export interface ZodXor<T extends readonly core.$ZodType[] = readonly core.$ZodType[]>
   extends _ZodType<core.$ZodXorInternals<T>>,
     core.$ZodXor<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -1756,7 +1756,7 @@ export const ZodXor: core.$constructor<ZodXor> = /*@__PURE__*/ core.$constructor
 /** Creates an exclusive union (XOR) where exactly one option must match.
  * Unlike regular unions that succeed when any option matches, xor fails if
  * zero or more than one option matches the input. */
-export function xor<const T extends readonly core.SomeType[]>(
+export function xor<const T extends readonly core.$ZodType[]>(
   options: T,
   params?: string | core.$ZodXorParams
 ): ZodXor<T> {
@@ -1770,7 +1770,7 @@ export function xor<const T extends readonly core.SomeType[]>(
 
 // ZodDiscriminatedUnion
 export interface ZodDiscriminatedUnion<
-  Options extends readonly core.SomeType[] = readonly core.$ZodType[],
+  Options extends readonly core.$ZodType[] = readonly core.$ZodType[],
   Disc extends string = string,
 > extends ZodUnion<Options>,
     core.$ZodDiscriminatedUnion<Options, Disc> {
@@ -1804,7 +1804,7 @@ export function discriminatedUnion<
 }
 
 // ZodIntersection
-export interface ZodIntersection<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
+export interface ZodIntersection<A extends core.$ZodType = core.$ZodType, B extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodIntersectionInternals<A, B>>,
     core.$ZodIntersection<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -1818,7 +1818,7 @@ export const ZodIntersection: core.$constructor<ZodIntersection> = /*@__PURE__*/
   }
 );
 
-export function intersection<T extends core.SomeType, U extends core.SomeType>(
+export function intersection<T extends core.$ZodType, U extends core.$ZodType>(
   left: T,
   right: U
 ): ZodIntersection<T, U> {
@@ -1832,11 +1832,11 @@ export function intersection<T extends core.SomeType, U extends core.SomeType>(
 // ZodTuple
 export interface ZodTuple<
   T extends util.TupleItems = readonly core.$ZodType[],
-  Rest extends core.SomeType | null = core.$ZodType | null,
+  Rest extends core.$ZodType | null = core.$ZodType | null,
 > extends _ZodType<core.$ZodTupleInternals<T, Rest>>,
     core.$ZodTuple<T, Rest> {
   "~standard": ZodStandardSchemaWithJSON<this>;
-  rest<Rest extends core.SomeType = core.$ZodType>(rest: Rest): ZodTuple<T, Rest>;
+  rest<Rest extends core.$ZodType = core.$ZodType>(rest: Rest): ZodTuple<T, Rest>;
 }
 export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
   core.attachMemoizer(inst);
@@ -1850,19 +1850,19 @@ export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constru
     }) as any;
 });
 
-export function tuple<T extends readonly [core.SomeType, ...core.SomeType[]]>(
+export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]]>(
   items: T,
   params?: string | core.$ZodTupleParams
 ): ZodTuple<T, null>;
-export function tuple<T extends readonly [core.SomeType, ...core.SomeType[]], Rest extends core.SomeType>(
+export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]], Rest extends core.$ZodType>(
   items: T,
   rest: Rest,
   params?: string | core.$ZodTupleParams
 ): ZodTuple<T, Rest>;
 export function tuple(items: [], params?: string | core.$ZodTupleParams): ZodTuple<[], null>;
 export function tuple(
-  items: core.SomeType[],
-  _paramsOrRest?: string | core.$ZodTupleParams | core.SomeType,
+  items: core.$ZodType[],
+  _paramsOrRest?: string | core.$ZodTupleParams | core.$ZodType,
   _params?: string | core.$ZodTupleParams
 ) {
   const hasRest = _paramsOrRest instanceof core.$ZodType;
@@ -1879,7 +1879,7 @@ export function tuple(
 // ZodRecord
 export interface ZodRecord<
   Key extends core.$ZodRecordKey = core.$ZodRecordKey,
-  Value extends core.SomeType = core.$ZodType,
+  Value extends core.$ZodType = core.$ZodType,
 > extends _ZodType<core.$ZodRecordInternals<Key, Value>>,
     core.$ZodRecord<Key, Value> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -1896,7 +1896,7 @@ export const ZodRecord: core.$constructor<ZodRecord> = /*@__PURE__*/ core.$const
   inst.valueType = def.valueType;
 });
 
-export function record<Key extends core.$ZodRecordKey, Value extends core.SomeType>(
+export function record<Key extends core.$ZodRecordKey, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
@@ -1918,7 +1918,7 @@ export function record<Key extends core.$ZodRecordKey, Value extends core.SomeTy
   }) as any;
 }
 // type alksjf = core.output<core.$ZodRecordKey>;
-export function partialRecord<Key extends core.$ZodRecordKey, Value extends core.SomeType>(
+export function partialRecord<Key extends core.$ZodRecordKey, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
@@ -1932,7 +1932,7 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   }) as any;
 }
 
-export function looseRecord<Key extends core.$ZodRecordKey, Value extends core.SomeType>(
+export function looseRecord<Key extends core.$ZodRecordKey, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
@@ -1947,7 +1947,7 @@ export function looseRecord<Key extends core.$ZodRecordKey, Value extends core.S
 }
 
 // ZodMap
-export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends core.SomeType = core.$ZodType>
+export interface ZodMap<Key extends core.$ZodType = core.$ZodType, Value extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodMapInternals<Key, Value>>,
     core.$ZodMap<Key, Value> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -1971,7 +1971,7 @@ export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor
   inst.size = (...args) => inst.check(core._size(...args));
 });
 
-export function map<Key extends core.SomeType, Value extends core.SomeType>(
+export function map<Key extends core.$ZodType, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodMapParams
@@ -1985,7 +1985,7 @@ export function map<Key extends core.SomeType, Value extends core.SomeType>(
 }
 
 // ZodSet
-export interface ZodSet<T extends core.SomeType = core.$ZodType>
+export interface ZodSet<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodSetInternals<T>>,
     core.$ZodSet<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2006,7 +2006,7 @@ export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor
   inst.size = (...args) => inst.check(core._size(...args));
 });
 
-export function set<Value extends core.SomeType>(
+export function set<Value extends core.$ZodType>(
   valueType: Value,
   params?: string | core.$ZodSetParams
 ): ZodSet<Value> {
@@ -2229,7 +2229,7 @@ export function transform<I = unknown, O = I>(
 }
 
 // ZodOptional
-export interface ZodOptional<T extends core.SomeType = core.$ZodType>
+export interface ZodOptional<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodOptionalInternals<T>>,
     core.$ZodOptional<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2246,7 +2246,7 @@ export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$c
   }
 );
 
-export function optional<T extends core.SomeType>(innerType: T): ZodOptional<T> {
+export function optional<T extends core.$ZodType>(innerType: T): ZodOptional<T> {
   return new ZodOptional({
     type: "optional",
     innerType: innerType as any as core.$ZodType,
@@ -2254,7 +2254,7 @@ export function optional<T extends core.SomeType>(innerType: T): ZodOptional<T> 
 }
 
 // ZodExactOptional
-export interface ZodExactOptional<T extends core.SomeType = core.$ZodType>
+export interface ZodExactOptional<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodExactOptionalInternals<T>>,
     core.$ZodExactOptional<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2271,7 +2271,7 @@ export const ZodExactOptional: core.$constructor<ZodExactOptional> = /*@__PURE__
   }
 );
 
-export function exactOptional<T extends core.SomeType>(innerType: T): ZodExactOptional<T> {
+export function exactOptional<T extends core.$ZodType>(innerType: T): ZodExactOptional<T> {
   return new ZodExactOptional({
     type: "optional",
     innerType: innerType as any as core.$ZodType,
@@ -2279,7 +2279,7 @@ export function exactOptional<T extends core.SomeType>(innerType: T): ZodExactOp
 }
 
 // ZodNullable
-export interface ZodNullable<T extends core.SomeType = core.$ZodType>
+export interface ZodNullable<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodNullableInternals<T>>,
     core.$ZodNullable<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2296,7 +2296,7 @@ export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$c
   }
 );
 
-export function nullable<T extends core.SomeType>(innerType: T): ZodNullable<T> {
+export function nullable<T extends core.$ZodType>(innerType: T): ZodNullable<T> {
   return new ZodNullable({
     type: "nullable",
     innerType: innerType as any as core.$ZodType,
@@ -2304,12 +2304,12 @@ export function nullable<T extends core.SomeType>(innerType: T): ZodNullable<T> 
 }
 
 // nullish
-export function nullish<T extends core.SomeType>(innerType: T): ZodOptional<ZodNullable<T>> {
+export function nullish<T extends core.$ZodType>(innerType: T): ZodOptional<ZodNullable<T>> {
   return optional(nullable(innerType));
 }
 
 // ZodDefault
-export interface ZodDefault<T extends core.SomeType = core.$ZodType>
+export interface ZodDefault<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodDefaultInternals<T>>,
     core.$ZodDefault<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2326,7 +2326,7 @@ export const ZodDefault: core.$constructor<ZodDefault> = /*@__PURE__*/ core.$con
   inst.removeDefault = inst.unwrap;
 });
 
-export function _default<T extends core.SomeType>(
+export function _default<T extends core.$ZodType>(
   innerType: T,
   defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
 ): ZodDefault<T> {
@@ -2340,7 +2340,7 @@ export function _default<T extends core.SomeType>(
 }
 
 // ZodPrefault
-export interface ZodPrefault<T extends core.SomeType = core.$ZodType>
+export interface ZodPrefault<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodPrefaultInternals<T>>,
     core.$ZodPrefault<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2356,7 +2356,7 @@ export const ZodPrefault: core.$constructor<ZodPrefault> = /*@__PURE__*/ core.$c
   }
 );
 
-export function prefault<T extends core.SomeType>(
+export function prefault<T extends core.$ZodType>(
   innerType: T,
   defaultValue: core.input<T> | (() => core.input<T>)
 ): ZodPrefault<T> {
@@ -2370,7 +2370,7 @@ export function prefault<T extends core.SomeType>(
 }
 
 // ZodNonOptional
-export interface ZodNonOptional<T extends core.SomeType = core.$ZodType>
+export interface ZodNonOptional<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodNonOptionalInternals<T>>,
     core.$ZodNonOptional<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2387,7 +2387,7 @@ export const ZodNonOptional: core.$constructor<ZodNonOptional> = /*@__PURE__*/ c
   }
 );
 
-export function nonoptional<T extends core.SomeType>(
+export function nonoptional<T extends core.$ZodType>(
   innerType: T,
   params?: string | core.$ZodNonOptionalParams
 ): ZodNonOptional<T> {
@@ -2399,7 +2399,7 @@ export function nonoptional<T extends core.SomeType>(
 }
 
 // ZodSuccess
-export interface ZodSuccess<T extends core.SomeType = core.$ZodType>
+export interface ZodSuccess<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodSuccessInternals<T>>,
     core.$ZodSuccess<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2413,7 +2413,7 @@ export const ZodSuccess: core.$constructor<ZodSuccess> = /*@__PURE__*/ core.$con
   inst.unwrap = () => inst._zod.def.innerType;
 });
 
-export function success<T extends core.SomeType>(innerType: T): ZodSuccess<T> {
+export function success<T extends core.$ZodType>(innerType: T): ZodSuccess<T> {
   return new ZodSuccess({
     type: "success",
     innerType: innerType as any as core.$ZodType,
@@ -2421,7 +2421,7 @@ export function success<T extends core.SomeType>(innerType: T): ZodSuccess<T> {
 }
 
 // ZodCatch
-export interface ZodCatch<T extends core.SomeType = core.$ZodType>
+export interface ZodCatch<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodCatchInternals<T>>,
     core.$ZodCatch<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2438,7 +2438,7 @@ export const ZodCatch: core.$constructor<ZodCatch> = /*@__PURE__*/ core.$constru
   inst.removeCatch = inst.unwrap;
 });
 
-function _catch<T extends core.SomeType>(
+function _catch<T extends core.$ZodType>(
   innerType: T,
   catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>)
 ): ZodCatch<T> {
@@ -2467,7 +2467,7 @@ export function nan(params?: string | core.$ZodNaNParams): ZodNaN {
 }
 
 // ZodPipe
-export interface ZodPipe<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
+export interface ZodPipe<A extends core.$ZodType = core.$ZodType, B extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodPipeInternals<A, B>>,
     core.$ZodPipe<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2484,10 +2484,10 @@ export const ZodPipe: core.$constructor<ZodPipe> = /*@__PURE__*/ core.$construct
 });
 
 export function pipe<
-  const A extends core.SomeType,
+  const A extends core.$ZodType,
   B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
 >(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodPipe<A, B>;
-export function pipe(in_: core.SomeType, out: core.SomeType) {
+export function pipe(in_: core.$ZodType, out: core.$ZodType) {
   return new ZodPipe({
     type: "pipe",
     in: in_ as unknown as core.$ZodType,
@@ -2497,7 +2497,7 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
 }
 
 // ZodCodec
-export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
+export interface ZodCodec<A extends core.$ZodType = core.$ZodType, B extends core.$ZodType = core.$ZodType>
   extends ZodPipe<A, B>,
     core.$ZodCodec<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2509,7 +2509,7 @@ export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constru
   core.$ZodCodec.init(inst, def);
 });
 
-export function codec<const A extends core.SomeType, B extends core.SomeType = core.$ZodType>(
+export function codec<const A extends core.$ZodType, B extends core.$ZodType = core.$ZodType>(
   in_: A,
   out: B,
   params: {
@@ -2526,7 +2526,7 @@ export function codec<const A extends core.SomeType, B extends core.SomeType = c
   }) as any;
 }
 
-export function invertCodec<A extends core.SomeType, B extends core.SomeType>(codec: ZodCodec<A, B>): ZodCodec<B, A> {
+export function invertCodec<A extends core.$ZodType, B extends core.$ZodType>(codec: ZodCodec<A, B>): ZodCodec<B, A> {
   const def = codec._zod.def;
   return new ZodCodec({
     type: "pipe",
@@ -2538,7 +2538,7 @@ export function invertCodec<A extends core.SomeType, B extends core.SomeType>(co
 }
 
 // ZodPreprocess
-export interface ZodPreprocess<B extends core.SomeType = core.$ZodType, I = unknown>
+export interface ZodPreprocess<B extends core.$ZodType = core.$ZodType, I = unknown>
   extends ZodPipe<core.$ZodTransform<unknown, I>, B>,
     core.$ZodPreprocess<B, I> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2554,7 +2554,7 @@ export const ZodPreprocess: core.$constructor<ZodPreprocess> = /*@__PURE__*/ cor
 );
 
 // ZodReadonly
-export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
+export interface ZodReadonly<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodReadonlyInternals<T>>,
     core.$ZodReadonly<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2571,7 +2571,7 @@ export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$c
   }
 );
 
-export function readonly<T extends core.SomeType>(innerType: T): ZodReadonly<T> {
+export function readonly<T extends core.$ZodType>(innerType: T): ZodReadonly<T> {
   return new ZodReadonly({
     type: "readonly",
     innerType: innerType as any as core.$ZodType,
@@ -2605,7 +2605,7 @@ export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart
 }
 
 // ZodLazy
-export interface ZodLazy<T extends core.SomeType = core.$ZodType>
+export interface ZodLazy<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodLazyInternals<T>>,
     core.$ZodLazy<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2619,7 +2619,7 @@ export const ZodLazy: core.$constructor<ZodLazy> = /*@__PURE__*/ core.$construct
   inst.unwrap = () => inst._zod.def.getter();
 });
 
-export function lazy<T extends core.SomeType>(getter: () => T): ZodLazy<T> {
+export function lazy<T extends core.$ZodType>(getter: () => T): ZodLazy<T> {
   return new ZodLazy({
     type: "lazy",
     getter: getter as any,
@@ -2627,7 +2627,7 @@ export function lazy<T extends core.SomeType>(getter: () => T): ZodLazy<T> {
 }
 
 // ZodPromise
-export interface ZodPromise<T extends core.SomeType = core.$ZodType>
+export interface ZodPromise<T extends core.$ZodType = core.$ZodType>
   extends _ZodType<core.$ZodPromiseInternals<T>>,
     core.$ZodPromise<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
@@ -2641,7 +2641,7 @@ export const ZodPromise: core.$constructor<ZodPromise> = /*@__PURE__*/ core.$con
   inst.unwrap = () => inst._zod.def.innerType;
 });
 
-export function promise<T extends core.SomeType>(innerType: T): ZodPromise<T> {
+export function promise<T extends core.$ZodType>(innerType: T): ZodPromise<T> {
   return new ZodPromise({
     type: "promise",
     innerType: innerType as any as core.$ZodType,
@@ -2834,7 +2834,7 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 
 // preprocess
 
-export function preprocess<A, U extends core.SomeType, B = unknown>(
+export function preprocess<A, U extends core.$ZodType, B = unknown>(
   fn: (arg: B, ctx: core.$RefinementCtx) => A,
   schema: U
 ): ZodPreprocess<U, B> {

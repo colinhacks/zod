@@ -1241,12 +1241,13 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 // `Object.keys` on the shape is recursion-safe by contrast — it lists the keys without invoking them — so an eager check is reachable. It was tried and reverted: a key list derived from the shape cannot be kept in agreement with `shape` itself, which resolves lazily over the object the caller passed and then freezes to a copy, and it charged every object schema construction time and memory for a check only this one type reads.
 //
 // `_Disc` is unused and retained only so `$ZodTypeDiscriminable<"kind">` keeps compiling for external callers.
-export interface $ZodTypeDiscriminableInternals<_Disc extends string = string> extends schemas._$ZodTypeInternals {
+export interface $ZodTypeDiscriminableInternals<_Disc extends string = string, out O = unknown, out I = unknown>
+  extends schemas.$ZodTypeInternals<O, I> {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable<_Disc extends string = string> extends schemas.SomeType {
-  _zod: $ZodTypeDiscriminableInternals;
+export interface $ZodTypeDiscriminable<_Disc extends string = string> extends schemas.$ZodType {
+  _zod: $ZodTypeDiscriminableInternals<_Disc>;
 }
 
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;

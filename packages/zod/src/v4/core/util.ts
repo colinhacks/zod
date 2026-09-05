@@ -149,7 +149,7 @@ export type Extend<A extends SomeObject, B extends SomeObject> = Flatten<
       }
 >;
 
-export type TupleItems = ReadonlyArray<schemas.SomeType>;
+export type TupleItems = ReadonlyArray<schemas.$ZodType>;
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
 export type MaybeAsync<T> = T | Promise<T>;
@@ -162,7 +162,7 @@ export type ExtractIndexSignature<T> = {
 };
 export type Keys<T extends object> = keyof OmitIndexSignature<T>;
 
-export type SchemaClass<T extends schemas.SomeType> = {
+export type SchemaClass<T extends schemas.$ZodType> = {
   new (def: T["_zod"]["def"]): T;
 };
 export type EnumValue = string | number; // | bigint | boolean | symbol;
@@ -577,10 +577,10 @@ export function optionalKeys(shape: schemas.$ZodShape): string[] {
 }
 
 export type CleanKey<T extends PropertyKey> = T extends `?${infer K}` ? K : T extends `${infer K}?` ? K : T;
-export type ToCleanMap<T extends schemas.$ZodLooseShape> = {
+export type ToCleanMap<T extends schemas.$ZodShape> = {
   [k in keyof T]: k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k;
 };
-export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
+export type FromCleanMap<T extends schemas.$ZodShape> = {
   [k in keyof T as k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k]: k;
 };
 

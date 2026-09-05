@@ -22,9 +22,9 @@ export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>) => AnyZod };
  * identity. Returns `$ZodType`: a visitor can swap in a schema of any type, so callers declare
  * their own return type.
  */
-export function visit(schema: schemas.SomeType, fn: VisitFn): AnyZod;
-export function visit(schema: schemas.SomeType, handlers: VisitHandlers): AnyZod;
-export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHandlers): AnyZod {
+export function visit(schema: schemas.$ZodType, fn: VisitFn): AnyZod;
+export function visit(schema: schemas.$ZodType, handlers: VisitHandlers): AnyZod;
+export function visit(schema: schemas.$ZodType, fnOrHandlers: VisitFn | VisitHandlers): AnyZod {
   const fn: VisitFn =
     typeof fnOrHandlers === "function"
       ? fnOrHandlers

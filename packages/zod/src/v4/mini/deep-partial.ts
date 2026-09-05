@@ -4,7 +4,7 @@ import * as schemas from "./schemas.js";
 
 /** Mini counterpart of `classic/deep-partial.ts`'s `DeepPartial`. */
 // biome-ignore format: preserve vertical layout for readability.
-export type DeepPartial<T extends core.SomeType> =
+export type DeepPartial<T extends core.$ZodType> =
   T extends schemas.ZodMiniObject<infer Shape, infer Config>
     ? schemas.ZodMiniObject<
         { -readonly [K in keyof Shape]: schemas.ZodMiniOptional<DeepPartial<Shape[K]>> },
@@ -12,18 +12,18 @@ export type DeepPartial<T extends core.SomeType> =
       >
   : T extends schemas.ZodMiniDiscriminatedUnion<infer Options, any>
     ? schemas.ZodMiniUnion<
-        { -readonly [I in keyof Options]: Options[I] extends core.SomeType ? DeepPartial<Options[I]> : Options[I] }
+        { -readonly [I in keyof Options]: Options[I] extends core.$ZodType ? DeepPartial<Options[I]> : Options[I] }
       >
   : T extends schemas.ZodMiniUnion<infer Options>
     ? schemas.ZodMiniUnion<
-        { -readonly [I in keyof Options]: Options[I] extends core.SomeType ? DeepPartial<Options[I]> : Options[I] }
+        { -readonly [I in keyof Options]: Options[I] extends core.$ZodType ? DeepPartial<Options[I]> : Options[I] }
       >
   : T extends schemas.ZodMiniArray<infer El>
     ? schemas.ZodMiniArray<DeepPartial<El>>
   : T extends schemas.ZodMiniTuple<infer Items, infer Rest>
     ? schemas.ZodMiniTuple<
-        { -readonly [K in keyof Items]: Items[K] extends core.SomeType ? DeepPartial<Items[K]> : Items[K] },
-        Rest extends core.SomeType ? DeepPartial<Rest> : Rest
+        { -readonly [K in keyof Items]: Items[K] extends core.$ZodType ? DeepPartial<Items[K]> : Items[K] },
+        Rest extends core.$ZodType ? DeepPartial<Rest> : Rest
       >
   : T extends schemas.ZodMiniIntersection<infer A, infer B>
     ? schemas.ZodMiniIntersection<DeepPartial<A>, DeepPartial<B>>
@@ -61,7 +61,7 @@ export type DeepPartial<T extends core.SomeType> =
   : T;
 
 /** See `classic/deep-partial.ts`. Mini variant uses `mini.partial(...)`. */
-export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
+export function deepPartial<T extends core.$ZodType>(schema: T): DeepPartial<T> {
   return visit(schema, {
     object: (s) => schemas.partial(s as schemas.ZodMiniObject),
     // See `classic/deep-partial.ts`.

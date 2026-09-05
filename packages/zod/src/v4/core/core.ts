@@ -104,7 +104,7 @@ export type $brand<T extends string | number | symbol = string | number | symbol
 };
 
 export type $ZodBranded<
-  T extends schemas.SomeType,
+  T extends schemas.$ZodType,
   Brand extends string | number | symbol,
   Dir extends "in" | "out" | "inout" = "out",
 > = T &
@@ -114,7 +114,7 @@ export type $ZodBranded<
       ? { _zod: { input: input<T> & $brand<Brand> } }
       : { _zod: { output: output<T> & $brand<Brand> } });
 
-export type $ZodNarrow<T extends schemas.SomeType, Out> = T & { _zod: { output: Out } };
+export type $ZodNarrow<T extends schemas.$ZodType, Out> = T & { _zod: { output: Out } };
 
 export class $ZodAsyncError extends Error {
   constructor() {

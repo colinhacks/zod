@@ -4,7 +4,7 @@ import * as schemas from "./schemas.js";
 
 /** Distributes `.partial()` through every object in a schema type, preserving the wrappers around them. */
 // biome-ignore format: preserve vertical layout for readability.
-export type DeepPartial<T extends core.SomeType> =
+export type DeepPartial<T extends core.$ZodType> =
   T extends schemas.ZodObject<infer Shape, infer Config>
     ? schemas.ZodObject<
         { -readonly [K in keyof Shape]: schemas.ZodOptional<DeepPartial<Shape[K]>> },
@@ -13,18 +13,18 @@ export type DeepPartial<T extends core.SomeType> =
   // Must precede ZodUnion; degrades to it, matching the runtime.
   : T extends schemas.ZodDiscriminatedUnion<infer Options, any>
     ? schemas.ZodUnion<
-        { -readonly [I in keyof Options]: Options[I] extends core.SomeType ? DeepPartial<Options[I]> : Options[I] }
+        { -readonly [I in keyof Options]: Options[I] extends core.$ZodType ? DeepPartial<Options[I]> : Options[I] }
       >
   : T extends schemas.ZodUnion<infer Options>
     ? schemas.ZodUnion<
-        { -readonly [I in keyof Options]: Options[I] extends core.SomeType ? DeepPartial<Options[I]> : Options[I] }
+        { -readonly [I in keyof Options]: Options[I] extends core.$ZodType ? DeepPartial<Options[I]> : Options[I] }
       >
   : T extends schemas.ZodArray<infer El>
     ? schemas.ZodArray<DeepPartial<El>>
   : T extends schemas.ZodTuple<infer Items, infer Rest>
     ? schemas.ZodTuple<
-        { -readonly [K in keyof Items]: Items[K] extends core.SomeType ? DeepPartial<Items[K]> : Items[K] },
-        Rest extends core.SomeType ? DeepPartial<Rest> : Rest
+        { -readonly [K in keyof Items]: Items[K] extends core.$ZodType ? DeepPartial<Items[K]> : Items[K] },
+        Rest extends core.$ZodType ? DeepPartial<Rest> : Rest
       >
   : T extends schemas.ZodIntersection<infer A, infer B>
     ? schemas.ZodIntersection<DeepPartial<A>, DeepPartial<B>>
@@ -64,7 +64,7 @@ export type DeepPartial<T extends core.SomeType> =
   : T;
 
 /** Returns a copy of the schema with every nested object's properties made optional. */
-export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
+export function deepPartial<T extends core.$ZodType>(schema: T): DeepPartial<T> {
   return visit(schema, {
     object: (s) => (s as schemas.ZodObject).partial(),
     // Every partialed option now admits `undefined`, which the constructor rejects as a duplicate.

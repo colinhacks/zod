@@ -96,7 +96,7 @@ export interface $ZodTypeDef {
   checks?: checks.$ZodCheck<never>[];
 }
 
-export interface _$ZodTypeInternals {
+export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The `@zod/core` version of this schema */
   version: typeof version;
 
@@ -174,18 +174,17 @@ export interface _$ZodTypeInternals {
 
   /** @internal The parent of this schema. Only set during certain clone operations. */
   parent?: $ZodType | undefined;
-}
-/** @internal */
-export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends _$ZodTypeInternals {
   /** @internal The inferred output type */
-  output: O; //extends { $out: infer O } ? O : Out;
+  output: O;
   /** @internal The inferred input type */
-  input: I; //extends { $in: infer I } ? I : In;
+  input: I;
 }
+
+/** A schema whose inferred types are not named. Derived from the internals rather than requiring the
+ * interface to be split, so nothing about how the library declares its types has to change. */
+export type SomeType = { _zod: Omit<$ZodTypeInternals, "output" | "input"> };
 
 export type $ZodStandardSchema<T> = StandardSchemaV1.Props<core.input<T>, core.output<T>>;
-
-export type SomeType = { _zod: _$ZodTypeInternals };
 
 export interface $ZodType<
   O = unknown,
@@ -1722,12 +1721,12 @@ export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constru
 /////////////////////////////////////////
 /////////////////////////////////////////
 
-export interface $ZodArrayDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodArrayDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "array";
   element: T;
 }
 
-export interface $ZodArrayInternals<T extends SomeType = $ZodType> extends _$ZodTypeInternals {
+export interface $ZodArrayInternals<T extends $ZodType = $ZodType> extends $ZodTypeInternals {
   //$ZodTypeInternals<core.output<T>[], core.input<T>[]> {
   def: $ZodArrayDef<T>;
   isst: errors.$ZodIssueInvalidType;
@@ -1735,7 +1734,7 @@ export interface $ZodArrayInternals<T extends SomeType = $ZodType> extends _$Zod
   input: core.input<T>[];
 }
 
-export interface $ZodArray<T extends SomeType = $ZodType> extends $ZodType<any, any, $ZodArrayInternals<T>> {}
+export interface $ZodArray<T extends $ZodType = $ZodType> extends $ZodType<any, any, $ZodArrayInternals<T>> {}
 
 function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
@@ -1801,7 +1800,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" | "defaulted" } };
 
-export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
+export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
     : Record<string, core.output<T[keyof T]>>
@@ -1816,7 +1815,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
       >;
 
 // experimental
-// export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = keyof (T &
+// export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = keyof (T &
 //   Extra) extends never
 //   ? Record<string, never>
 //   : string extends keyof T
@@ -1827,7 +1826,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
 //       >
 //     : util.Prettify<$InferObjectOutputNoIndex<T, Extra>>;
 
-// export type $InferObjectOutputNoIndex<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = {
+// export type $InferObjectOutputNoIndex<T extends $ZodShape, Extra extends Record<string, unknown>> = {
 //   [k in keyof T as string extends k
 //     ? never
 //     : k extends string
@@ -1845,7 +1844,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
 //       : never]?: T[k]["_zod"]["output"];
 // } & Extra;
 
-export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
+export type $InferObjectInput<T extends $ZodShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
     : Record<string, core.input<T[keyof T]>>
@@ -1917,7 +1916,7 @@ export type $strip = {
   in: {};
 };
 
-export type $catchall<T extends SomeType> = {
+export type $catchall<T extends $ZodType> = {
   out: { [k: string]: core.output<T> };
   in: { [k: string]: core.input<T> };
 };
@@ -1934,7 +1933,7 @@ export interface $ZodObjectInternals<
   /** @ts-ignore Cast variance */
   out Shape extends $ZodShape = $ZodShape,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
-> extends _$ZodTypeInternals {
+> extends $ZodTypeInternals {
   def: $ZodObjectDef<Shape>;
   config: Config;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
@@ -1944,7 +1943,6 @@ export interface $ZodObjectInternals<
   optin?: "optional" | undefined;
   optout?: "optional" | undefined;
 }
-export type $ZodLooseShape = Record<string, any>;
 
 export interface $ZodObject<
   /** @ts-ignore Cast variance */
@@ -2269,18 +2267,18 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 /////////////////////////////////////////
 /////////////////////////////////////////
 // use generic to distribute union types
-export type $InferUnionOutput<T extends SomeType> = T extends any ? core.output<T> : never;
-export type $InferUnionInput<T extends SomeType> = T extends any ? core.input<T> : never;
-export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $ZodType[]> extends $ZodTypeDef {
+export type $InferUnionOutput<T extends $ZodType> = T extends any ? core.output<T> : never;
+export type $InferUnionInput<T extends $ZodType> = T extends any ? core.input<T> : never;
+export interface $ZodUnionDef<Options extends readonly $ZodType[] = readonly $ZodType[]> extends $ZodTypeDef {
   type: "union";
   options: Options;
   inclusive?: boolean;
 }
 
-type IsOptionalIn<T extends SomeType> = T extends OptionalInSchema ? true : false;
-type IsOptionalOut<T extends SomeType> = T extends OptionalOutSchema ? true : false;
+type IsOptionalIn<T extends $ZodType> = T extends OptionalInSchema ? true : false;
+type IsOptionalOut<T extends $ZodType> = T extends OptionalOutSchema ? true : false;
 
-export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $ZodType[]> extends _$ZodTypeInternals {
+export interface $ZodUnionInternals<T extends readonly $ZodType[] = readonly $ZodType[]> extends $ZodTypeInternals {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
@@ -2292,7 +2290,7 @@ export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $Zo
   optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
 }
 
-export interface $ZodUnion<T extends readonly SomeType[] = readonly $ZodType[]>
+export interface $ZodUnion<T extends readonly $ZodType[] = readonly $ZodType[]>
   extends $ZodType<any, any, $ZodUnionInternals<T>> {
   _zod: $ZodUnionInternals<T>;
 }
@@ -2424,9 +2422,9 @@ function handleExclusiveUnionResults(
   return final;
 }
 
-export interface $ZodXorInternals<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodUnionInternals<T> {}
+export interface $ZodXorInternals<T extends readonly $ZodType[] = readonly $ZodType[]> extends $ZodUnionInternals<T> {}
 
-export interface $ZodXor<T extends readonly SomeType[] = readonly $ZodType[]>
+export interface $ZodXor<T extends readonly $ZodType[] = readonly $ZodType[]>
   extends $ZodType<any, any, $ZodXorInternals<T>> {
   _zod: $ZodXorInternals<T>;
 }
@@ -2476,7 +2474,7 @@ export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$construct
 //////////////////////////////////////////////////////
 
 export interface $ZodDiscriminatedUnionDef<
-  Options extends readonly SomeType[] = readonly $ZodType[],
+  Options extends readonly $ZodType[] = readonly $ZodType[],
   Disc extends string = string,
 > extends $ZodUnionDef<Options> {
   discriminator: Disc;
@@ -2484,7 +2482,7 @@ export interface $ZodDiscriminatedUnionDef<
 }
 
 export interface $ZodDiscriminatedUnionInternals<
-  Options extends readonly SomeType[] = readonly $ZodType[],
+  Options extends readonly $ZodType[] = readonly $ZodType[],
   Disc extends string = string,
 > extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
@@ -2495,7 +2493,7 @@ export interface $ZodDiscriminatedUnionInternals<
 }
 
 /** The discriminator values a member of `Options` can declare. An omittable discriminator contributes `undefined`, matching what `propValues` claims for it. */
-export type $DiscriminatorValue<Options extends readonly SomeType[], Disc extends string> = {
+export type $DiscriminatorValue<Options extends readonly $ZodType[], Disc extends string> = {
   [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
     ? Disc extends keyof Out
       ? Out[Disc]
@@ -2504,7 +2502,7 @@ export type $DiscriminatorValue<Options extends readonly SomeType[], Disc extend
 }[number];
 
 /** The member of `Options` that declares `V`. */
-export type $DiscriminatedOption<Options extends readonly SomeType[], Disc extends string, V> = {
+export type $DiscriminatedOption<Options extends readonly $ZodType[], Disc extends string, V> = {
   [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
     ? Disc extends keyof Out
       ? V extends Out[Disc]
@@ -2516,7 +2514,7 @@ export type $DiscriminatedOption<Options extends readonly SomeType[], Disc exten
 
 /** Returns the option of `union` whose discriminator claims `value`. */
 export function getDiscriminatedOption<
-  Options extends readonly SomeType[],
+  Options extends readonly $ZodType[],
   Disc extends string,
   const V extends $DiscriminatorValue<Options, Disc>,
 >(union: $ZodDiscriminatedUnion<Options, Disc>, value: V): $DiscriminatedOption<Options, Disc, V> {
@@ -2535,11 +2533,9 @@ export function getDiscriminatedOption<
 }
 
 export interface $ZodDiscriminatedUnion<
-  Options extends readonly SomeType[] = readonly $ZodType[],
+  Options extends readonly $ZodType[] = readonly $ZodType[],
   Disc extends string = string,
-> extends $ZodType {
-  _zod: $ZodDiscriminatedUnionInternals<Options, Disc>;
-}
+> extends $ZodType<any, any, $ZodDiscriminatedUnionInternals<Options, Disc>> {}
 
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
   /*@__PURE__*/
@@ -2641,15 +2637,15 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-export interface $ZodIntersectionDef<Left extends SomeType = $ZodType, Right extends SomeType = $ZodType>
+export interface $ZodIntersectionDef<Left extends $ZodType = $ZodType, Right extends $ZodType = $ZodType>
   extends $ZodTypeDef {
   type: "intersection";
   left: Left;
   right: Right;
 }
 
-export interface $ZodIntersectionInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
-  extends _$ZodTypeInternals {
+export interface $ZodIntersectionInternals<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType>
+  extends $ZodTypeInternals {
   // $ZodTypeInternals<core.output<A> & core.output<B>, core.input<A> & core.input<B>>
   def: $ZodIntersectionDef<A, B>;
   isst: never;
@@ -2659,7 +2655,7 @@ export interface $ZodIntersectionInternals<A extends SomeType = $ZodType, B exte
   input: core.input<A> & core.input<B>;
 }
 
-export interface $ZodIntersection<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodIntersection<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodIntersectionInternals<A, B>;
 }
 
@@ -2809,39 +2805,39 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
 
 export interface $ZodTupleDef<
   T extends util.TupleItems = readonly $ZodType[],
-  Rest extends SomeType | null = $ZodType | null,
+  Rest extends $ZodType | null = $ZodType | null,
 > extends $ZodTypeDef {
   type: "tuple";
   items: T;
   rest: Rest;
 }
 
-export type $InferTupleInputType<T extends util.TupleItems, Rest extends SomeType | null> = [
+export type $InferTupleInputType<T extends util.TupleItems, Rest extends $ZodType | null> = [
   ...TupleInputTypeWithOptionals<T>,
-  ...(Rest extends SomeType ? core.input<Rest>[] : []),
+  ...(Rest extends $ZodType ? core.input<Rest>[] : []),
 ];
 type TupleInputTypeNoOptionals<T extends util.TupleItems> = {
   [k in keyof T]: core.input<T[k]>;
 };
 type TupleInputTypeWithOptionals<T extends util.TupleItems> = T extends readonly [
-  ...infer Prefix extends SomeType[],
-  infer Tail extends SomeType,
+  ...infer Prefix extends $ZodType[],
+  infer Tail extends $ZodType,
 ]
   ? Tail["_zod"]["optin"] extends "optional" | "defaulted"
     ? [...TupleInputTypeWithOptionals<Prefix>, core.input<Tail>?]
     : TupleInputTypeNoOptionals<T>
   : [];
 
-export type $InferTupleOutputType<T extends util.TupleItems, Rest extends SomeType | null> = [
+export type $InferTupleOutputType<T extends util.TupleItems, Rest extends $ZodType | null> = [
   ...TupleOutputTypeWithOptionals<T>,
-  ...(Rest extends SomeType ? core.output<Rest>[] : []),
+  ...(Rest extends $ZodType ? core.output<Rest>[] : []),
 ];
 type TupleOutputTypeNoOptionals<T extends util.TupleItems> = {
   [k in keyof T]: core.output<T[k]>;
 };
 type TupleOutputTypeWithOptionals<T extends util.TupleItems> = T extends readonly [
-  ...infer Prefix extends SomeType[],
-  infer Tail extends SomeType,
+  ...infer Prefix extends $ZodType[],
+  infer Tail extends $ZodType,
 ]
   ? Tail["_zod"]["optout"] extends "optional"
     ? [...TupleOutputTypeWithOptionals<Prefix>, core.output<Tail>?]
@@ -2850,8 +2846,8 @@ type TupleOutputTypeWithOptionals<T extends util.TupleItems> = T extends readonl
 
 export interface $ZodTupleInternals<
   T extends util.TupleItems = readonly $ZodType[],
-  Rest extends SomeType | null = $ZodType | null,
-> extends _$ZodTypeInternals {
+  Rest extends $ZodType | null = $ZodType | null,
+> extends $ZodTypeInternals {
   def: $ZodTupleDef<T, Rest>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueTooBig<unknown[]> | errors.$ZodIssueTooSmall<unknown[]>;
   // $ZodTypeInternals<$InferTupleOutputType<T, Rest>, $InferTupleInputType<T, Rest>>
@@ -2861,7 +2857,7 @@ export interface $ZodTupleInternals<
 
 export interface $ZodTuple<
   T extends util.TupleItems = readonly $ZodType[],
-  Rest extends SomeType | null = $ZodType | null,
+  Rest extends $ZodType | null = $ZodType | null,
 > extends $ZodType {
   _zod: $ZodTupleInternals<T, Rest>;
 }
@@ -3016,7 +3012,7 @@ function handleTupleResults(
 //////////////////////////////////////////
 
 export type $ZodRecordKey = $ZodType<string | number | symbol, unknown>; // $HasValues | $HasPattern;
-export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
+export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodType = $ZodType>
   extends $ZodTypeDef {
   type: "record";
   keyType: Key;
@@ -3028,7 +3024,7 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
 
 // export type $InferZodRecordOutput<
 //   Key extends $ZodRecordKey = $ZodRecordKey,
-//   Value extends SomeType = $ZodType,
+//   Value extends $ZodType = $ZodType,
 // > = undefined extends Key["_zod"]["values"]
 //   ? string extends core.output<Key>
 //     ? Record<core.output<Key>, core.output<Value>>
@@ -3040,14 +3036,14 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
 //   : Record<core.output<Key>, core.output<Value>>;
 export type $InferZodRecordOutput<
   Key extends $ZodRecordKey = $ZodRecordKey,
-  Value extends SomeType = $ZodType,
+  Value extends $ZodType = $ZodType,
 > = Key extends $partial
   ? Partial<Record<core.output<Key>, core.output<Value>>>
   : Record<core.output<Key>, core.output<Value>>;
 
 // export type $InferZodRecordInput<
 //   Key extends $ZodRecordKey = $ZodRecordKey,
-//   Value extends SomeType = $ZodType,
+//   Value extends $ZodType = $ZodType,
 // > = undefined extends Key["_zod"]["values"]
 //   ? string extends core.input<Key>
 //     ? Record<core.input<Key>, core.input<Value>>
@@ -3060,12 +3056,12 @@ export type $InferZodRecordOutput<
 
 export type $InferZodRecordInput<
   Key extends $ZodRecordKey = $ZodRecordKey,
-  Value extends SomeType = $ZodType,
+  Value extends $ZodType = $ZodType,
 > = Key extends $partial
   ? Partial<Record<core.input<Key> & PropertyKey, core.input<Value>>>
   : Record<core.input<Key> & PropertyKey, core.input<Value>>;
 
-export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
+export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodType = $ZodType>
   extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
   def: $ZodRecordDef<Key, Value>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
@@ -3074,7 +3070,7 @@ export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, 
 }
 
 export type $partial = { "~~partial": true };
-export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
+export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodType = $ZodType>
   extends $ZodType {
   _zod: $ZodRecordInternals<Key, Value>;
 }
@@ -3263,13 +3259,13 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 //////////                   //////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export interface $ZodMapDef<Key extends SomeType = $ZodType, Value extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodMapDef<Key extends $ZodType = $ZodType, Value extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "map";
   keyType: Key;
   valueType: Value;
 }
 
-export interface $ZodMapInternals<Key extends SomeType = $ZodType, Value extends SomeType = $ZodType>
+export interface $ZodMapInternals<Key extends $ZodType = $ZodType, Value extends $ZodType = $ZodType>
   extends $ZodTypeInternals<Map<core.output<Key>, core.output<Value>>, Map<core.input<Key>, core.input<Value>>> {
   def: $ZodMapDef<Key, Value>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey | errors.$ZodIssueInvalidElement<unknown>;
@@ -3277,7 +3273,7 @@ export interface $ZodMapInternals<Key extends SomeType = $ZodType, Value extends
   optout?: "optional" | undefined;
 }
 
-export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodMap<Key extends $ZodType = $ZodType, Value extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodMapInternals<Key, Value>;
 }
 
@@ -3369,12 +3365,12 @@ function handleMapResult(
 //////////                   //////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export interface $ZodSetDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodSetDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "set";
   valueType: T;
 }
 
-export interface $ZodSetInternals<T extends SomeType = $ZodType>
+export interface $ZodSetInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<Set<core.output<T>>, Set<core.input<T>>> {
   def: $ZodSetDef<T>;
   isst: errors.$ZodIssueInvalidType;
@@ -3382,7 +3378,7 @@ export interface $ZodSetInternals<T extends SomeType = $ZodType>
   optout?: "optional" | undefined;
 }
 
-export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodSet<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodSetInternals<T>;
 }
 
@@ -3693,12 +3689,12 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodOptionalDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodOptionalDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "optional";
   innerType: T;
 }
 
-export interface $ZodOptionalInternals<T extends SomeType = $ZodType>
+export interface $ZodOptionalInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
   def: $ZodOptionalDef<T>;
   optin: "optional" | "defaulted";
@@ -3708,7 +3704,7 @@ export interface $ZodOptionalInternals<T extends SomeType = $ZodType>
   pattern: T["_zod"]["pattern"];
 }
 
-export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodOptional<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodOptionalInternals<T>;
 }
 
@@ -3759,16 +3755,16 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 ////////////////////////////////////////////////
 
 // Def extends $ZodOptionalDef (no additional fields needed)
-export interface $ZodExactOptionalDef<T extends SomeType = $ZodType> extends $ZodOptionalDef<T> {}
+export interface $ZodExactOptionalDef<T extends $ZodType = $ZodType> extends $ZodOptionalDef<T> {}
 
 // Internals extends $ZodOptionalInternals but narrows output/input types (removes | undefined)
-export interface $ZodExactOptionalInternals<T extends SomeType = $ZodType> extends $ZodOptionalInternals<T> {
+export interface $ZodExactOptionalInternals<T extends $ZodType = $ZodType> extends $ZodOptionalInternals<T> {
   def: $ZodExactOptionalDef<T>;
   output: core.output<T>; // NO | undefined (narrowed from parent)
   input: core.input<T>; // NO | undefined (narrowed from parent)
 }
 
-export interface $ZodExactOptional<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodExactOptional<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodExactOptionalInternals<T>;
 }
 
@@ -3796,12 +3792,12 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodNullableDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodNullableDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "nullable";
   innerType: T;
 }
 
-export interface $ZodNullableInternals<T extends SomeType = $ZodType>
+export interface $ZodNullableInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | null, core.input<T> | null> {
   def: $ZodNullableDef<T>;
   optin: T["_zod"]["optin"];
@@ -3811,7 +3807,7 @@ export interface $ZodNullableInternals<T extends SomeType = $ZodType>
   pattern: T["_zod"]["pattern"];
 }
 
-export interface $ZodNullable<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodNullable<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodNullableInternals<T>;
 }
 
@@ -3847,14 +3843,14 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodDefaultDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodDefaultDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "default";
   innerType: T;
   /** The default value. May be a getter. */
   defaultValue: util.NoUndefined<core.output<T>>;
 }
 
-export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
+export interface $ZodDefaultInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
   optin: "defaulted";
@@ -3863,7 +3859,7 @@ export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
   values: T["_zod"]["values"];
 }
 
-export interface $ZodDefault<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodDefault<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodDefaultInternals<T>;
 }
 
@@ -3914,14 +3910,14 @@ function handleDefaultResult(payload: ParsePayload, def: $ZodDefaultDef) {
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 
-export interface $ZodPrefaultDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodPrefaultDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "prefault";
   innerType: T;
   /** The default value. May be a getter. */
   defaultValue: core.input<T>;
 }
 
-export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
+export interface $ZodPrefaultInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
   optin: "defaulted";
@@ -3930,7 +3926,7 @@ export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
   values: T["_zod"]["values"];
 }
 
-export interface $ZodPrefault<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodPrefault<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodPrefaultInternals<T>;
 }
 
@@ -3963,12 +3959,12 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
 //////////                           //////////
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
-export interface $ZodNonOptionalDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodNonOptionalDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "nonoptional";
   innerType: T;
 }
 
-export interface $ZodNonOptionalInternals<T extends SomeType = $ZodType>
+export interface $ZodNonOptionalInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, util.NoUndefined<core.input<T>>> {
   def: $ZodNonOptionalDef<T>;
   isst: errors.$ZodIssueInvalidType;
@@ -3977,7 +3973,7 @@ export interface $ZodNonOptionalInternals<T extends SomeType = $ZodType>
   optout: "optional" | undefined;
 }
 
-export interface $ZodNonOptional<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodNonOptional<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodNonOptionalInternals<T>;
 }
 
@@ -4060,19 +4056,19 @@ function handleNonOptionalResult(payload: ParsePayload, inst: $ZodNonOptional) {
 //////////                         //////////
 /////////////////////////////////////////////
 /////////////////////////////////////////////
-export interface $ZodSuccessDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodSuccessDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "success";
   innerType: T;
 }
 
-export interface $ZodSuccessInternals<T extends SomeType = $ZodType> extends $ZodTypeInternals<boolean, core.input<T>> {
+export interface $ZodSuccessInternals<T extends $ZodType = $ZodType> extends $ZodTypeInternals<boolean, core.input<T>> {
   def: $ZodSuccessDef<T>;
   isst: never;
   optin: T["_zod"]["optin"];
   optout: "optional" | undefined;
 }
 
-export interface $ZodSuccess<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodSuccess<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodSuccessInternals<T>;
 }
 
@@ -4112,13 +4108,13 @@ export interface $ZodCatchCtx extends ParsePayload {
   /** @deprecated Use `ctx.value` */
   input: unknown;
 }
-export interface $ZodCatchDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodCatchDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "catch";
   innerType: T;
   catchValue: (ctx: $ZodCatchCtx) => unknown;
 }
 
-export interface $ZodCatchInternals<T extends SomeType = $ZodType>
+export interface $ZodCatchInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodCatchDef<T>;
   optin: T["_zod"]["optin"];
@@ -4127,7 +4123,7 @@ export interface $ZodCatchInternals<T extends SomeType = $ZodType>
   values: T["_zod"]["values"];
 }
 
-export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodCatch<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodCatchInternals<T>;
 }
 
@@ -4225,7 +4221,7 @@ export const $ZodNaN: core.$constructor<$ZodNaN> = /*@__PURE__*/ core.$construct
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodPipeDef<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "pipe";
   in: A;
   out: B;
@@ -4235,7 +4231,7 @@ export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType =
   reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
-export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
+export interface $ZodPipeInternals<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<B>, core.input<A>> {
   def: $ZodPipeDef<A, B>;
   isst: never;
@@ -4245,7 +4241,7 @@ export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends Some
   propValues: A["_zod"]["propValues"];
 }
 
-export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodPipe<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodPipeInternals<A, B>;
 }
 
@@ -4290,12 +4286,12 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodPipeDef<A, B> {
+export interface $ZodCodecDef<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType> extends $ZodPipeDef<A, B> {
   transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => util.MaybeAsync<core.input<B>>;
   reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
-export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
+export interface $ZodCodecInternals<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<B>, core.input<A>> {
   def: $ZodCodecDef<A, B>;
   isst: never;
@@ -4305,7 +4301,7 @@ export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends Som
   propValues: A["_zod"]["propValues"];
 }
 
-export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodCodec<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodCodecInternals<A, B>;
 }
 
@@ -4358,7 +4354,7 @@ function handleCodecAResult(result: ParsePayload, def: $ZodCodecDef, ctx: ParseC
   }
 }
 
-function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeType, ctx: ParseContextInternal) {
+function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: $ZodType, ctx: ParseContextInternal) {
   // Check if transform added any issues
   if (left.issues.length) {
     left.aborted = true;
@@ -4375,20 +4371,20 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType, I = unknown>
+export interface $ZodPreprocessDef<B extends $ZodType = $ZodType, I = unknown>
   extends $ZodPipeDef<$ZodTransform<unknown, I>, B> {
   in: $ZodTransform<unknown, I>;
   out: B;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType, I = unknown>
+export interface $ZodPreprocessInternals<B extends $ZodType = $ZodType, I = unknown>
   extends $ZodPipeInternals<$ZodTransform<unknown, I>, B> {
   def: $ZodPreprocessDef<B, I>;
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType, I = unknown>
+export interface $ZodPreprocess<B extends $ZodType = $ZodType, I = unknown>
   extends $ZodPipe<$ZodTransform<unknown, I>, B> {
   _zod: $ZodPreprocessInternals<B, I>;
 }
@@ -4408,12 +4404,12 @@ export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ c
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 
-export interface $ZodReadonlyDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodReadonlyDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "readonly";
   innerType: T;
 }
 
-export interface $ZodReadonlyInternals<T extends SomeType = $ZodType>
+export interface $ZodReadonlyInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.MakeReadonly<core.output<T>>, util.MakeReadonly<core.input<T>>> {
   def: $ZodReadonlyDef<T>;
   optin: T["_zod"]["optin"];
@@ -4423,7 +4419,7 @@ export interface $ZodReadonlyInternals<T extends SomeType = $ZodType>
   values: T["_zod"]["values"];
 }
 
-export interface $ZodReadonly<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodReadonly<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodReadonlyInternals<T>;
 }
 
@@ -4762,18 +4758,18 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-export interface $ZodPromiseDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodPromiseDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "promise";
   innerType: T;
 }
 
-export interface $ZodPromiseInternals<T extends SomeType = $ZodType>
+export interface $ZodPromiseInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<Promise<core.output<T>>, util.MaybeAsync<core.input<T>>> {
   def: $ZodPromiseDef<T>;
   isst: never;
 }
 
-export interface $ZodPromise<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodPromise<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodPromiseInternals<T>;
 }
 
@@ -4796,12 +4792,12 @@ export const $ZodPromise: core.$constructor<$ZodPromise> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export interface $ZodLazyDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
+export interface $ZodLazyDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "lazy";
   getter: () => T;
 }
 
-export interface $ZodLazyInternals<T extends SomeType = $ZodType>
+export interface $ZodLazyInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodLazyDef<T>;
   isst: never;
@@ -4813,7 +4809,7 @@ export interface $ZodLazyInternals<T extends SomeType = $ZodType>
   optout: T["_zod"]["optout"];
 }
 
-export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
+export interface $ZodLazy<T extends $ZodType = $ZodType> extends $ZodType {
   _zod: $ZodLazyInternals<T>;
 }
 
