@@ -1,6 +1,6 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S nub --node
 // Regenerate .triage/<kind>/index.md from the YAML frontmatter of every results.md.
-// Usage: node .claude/skills/triage/scripts/reindex.mjs [issues|prs|advisories]
+// usage: nub --node .claude/skills/triage/scripts/reindex.mjs [issues|prs|advisories]
 import { readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";

@@ -6,9 +6,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Re-runs the zod package tests with global AOT compilation enabled. Catches
 // any divergence between the compiled fast path and the runtime parser across
-// the existing test corpus. Wired into the default `pnpm test` run via the
+// the existing test corpus. Wired into the default `nub run test` run via the
 // projects array in vitest.config.ts; can also be invoked directly via
-// `pnpm test:compile`.
+// `nub run test:compile`.
 export default defineConfig({
   resolve: {
     conditions: ["@zod/source", "default"],

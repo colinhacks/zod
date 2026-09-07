@@ -31,9 +31,9 @@ function newestMtime(dir: string): number {
 }
 
 beforeAll(() => {
-  if (!existsSync(builtEntry)) throw new Error(`${builtEntry} is missing. Run \`pnpm build\` first.`);
+  if (!existsSync(builtEntry)) throw new Error(`${builtEntry} is missing. Run \`nub run build\` first.`);
   if (newestMtime(path.join(zodRoot, "src")) > statSync(builtEntry).mtimeMs) {
-    throw new Error(`${builtEntry} is older than packages/zod/src. Run \`pnpm build\` first.`);
+    throw new Error(`${builtEntry} is older than packages/zod/src. Run \`nub run build\` first.`);
   }
 });
 

@@ -4,6 +4,7 @@
   "name": "Node.js & TypeScript",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "image": "mcr.microsoft.com/devcontainers/typescript-node:4-24-bookworm",
+  "remoteUser": "node",
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
@@ -12,7 +13,10 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "pnpm i"
+  "containerEnv": {
+    "PATH": "/home/node/.nub/bin:${containerEnv:PATH}"
+  },
+  "postCreateCommand": "bash -o pipefail -c 'curl -fsSL https://raw.githubusercontent.com/nubjs/nub/0ae8783f1f93763c56dfc827892cfb679e8a0a77/install.sh | bash -s -- 0.8.3 && nub install --frozen-lockfile'"
 
   // Configure tool-specific properties.
   // "customizations": {},

@@ -26,9 +26,9 @@ Everything goes under `.triage/` in the **root repo**, which is gitignored — w
 
 One directory per ticket, named by bare GitHub number (no leading zeros, no `issue-`/`pr-` prefix) — or by bare GHSA id for an advisory. `results.md` is the write-up. Everything else you need — repro scripts, a saved `gh pr diff`, test fixtures, benchmark output, notes — goes in that same directory. Name scratch files descriptively (`repro.ts`, `diff.patch`, `bench-before.txt`); there is no naming rule beyond not colliding with `results.md`.
 
-For an issue repro, `pnpm dev .triage/issues/<N>/repro.ts` from the root repo works directly.
+For an issue repro, `nub run dev .triage/issues/<N>/repro.ts` from the root repo works directly.
 
-A repro must sit **inside** the checkout it is testing, because module resolution walks up from the file, not from the cwd — a script under `.triage/` cannot resolve `zod` from a PR worktree. Keep the canonical copy in the ticket directory and copy it in to run: `cp .triage/prs/<N>/repro.ts <worktree>/repro-<N>.ts`. That is also what lets you run the identical file against both `main` and the PR and diff the output, which is the cheapest way to characterize a behavior change. For a probe needing GC or other flags, skip `pnpm dev` and invoke node directly: `node --expose-gc --conditions=@zod/source --import tsx repro-<N>.ts`.
+A repro must sit **inside** the checkout it is testing, because module resolution walks up from the file, not from the cwd — a script under `.triage/` cannot resolve `zod` from a PR worktree. Keep the canonical copy in the ticket directory and copy it in to run: `cp .triage/prs/<N>/repro.ts <worktree>/repro-<N>.ts`. That is also what lets you run the identical file against both `main` and the PR and diff the output, which is the cheapest way to characterize a behavior change. For a probe needing GC or other flags, invoke Nub with the flags directly: `nub --expose-gc --conditions=@zod/source repro-<N>.ts`.
 
 ### Writing to the root repo from a PR worktree
 
@@ -210,7 +210,7 @@ No worktree — read the code on `main`.
 
 1. `gh issue view <N> -R colinhacks/zod --comments` and read the whole thread, including maintainer replies. A prior decision from Colin usually settles it.
 2. Check for duplicates and prior art: `gh search issues --repo colinhacks/zod '<keywords>'`, and grep `.triage/issues/*/results.md` — the sweep may already cover it. Cross-link with a relative `../NNNN/results.md`.
-3. Reproduce against current source before believing the report. Write the repro to `.triage/issues/<N>/repro.ts` and run `pnpm dev` on it. A large share of open issues are already fixed.
+3. Reproduce against current source before believing the report. Write the repro to `.triage/issues/<N>/repro.ts` and run `nub run dev` on it. A large share of open issues are already fixed.
 4. Brainstorm before concluding. Consider the fix, its blast radius, whether it belongs in core at all, and what userland escape hatch already exists.
 5. Write `results.md`, then report back per `## Reporting back`.
 
@@ -239,7 +239,7 @@ Otherwise check it out (this repo's convention, per AGENTS.md):
 git fetch origin pull/<N>/head:pr-<N>
 git worktree add ~/.cursor/worktrees/zod/pr-<N> pr-<N>
 cd ~/.cursor/worktrees/zod/pr-<N>
-pnpm install --frozen-lockfile      # fast, the pnpm store is shared
+nub install --frozen-lockfile      # fast, Nub's store is shared
 ```
 
 Do **not** use `gh pr checkout --detach` — it detaches your current working tree instead of creating a worktree.
@@ -248,7 +248,7 @@ Then, in the worktree:
 
 1. Read the diff in full context, not just the hunks. What did it touch that the author did not think about?
 2. `git log --oneline main..HEAD` — is this rebased on anything current, or written against a version of the code that has since moved?
-3. Run the tests the change implicates: `pnpm vitest run <path>`. Run the full suite only when the change is broad.
+3. Run the tests the change implicates: `nub exec --node vitest run <path>`. Run the full suite only when the change is broad.
 4. Judge test coverage against the repo's own bar: a feature or bug fix without a test is incomplete, and tests must be TypeScript.
 5. Probe the edge cases the author's tests skip — write them into `$ZOD_ROOT/.triage/prs/<N>/` and run them. A passing suite over a shallow test is not evidence.
 6. Write `$ZOD_ROOT/.triage/prs/<N>/results.md`, then report back per `## Reporting back`.
@@ -275,11 +275,11 @@ Resume by asking disk, not memory:
 ```bash
 grep -l 'status: done' .triage/prs/*/results.md | wc -l                    # progress
 grep -h '^verdict:' .triage/prs/*/results.md | sort | uniq -c              # verdict spread
-node .claude/skills/triage/scripts/reindex.mjs prs                   # regenerate .triage/prs/index.md
+nub --node .claude/skills/triage/scripts/reindex.mjs prs             # regenerate .triage/prs/index.md
 ```
 
 `reindex.mjs` rebuilds an index table from frontmatter, so the index is derived and never hand-edited for PRs. Pass `issues`, `prs`, or `advisories`.
 
-`pnpm dev scripts/triage-signal.ts` regenerates `.triage/signal-report.md`, which ranks the whole open backlog by engagement, flags security content, and groups likely-duplicate clusters. Start a sweep there rather than at the top of `gh pr list` — roughly a third of the open backlog is duplicates, and the clusters collapse many tickets into one decision.
+`nub run dev scripts/triage-signal.ts` regenerates `.triage/signal-report.md`, which ranks the whole open backlog by engagement, flags security content, and groups likely-duplicate clusters. Start a sweep there rather than at the top of `gh pr list` — roughly a third of the open backlog is duplicates, and the clusters collapse many tickets into one decision.
 
 When parallelizing across sub-agents, give each agent a disjoint set of numbers and have each write only its own ticket directories. Never have two agents share a results file.

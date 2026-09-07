@@ -92,9 +92,6 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
-      tsx:
-        specifier: ^4.19.3
-        version: 4.19.3
       typescript:
         specifier: ~5.5.4
         version: 5.5.4

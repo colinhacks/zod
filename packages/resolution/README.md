@@ -1,7 +1,10 @@
-# Zod perftesting
+# Package resolution checks
 
-`node generateRandomSchemas.js` to generate some random Zod schemas (pregenerated ones already exist in `src/index.ts`)
+Run from the repository root:
 
-`npm run build-bench` to run `tsc` with `extendedDiagnostics`
+```sh
+nub run build
+nub run --filter @zod/resolution test:all
+```
 
-Either modify zod's typings in `node_modules/zod` or `npm link` a local copy and do modifications there. Remember to build `zod` in between!
+These checks inspect the published declarations with Are the Types Wrong and execute the built CommonJS and ES modules on plain Node through Nub.

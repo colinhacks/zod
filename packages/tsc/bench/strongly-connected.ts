@@ -15,4 +15,4 @@ await gen.generate({
   // methods: [""],
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;

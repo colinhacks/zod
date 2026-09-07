@@ -1,8 +1,8 @@
 // Randomized differential sweep for z.compile. Builds schemas from a grammar, throws generated inputs at both parsers, and compares success, output and issues exactly — plus the one property the fallback cannot rescue: that a bail-out inside a union is not read as a rejected branch.
 //
-//   pnpm dev scripts/compile-fuzz.ts            # default seed
-//   pnpm dev scripts/compile-fuzz.ts 424242     # a specific seed, printed on any failure
-//   ROUNDS=20000 pnpm dev scripts/compile-fuzz.ts
+//   nub run dev scripts/compile-fuzz.ts            # default seed
+//   nub run dev scripts/compile-fuzz.ts 424242     # a specific seed, printed on any failure
+//   ROUNDS=20000 nub run dev scripts/compile-fuzz.ts
 //
 // Not wired into CI: it is a hunting tool, and a seed that finds something new should become a fixture in compile-differential.test.ts rather than a flaky test run.
 import * as z from "zod";

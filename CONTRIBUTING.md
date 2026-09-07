@@ -23,13 +23,21 @@ Before you start working on a contribution, create an issue describing what you 
 
 The following steps will get you set up to contribute changes to this repo:
 
+Install [Nub](https://nubjs.com/docs) v0.8.3 first. Nub manages dependencies, runs scripts and TypeScript, and provisions the Node version in `.nvmrc`. The existing `pnpm-lock.yaml` is the lockfile format, not a requirement to install pnpm.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nubjs/nub/0ae8783f1f93763c56dfc827892cfb679e8a0a77/install.sh | bash -s -- 0.8.3
+```
+
+Restart the shell after installation so Nub is on `PATH`.
+
 1. Fork this repo.
 
 2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Run `pnpm i` to install dependencies.
+3. Run `nub install --frozen-lockfile` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in [`play.ts`](play.ts) (see `pnpm play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`play.ts`](play.ts) (see `nub run dev:play` below) or start implementing a feature right away.
 
 ### Building Docs Locally
 
@@ -38,7 +46,7 @@ The following steps will get you set up to contribute changes to this repo:
 To start a dev server, run:
 
 ```sh
-pnpm run --filter=@zod/docs dev
+nub run --filter=@zod/docs dev
 ```
 
 #### Production Build
@@ -47,7 +55,7 @@ To build `@zod/docs` for production, you will need to set the `GITHUB_TOKEN` env
 
 ```sh
 export GITHUB_TOKEN=your_token_here # persists in shell session
-pnpm run --filter=@zod/docs build
+nub run --filter=@zod/docs build
 ```
 
 > The `GITHUB_TOKEN` environment variable is used to fetch stargazer counts of projects in Zod's ecosystem.
@@ -65,35 +73,24 @@ In the OSS version of VSCode the extension may not be available.
 
 ### Commands
 
-**`pnpm build`**
+| Command | Purpose |
+| --- | --- |
+| `nub run build` | Build Zod and Zod Mini, including their declarations |
+| `nub run test` | Run all Vitest projects, including compile mode and type checks |
+| `nub run test:watch` | Start Vitest in watch mode |
+| `nub run test <file>` | Run test files matching `<file>` |
+| `nub run dev:play` | Execute [`play.ts`](play.ts) against source |
+| `nub run dev:watch play.ts` | Re-run the playground when its imports change |
+| `nub run --filter @zod/resolution test:all` | Check the built package's declarations and module resolution |
+| `nub add -Dw <package>` | Add a root development dependency |
 
-- deletes `lib` and re-compiles `src` to `lib`
-
-**`pnpm test`**
-
-- runs all Vitest tests and generates coverage badge
-
-**`pnpm test:watch`**
-
-- runs all Vitest tests and
-
-**`pnpm test <file>`**
-
-- runs all test files that match `<file>`
-
-**`pnpm test --filter <ws> <file>`**
-
-- runs all test files in `<ws>` that match `<file>` (e.g. `"enum"` will match `"enum.test.ts"`)
-
-**`pnpm dev:play`**
-
-- executes [`play.ts`](play.ts), watches for changes. useful for experimentation
+Run `nub run build` before testing built-package resolution and bundle sizes. Repository scripts use `nub exec --node` for third-party tools so tests retain plain Node semantics.
 
 ### Tests
 
 Zod uses Vitest for testing. After implementing your contribution, write tests for it. Just create a new file in the `tests` directory of any workspace, or add additional tests to an existing file if appropriate.
 
-> Zod uses git hooks to execute tests before `git push`. Before submitting your PR, run `pnpm test` to make sure there are no (unintended) breaking changes.
+> Zod uses git hooks to execute tests before `git push`. Before submitting your PR, run `nub run test` to make sure there are no (unintended) breaking changes.
 
 ### Documentation
 

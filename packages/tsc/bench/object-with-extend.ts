@@ -16,7 +16,7 @@ await gen.generate({
   numRefs: 0,
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;
 
 console.log("╔════════════════╗");
 console.log("║     Zod v4     ║");
@@ -31,4 +31,4 @@ await gen.generate({
   numRefs: 0,
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;

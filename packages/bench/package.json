@@ -16,6 +16,6 @@
     "zod443": "https://registry.npmjs.org/zod/-/zod-4.4.3.tgz"
   },
   "scripts": {
-    "bench": "tsx --conditions @zod/source index.ts"
+    "bench": "nub --conditions @zod/source index.ts"
   }
 }

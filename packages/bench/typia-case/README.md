@@ -8,10 +8,10 @@ To regenerate:
 
 ```sh
 mkdir -p /tmp/typia-build/src && cd /tmp/typia-build
-npm init -y
-npm install typia@9.7.2 typescript@5.9.3 ts-patch@3.3.0
+nub init -y --js --no-install --no-git
+nub add typia@9.7.2 typescript@5.9.3 ts-patch@3.3.0
 cp <repo>/packages/bench/typia-case/src/index.ts src/index.ts
 cp <repo>/packages/bench/typia-case/tsconfig.json tsconfig.json
-npx ts-patch install && npx tsc -p tsconfig.json
+nub exec --node ts-patch install && nub exec --node tsc -p tsconfig.json
 cp build/index.js <repo>/packages/bench/typia-case/build/index.cjs
 ```

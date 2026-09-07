@@ -4,7 +4,7 @@
  * backing store — roughly 900 B at these property counts — instead of inline
  * slots, and every property read goes through a hash lookup.
  *
- * Run with: node --allow-natives-syntax --import tsx
+ * Run with: nub --allow-natives-syntax
  */
 import * as z from "zod";
 import { table } from "./harness.js";

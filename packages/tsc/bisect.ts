@@ -45,7 +45,7 @@ while (!MAX || MAX - MIN > 2) {
   });
 
   console.log(`Attempting tsc compilation...`);
-  const _proc = $`pnpm run build:bench`;
+  const _proc = $`nub run build:bench`;
 
   try {
     procs.push(_proc);
