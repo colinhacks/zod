@@ -1658,3 +1658,70 @@ test("strict is per-call, so a supported schema compiles either way", () => {
     invalid(aot, { a: 1, b: 1 });
   }
 });
+
+test("compiled records walk own enumerable keys without Reflect.ownKeys", () => {
+  // for-in plus hasOwn sees the same keys as the runtime's Reflect.ownKeys walk: inherited enumerables are skipped, symbols fail a string key schema but pass a symbol one, and the numeric-string retry still applies
+  const sym = Symbol("s");
+  const bare = compile(z.record(z.string(), z.number()));
+  const inherited = Object.assign(Object.create({ proto: 1 }), { a: 1 });
+  expect(bare.parse(inherited)).toEqual({ a: 1 });
+  const symbolic = { a: 1, [sym]: 2 };
+  expect(bare.safeParse(symbolic).error!.issues).toEqual(
+    z.record(z.string(), z.number()).safeParse(symbolic).error!.issues
+  );
+  expect(bare.safeParse({ a: 1, b: "x" }).error!.issues).toEqual(
+    z.record(z.string(), z.number()).safeParse({ a: 1, b: "x" }).error!.issues
+  );
+  const symKeys = compile(z.record(z.symbol(), z.number()));
+  expect(symKeys.parse({ [sym]: 2 })).toEqual({ [sym]: 2 });
+  expect(symKeys.safeParse({ a: 1 }).success).toBe(false);
+  const emailKeys = compile(z.record(z.email(), z.number()));
+  expect(emailKeys.parse({ "a@b.co": 1 })).toEqual({ "a@b.co": 1 });
+  expect(emailKeys.safeParse({ "a@b.co": 1, [sym]: 2 }).success).toBe(false);
+  expect(compile(z.record(z.number(), z.string())).parse({ 1: "a" })).toEqual({ 1: "a" });
+  // keys are snapshotted before any value is read and rechecked when visited, like the runtime's Reflect.ownKeys walk: a getter that adds a key mid-walk is not visited, one that hides a later key skips it
+  const mutating = (effect: (o: Record<PropertyKey, unknown>) => void) => {
+    const o: Record<PropertyKey, unknown> = {};
+    Object.defineProperty(o, "a", {
+      enumerable: true,
+      get() {
+        effect(o);
+        return 1;
+      },
+    });
+    o.b = 2;
+    return o;
+  };
+  const both = z.record(z.union([z.string(), z.symbol()]), z.number());
+  for (const [schema, effect] of [
+    [
+      both,
+      (o: Record<PropertyKey, unknown>) => {
+        o[sym] = 2;
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => {
+        o[sym] = "bad";
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => {
+        o.z = "bad";
+      },
+    ],
+    [
+      z.record(z.string(), z.number()),
+      (o: Record<PropertyKey, unknown>) => Object.defineProperty(o, "b", { enumerable: false }),
+    ],
+  ] as const) {
+    const expected = schema.safeParse(mutating(effect));
+    const actual = compile(schema).safeParse(mutating(effect));
+    expect(actual.success).toBe(expected.success);
+    if (expected.success)
+      expect(Reflect.ownKeys(actual.data as object)).toEqual(Reflect.ownKeys(expected.data as object));
+    else expect(actual.error!.issues).toEqual(expected.error!.issues);
+  }
+});
