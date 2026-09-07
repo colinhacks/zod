@@ -20,12 +20,19 @@ interface Gen {
   valid: () => unknown;
   // one corruption of a valid value; not always rejected (a loose object absorbs an extra key), and both sides must agree either way
   corrupt: (v: unknown) => unknown;
+  // this node itself is an island; a nested one is absorbed by the parent's issue path and never makes the root refuse
   island: boolean;
 }
 
 interface Ctx {
   rand: () => number;
-  calls: { n: number };
+  // runs per generated callback, so the two-run bound holds for each one rather than for the sum
+  calls: Map<number, number>;
+  nextCallback: number;
+}
+
+function count(c: Ctx, id: number): void {
+  c.calls.set(id, (c.calls.get(id) ?? 0) + 1);
 }
 
 const pick = <T>(c: Ctx, xs: readonly T[]): T => xs[Math.floor(c.rand() * xs.length)]!;
@@ -89,10 +96,11 @@ function leaf(c: Ctx): Gen {
         corrupt: () => pick(c, ["d", 2, null]),
         island: false,
       };
-    case 6:
+    case 6: {
+      const id = c.nextCallback++;
       return {
         schema: z.number().superRefine((v, ctx) => {
-          c.calls.n++;
+          count(c, id);
           if (v < 0) ctx.addIssue({ code: "custom", message: "negative" });
         }),
         desc: "number.superRefine",
@@ -100,10 +108,12 @@ function leaf(c: Ctx): Gen {
         corrupt: () => pick(c, [-1, "x"]),
         island: false,
       };
-    default:
+    }
+    default: {
+      const id = c.nextCallback++;
       return {
         schema: z.string().transform((s) => {
-          c.calls.n++;
+          count(c, id);
           return s.length;
         }),
         desc: "string.transform",
@@ -111,6 +121,7 @@ function leaf(c: Ctx): Gen {
         corrupt: () => 42,
         island: false,
       };
+    }
   }
 }
 
@@ -122,6 +133,7 @@ function wrap(c: Ctx, inner: Gen): Gen {
         schema: inner.schema.optional(),
         desc: `${inner.desc}.optional`,
         valid: () => (c.rand() < 0.3 ? undefined : inner.valid()),
+        island: false,
       };
     case 1:
       return {
@@ -129,6 +141,7 @@ function wrap(c: Ctx, inner: Gen): Gen {
         schema: inner.schema.nullable(),
         desc: `${inner.desc}.nullable`,
         valid: () => (c.rand() < 0.3 ? null : inner.valid()),
+        island: false,
       };
     case 2: {
       const dflt = inner.valid();
@@ -137,16 +150,18 @@ function wrap(c: Ctx, inner: Gen): Gen {
         schema: inner.schema.default(dflt as never),
         desc: `${inner.desc}.default`,
         valid: () => (c.rand() < 0.3 ? undefined : inner.valid()),
+        island: false,
       };
     }
     case 3:
-      return { ...inner, schema: inner.schema.readonly(), desc: `${inner.desc}.readonly` };
+      return { ...inner, schema: inner.schema.readonly(), desc: `${inner.desc}.readonly`, island: false };
     default:
       return {
         ...inner,
         schema: inner.schema.optional().nonoptional(),
         desc: `${inner.desc}.optional.nonoptional`,
         corrupt: (v) => (c.rand() < 0.5 ? undefined : inner.corrupt(v)),
+        island: false,
       };
   }
 }
@@ -198,7 +213,7 @@ function container(c: Ctx, depth: number): Gen {
           }
           return o;
         },
-        island: entries.some(([, g]) => g.island),
+        island: false,
       };
     }
     case 2: {
@@ -216,7 +231,7 @@ function container(c: Ctx, depth: number): Gen {
           else return 42;
           return a;
         },
-        island: g.island,
+        island: false,
       };
     }
     case 3: {
@@ -241,7 +256,7 @@ function container(c: Ctx, depth: number): Gen {
           else a.length = i;
           return a;
         },
-        island: items.some((g) => g.island) || !!rest?.island,
+        island: false,
       };
     }
     case 4: {
@@ -264,7 +279,7 @@ function container(c: Ctx, depth: number): Gen {
           else return 42;
           return o;
         },
-        island: g.island,
+        island: false,
       };
     }
     case 5: {
@@ -274,7 +289,7 @@ function container(c: Ctx, depth: number): Gen {
         desc: `union(${options.map((g) => g.desc).join("|")})`,
         valid: () => pick(c, options).valid(),
         corrupt: (v) => pick(c, options).corrupt(v),
-        island: options.some((g) => g.island),
+        island: false,
       };
     }
     case 6: {
@@ -300,7 +315,7 @@ function container(c: Ctx, depth: number): Gen {
           else o.t = "nope";
           return o;
         },
-        island: branches.some(([, g]) => g.island),
+        island: false,
       };
     }
     case 7: {
@@ -396,18 +411,18 @@ test("random schemas parse identically through the interpreter and the compiler"
 
 function checkSeed(seed: number): void {
   {
-    const c: Ctx = { rand: mulberry32(seed), calls: { n: 0 } };
+    const c: Ctx = { rand: mulberry32(seed), calls: new Map(), nextCallback: 0 };
     const g = gen(c, 3);
     const compiled = compile(g.schema);
     const inputs = [g.valid(), g.corrupt(g.valid()), g.corrupt(g.corrupt(g.valid())), pick(c, JUNK)];
     for (const input of inputs) {
       const label = `seed ${seed} ${g.desc} input ${describe(input)}`;
-      c.calls.n = 0;
+      c.calls.clear();
       const a = attempt(() => g.schema.safeParse(input));
-      const runtimeCalls = c.calls.n;
-      c.calls.n = 0;
+      const runtimeCalls = new Map(c.calls);
+      c.calls.clear();
       const b = attempt(() => compiled.safeParse(input));
-      const compiledCalls = c.calls.n;
+      const compiledCalls = new Map(c.calls);
       expect(b.threw, `${label}: throw`).toBe(a.threw);
       if (a.threw) continue;
       expect(b.value!.success, `${label}: verdict`).toBe(a.value!.success);
@@ -417,10 +432,12 @@ function checkSeed(seed: number): void {
       } else {
         expect(b.value!.error!.issues, `${label}: issues`).toEqual(a.value!.error!.issues);
       }
-      // the fast pass runs a callback at most once, the issue pass at most once more
-      expect(compiledCalls, `${label}: callbacks ${compiledCalls} vs ${runtimeCalls}`).toBeLessThanOrEqual(
-        2 * runtimeCalls
-      );
+      // the fast pass runs a callback at most once, the issue pass at most once more, for each callback on its own
+      for (const [id, n] of compiledCalls) {
+        expect(n, `${label}: callback ${id} ran ${n} vs ${runtimeCalls.get(id) ?? 0}`).toBeLessThanOrEqual(
+          2 * (runtimeCalls.get(id) ?? 0)
+        );
+      }
     }
     if (!g.island)
       expect(() => compileFn(g.schema, { issues: true }), `${g.desc}: issue compile refused`).not.toThrow();
