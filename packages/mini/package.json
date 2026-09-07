@@ -34,7 +34,8 @@
     },
     "conditions": {
       "@zod/source": "src"
-    }
+    },
+    "sealCjsExports": true
   },
   "exports": {
     "./package.json": "./package.json",
