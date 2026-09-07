@@ -711,6 +711,7 @@ export type $ZodStringFormats =
   | "json_string"
   | "e164"
   | "credit_card"
+  | "iban"
   | "lowercase"
   | "uppercase"
   | "regex"

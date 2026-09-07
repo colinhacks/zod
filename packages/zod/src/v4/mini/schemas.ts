@@ -509,6 +509,21 @@ export function creditCard(params?: string | core.$ZodCreditCardParams): ZodMini
   return core._creditCard(ZodMiniCreditCard, params);
 }
 
+// ZodMiniIBAN
+export interface ZodMiniIBAN extends _ZodMiniString<core.$ZodIBANInternals> {}
+export const ZodMiniIBAN: core.$constructor<ZodMiniIBAN> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniIBAN",
+  (inst, def) => {
+    core.$ZodIBAN.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function iban(params?: string | core.$ZodIBANParams): ZodMiniIBAN {
+  return core._iban(ZodMiniIBAN, params);
+}
+
 // ZodMiniJWT
 export interface ZodMiniJWT extends _ZodMiniString<core.$ZodJWTInternals> {
   // _zod: core.$ZodJWTInternals;

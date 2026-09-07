@@ -1144,6 +1144,53 @@ export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ c
   }
 );
 
+//////////////////////////////   ZodIBAN   //////////////////////////////
+
+// iso 7064 mod 97-10 checksum without BigInt
+function isIso7064Mod97(iban: string): boolean {
+  let remainder = 0;
+  const len = iban.length;
+  for (let i = 4; i < len; i++) {
+    const code = iban.charCodeAt(i);
+    remainder = (code >= 65 ? remainder * 100 + (code - 55) : remainder * 10 + (code - 48)) % 97;
+  }
+  for (let i = 0; i < 4; i++) {
+    const code = iban.charCodeAt(i);
+    remainder = (code >= 65 ? remainder * 100 + (code - 55) : remainder * 10 + (code - 48)) % 97;
+  }
+  return remainder === 1;
+}
+
+export function isValidIBAN(input: string): boolean {
+  if (!regexes.iban.test(input)) return false;
+  return isIso7064Mod97(input);
+}
+
+export interface $ZodIBANDef extends $ZodStringFormatDef<"iban"> {}
+export interface $ZodIBANInternals extends $ZodStringFormatInternals<"iban"> {
+  def: $ZodIBANDef;
+}
+
+export interface $ZodIBAN extends $ZodType {
+  _zod: $ZodIBANInternals;
+}
+
+export const $ZodIBAN: core.$constructor<$ZodIBAN> = /*@__PURE__*/ core.$constructor("$ZodIBAN", (inst, def): void => {
+  // shape only — checksum is not expressible as a pattern
+  def.pattern ??= regexes.iban;
+  $ZodStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    if (isValidIBAN(payload.value)) return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "iban",
+      input: payload.value,
+      inst,
+      continue: !def.abort,
+    });
+  };
+});
+
 //////////////////////////////   ZodJWT   //////////////////////////////
 
 export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = null): boolean {
@@ -5205,6 +5252,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64URL
   | $ZodE164
   | $ZodCreditCard
+  | $ZodIBAN
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>

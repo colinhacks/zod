@@ -50,6 +50,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON-merkkijono",
     e164: "E.164-luku",
     credit_card: "luottokortin numero",
+    iban: "IBAN",
     jwt: "JWT",
     template_literal: "templaattimerkkijono",
   };

@@ -1030,6 +1030,19 @@ export function creditCard(params?: string | core.$ZodCreditCardParams): ZodCred
   return core._creditCard(ZodCreditCard, params);
 }
 
+// ZodIBAN
+export interface ZodIBAN extends ZodStringFormat<"iban"> {
+  _zod: core.$ZodIBANInternals;
+}
+export const ZodIBAN: core.$constructor<ZodIBAN> = /*@__PURE__*/ core.$constructor("ZodIBAN", (inst, def) => {
+  core.$ZodIBAN.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function iban(params?: string | core.$ZodIBANParams): ZodIBAN {
+  return core._iban(ZodIBAN, params);
+}
+
 // ZodJWT
 export interface ZodJWT extends ZodStringFormat<"jwt"> {
   _zod: core.$ZodJWTInternals;

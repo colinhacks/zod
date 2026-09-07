@@ -498,6 +498,23 @@ export function _creditCard<T extends schemas.$ZodCreditCard>(
   });
 }
 
+// IBAN
+export type $ZodIBANParams = StringFormatParams<schemas.$ZodIBAN, "pattern" | "when">;
+export type $ZodCheckIBANParams = CheckStringFormatParams<schemas.$ZodIBAN, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _iban<T extends schemas.$ZodIBAN>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodIBANParams | $ZodCheckIBANParams
+): T {
+  return new Class({
+    type: "string",
+    format: "iban",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // JWT
 export type $ZodJWTParams = StringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
 export type $ZodCheckJWTParams = CheckStringFormatParams<schemas.$ZodJWT, "pattern" | "when">;

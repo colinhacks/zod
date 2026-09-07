@@ -9,6 +9,7 @@ import {
   isValidBase64URL,
   isValidCIDRv6,
   isValidCreditCard,
+  isValidIBAN,
   isValidIPv6,
   isValidJWT,
   mergeValues,
@@ -789,6 +790,11 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   }
   if (fmt === "credit_card") {
     const validator = addConstant(ctx, isValidCreditCard);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return accessor;
+  }
+  if (fmt === "iban") {
+    const validator = addConstant(ctx, isValidIBAN);
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
     return accessor;
   }

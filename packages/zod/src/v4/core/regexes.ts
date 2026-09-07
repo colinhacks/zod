@@ -98,6 +98,9 @@ export const e164: RegExp = /^\+[1-9]\d{6,14}$/;
 // Credit card shape: 12–19 digits, optionally separated by single spaces or single hyphens. ISO/IEC 7812 caps the PAN at 19 digits; 12 is the shortest issued length (Maestro).
 export const creditCard: RegExp = /^\d(?:[ -]?\d){11,18}$/;
 
+// iban electronic format: 2-letter country, 2 check digits, 11-30 bban characters
+export const iban: RegExp = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/;
+
 const dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
 
 /** Anchors a pattern source. The interpolation lives here rather than at the call site because
