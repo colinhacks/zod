@@ -9,6 +9,7 @@ import {
   subtreeRunsCallbacks,
 } from "../compile.js";
 import { $ZodAsyncError } from "../core.js";
+import { emitters } from "../jit.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
 function expectMatch(schema: z.ZodType, value: unknown) {
@@ -1742,6 +1743,35 @@ test("compiled parse methods run user callbacks at most twice on invalid input",
     run();
     expect(refines, name).toBe(2);
   }
+});
+
+test("strict compilation surfaces malformed issue code instead of the silent runtime re-parse", () => {
+  // a refused issue compile falls back to the interpreter, so a syntax error in an emitter keeps every parity test green; strict mode, which the global shim uses, throws it
+  const string = emitters.$ZodString!;
+  const issues = string.issues;
+  string.issues = ((doc: { write(line: string): void }) => {
+    doc.write("this is not javascript");
+    return "input";
+  }) as never;
+  try {
+    expect(() => compile(z.string(), { strict: true }).safeParse(42)).toThrow(ZodCompileUnsupportedError);
+    const lenient = compile(z.string()).safeParse(42);
+    expect(!lenient.success && lenient.error.issues.map((i) => i.code)).toEqual(["invalid_type"]);
+  } finally {
+    string.issues = issues as never;
+  }
+});
+
+test("a rest tuple reports its fixed items' issues after the rest elements', like the interpreter", () => {
+  // the interpreter runs the fixed items first but merges their results last; found by the generative suite, invisible to every fixture with one failing element
+  const schema = z.tuple([z.string(), z.object({ a: z.string() })], z.number());
+  const bad = [1, { a: 2 }, "x", "y"];
+  expect(
+    compile(schema)
+      .safeParse(bad)
+      .error!.issues.map((i) => i.path)
+  ).toEqual([[2], [3], [0], [1, "a"]]);
+  expect(compile(schema).safeParse(bad).error!.issues).toEqual(schema.safeParse(bad).error!.issues);
 });
 
 test("issue parsers compile natively for every emitter-backed shape", () => {

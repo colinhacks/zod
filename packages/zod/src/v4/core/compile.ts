@@ -63,6 +63,8 @@ export class ZodCompileAsyncError extends Error {
 export class ZodCompileUnsupportedError extends Error {
   /** Whether a container may absorb this refusal by running the child through the runtime (see `compileChild`). False when running only that node on the runtime is not equivalent to running the whole parse there — a runtime island gets no parse context, so a node that *consumes* issues rather than propagating them would finalize them against the wrong error map and still succeed. */
   readonly islandable: boolean;
+  /** The generated code did not evaluate: a compiler defect, not an unsupported schema. */
+  malformed?: boolean;
 
   constructor(feature: string, islandable = true) {
     super(`z.compile does not support ${feature}; this schema must use the runtime parser`);
@@ -148,6 +150,8 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
           issueParser = compileFn(schema, { issues: true }) as unknown as IssueParser;
         } catch (err) {
           if (!(err instanceof ZodCompileUnsupportedError || err instanceof ZodCompileAsyncError)) throw err;
+          // malformed generated code is a compiler defect; the silent re-parse would keep every parity test green over it, so strict mode (the global shim's) throws it
+          if (options?.strict && (err as ZodCompileUnsupportedError).malformed) throw err;
           issueParser = null;
         }
       }
@@ -318,7 +322,11 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     fn = factory(...constantValues) as CompiledFn<core.output<T>>;
   } catch (err) {
     // Malformed generated code (or a CSP environment rejecting `new Function`) surfaces as a typed error so the global shim falls back to the runtime instead of crashing with a raw SyntaxError/EvalError.
-    throw new ZodCompileUnsupportedError(`this schema (generated code failed to evaluate: ${(err as Error).message})`);
+    const refusal = new ZodCompileUnsupportedError(
+      `this schema (generated code failed to evaluate: ${(err as Error).message})`
+    );
+    refusal.malformed = true;
+    throw refusal;
   }
   if (options?.debug) {
     fn.code = fullCode;

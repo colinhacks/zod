@@ -1487,6 +1487,9 @@ function generateTupleIssues(
 
     const out = newVar(ctx);
     d.write(`const ${out} = [];`);
+    // the interpreter runs the fixed items first but merges their issues last, after the rest elements have pushed theirs; hold them aside across the rest loop so the order matches
+    const held = rest ? newVar(ctx) : null;
+    if (held) d.write(`const ${held} = payload.issues.length;`);
     const hasTail = optoutStart < items.length;
     const trunc = hasTail ? newVar(ctx) : null;
     if (trunc) d.write(`let ${trunc} = false;`);
@@ -1529,6 +1532,8 @@ function generateTupleIssues(
     }
 
     if (rest) {
+      const fixed = newVar(ctx);
+      d.write(`const ${fixed} = payload.issues.length > ${held} ? payload.issues.splice(${held}) : null;`);
       const iVar = newVar(ctx);
       const el = newVar(ctx);
       d.write(`for (let ${iVar} = ${items.length}; ${iVar} < ${accessor}.length; ${iVar}++) {`);
@@ -1538,6 +1543,7 @@ function generateTupleIssues(
         d2.write(`${out}[${iVar}] = ${iv};`);
       });
       d.write(`}`);
+      d.write(`if (${fixed}) payload.issues.push(...${fixed});`);
     }
 
     // trailing absent optional-out slots that produced undefined truncate, mirroring handleTupleResults' final loop
@@ -1798,7 +1804,7 @@ interface Emitter {
 }
 
 // One emitter per core subclass, keyed by the trait name its constructor records. A class without an entry inherits its nearest ancestor's; a class without any compilable ancestor is unsupported. Only `compile()` reads this, so a bundle that never compiles keeps none of it.
-const emitters: Record<string, Emitter> = {
+export const emitters: Record<string, Emitter> = {
   $ZodObject: {
     fast: (doc, ctx, inst, accessor, buildsValue) => generateObjectCheck(doc, ctx, inst, accessor, buildsValue),
     issues: generateObjectIssues,
