@@ -1091,6 +1091,12 @@ test("a finalized issue copies the raw issue's own keys only", () => {
   const issue = schema.safeParse("x").error!.issues[0];
   expect(issue).toStrictEqual({ code: "custom", message: "own", path: [], extra: 1 });
   expect("inherited" in issue).toBe(false);
+  // own symbol-keyed fields are not copied either; nothing in zod produces one and the walk stays a string-key walk
+  const sym = Symbol("meta");
+  const symbolic = z.string().check((ctx) => {
+    ctx.issues.push({ code: "custom", message: "sym", input: ctx.value, [sym]: 1 } as never);
+  });
+  expect(Object.getOwnPropertySymbols(symbolic.safeParse("x").error!.issues[0])).toEqual([]);
   // an own __proto__ key, as JSON.parse produces, neither swaps the prototype nor survives
   const parsed = z.string().check((ctx) => {
     ctx.issues.push(JSON.parse('{"code":"custom","message":"json","__proto__":{"polluted":true}}'));
