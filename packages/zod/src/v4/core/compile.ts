@@ -2016,7 +2016,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   return outputVar;
 }
 
-// Walks the own enumerable keys of a plain object in Reflect.ownKeys order — strings from Object.keys, then symbols — instead of Reflect.ownKeys, whose accumulator made that walk 3–6x the cost of the loop it fed. Both key sets are snapshotted before any value is read and every key is rechecked with propertyIsEnumerable when visited, so a getter that adds, deletes or hides a key mid-walk sees the runtime's verdict; for-in was faster still but enumerates the prototype chain after the own keys, so a getter that shadowed an inherited enumerable name mid-walk leaked the new key. `body` is written once for the string loop and once for the symbol loop unless `onSymbol` replaces the latter.
+// Walks the own enumerable keys of a plain object in Reflect.ownKeys order — strings from getOwnPropertyNames, then symbols — instead of Reflect.ownKeys, whose accumulator made that walk 3–6x the cost of the loop it fed. Both snapshots are taken before any value is read and every key is rechecked with propertyIsEnumerable when visited, exactly the runtime's walk, so a getter that adds, deletes, hides or reveals a key mid-walk sees the runtime's verdict; for-in and Object.keys were no faster and each lost a case (for-in enumerates the prototype chain after the own keys, Object.keys drops a key that is non-enumerable at snapshot time). `body` is written once for the string loop and once for the symbol loop unless `onSymbol` replaces the latter.
 function emitOwnKeys(
   doc: Doc,
   ctx: CompileContext,
@@ -2030,7 +2030,7 @@ function emitOwnKeys(
   const keysVar = newVar(ctx);
   const iVar = newVar(ctx);
   doc.write(`const ${symsVar} = Object.getOwnPropertySymbols(${accessor});`);
-  doc.write(`const ${keysVar} = Object.keys(${accessor});`);
+  doc.write(`const ${keysVar} = Object.getOwnPropertyNames(${accessor});`);
   doc.write(`for (let ${iVar} = 0; ${iVar} < ${keysVar}.length; ${iVar}++) {`);
   doc.indented((d) => {
     d.write(`const ${kVar} = ${keysVar}[${iVar}];`);

@@ -1660,7 +1660,7 @@ test("strict is per-call, so a supported schema compiles either way", () => {
 });
 
 test("compiled records walk own enumerable keys without Reflect.ownKeys", () => {
-  // an Object.keys snapshot plus a per-key recheck sees the same keys as the runtime's Reflect.ownKeys walk: inherited enumerables are skipped, symbols fail a string key schema but pass a symbol one, and the numeric-string retry still applies
+  // a getOwnPropertyNames snapshot plus a per-key recheck sees the same keys as the runtime's Reflect.ownKeys walk: inherited enumerables are skipped, symbols fail a string key schema but pass a symbol one, and the numeric-string retry still applies
   const sym = Symbol("s");
   const bare = compile(z.record(z.string(), z.number()));
   const inherited = Object.assign(Object.create({ proto: 1 }), { a: 1 });
@@ -1739,4 +1739,20 @@ test("compiled records walk own enumerable keys without Reflect.ownKeys", () => 
   const inUnion = z.union([z.record(z.string(), z.number()), z.any()]);
   expect(compile(inUnion).parse(shadowing())).toStrictEqual(inUnion.parse(shadowing()));
   expect(compile(inUnion).parse(shadowing())).toStrictEqual({ a: 1 });
+  // a key that is non-enumerable at snapshot time and revealed by an earlier getter is in the snapshot and passes the recheck, like the runtime
+  const revealing = () => {
+    const o: Record<string, unknown> = {};
+    Object.defineProperty(o, "a", {
+      enumerable: true,
+      get() {
+        Object.defineProperty(o, "b", { enumerable: true });
+        return 1;
+      },
+    });
+    Object.defineProperty(o, "b", { value: 2, enumerable: false, configurable: true });
+    return o;
+  };
+  const plain = z.record(z.string(), z.number());
+  expect(compile(plain).parse(revealing())).toStrictEqual(plain.parse(revealing()));
+  expect(compile(plain).parse(revealing())).toStrictEqual({ a: 1, b: 2 });
 });
