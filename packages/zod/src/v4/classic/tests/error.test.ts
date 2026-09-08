@@ -1080,3 +1080,15 @@ describe("safeParse builds the error on first read", () => {
     }
   });
 });
+
+test("a finalized issue copies the raw issue's own keys only", () => {
+  const proto = { inherited: true };
+  const schema = z.string().check((ctx) => {
+    const raw = Object.create(proto);
+    Object.assign(raw, { code: "custom", message: "own", input: ctx.value, extra: 1 });
+    ctx.issues.push(raw);
+  });
+  const issue = schema.safeParse("x").error!.issues[0];
+  expect(issue).toStrictEqual({ code: "custom", message: "own", path: [], extra: 1 });
+  expect("inherited" in issue).toBe(false);
+});

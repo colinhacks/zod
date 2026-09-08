@@ -25,7 +25,7 @@ function sample(fn: () => unknown, iters: number): number {
   return Number(process.hrtime.bigint() - t0) / iters;
 }
 
-// candidate finalizeIssue bodies, same output: object rest (shipped) vs an explicit copy loop
+// candidate finalizeIssue bodies, same output: object rest (main before #6567) vs a for-in copy loop; the shipped body walks Object.keys so inherited keys stay out
 const SKIP = new Set(["inst", "schema", "continue", "input"]);
 function finalizeLoop(iss: any, c: any, cfg: any): any {
   const traits: Set<string> | undefined = iss.inst?._zod?.traits;
