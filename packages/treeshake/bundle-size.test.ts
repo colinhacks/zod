@@ -42,13 +42,13 @@ const CEILINGS: Record<string, number> = {
   // Also carries the Standard Schema issue bag: a failing `~standard.validate` parses with a plain issue holder instead of constructing a ZodError. Measured 2974 / 3455 / 4540 locally plus 28 headroom.
   // Also carries the lazy `safeParse` error: a getter and a setter on the failing result, and the async wrapper that keeps a sync throw a rejection. Measured 3021 / 3497 / 4581 locally plus 18 headroom.
   // Also carries the symbol-key loop in `util.members`, which is what installs `$ZodProperties`'s `Symbol.iterator` on its prototype, and the memoizer's shared reference predicate. Measured 3036 / 3516 / 4611 locally plus 18 headroom.
-  "zod-mini-boolean": 3054,
+  "zod-mini-boolean": 3088,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
   // Also carries the Standard Schema issue bag: a failing `~standard.validate` parses with a plain issue holder instead of constructing a ZodError. Measured 2974 / 3455 / 4540 locally plus 28 headroom.
   // Also carries the lazy `safeParse` error: a getter and a setter on the failing result, and the async wrapper that keeps a sync throw a rejection. Measured 3021 / 3497 / 4581 locally plus 18 headroom.
   // Also carries the symbol-key loop in `util.members`, which is what installs `$ZodProperties`'s `Symbol.iterator` on its prototype, and the memoizer's shared reference predicate. Measured 3036 / 3516 / 4611 locally plus 18 headroom.
   // Lowered by the measured −105 when checks stopped writing metadata into the bag at attach time: the string length/format closures and the per-instance bounded regex left every string bundle, and the template literal now derives its own part patterns.
-  "zod-mini-string": 3429,
+  "zod-mini-string": 3462,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
   // Also carries the memoizer seam from #6482: each container init reads `globalConfig.memoizer` and calls `attach`, which is what lets `zod/mini` opt into cycle support. Measured 4512 locally but 4533 on CI — the gzip stream differs across zlib builds — so the headroom rides on the CI number.

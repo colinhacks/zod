@@ -964,13 +964,18 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
-  rest.path ??= [];
-  rest.message = message;
-  if (ctx?.reportInput) {
-    rest.input = _input;
+  // an explicit own-key copy beats object rest with excluded keys, which v8 routes through a generic runtime call; Object.keys rather than for-in so an issue pushed with a prototype does not leak inherited keys, and an own __proto__ key is dropped rather than assigned through the setter
+  const full: any = {};
+  for (const k of Object.keys(iss)) {
+    if (k === "inst" || k === "schema" || k === "continue" || k === "input" || k === "__proto__") continue;
+    full[k] = (iss as any)[k];
   }
-  return rest;
+  full.path ??= [];
+  full.message = message;
+  if (ctx?.reportInput) {
+    full.input = iss.input;
+  }
+  return full;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
