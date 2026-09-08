@@ -2016,7 +2016,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   return outputVar;
 }
 
-// Walks the own enumerable keys of a plain object in Reflect.ownKeys order — strings by for-in, then symbols — without materializing the key array, which made that walk 3–6x the cost of the loop it fed. Both key sets are snapshotted before any value is read and every key is rechecked with propertyIsEnumerable when visited, so a getter that adds, deletes or hides a key mid-walk sees the runtime's verdict; a proxy observes one more descriptor lookup per key than the runtime, from for-in's own enumerability filter. `body` is written once for the string loop and once for the symbol loop unless `onSymbol` replaces the latter.
+// Walks the own enumerable keys of a plain object in Reflect.ownKeys order — strings from Object.keys, then symbols — instead of Reflect.ownKeys, whose accumulator made that walk 3–6x the cost of the loop it fed. Both key sets are snapshotted before any value is read and every key is rechecked with propertyIsEnumerable when visited, so a getter that adds, deletes or hides a key mid-walk sees the runtime's verdict; for-in was faster still but enumerates the prototype chain after the own keys, so a getter that shadowed an inherited enumerable name mid-walk leaked the new key. `body` is written once for the string loop and once for the symbol loop unless `onSymbol` replaces the latter.
 function emitOwnKeys(
   doc: Doc,
   ctx: CompileContext,
@@ -2027,10 +2027,13 @@ function emitOwnKeys(
 ): void {
   const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
   const symsVar = newVar(ctx);
+  const keysVar = newVar(ctx);
   const iVar = newVar(ctx);
   doc.write(`const ${symsVar} = Object.getOwnPropertySymbols(${accessor});`);
-  doc.write(`for (const ${kVar} in ${accessor}) {`);
+  doc.write(`const ${keysVar} = Object.keys(${accessor});`);
+  doc.write(`for (let ${iVar} = 0; ${iVar} < ${keysVar}.length; ${iVar}++) {`);
   doc.indented((d) => {
+    d.write(`const ${kVar} = ${keysVar}[${iVar}];`);
     d.write(`if (${kVar} === "__proto__" || !${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
     body(d);
   });

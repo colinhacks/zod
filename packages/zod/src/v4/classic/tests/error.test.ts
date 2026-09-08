@@ -1091,4 +1091,12 @@ test("a finalized issue copies the raw issue's own keys only", () => {
   const issue = schema.safeParse("x").error!.issues[0];
   expect(issue).toStrictEqual({ code: "custom", message: "own", path: [], extra: 1 });
   expect("inherited" in issue).toBe(false);
+  // an own __proto__ key, as JSON.parse produces, neither swaps the prototype nor survives
+  const parsed = z.string().check((ctx) => {
+    ctx.issues.push(JSON.parse('{"code":"custom","message":"json","__proto__":{"polluted":true}}'));
+  });
+  const fromJson = parsed.safeParse("x").error!.issues[0];
+  expect(Object.getPrototypeOf(fromJson)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(fromJson, "__proto__")).toBe(false);
+  expect("polluted" in fromJson).toBe(false);
 });

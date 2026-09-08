@@ -1660,7 +1660,7 @@ test("strict is per-call, so a supported schema compiles either way", () => {
 });
 
 test("compiled records walk own enumerable keys without Reflect.ownKeys", () => {
-  // for-in plus hasOwn sees the same keys as the runtime's Reflect.ownKeys walk: inherited enumerables are skipped, symbols fail a string key schema but pass a symbol one, and the numeric-string retry still applies
+  // an Object.keys snapshot plus a per-key recheck sees the same keys as the runtime's Reflect.ownKeys walk: inherited enumerables are skipped, symbols fail a string key schema but pass a symbol one, and the numeric-string retry still applies
   const sym = Symbol("s");
   const bare = compile(z.record(z.string(), z.number()));
   const inherited = Object.assign(Object.create({ proto: 1 }), { a: 1 });
@@ -1724,4 +1724,19 @@ test("compiled records walk own enumerable keys without Reflect.ownKeys", () => 
       expect(Reflect.ownKeys(actual.data as object)).toEqual(Reflect.ownKeys(expected.data as object));
     else expect(actual.error!.issues).toEqual(expected.error!.issues);
   }
+  // a getter that defines an own key under an inherited enumerable name mid-walk: the snapshot predates it, so neither walk visits it, and a union that accepts the record cannot be corrected by a fallback
+  const shadowing = () => {
+    const o = Object.create({ z: 0 });
+    Object.defineProperty(o, "a", {
+      enumerable: true,
+      get() {
+        Object.defineProperty(o, "z", { value: 2, enumerable: true });
+        return 1;
+      },
+    });
+    return o;
+  };
+  const inUnion = z.union([z.record(z.string(), z.number()), z.any()]);
+  expect(compile(inUnion).parse(shadowing())).toStrictEqual(inUnion.parse(shadowing()));
+  expect(compile(inUnion).parse(shadowing())).toStrictEqual({ a: 1 });
 });

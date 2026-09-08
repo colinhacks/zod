@@ -964,10 +964,10 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  // an explicit own-key copy beats object rest with excluded keys, which v8 routes through a generic runtime call; Object.keys rather than for-in so an issue pushed with a prototype does not leak inherited keys
+  // an explicit own-key copy beats object rest with excluded keys, which v8 routes through a generic runtime call; Object.keys rather than for-in so an issue pushed with a prototype does not leak inherited keys, and an own __proto__ key is dropped rather than assigned through the setter
   const full: any = {};
   for (const k of Object.keys(iss)) {
-    if (k === "inst" || k === "schema" || k === "continue" || k === "input") continue;
+    if (k === "inst" || k === "schema" || k === "continue" || k === "input" || k === "__proto__") continue;
     full[k] = (iss as any)[k];
   }
   full.path ??= [];

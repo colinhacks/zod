@@ -432,11 +432,12 @@ function checkSeed(seed: number): void {
       } else {
         expect(b.value!.error!.issues, `${label}: issues`).toEqual(a.value!.error!.issues);
       }
-      // the fast pass runs a callback at most once, the runtime re-parse at most once more, for each callback on its own
-      for (const [id, n] of compiledCalls) {
-        expect(n, `${label}: callback ${id} ran ${n} vs ${runtimeCalls.get(id) ?? 0}`).toBeLessThanOrEqual(
-          2 * (runtimeCalls.get(id) ?? 0)
-        );
+      // every callback the interpreter reaches, the compiled schema reaches too; the fast pass runs it at most once and the runtime re-parse at most once more
+      for (const id of new Set([...compiledCalls.keys(), ...runtimeCalls.keys()])) {
+        const n = compiledCalls.get(id) ?? 0;
+        const r = runtimeCalls.get(id) ?? 0;
+        expect(n, `${label}: callback ${id} ran ${n} vs ${r}`).toBeGreaterThanOrEqual(r);
+        expect(n, `${label}: callback ${id} ran ${n} vs ${r}`).toBeLessThanOrEqual(2 * r);
       }
     }
     expect(() => compileFn(g.schema), `${g.desc}: compile refused`).not.toThrow();
