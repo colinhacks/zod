@@ -50,7 +50,7 @@ Key commands:
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
 - Format validators (`z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, …) are deliberately narrower than the specs they're named after. "The spec allows X" is not a reason to accept X — see "Format validators: spec compliance is not the bar" below.
-- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`), and NEVER run `gh workflow run release.yml`. A version bump on `main` publishes nothing by itself; the dispatch plus an approval in the `npm` environment is what publishes, and that is the one irreversible action in this repo. If a version bump is genuinely needed, ask first.
+- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`), and NEVER run `gh workflow run release.yml`. A version bump on `main` publishes nothing by itself, and a dispatched run can be cancelled; the approval in the `npm` environment is what publishes, and that is the one irreversible action in this repo. If a version bump is genuinely needed, ask first.
 
 ## The three axes
 
