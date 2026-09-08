@@ -49,7 +49,7 @@ So the fix is not a follow-up to the triage. It is a step inside it, and it come
 - **Judge the candidates against the whole defect, not the reported symptom.** A patch that fixes the one function in the PoC while three sibling call sites keep the bug is partial. Build a behavior matrix of the cases that matter, run it against `main` and against each candidate patch, and let that table pick the winner. This is also how you catch a patch that trades a crash for silent data loss.
 - **Extend the base rather than starting over**, and preserve the contributor's commits — AGENTS.md covers pushing to a contributor's head ref.
 - **Run what CI runs** before pushing, then confirm CI itself is green.
-- **Do not bump a version and do not cut a release.** Landing on `main` is the goal. Release timing on a security fix is Colin's, and on this repo a version bump is the one irreversible action.
+- **Do not bump a version and do not cut a release.** Landing on `main` is the goal. Release timing on a security fix is Colin's, and on this repo dispatching the release workflow is the one irreversible action.
 
 Only once the fix is merged do you write the comment, and the comment names the merge commit and the PR.
 

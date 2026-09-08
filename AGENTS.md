@@ -50,7 +50,7 @@ Key commands:
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
 - Format validators (`z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, …) are deliberately narrower than the specs they're named after. "The spec allows X" is not a reason to accept X — see "Format validators: spec compliance is not the bar" below.
-- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
+- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`), and NEVER run `gh workflow run release.yml`. A version bump on `main` publishes nothing by itself; the dispatch plus an approval in the `npm` environment is what publishes, and that is the one irreversible action in this repo. If a version bump is genuinely needed, ask first.
 
 ## The three axes
 
@@ -86,7 +86,7 @@ If you touch that machinery, three things bite:
 
 ## Cutting a release
 
-Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
+Only do this when the user explicitly asks. A release is two deliberate steps: push the version bump to `main`, then dispatch `.github/workflows/release.yml` and approve its `npm` environment. The workflow publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
 
 Five files must be bumped together — `nub run check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
 
@@ -106,9 +106,15 @@ git checkout main && git pull
 git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json packages/mini/jsr.json
 git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
+
+# Then start the release from any machine signed into gh, and approve it when the run pauses on the npm environment.
+gh workflow run release.yml
+gh run watch   # pick the "Release on npm" run
 ```
 
-The release workflow runs on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, but publishing requires a changed package version. Tooling-only edits do not publish. Nub publishes `zod` with npm trusted publishing and provenance, then the workflow tags and releases it and publishes `@zod/mini` to npm and JSR last. Watch the Actions tab to confirm `build_and_publish` succeeds.
+Nothing publishes on push. The dispatch runs the test, lint and circular-dependency gates, then `build_and_publish` waits in the `npm` environment until colinhacks or joeltg approves it (the Actions run page, or `gh api -X POST repos/colinhacks/zod/actions/runs/<run-id>/pending_deployments -F 'environment_ids[]=21517757301' -f state=approved -f comment=ok`). Nub publishes `zod` with npm trusted publishing and provenance, then the workflow tags and releases it and publishes `@zod/mini` to npm and JSR last. Every publish step skips a version that is already on its registry, so a dispatch with no version bump, or a second dispatch of the same version, is harmless. Watch the Actions tab to confirm `build_and_publish` succeeds.
+
+The `npm` environment is what makes the dispatch the only publish path: it deploys `main` only and requires a reviewer, and the npm trusted publishers for `zod` and `@zod/mini` are bound to it, so a workflow on another branch cannot mint a publish token. Keep `actions: write` out of every bot workflow, because a `GITHUB_TOKEN` cannot trigger a push workflow but can trigger a `workflow_dispatch`.
 
 To publish `@zod/mini` at a version zod already shipped without it, dispatch the same workflow; it publishes only the scoped package, with the peer floor set to that minor:
 
