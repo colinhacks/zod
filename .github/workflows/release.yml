@@ -2,55 +2,18 @@
 
 name: Release on npm
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "packages/zod/package.json"
-      - "packages/mini/package.json"
-      - ".github/workflows/release.yml"
-  # back-publish @zod/mini at an x.y.z that zod already shipped without it; the peer floor becomes ^x.y.0
+  # a version bump on main publishes nothing by itself; a maintainer runs `gh workflow run release.yml` and approves the npm environment
   workflow_dispatch:
     inputs:
       mini_version:
-        description: "Publish @zod/mini at this x.y.z (must be an existing zod version)"
-        required: true
+        description: "Leave empty to release what is on main. Set an x.y.z that zod already shipped to back-publish @zod/mini at that version; the peer floor becomes ^x.y.0"
+        required: false
         type: string
+        default: ""
 
 jobs:
-  version_changed:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.version.outputs.changed }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
-        with:
-          nub-version: "0.8.3"
-      - id: version
-        env:
-          BASE_SHA: ${{ github.event.before }}
-        run: |
-          git cat-file -e "$BASE_SHA^{commit}"
-          changed=false
-          for package in zod mini; do
-            if ! git cat-file -e "$BASE_SHA:packages/$package/package.json" 2>/dev/null; then
-              changed=true
-              continue
-            fi
-            before=$(git show "$BASE_SHA:packages/$package/package.json" | nub --node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version')
-            after=$(nub --node -p "require('./packages/$package/package.json').version")
-            if [ "$before" != "$after" ]; then changed=true; fi
-          done
-          echo "changed=$changed" >> "$GITHUB_OUTPUT"
-
   test-node:
-    if: github.event_name == 'push'
+    if: inputs.mini_version == ''
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -79,7 +42,7 @@ jobs:
       - run: nub run --filter @zod/integration test:all
 
   lint:
-    if: github.event_name == 'push'
+    if: inputs.mini_version == ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -97,7 +60,7 @@ jobs:
       - run: nub run lint:check
 
   check-circular:
-    if: github.event_name == 'push'
+    if: inputs.mini_version == ''
     runs-on: ubuntu-latest
     name: Check for circular dependencies
     steps:
@@ -111,9 +74,11 @@ jobs:
       - run: nub run check:circular
 
   build_and_publish:
-    if: github.event_name == 'push' && needs.version_changed.outputs.changed == 'true'
-    needs: [version_changed, test-node, lint, check-circular]
+    if: inputs.mini_version == ''
+    needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
+    # a required reviewer approves every publish, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can publish
+    environment: npm
     # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing; a stall that outlives them needs the wait moved to its own job rather than a larger number here.
     timeout-minutes: 360
     permissions:
@@ -261,8 +226,9 @@ jobs:
       - run: nub run check:lockstep --wait
 
   backpublish_mini:
-    if: github.event_name == 'workflow_dispatch'
+    if: inputs.mini_version != ''
     runs-on: ubuntu-latest
+    environment: npm
     timeout-minutes: 360
     permissions:
       contents: read
