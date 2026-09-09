@@ -17,7 +17,7 @@ npm install zod@latest
 
 At a glance:
 
-- [`z.validate()`](#zvalidate) — checks input validity without building a result (up to 38x faster than `.safeParse().success` on a compiled schema)
+- [`z.validate()`](#zvalidate) — checks input validity without building a result (up to 35x faster than `.safeParse().success` on a compiled schema)
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
 
@@ -43,23 +43,23 @@ if (Player.validate(data)) {
 }
 ```
 
-In conjunction with [`z.compile()`](/compile), this can be up to 38x faster than `.safeParse().success` on invalid input.
+In conjunction with [`z.compile()`](/compile), this can be up to 35x faster than `.safeParse().success` on invalid input.
 
 <ThemedImage
   lightSrc="/blog/validate-compiled-invalid-light.svg"
   darkSrc="/blog/validate-compiled-invalid-dark.svg"
-  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 32 ns (38.1x faster), an array of 10 strings 22 ns (25.6x), a 3-element tuple 28 ns (16.5x), a 5-key object 20 ns (17.9x), a discriminated union of 3 22 ns (16.3x), z.number() 18 ns (14.8x), z.boolean() 18 ns (14.5x), z.string() 18 ns (14.6x); up to 38.1x faster"
+  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 28 ns (34.9x faster), an array of 10 strings 23 ns (24.6x), a 3-element tuple 28 ns (16.1x), a 5-key object 21 ns (16.3x), a discriminated union of 3 21 ns (15.7x), z.number() 19 ns (13.8x), z.string() 19 ns (13.2x), z.boolean() 19 ns (13.7x); up to 34.9x faster"
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
 <Accordions type="single">
 <Accordion title="Uncompiled schemas">
-Without compilation it is up to 6.4x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
+Without compilation it is up to 5.9x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
 
 <ThemedImage
   lightSrc="/blog/validate-invalid-light.svg"
   darkSrc="/blog/validate-invalid-dark.svg"
-  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 701 ns (1.7x faster), an array of 10 strings 206 ns (2.5x), a 3-element tuple 166 ns (2.6x), a discriminated union of 3 93 ns (3.5x), a 5-key object 74 ns (4.2x), z.number() 45 ns (5.8x), z.boolean() 41 ns (6.4x), z.string() 40 ns (6.4x); up to 6.4x faster"
+  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 659 ns (1.5x faster), an array of 10 strings 211 ns (2.3x), a 3-element tuple 166 ns (2.5x), a discriminated union of 3 93 ns (3.3x), a 5-key object 75 ns (3.9x), z.number() 47 ns (5.3x), z.string() 42 ns (5.8x), z.boolean() 42 ns (5.9x); up to 5.9x faster"
   caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 </Accordion>
