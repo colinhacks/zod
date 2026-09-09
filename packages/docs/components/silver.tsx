@@ -1,34 +1,16 @@
 export const Silver = () => {
   const companies = [
     {
-      name: "Sanity",
-      logoSrc: "https://avatars.githubusercontent.com/u/17177659?s=200&v=4",
-      url: "sanity.io",
-      href: "https://www.sanity.io/",
-    },
-    {
       name: "Subtotal",
       logoSrc: "https://avatars.githubusercontent.com/u/176449348?s=200&v=4",
       url: "subtotal.com",
       href: "https://www.subtotal.com/?utm_source=zod",
     },
     {
-      name: "Nitric",
-      logoSrc: "https://avatars.githubusercontent.com/u/72055470?s=200&v=4",
-      url: "nitric.io",
-      href: "https://nitric.io/",
-    },
-    {
       name: "PropelAuth",
       logoSrc: "https://avatars.githubusercontent.com/u/89474619?s=200&v=4",
       url: "propelauth.com",
       href: "https://www.propelauth.com/",
-    },
-    {
-      name: "Cerbos",
-      logoSrc: "https://avatars.githubusercontent.com/u/80861386?s=200&v=4",
-      url: "cerbos.dev",
-      href: "https://cerbos.dev/",
     },
     {
       name: "Scalar",
@@ -47,18 +29,6 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/91036480?s=200&v=4",
       url: "whop.com",
       href: "https://whop.com/",
-    },
-    {
-      name: "CryptoJobsList",
-      logoSrc: "https://avatars.githubusercontent.com/u/36402888?s=200&v=4",
-      url: "cryptojobslist.com",
-      href: "https://cryptojobslist.com/",
-    },
-    {
-      name: "Plain",
-      logoSrc: "https://avatars.githubusercontent.com/u/70170949?s=200&v=4",
-      url: "plain.com",
-      href: "https://plain.com/",
     },
     {
       name: "Inngest",
@@ -89,12 +59,6 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/117220588?s=200&v=4",
       url: "9thco.com",
       href: "https://www.9thco.com/?utm_source=zod",
-    },
-    {
-      name: "Ferry Health",
-      logoSrc: "https://avatars.githubusercontent.com/u/158637456?s=200&v=4",
-      url: "ferry.health",
-      href: "https://ferry.health/?utm_source=zod",
     },
   ];
 
