@@ -201,12 +201,18 @@ Eight members on a Zod Classic schema — `.format`, `.minLength`, `.maxLength`,
 ```ts
 const s = z.string().min(3).max(9);
 
-Object.keys(s); // 4.5: ["format", "minLength", "maxLength"] — 4.6: []
+Object.keys(s); // 4.5: ["def", "type", "format", "minLength", "maxLength"] — 4.6: ["def", "type"]
 s.minLength;    // 3 in both
-Object.keys(s); // ["minLength"]
+Object.keys(s); // 4.6: ["def", "type", "minLength"]
 ```
 
-Reading a member gives the same value as before. The difference shows up in enumeration. A key is absent until something reads it, and `Object.assign({}, schema)` copies only the members that have been read. Deleting one restores the getter, and the next read recomputes it.
+A key is absent until something reads it, and `Object.assign({}, schema)` copies only the members that have been read. Deleting one restores the getter, and the next read recomputes it.
+
+The values can move too, because the getters read the same fold the JSON Schema converter does. An order-dependent chain reports the tighter bound now instead of whichever check wrote last.
+
+```ts
+z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
+```
 
 ## Commits
 
