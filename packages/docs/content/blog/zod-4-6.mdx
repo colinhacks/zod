@@ -20,6 +20,8 @@ At a glance:
 - [`z.validate()`](#zvalidate) — checks input validity without building a result (up to 35x faster than `.safeParse().success` on a compiled schema)
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
+- [Faster CommonJS](#faster-commonjs) — drops the getter on every export (~3x faster `z.validate()` under `require`)
+- [`@zod/mini`](/packages/mini) — Zod Mini as a standalone package, with `zod` as a peer dependency
 
 ## `z.validate()`
 
@@ -140,6 +142,19 @@ z.fromJSONSchema({
 }).parse(["a", 2]);               // ❌ only one number
 ```
 
+## Faster CommonJS
+
+TypeScript compiles a re-export to a getter, and 252 of the 255 exports on Zod 4.5's CommonJS entrypoint were getters. V8 could not see a constant callee behind one, so it could not inline the call. The 4.6 build emits plain properties and freezes the exports object. On a compiled schema, `z.validate()` under `require` is about 3x faster than it was in Zod 4.5. ([#6564](https://github.com/colinhacks/zod/pull/6564))
+
+```ts
+const { z } = require("zod");
+const CompiledPlayer = z.compile(Player);
+
+z.validate(CompiledPlayer, data); // ~3x faster than Zod 4.5
+```
+
+Only calls through the namespace were affected. A method call like `Player.safeParse(data)` never reads the exports object, and the ESM build is unchanged.
+
 ## Bug fixes
 
 ### ⚠️ Error maps run on the first read of `error`
@@ -216,8 +231,9 @@ z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
 
 ## Commits
 
-Zod 4.6 rolls up 61 commits.
+Zod 4.6 rolls up 62 commits.
 
+- [`277613a6`](https://github.com/colinhacks/zod/commit/277613a6) docs: move the release procedure to the maintainer-local notes by [@colinhacks](https://github.com/colinhacks)
 - [`eb1c1089`](https://github.com/colinhacks/zod/commit/eb1c1089) ci: release only on workflow_dispatch behind the npm environment ([#6569](https://github.com/colinhacks/zod/pull/6569)) by [@colinhacks](https://github.com/colinhacks)
 - [`741981ff`](https://github.com/colinhacks/zod/commit/741981ff) perf(compile): for-in record walk, cheaper issue finalization, and a generative compile differential ([#6567](https://github.com/colinhacks/zod/pull/6567)) by [@colinhacks](https://github.com/colinhacks)
 - [`804e0f52`](https://github.com/colinhacks/zod/commit/804e0f52) perf: seal the CommonJS exports so require("zod") stops reading through a getter ([#6564](https://github.com/colinhacks/zod/pull/6564)) by [@colinhacks](https://github.com/colinhacks)
