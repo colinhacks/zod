@@ -190,8 +190,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <p>
       <a href="https://trigger.dev/?utm_source=zod">
         <picture height="80px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
-          <img alt="Trigger.dev logo" height="80px" src="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
+          <source media="(prefers-color-scheme: dark)" srcset="https://trigger.dev/docs/logo/dark.png">
+          <img alt="Trigger.dev logo" height="80px" src="https://cdn.jsdelivr.net/gh/triggerdotdev/trigger.dev@c719f84f03bfa2bb4f13fa35251725ed5046a139/apps/webapp/app/assets/images/logo.svg">
         </picture>
       </a>
       <br  />
