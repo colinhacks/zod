@@ -126,59 +126,77 @@ export interface CompileOptions {
 export function compile<T extends SomeType>(schema: T, options?: CompileOptions): T {
   try {
     const parser = compileFn(schema);
-    const clone = util.clone(schema as any) as T;
-
-    // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
-    const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
-      __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
-    };
-    const originalRun = liveRun.__originalRun ?? liveRun;
-
-    // Delegate to the *original* schema's run on bypass/fallback (not the
-    // clone's). The original closed over its own `inst` at construction time;
-    // issue payloads use that reference to derive things like the class name
-    // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
-    // would push issues with `inst === clone`, producing diverging error
-    // messages from the original schema.
-    const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
-      if (
-        ctx?.async ||
-        ctx?.direction === "backward" ||
-        ctx?.skipChecks ||
-        (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
-      ) {
-        return originalRun(payload, ctx);
-      }
-
-      // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
-      if (ctx && isBackEdge(ctx, payload.value)) {
-        return originalRun(payload, ctx);
-      }
-
-      const out = parser(payload.value);
-      if (out !== INVALID) {
-        payload.value = out;
-        return payload;
-      }
-      // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
-      if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
-      return originalRun(payload, ctx);
-    };
-    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
-    (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
-    clone._zod.bag.fallbackRun = originalRun;
+    const clone = withParser(schema, parser);
+    // withParser leaves the parser as its own validator; the generated assert-only variant is better when we have one
     clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
-    clone._zod.run = wrapped;
-
-    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
-    if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, parser);
-
     return clone;
   } catch (err) {
     if (options?.strict) throw err;
     // a schema we can't compile still has to work, so hand it back untouched on the runtime parser — the same silent fallback global mode already does
     return schema;
   }
+}
+
+/**
+ * Install an already-generated parser as a schema's fast path. Returns a clone; the original is
+ * unchanged.
+ *
+ * The parser takes the input and returns the parsed value, or `INVALID` to hand the parse to the
+ * runtime. It must be synchronous and forward-direction, and it must build fresh output rather than
+ * return its input — Zod cannot check either, and a wrong *success* is returned to the caller as-is.
+ *
+ * `compile()` is the ordinary entry point. This is for a build-time or native compiler that produces
+ * a parser where `new Function` is unavailable.
+ */
+export function withParser<T extends SomeType>(schema: T, parser: (input: unknown) => core.output<T> | INVALID): T {
+  // generated code never receives the parse context, so only the runtime can close a reference cycle; compileFn refuses these too
+  if (isRecursiveSchema(schema as any)) {
+    throw new ZodCompileUnsupportedError("a schema whose subtree contains a reference cycle");
+  }
+  const clone = util.clone(schema as any) as T;
+
+  // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
+  const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+  };
+  const originalRun = liveRun.__originalRun ?? liveRun;
+
+  // Delegate to the *original* schema's run on bypass/fallback, not the clone's. The original closed over its own `inst` at construction time, and issue payloads use that reference to derive things like the class name for `z.instanceof(Test)`; calling the clone's freshly-initialized run would push issues with `inst === clone` and diverge from the original schema's error messages.
+  const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
+    if (
+      ctx?.async ||
+      ctx?.direction === "backward" ||
+      ctx?.skipChecks ||
+      (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
+    ) {
+      return originalRun(payload, ctx);
+    }
+
+    // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
+    if (ctx && isBackEdge(ctx, payload.value)) {
+      return originalRun(payload, ctx);
+    }
+
+    const out = parser(payload.value);
+    if (out !== INVALID) {
+      payload.value = out;
+      return payload;
+    }
+    // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
+    if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
+    return originalRun(payload, ctx);
+  };
+  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
+  (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
+  clone._zod.bag.fallbackRun = originalRun;
+  // a supplied parser answers `validate` too: one implementation means parse and validate cannot disagree, and its undefined `definite` keeps the runtime re-parse on every rejection
+  clone._zod.bag.validator = parser as CompiledFn<unknown>;
+  clone._zod.run = wrapped;
+
+  // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
+  if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, parser as CompiledFn<core.output<T>>);
+
+  return clone;
 }
 
 function installCompiledUserMethods<T extends SomeType>(

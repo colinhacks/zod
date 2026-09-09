@@ -1,7 +1,14 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile, compileFn } from "../compile.js";
+import {
+  INVALID,
+  ZodCompileAsyncError,
+  ZodCompileUnsupportedError,
+  compile,
+  compileFn,
+  withParser,
+} from "../compile.js";
 import { $ZodAsyncError } from "../core.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
@@ -1778,4 +1785,75 @@ test("compiled records walk own enumerable keys without Reflect.ownKeys", () => 
   const plain = z.record(z.string(), z.number());
   expect(compile(plain).parse(revealing())).toStrictEqual(plain.parse(revealing()));
   expect(compile(plain).parse(revealing())).toStrictEqual({ a: 1, b: 2 });
+});
+
+// withParser: a parser Zod did not generate, installed on the same wrapper compile() uses.
+
+// tags its output so a test fails loudly if the runtime ran instead of the supplied parser
+function taggedParser(input: unknown) {
+  if (typeof input !== "object" || input === null) return INVALID;
+  const o = input as Record<string, unknown>;
+  if (typeof o.a !== "string") return INVALID;
+  return { a: o.a, tag: "supplied" };
+}
+
+const withParserSchema = z.object({ a: z.string() });
+
+test("withParser installs the supplied parser", () => {
+  const installed = withParser(withParserSchema, taggedParser);
+  expect(installed.parse({ a: "x" })).toStrictEqual({ a: "x", tag: "supplied" });
+  // the clone is a new schema; the original keeps the runtime
+  expect(installed).not.toBe(withParserSchema);
+  expect(withParserSchema.parse({ a: "x" })).toStrictEqual({ a: "x" });
+});
+
+test("withParser hands INVALID to the runtime and gets a real ZodError", () => {
+  const installed = withParser(withParserSchema, taggedParser);
+  const result = installed.safeParse({ a: 1 });
+  expect(result.success).toBe(false);
+  expect(result.error!.issues).toEqual(withParserSchema.safeParse({ a: 1 }).error!.issues);
+});
+
+test("withParser answers validate with the supplied parser", () => {
+  const installed = withParser(withParserSchema, taggedParser);
+  expect(z.validate(installed, { a: "x" })).toBe(true);
+  expect(z.validate(installed, { a: 1 })).toBe(false);
+});
+
+test("withParser bypasses the fast path on async, like compile()", async () => {
+  const installed = withParser(withParserSchema, taggedParser);
+  // async runs on the runtime, so the tag is absent
+  await expect(installed.parseAsync({ a: "x" })).resolves.toStrictEqual({ a: "x" });
+});
+
+test("withParser reaches a parse it does not own the call site of", () => {
+  const installed = withParser(withParserSchema, taggedParser);
+  // installing on _zod.run rather than wrapping a call site is the whole point: a framework holding the schema gets the supplied parser through Standard Schema, and so does z.parse
+  expect((installed["~standard"].validate({ a: "x" }) as { value: unknown }).value).toStrictEqual({
+    a: "x",
+    tag: "supplied",
+  });
+  expect(z.parse(installed, { a: "x" })).toStrictEqual({ a: "x", tag: "supplied" });
+});
+
+test("withParser refuses a recursive schema", () => {
+  type Node = { next: Node | null };
+  const Node: z.ZodType<Node> = z.object({ next: z.lazy(() => z.nullable(Node)) });
+  expect(() => withParser(Node, () => INVALID)).toThrow(ZodCompileUnsupportedError);
+});
+
+test("withParser leaves encode on the runtime", () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (s) => Number(s),
+    encode: (n) => String(n),
+  });
+  const installed = withParser(codec, () => INVALID);
+  expect(z.encode(installed, 5)).toBe("5");
+});
+
+test("withParser rejects a parser whose output contradicts the schema", () => {
+  // the returned schema still claims T, so a parser that succeeds with something else would make parse() lie about its own type
+  // @ts-expect-error a number is not the output of z.string()
+  withParser(z.string(), () => 123);
+  expectTypeOf(withParser(z.string(), () => "ok")).toEqualTypeOf<z.ZodString>();
 });
