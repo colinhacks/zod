@@ -802,3 +802,11 @@ test("part patterns fold checks through wrappers and unions", () => {
   expect(lazy.safeParse("x").success).toBe(false);
   expect(lazy.safeParse("xy").success).toBe(true);
 });
+
+test("an embedded email does not constrain the other parts", () => {
+  const schema = z.templateLiteral([z.email(), "|", z.string()]);
+  expect(schema.safeParse("a@b.cc|a..b").success).toBe(true);
+  expect(schema.safeParse("a@b.cc|xy").success).toBe(true);
+  expect(schema.safeParse("a..b@b.cc|xy").success).toBe(false);
+  expect(schema.safeParse(".a@b.cc|xy").success).toBe(false);
+});
