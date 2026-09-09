@@ -16,6 +16,14 @@ export const Platinum = () => {
       url: "coderabbit.ai",
       href: "https://www.coderabbit.ai/",
     },
+    {
+      name: "Trigger.dev",
+      description: "Build and deploy fully-managed AI agents and workflows",
+      logoDark: "https://avatars.githubusercontent.com/u/95297378?s=400&v=4",
+      logoLight: "https://avatars.githubusercontent.com/u/95297378?s=400&v=4",
+      url: "trigger.dev",
+      href: "https://trigger.dev/?utm_source=zod",
+    },
   ];
 
   return (
