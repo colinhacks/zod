@@ -1839,7 +1839,7 @@ test("withParser reaches a parse it does not own the call site of", () => {
 test("withParser refuses a recursive schema", () => {
   type Node = { next: Node | null };
   const Node: z.ZodType<Node> = z.object({ next: z.lazy(() => z.nullable(Node)) });
-  expect(() => withParser(Node, taggedParser)).toThrow(ZodCompileUnsupportedError);
+  expect(() => withParser(Node, () => INVALID)).toThrow(ZodCompileUnsupportedError);
 });
 
 test("withParser leaves encode on the runtime", () => {

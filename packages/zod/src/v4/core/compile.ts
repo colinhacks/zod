@@ -148,7 +148,7 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
  * `compile()` is the ordinary entry point. This is for a build-time or native compiler that produces
  * a parser where `new Function` is unavailable.
  */
-export function withParser<T extends SomeType>(schema: T, parser: (input: unknown) => unknown): T {
+export function withParser<T extends SomeType>(schema: T, parser: (input: unknown) => core.output<T> | INVALID): T {
   // generated code never receives the parse context, so only the runtime can close a reference cycle; compileFn refuses these too
   if (isRecursiveSchema(schema as any)) {
     throw new ZodCompileUnsupportedError("a schema whose subtree contains a reference cycle");
@@ -161,12 +161,7 @@ export function withParser<T extends SomeType>(schema: T, parser: (input: unknow
   };
   const originalRun = liveRun.__originalRun ?? liveRun;
 
-  // Delegate to the *original* schema's run on bypass/fallback (not the
-  // clone's). The original closed over its own `inst` at construction time;
-  // issue payloads use that reference to derive things like the class name
-  // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
-  // would push issues with `inst === clone`, producing diverging error
-  // messages from the original schema.
+  // Delegate to the *original* schema's run on bypass/fallback, not the clone's. The original closed over its own `inst` at construction time, and issue payloads use that reference to derive things like the class name for `z.instanceof(Test)`; calling the clone's freshly-initialized run would push issues with `inst === clone` and diverge from the original schema's error messages.
   const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
     if (
       ctx?.async ||
