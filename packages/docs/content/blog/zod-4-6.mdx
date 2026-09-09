@@ -23,7 +23,7 @@ At a glance:
 
 ## `z.validate()`
 
-Standalone boolean validation, in Zod, Zod Mini, and Zod Core. It answers "is this input valid?" without constructing a `ZodError`, which makes rejection cheap. The return type is a guard on the schema's input type. ([#6471](https://github.com/colinhacks/zod/pull/6471))
+Standalone boolean validation, in Zod, Zod Mini, and Zod Core. It answers "is this input valid?" without constructing a `ZodError`, which makes rejection cheap. The return type is a guard on the schema's input type.
 
 ```ts
 z.validate(z.string(), "hi"); // true
