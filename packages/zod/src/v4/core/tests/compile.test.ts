@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "../../index.js";
 import {
@@ -1849,4 +1849,11 @@ test("withParser leaves encode on the runtime", () => {
   });
   const installed = withParser(codec, () => INVALID);
   expect(z.encode(installed, 5)).toBe("5");
+});
+
+test("withParser rejects a parser whose output contradicts the schema", () => {
+  // the returned schema still claims T, so a parser that succeeds with something else would make parse() lie about its own type
+  // @ts-expect-error a number is not the output of z.string()
+  withParser(z.string(), () => 123);
+  expectTypeOf(withParser(z.string(), () => "ok")).toEqualTypeOf<z.ZodString>();
 });
