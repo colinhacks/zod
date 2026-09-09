@@ -50,7 +50,7 @@ Key commands:
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
 - Format validators (`z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, …) are deliberately narrower than the specs they're named after. "The spec allows X" is not a reason to accept X — see "Format validators: spec compliance is not the bar" below.
-- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`), and NEVER run `gh workflow run release.yml`. A version bump on `main` publishes nothing by itself, and a dispatched run can be cancelled; the approval in the `npm` environment is what publishes, and that is the one irreversible action in this repo. If a version bump is genuinely needed, ask first.
+- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`), and NEVER run `gh workflow run release.yml`. Publishing is a maintainer-only dispatch behind an approval. If a version bump is genuinely needed, ask first.
 
 ## The three axes
 
@@ -83,48 +83,6 @@ If you touch that machinery, three things bite:
 - **Moving a property between definition sites changes its descriptor**, and writability/enumerability/configurability are part of the public contract. `packages/bench/memory/` has a surface-diff approach for this: dump every descriptor, alias and assign/delete semantic on both revisions and diff them. It caught four real regressions that tests did not.
 - **Redefining an accessor demotes the object to dictionary mode**, which cost 2x on `z.object().parse` once. Run `packages/bench/memory/dict-mode.ts` after any change here — every instance must report `fast`.
 - **A bound function pays a call-time trampoline.** Fine for cold builder methods, measurably not fine on the parse path.
-
-## Cutting a release
-
-Only do this when the user explicitly asks. A release is two deliberate steps: push the version bump to `main`, then dispatch `.github/workflows/release.yml` and approve its `npm` environment. The workflow publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
-
-Five files must be bumped together — `nub run check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
-
-- `packages/zod/package.json` — `version`
-- `packages/zod/jsr.json` — `version`
-- `packages/zod/src/v4/core/versions.ts` — `major` / `minor` / `patch`
-- `packages/mini/package.json` — `version` (same x.y.z; `@zod/mini` ships in lockstep) and `peerDependencies.zod` (`^x.y.0`, the minor being released — bump it on every minor)
-- `packages/mini/jsr.json` — `version` and the `imports["zod/mini"]` range (`jsr:@zod/zod@^x.y.0/mini`, same rule)
-
-Procedure:
-
-```bash
-# Make sure main is clean and up to date first.
-git checkout main && git pull
-
-# Bump all five files to the new x.y.z (and the @zod/mini peer floor + JSR import range on a minor), then:
-git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json packages/mini/jsr.json
-git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
-git push origin main
-
-# Then start the release from any machine signed into gh, and approve it when the run pauses on the npm environment.
-gh workflow run release.yml
-gh run watch   # pick the "Release on npm" run
-```
-
-Nothing publishes on push. The dispatch runs the test, lint and circular-dependency gates, then `build_and_publish` waits in the `npm` environment until colinhacks or joeltg approves it (the Actions run page, or `gh api -X POST repos/colinhacks/zod/actions/runs/<run-id>/pending_deployments -F 'environment_ids[]=21517757301' -f state=approved -f comment=ok`). Nub publishes `zod` with npm trusted publishing and provenance, then the workflow tags and releases it and publishes `@zod/mini` to npm and JSR last. Every publish step skips a version that is already on its registry, so a dispatch with no version bump, or a second dispatch of the same version, is harmless. Watch the Actions tab to confirm `build_and_publish` succeeds.
-
-The `npm` environment is what makes the dispatch the only publish path: it deploys `main` only and requires a reviewer, and the npm trusted publishers for `zod` and `@zod/mini` are bound to it, so a workflow on another branch cannot mint a publish token. Keep `actions: write` out of every bot workflow, because a `GITHUB_TOKEN` cannot trigger a push workflow but can trigger a `workflow_dispatch`.
-
-To publish `@zod/mini` at a version zod already shipped without it, dispatch the same workflow; it publishes only the scoped package, with the peer floor set to that minor:
-
-```bash
-gh workflow run release.yml -f mini_version=4.5.2
-```
-
-A back-published version below `latest` goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one; remove the tag once the backfill is done: `nub dist-tag rm @zod/mini backfill`. A version that is zod's `latest` is published under `latest` instead. Dispatch one version at a time and let each run finish — concurrent publishes to one package fail with npm `E409` while the previous packument write is still processing.
-
-Both release paths end with `nub run check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and JSR and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin on either registry, when a `@zod/mini` version has no `zod` twin, or when the `latest` tags differ. A `zod` version present on npm but missing on JSR is only warned about, since that publish is recovered by hand and must not hold a release red. Run `nub run check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
 
 ## Format validators: spec compliance is not the bar
 
