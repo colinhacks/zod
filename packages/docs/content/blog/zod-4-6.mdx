@@ -2,7 +2,7 @@
 title: Zod 4.6
 author: Colin McDonnell
 date: 2026-09-01
-description: Zod 4.6 is now available, with z.properties() as a real schema, a .validate() method on Zod Classic, and six more JSON Schema keywords.
+description: Zod 4.6 is now available, with z.validate() for boolean validation, z.properties() as a real schema, and six more JSON Schema keywords.
 ---
 
 import { ThemedImage } from "@/components/themed-image";
@@ -17,9 +17,57 @@ npm install zod@latest
 
 At a glance:
 
+- [`z.validate()`](#zvalidate) — checks input validity without building a result (up to 38x faster than `.safeParse().success` on a compiled schema)
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
-- [`.validate()`](#validate) — checks input validity without building a result (up to 38x faster than `.safeParse().success` on a compiled schema)
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
+
+## `z.validate()`
+
+Standalone boolean validation, in Zod, Zod Mini, and Zod Core. It answers "is this input valid?" without constructing a `ZodError`, which makes rejection cheap. The return type is a guard on the schema's input type. ([#6471](https://github.com/colinhacks/zod/pull/6471))
+
+```ts
+z.validate(z.string(), "hi"); // true
+z.validate(z.string(), 42);   // false
+```
+
+It is a method on Zod Classic schemas too. ([#6547](https://github.com/colinhacks/zod/pull/6547))
+
+```ts
+const Player = z.object({
+  username: z.string(),
+  xp: z.number(),
+});
+
+if (Player.validate(data)) {
+  data.username; // narrowed
+}
+```
+
+In conjunction with [`z.compile()`](/compile), this can be up to 38x faster than `.safeParse().success` on invalid input.
+
+<ThemedImage
+  lightSrc="/blog/validate-compiled-invalid-light.svg"
+  darkSrc="/blog/validate-compiled-invalid-dark.svg"
+  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 32 ns (38.1x faster), an array of 10 strings 22 ns (25.6x), a 3-element tuple 28 ns (16.5x), a 5-key object 20 ns (17.9x), a discriminated union of 3 22 ns (16.3x), z.number() 18 ns (14.8x), z.boolean() 18 ns (14.5x), z.string() 18 ns (14.6x); up to 38.1x faster"
+  caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
+/>
+
+<Accordions type="single">
+<Accordion title="Uncompiled schemas">
+Without compilation it is up to 6.4x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
+
+<ThemedImage
+  lightSrc="/blog/validate-invalid-light.svg"
+  darkSrc="/blog/validate-invalid-dark.svg"
+  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 701 ns (1.7x faster), an array of 10 strings 206 ns (2.5x), a 3-element tuple 166 ns (2.6x), a discriminated union of 3 93 ns (3.5x), a 5-key object 74 ns (4.2x), z.number() 45 ns (5.8x), z.boolean() 41 ns (6.4x), z.string() 40 ns (6.4x); up to 6.4x faster"
+  caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
+/>
+</Accordion>
+</Accordions>
+
+Both charts measure the failure path. The key feature of `.validate()` is that it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
+
+> **Note** — Async refinements are covered by `.validateAsync()`.
 
 ## `z.properties()`
 
@@ -60,47 +108,6 @@ const res = await fetch("/api/user");
 
 okResponse.parse(res) === res; // ✅ true
 ```
-
-## `.validate()`
-
-Zod 4.5 added `z.validate()`, a boolean check that narrows to the schema's input type. It is a method on Zod Classic schemas now. ([#6547](https://github.com/colinhacks/zod/pull/6547))
-
-```ts
-const Player = z.object({
-  username: z.string(),
-  xp: z.number(),
-});
-
-if (Player.validate(data)) {
-  data.username; // narrowed
-}
-```
-
-In conjunction with [`z.compile()`](/compile), this can be up to 38x faster than `.safeParse().success` on invalid input.
-
-<ThemedImage
-  lightSrc="/blog/validate-compiled-invalid-light.svg"
-  darkSrc="/blog/validate-compiled-invalid-dark.svg"
-  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 32 ns (38.1x faster), an array of 10 strings 22 ns (25.6x), a 3-element tuple 28 ns (16.5x), a 5-key object 20 ns (17.9x), a discriminated union of 3 22 ns (16.3x), z.number() 18 ns (14.8x), z.boolean() 18 ns (14.5x), z.string() 18 ns (14.6x); up to 38.1x faster"
-  caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
-/>
-
-<Accordions type="single">
-<Accordion title="Uncompiled schemas">
-Without compilation it is up to 6.4x faster. The saving is the result object: `.safeParse()` allocates one with an accessor pair on every call, and `.validate()` allocates nothing.
-
-<ThemedImage
-  lightSrc="/blog/validate-invalid-light.svg"
-  darkSrc="/blog/validate-invalid-dark.svg"
-  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 701 ns (1.7x faster), an array of 10 strings 206 ns (2.5x), a 3-element tuple 166 ns (2.6x), a discriminated union of 3 93 ns (3.5x), a 5-key object 74 ns (4.2x), z.number() 45 ns (5.8x), z.boolean() 41 ns (6.4x), z.string() 40 ns (6.4x); up to 6.4x faster"
-  caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
-/>
-</Accordion>
-</Accordions>
-
-Both charts measure the failure path. The key feature of `.validate()` is that it can *short-circuit* on the first issue it encounters, instead of aggregating a full `ZodIssue[]` array.
-
-> **Note** — Async refinements are covered by `.validateAsync()`.
 
 ## `fromJSONSchema()`
 
