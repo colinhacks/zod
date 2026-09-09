@@ -2,7 +2,7 @@
 title: Zod 4.6
 author: Colin McDonnell
 date: 2026-09-01
-description: Zod 4.6 is now available, with z.validate() for boolean validation, z.properties() as a real schema, and six more JSON Schema keywords.
+description: Zod 4.6 is now available, with .validate() for boolean validation, z.properties() as a real schema, and six more JSON Schema keywords.
 ---
 
 import { ThemedImage } from "@/components/themed-image";
@@ -17,7 +17,7 @@ npm install zod@latest
 
 At a glance:
 
-- [`z.validate()`](#zvalidate) — checks input validity without building a result (up to 35x faster than `.safeParse().success` on a compiled schema)
+- [`.validate()`](#validate) — checks input validity without building a result (up to 35x faster than `.safeParse().success` on a compiled schema)
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
 - [`z.iban()`](#ziban) — electronic-format IBAN plus mod-97 checksum
@@ -25,7 +25,7 @@ At a glance:
 - [Memory retention in recursive schemas](#memory-retention-in-recursive-schemas) — releases the parsed input, fixing a 4.5 out-of-memory regression
 - [`@zod/mini`](/packages/mini) — Zod Mini as a standalone package, versioned in lockstep with `zod` since 4.5
 
-## `z.validate()`
+## `.validate()`
 
 Standalone boolean validation, in Zod, Zod Mini, and Zod Core. It answers "is this input valid?" without constructing a `ZodError`, which makes rejection cheap. The return type is a guard on the schema's input type.
 
@@ -52,7 +52,7 @@ In conjunction with [`z.compile()`](/compile), this can be up to 35x faster than
 <ThemedImage
   lightSrc="/blog/validate-compiled-invalid-light.svg"
   darkSrc="/blog/validate-compiled-invalid-dark.svg"
-  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 28 ns (34.9x faster), an array of 10 strings 23 ns (24.6x), a 3-element tuple 28 ns (16.1x), a 5-key object 21 ns (16.3x), a discriminated union of 3 21 ns (15.7x), z.number() 19 ns (13.8x), z.string() 19 ns (13.2x), z.boolean() 19 ns (13.7x); up to 34.9x faster"
+  alt="Time per call on invalid input, schemas compiled with z.compile(), safeParse().success as a gray bar with .validate() as a blue bar inside it: a union of 3 objects 28 ns (34.9x faster), an array of 10 strings 23 ns (24.6x), a 3-element tuple 28 ns (16.1x), a 5-key object 21 ns (16.3x), a discriminated union of 3 21 ns (15.7x), z.number() 19 ns (13.8x), z.string() 19 ns (13.2x), z.boolean() 19 ns (13.7x); up to 34.9x faster"
   caption={<>Time per call on invalid input, compiled with z.compile() — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 
@@ -63,7 +63,7 @@ Without compilation it is up to 5.9x faster. The saving is the result object: `.
 <ThemedImage
   lightSrc="/blog/validate-invalid-light.svg"
   darkSrc="/blog/validate-invalid-dark.svg"
-  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with z.validate() as a blue bar inside it: a union of 3 objects 659 ns (1.5x faster), an array of 10 strings 211 ns (2.3x), a 3-element tuple 166 ns (2.5x), a discriminated union of 3 93 ns (3.3x), a 5-key object 75 ns (3.9x), z.number() 47 ns (5.3x), z.string() 42 ns (5.8x), z.boolean() 42 ns (5.9x); up to 5.9x faster"
+  alt="Time per call on invalid input, plain schemas, safeParse().success as a gray bar with .validate() as a blue bar inside it: a union of 3 objects 659 ns (1.5x faster), an array of 10 strings 211 ns (2.3x), a 3-element tuple 166 ns (2.5x), a discriminated union of 3 93 ns (3.3x), a 5-key object 75 ns (3.9x), z.number() 47 ns (5.3x), z.string() 42 ns (5.8x), z.boolean() 42 ns (5.9x); up to 5.9x faster"
   caption={<>Time per call on invalid input, plain schemas — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/validate-vs-safeparse.ts">benchmark</a>)</>}
 />
 </Accordion>
