@@ -1,6 +1,51 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("recursive object schema type aliases", () => {
+  type ObjectField = z.ZodObject<{ [k: string]: ObjectField }>;
+  type MixedField = z.ZodString | z.ZodObject<{ [k: string]: MixedField }>;
+  expectTypeOf<ObjectField>().toExtend<z.ZodType>();
+  expectTypeOf<MixedField>().toExtend<z.ZodType>();
+
+  type ObjectValue = { [k: string]: ObjectValue };
+  type MixedValue = string | { [k: string]: MixedValue };
+  expectTypeOf<z.input<ObjectField>>().toEqualTypeOf<ObjectValue>();
+  expectTypeOf<z.output<ObjectField>>().toEqualTypeOf<ObjectValue>();
+  expectTypeOf<z.input<MixedField>>().toEqualTypeOf<MixedValue>();
+  expectTypeOf<z.output<MixedField>>().toEqualTypeOf<MixedValue>();
+
+  const schema: MixedField = z.object({ name: z.string(), nested: z.object({ name: z.string() }) });
+  expect(schema.parse({ name: "a", nested: { name: "b", extra: true } })).toEqual({
+    name: "a",
+    nested: { name: "b" },
+  });
+  expect(schema.safeParse({ name: "a", nested: { name: 123 } }).success).toBe(false);
+
+  type CoreField = z.core.$ZodString<string> | z.core.$ZodObject<{ [k: string]: CoreField }>;
+  expectTypeOf<z.input<CoreField>>().toEqualTypeOf<MixedValue>();
+  expectTypeOf<z.output<CoreField>>().toEqualTypeOf<MixedValue>();
+});
+
+test("recursive object aliases preserve distinct input and output", () => {
+  type Field = z.ZodPipe<z.ZodString, z.ZodTransform<number, string>> | z.ZodObject<{ [k: string]: Field }>;
+  type Input = string | { [k: string]: Input };
+  type Output = number | { [k: string]: Output };
+  expectTypeOf<z.input<Field>>().toEqualTypeOf<Input>();
+  expectTypeOf<z.output<Field>>().toEqualTypeOf<Output>();
+  const schema: Field = z.object({ nested: z.object({ length: z.string().transform((s) => s.length) }) });
+  expect(schema.parse({ nested: { length: "abc" } })).toEqual({ nested: { length: 3 } });
+  expect(schema.safeParse({ nested: { length: 3 } }).success).toBe(false);
+});
+
+test("indexed object inference preserves string keys", () => {
+  type Indexed = z.ZodObject<Record<string, z.ZodString>>;
+  type Recursive = z.ZodObject<Record<string, Recursive>>;
+  expectTypeOf<keyof z.input<Indexed>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.output<Indexed>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.input<Recursive>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.output<Recursive>>().toEqualTypeOf<string>();
+});
+
 test("recursion with z.lazy", () => {
   const data = {
     name: "I",

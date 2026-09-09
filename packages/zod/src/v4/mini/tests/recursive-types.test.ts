@@ -1,6 +1,22 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/mini";
 
+test("recursive object schema type aliases", () => {
+  type ObjectField = z.ZodMiniObject<{ [k: string]: ObjectField }>;
+  type Field = z.ZodMiniString<string> | z.ZodMiniObject<{ [k: string]: Field }>;
+  type ObjectValue = { [k: string]: ObjectValue };
+  type Value = string | { [k: string]: Value };
+  expectTypeOf<z.input<ObjectField>>().toEqualTypeOf<ObjectValue>();
+  expectTypeOf<z.output<ObjectField>>().toEqualTypeOf<ObjectValue>();
+  expectTypeOf<keyof z.input<ObjectField>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.output<ObjectField>>().toEqualTypeOf<string>();
+  expectTypeOf<z.input<Field>>().toEqualTypeOf<Value>();
+  expectTypeOf<z.output<Field>>().toEqualTypeOf<Value>();
+  const schema: Field = z.object({ nested: z.object({ name: z.string() }) });
+  expect(schema.parse({ nested: { name: "a", extra: true } })).toEqual({ nested: { name: "a" } });
+  expect(schema.safeParse({ nested: { name: 123 } }).success).toBe(false);
+});
+
 test("recursion with z.lazy", () => {
   const data = {
     name: "I",
