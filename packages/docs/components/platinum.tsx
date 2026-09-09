@@ -16,14 +16,6 @@ export const Platinum = () => {
       url: "trigger.dev",
       href: "https://trigger.dev/?utm_source=zod",
     },
-    {
-      name: "CodeRabbit",
-      description: "Cut code review time & bugs in half",
-      logoDark: "https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d",
-      logoLight: "https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74",
-      url: "coderabbit.ai",
-      href: "https://www.coderabbit.ai/",
-    },
   ];
 
   return (
