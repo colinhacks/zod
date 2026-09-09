@@ -16,9 +16,10 @@ interface Entry {
 }
 
 interface State {
-  buckets: Map<$ZodType, Map<object, Entry>>;
+  /** Weak throughout because `attach` caches a bucket on the schema instance, which outlives the parse. */
+  buckets: WeakMap<$ZodType, WeakMap<object, Entry>>;
   /** Nodes a back-edge resolved to before they finished. */
-  backEdges: Set<object> | undefined;
+  backEdges: WeakSet<object> | undefined;
 }
 
 /** Keyed off the context object every schema in one parse call already shares. */
@@ -199,17 +200,17 @@ export function isRecursiveSchema(inst: $ZodType): boolean {
   return isRecursive(inst, new Set(), true) !== NONE;
 }
 
-function bucketFor(state: State, inst: $ZodType): Map<object, Entry> {
+function bucketFor(state: State, inst: $ZodType): WeakMap<object, Entry> {
   let bucket = state.buckets.get(inst);
   if (!bucket) {
-    bucket = new Map();
+    bucket = new WeakMap();
     state.buckets.set(inst, bucket);
   }
   return bucket;
 }
 
 // Set immediately before delegating to core and cleared immediately after, so `alloc` registers only for a visit this module is driving.
-let handoff: Map<object, Entry> | undefined;
+let handoff: WeakMap<object, Entry> | undefined;
 
 // Allocated but unfinished entries. `alloc` and the matching pop both happen in the synchronous part of a parse, so they nest even when children are async, and one stack serves every schema.
 const open: Entry[] = [];
@@ -242,9 +243,9 @@ const memo: $ZodMemoizer = {
   attach(inst) {
     let isRecursiveInst: boolean | undefined;
     let rechecked = false;
-    // `bucket` memoized for one parse; a recursive schema is re-entered many times and its bucket never changes
+    // a recursive schema is re-entered many times per parse and its bucket never changes
     let lastCtx: object | undefined;
-    let lastBucket: Map<object, Entry> | undefined;
+    let lastBucket: WeakMap<object, Entry> | undefined;
 
     // Wraps `parse` in a deferred so it sees the container's final parse. Core's own deferred copies `parse` into `run` when there are no checks, and it ran first, so `run` is patched to match; with checks, `run` reads `parse` dynamically.
     inst._zod.deferred ??= [];
@@ -270,11 +271,11 @@ const memo: $ZodMemoizer = {
 
         let state = (ctx as WithState)[STATE];
         if (!state) {
-          state = { buckets: new Map(), backEdges: undefined };
+          state = { buckets: new WeakMap(), backEdges: undefined };
           (ctx as WithState)[STATE] = state;
         }
 
-        let bucket: Map<object, Entry>;
+        let bucket: WeakMap<object, Entry>;
         if (lastCtx === ctx) {
           bucket = lastBucket!;
         } else {
@@ -291,7 +292,7 @@ const memo: $ZodMemoizer = {
           } else {
             // Still being parsed: its own checks cover it, so skip them here.
             payload.memo = true;
-            state.backEdges ??= new Set();
+            state.backEdges ??= new WeakSet();
             state.backEdges.add(hit.value as object);
           }
           return payload;

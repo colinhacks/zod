@@ -1,3 +1,5 @@
+import v8 from "node:v8";
+import vm from "node:vm";
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
@@ -959,4 +961,34 @@ test("parses a factory-built recursive schema through z.lazy", () => {
 
   const out = z.object({ root: Node() }).parse({ root: { id: 1, child: { id: 2, child: undefined } } });
   expect(out.root.child.id).toBe(2);
+});
+
+test("a finished parse pins nothing on the schema", async () => {
+  // es2020 is the target, and its lib predates WeakRef
+  type Weak<T extends object> = { deref(): T | undefined };
+  const { WeakRef: Weak } = globalThis as unknown as { WeakRef: new <T extends object>(target: T) => Weak<T> };
+  // vitest carries no --expose-gc, so reach the collector the way node's own tests do
+  v8.setFlagsFromString("--expose-gc");
+  const gc = vm.runInNewContext("gc") as () => void;
+
+  const Node: any = z.object({
+    id: z.number(),
+    get next() {
+      return z.optional(Node);
+    },
+  });
+
+  const ref = ((): Weak<object> => {
+    const input = { id: 1, next: { id: 2, next: undefined } };
+    Node.parse(input);
+    return new Weak(input);
+  })();
+
+  for (let attempt = 0; attempt < 10 && ref.deref(); attempt++) {
+    // the input stays on the stack until a macrotask boundary
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    gc();
+  }
+
+  expect(ref.deref()).toBeUndefined();
 });
