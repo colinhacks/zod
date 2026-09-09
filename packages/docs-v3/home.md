@@ -188,22 +188,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://www.coderabbit.ai/">
-        <picture height="80px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
-          <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
-        </picture>
-      </a>
-      <br  />
-      Cut code review time & bugs in half
-      <br/>
-      <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
-      </p>
-      <p></p>
-    </td>
-    <td align="center">
-      <p></p>
-      <p>
       <a href="https://trigger.dev/?utm_source=zod">
         <picture height="80px">
           <source media="(prefers-color-scheme: dark)" srcset="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
@@ -214,6 +198,22 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       Build and deploy fully-managed AI agents and workflows
       <br/>
       <a href="https://trigger.dev/?utm_source=zod" style="text-decoration:none;">trigger.dev</a>
+      </p>
+      <p></p>
+    </td>
+    <td align="center">
+      <p></p>
+      <p>
+      <a href="https://www.coderabbit.ai/">
+        <picture height="80px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
+          <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
+        </picture>
+      </a>
+      <br  />
+      Cut code review time & bugs in half
+      <br/>
+      <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
       </p>
       <p></p>
     </td>
