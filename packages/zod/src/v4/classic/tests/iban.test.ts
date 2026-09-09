@@ -51,6 +51,13 @@ describe("z.iban", () => {
     expect(() => z.iban().parse("FR1420041010050500013M02607")).toThrow();
   });
 
+  test("rejects check digits outside 02-98", () => {
+    // mod 97 alone accepts all three; `98 - remainder` can only ever emit 02-98
+    expect(() => z.iban().parse("DE00000000000000000066")).toThrow();
+    expect(() => z.iban().parse("DE01000000000000000048")).toThrow();
+    expect(() => z.iban().parse("DE99000000000000000030")).toThrow();
+  });
+
   test("carries the shape regex as its JSON Schema pattern", () => {
     expect(z.toJSONSchema(z.iban())).toMatchObject({
       format: "iban",
