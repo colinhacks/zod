@@ -222,31 +222,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Gold</h3>
-
-<table align="center" style="justify-content: center;align-items: center;display: flex;">
-  <tr>
-    <td align="center">
-      <p></p>
-      <p>
-      <a href="https://zernio.com/?utm_source=zod">
-        <picture height="48px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://zernio.com/brand/logo-white.svg">
-          <img alt="Zernio" height="48px" src="https://zernio.com/brand/logo-primary.svg">
-        </picture>
-      </a>
-      <br  />
-      Social APIs for developers and AI agents
-      <br/>
-      <a href="https://zernio.com/?utm_source=zod" style="text-decoration:none;">zernio.com</a>
-      </p>
-      <p></p>
-    </td>
-  </tr>
-</table>
-
-<br/>
-
 <h3 align="center">Silver</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
@@ -305,6 +280,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <img src="https://avatars.githubusercontent.com/u/117220588?s=200&v=4" height="50px;" alt="9thCO" />
       <br />
       <a style="text-decoration:none;" href="https://www.9thco.com/?utm_source=zod" target="_blank">9thCO</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/28635252?s=200&v=4" height="50px;" alt="StackBlitz" />
+      <br />
+      <a style="text-decoration:none;" href="https://stackblitz.com/?utm_source=zod" target="_blank">StackBlitz</a>
     </td>
   </tr>
 </table>
