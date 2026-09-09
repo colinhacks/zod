@@ -37,6 +37,15 @@ test("recursive object aliases preserve distinct input and output", () => {
   expect(schema.safeParse({ nested: { length: 3 } }).success).toBe(false);
 });
 
+test("indexed object inference preserves string keys", () => {
+  type Indexed = z.ZodObject<Record<string, z.ZodString>>;
+  type Recursive = z.ZodObject<Record<string, Recursive>>;
+  expectTypeOf<keyof z.input<Indexed>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.output<Indexed>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.input<Recursive>>().toEqualTypeOf<string>();
+  expectTypeOf<keyof z.output<Recursive>>().toEqualTypeOf<string>();
+});
+
 test("recursion with z.lazy", () => {
   const data = {
     name: "I",

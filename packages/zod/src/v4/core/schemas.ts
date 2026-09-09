@@ -1893,7 +1893,7 @@ type OptionalInSchema = { _zod: { optin: "optional" | "defaulted" } };
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
-    : { [k: string]: core.output<T[keyof T]> }
+    : { [k in string]: core.output<T[keyof T]> }
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
@@ -1937,7 +1937,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
 export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
-    : { [k: string]: core.input<T[keyof T]> }
+    : { [k in string]: core.input<T[keyof T]> }
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
