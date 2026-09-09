@@ -67,7 +67,7 @@ test("locales - tg", () => {
     [
       z.discriminatedUnion("kind", [z.object({ kind: z.literal("a") }), z.object({ kind: z.literal("b") })]),
       { kind: "c" },
-      "Қимати дискриминатори нодуруст: 'a' | 'b' интизор мерафт",
+      "Қимати нодурусти дискриминатор: 'a' | 'b' интизор мерафт",
     ],
     [z.record(z.string().min(2), z.number()), { a: 1 }, "Калиди нодуруст дар record"],
     [z.map(z.string(), z.number()), new Map([[{}, 1]]), "Калиди нодуруст дар map"],
