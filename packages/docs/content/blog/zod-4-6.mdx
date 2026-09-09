@@ -1,7 +1,7 @@
 ---
 title: Zod 4.6
 author: Colin McDonnell
-date: 2026-09-01
+date: 2026-09-09
 description: Zod 4.6 is now available, with .validate() for boolean validation, z.properties() as a real schema, and six more JSON Schema keywords.
 ---
 
@@ -21,6 +21,7 @@ At a glance:
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
 - [`z.iban()`](#ziban) — electronic-format IBAN plus mod-97 checksum
+- [`z.withParser()`](#zwithparser) — installs a parser generated elsewhere, for environments without `new Function`
 - [Faster CommonJS](#faster-commonjs) — drops the getter on every export (~3x faster `z.validate()` under `require`)
 - [Memory retention in recursive schemas](#memory-retention-in-recursive-schemas) — releases the parsed input, fixing a 4.5 out-of-memory regression
 - [`@zod/mini`](/packages/mini) — Zod Mini as a standalone package, versioned in lockstep with `zod` since 4.5
@@ -153,6 +154,19 @@ z.iban().parse("DE89370400440532013000"); // ✅
 z.iban().parse("DE89370400440532013001"); // ❌ bad checksum
 ```
 
+## `z.withParser()`
+
+`z.compile()` builds its parser with `new Function`, which a strict Content Security Policy blocks. `z.withParser()` is that installer on its own: it takes a parser generated somewhere else, at build time or by a native compiler, and installs it under the same contract. ([#6575](https://github.com/colinhacks/zod/pull/6575))
+
+```ts
+const Player = z.object({ username: z.string(), xp: z.number() });
+
+// isPlayer is a type guard your build step generated
+const Fast = z.withParser(Player, (input) => (isPlayer(input) ? input : z.INVALID));
+```
+
+Returning `z.INVALID` hands the input back to the runtime, which stays the only source of `ZodError`s.
+
 ## Faster CommonJS
 
 TypeScript compiles a re-export to a getter, and 252 of the 255 exports on Zod 4.5's CommonJS entrypoint were getters. V8 could not see a constant callee behind one, so it could not inline the call. The 4.6 build emits plain properties and freezes the exports object. On a compiled schema, `z.validate()` under `require` is about 3x faster than it was in Zod 4.5. ([#6564](https://github.com/colinhacks/zod/pull/6564))
@@ -268,8 +282,11 @@ z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
 
 ## Commits
 
-Zod 4.6 rolls up 69 commits.
+Zod 4.6 rolls up 72 commits.
 
+- [`661673ae`](https://github.com/colinhacks/zod/commit/661673ae) docs: make the 9thCO logo visible on the light theme by [@colinhacks](https://github.com/colinhacks)
+- [`6de10dce`](https://github.com/colinhacks/zod/commit/6de10dce) docs: reconcile the sponsor listings against every active sponsorship ([#6579](https://github.com/colinhacks/zod/pull/6579)) by [@colinhacks](https://github.com/colinhacks)
+- [`213ee75d`](https://github.com/colinhacks/zod/commit/213ee75d) feat(compile): add z.withParser for externally generated parsers ([#6575](https://github.com/colinhacks/zod/pull/6575)) by [@colinhacks](https://github.com/colinhacks)
 - [`f9465d4e`](https://github.com/colinhacks/zod/commit/f9465d4e) docs: reconcile the sponsor listings with active sponsorships ([#6576](https://github.com/colinhacks/zod/pull/6576)) by [@colinhacks](https://github.com/colinhacks)
 - [`f7fd5548`](https://github.com/colinhacks/zod/commit/f7fd5548) perf(v4): drop the lookaheads from the email regex ([#6573](https://github.com/colinhacks/zod/pull/6573)) by [@colinhacks](https://github.com/colinhacks)
 - [`36f17960`](https://github.com/colinhacks/zod/commit/36f17960) fix(v4): stop the memoizer from pinning a finished parse ([#6572](https://github.com/colinhacks/zod/pull/6572)) by [@colinhacks](https://github.com/colinhacks)
