@@ -2600,7 +2600,7 @@ export interface $ZodDiscriminatedUnionInternals<
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
   bag: util.LoosePartial<{
-    optionsMap: Map<util.Primitive, $ZodType>;
+    optionsMap: Map<util.Primitive, $ZodType | null>;
   }>;
 }
 
@@ -2624,7 +2624,7 @@ export type $DiscriminatedOption<Options extends readonly SomeType[], Disc exten
     : never;
 }[number];
 
-/** Returns the option of `union` whose discriminator claims `value`. */
+/** Returns the option whose discriminator claims `value`, or throws if ambiguous. */
 export function getDiscriminatedOption<
   Options extends readonly SomeType[],
   Disc extends string,
@@ -2633,15 +2633,31 @@ export function getDiscriminatedOption<
   const internals = union._zod;
   let map = internals.bag.optionsMap;
   if (!map) {
-    map = new Map();
-    const { options, discriminator } = internals.def;
-    for (const option of options as unknown as readonly $ZodType[]) {
-      // First declaration wins, matching the order the parse path resolves a duplicate in.
-      for (const v of option._zod.propValues?.[discriminator] ?? []) if (!map.has(v)) map.set(v, option);
-    }
+    map = discriminatorMap(internals.def);
     internals.bag.optionsMap = map;
   }
-  return map.get(value as util.Primitive) as any;
+  const option = map.get(value as util.Primitive);
+  if (option === null) throw new Error(`Ambiguous discriminator value "${String(value)}"`);
+  return option as any;
+}
+
+function discriminatorMap(def: $ZodDiscriminatedUnionDef<readonly SomeType[]>): Map<util.Primitive, $ZodType | null> {
+  const map = new Map<util.Primitive, $ZodType | null>();
+  for (const option of def.options as readonly $ZodType[]) {
+    const values = option._zod.propValues?.[def.discriminator];
+    if (!values || values.size === 0)
+      throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
+    for (const value of values) {
+      if (map.has(value)) {
+        if (value !== undefined) throw new Error(`Duplicate discriminator value "${String(value)}"`);
+        // keep the collision marked so a later member cannot reclaim it
+        map.set(value, null);
+      } else {
+        map.set(value, option);
+      }
+    }
+  }
+  return map;
 }
 
 export interface $ZodDiscriminatedUnion<
@@ -2661,10 +2677,12 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     const _super = inst._zod.parse;
     util.defineLazyInternal(inst, "propValues", (zod) => {
       const propValues: util.PropValues = {};
+      let undefinedCount = 0;
       for (const option of zod.def.options) {
         const pv = option._zod.propValues;
         if (!pv || Object.keys(pv).length === 0)
           throw new Error(`Invalid discriminated union option at index "${zod.def.options.indexOf(option)}"`);
+        if (pv[zod.def.discriminator]?.has(undefined)) undefinedCount++;
         for (const [k, v] of Object.entries(pv!)) {
           if (!Object.prototype.hasOwnProperty.call(propValues, k)) {
             util.assignProp(propValues, k, new Set());
@@ -2674,6 +2692,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
           }
         }
       }
+      if (!zod.def.unionFallback && undefinedCount > 1) propValues[zod.def.discriminator]?.delete(undefined);
       return propValues;
     });
 
@@ -2685,22 +2704,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
     });
 
-    const disc = util.cached(() => {
-      const opts = def.options;
-      const map: Map<util.Primitive, $ZodType> = new Map();
-      for (const o of opts) {
-        const values = o._zod.propValues?.[def.discriminator];
-        if (!values || values.size === 0)
-          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
-        for (const v of values) {
-          if (map.has(v)) {
-            throw new Error(`Duplicate discriminator value "${String(v)}"`);
-          }
-          map.set(v, o);
-        }
-      }
-      return map;
-    });
+    const disc = util.cached(() => discriminatorMap(def));
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
@@ -2715,8 +2719,10 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const opt = disc.value.get(input?.[def.discriminator] as any);
-      if (opt) {
+      const value = input?.[def.discriminator];
+      const opt = disc.value.get(value as util.Primitive);
+      // forward metadata cannot choose an encoder for an absent tag
+      if (opt && (value !== undefined || ctx.direction !== "backward")) {
         return opt._zod.run(payload, ctx) as any;
       }
 
@@ -2733,7 +2739,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
-        options: Array.from(disc.value.keys()),
+        options: Array.from(disc.value.keys()).filter((value) => disc.value.get(value) !== null),
         input,
         path: [def.discriminator],
         inst,

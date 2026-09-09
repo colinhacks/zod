@@ -740,6 +740,26 @@ test("encode with codec discriminator", () => {
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
 
+test("nested encoding does not select a sibling from forward discriminator values", async () => {
+  const tag = (value: "a" | "b") =>
+    z.codec(z.literal(value).default(value), z.undefined(), {
+      decode: () => undefined,
+      encode: () => value,
+    });
+  const inner = z.discriminatedUnion("type", [
+    z.object({ type: tag("a"), value: z.literal("a") }),
+    z.object({ type: tag("b"), value: z.literal("b") }),
+  ]);
+  const outer = z.discriminatedUnion("type", [inner, z.object({ type: z.undefined(), value: z.string() })]);
+  for (const value of ["a", "b"] as const) {
+    const input = { type: undefined, value };
+    const expected = { type: value, value };
+    expect(z.encode(inner, input)).toEqual(expected);
+    expect(z.encode(outer, input)).toEqual(expected);
+    expect(await z.encodeAsync(outer, input)).toEqual(expected);
+  }
+});
+
 test("getDiscriminatedOption", () => {
   const fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
   const veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
@@ -811,9 +831,14 @@ test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])
   }
 );
 
-// An omittable discriminator reads back as undefined at the lookup, exactly as TypeScript sees it: `{ k?: "a" } | { k?: "c" }` does not narrow on `k === undefined`.
 test("an omittable discriminator claims undefined", () => {
-  const omittable = [z.exactOptional(z.literal("a")), z.optional(z.literal("a")), z.literal("a").default("a")];
+  const omittable = [
+    z.exactOptional(z.literal("a")),
+    z.optional(z.literal("a")),
+    z.literal("a").default("a"),
+    z.literal("a").prefault("a"),
+    z.literal("a").catch("a"),
+  ];
   for (const k of omittable) {
     expect(z.object({ k })._zod.propValues.k).toEqual(new Set(["a", undefined]));
   }
@@ -827,10 +852,91 @@ test("an omittable discriminator claims undefined", () => {
   expect(z.union(options).safeParse({ x: "s" }).success).toEqual(true);
   expect(z.discriminatedUnion("k", options).safeParse({ k: "b", y: 1 }).success).toEqual(true);
 
-  // two options omit the key: both claim undefined, so they are not discriminable on it
+  // ambiguous absence does not prevent explicit tags from routing
   for (const k of omittable) {
-    expect(() =>
-      z.discriminatedUnion("k", [z.object({ k }), z.object({ k: z.exactOptional(z.literal("c")) })]).parse({})
-    ).toThrow(/Duplicate discriminator value "undefined"/);
+    const schema = z.discriminatedUnion("k", [z.object({ k }), z.object({ k: z.exactOptional(z.literal("c")) })]);
+    expect(schema.parse({ k: "a" })).toEqual({ k: "a" });
+    expect(schema.parse({ k: "c" })).toEqual({ k: "c" });
+    expect(schema.safeParse({}).success).toBe(false);
   }
+});
+
+test("defaulted discriminators preserve tagged parsing without guessing a member", async () => {
+  const a = z.object({ type: z.literal("a").default("a"), x: z.number().positive() });
+  const b = z.object({ type: z.literal("b").default("b"), y: z.string() });
+  const c = z.object({ type: z.literal("c").default("c"), z: z.boolean() });
+  for (const options of [
+    [a, b, c],
+    [c, b, a],
+  ] as const) {
+    const schema = z.discriminatedUnion("type", options);
+    for (const input of [a.parse({ x: 1 }), b.parse({ y: "s" }), c.parse({ z: true })]) {
+      expect(schema.parse(input)).toEqual(input);
+      expect((await schema.safeParseAsync(input)).success).toBe(true);
+    }
+    for (const input of [{ x: 1, y: "s", z: true }, { type: undefined }, { type: "other" }, { type: "a", x: -1 }]) {
+      expect(schema.safeParse(input).success).toBe(false);
+      expect((await schema.safeParseAsync(input)).success).toBe(false);
+    }
+    const result = schema.safeParse({});
+    expect(result.error?.issues[0]).toMatchObject({
+      code: "invalid_union",
+      path: ["type"],
+      options: options.map((o) => o.shape.type.unwrap().value),
+    });
+    expect(z.getDiscriminatedOption(schema, "a")).toBe(a);
+  }
+  const unique = z.discriminatedUnion("type", [a, b.safeExtend({ type: b.shape.type.unwrap() })]);
+  expect(unique.parse({ x: 1 })).toEqual({ type: "a", x: 1 });
+});
+
+test("undefined collisions are value-based and discriminator lookup rejects ambiguity", () => {
+  const a = z.object({ type: z.literal("a").optional() });
+  const absent = z.object({ type: z.undefined() });
+  for (const options of [
+    [a, absent],
+    [absent, a],
+    [absent, absent, a],
+  ] as const) {
+    const schema = z.discriminatedUnion("type", options);
+    expect(schema.parse({ type: "a" })).toEqual({ type: "a" });
+    expect(schema.safeParse({}).success).toBe(false);
+    expect(() => z.getDiscriminatedOption(schema, undefined)).toThrow('Ambiguous discriminator value "undefined"');
+  }
+  const unique = z.discriminatedUnion("type", [absent, z.object({ type: z.literal("a") })]);
+  expect(unique.parse({ type: undefined })).toEqual({ type: undefined });
+  expect(z.getDiscriminatedOption(unique, undefined)).toBe(absent);
+});
+
+test("non-undefined discriminator collisions remain schema errors", () => {
+  for (const tag of [z.literal("a").default("a"), z.literal(["a", "b"]), z.literal("a").nullable()]) {
+    const schema = z.discriminatedUnion("type", [z.object({ type: tag }), z.object({ type: tag })]);
+    expect(() => schema.safeParse({ type: "a" })).toThrow(/Duplicate discriminator value/);
+    expect(() => z.encode(schema, { type: "a" })).toThrow(/Duplicate discriminator value/);
+    expect(() => z.getDiscriminatedOption(schema, "a")).toThrow(/Duplicate discriminator value/);
+  }
+  const nullable = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a").nullable() }),
+    z.object({ type: z.literal("b").nullable() }),
+  ]);
+  expect(() => nullable.safeParse({ type: "a" })).toThrow('Duplicate discriminator value "null"');
+});
+
+test("nested defaulted unions only advertise routable discriminator values", () => {
+  const a = z.object({ type: z.literal("a").default("a"), group: z.literal("inner") });
+  const b = z.object({ type: z.literal("b").default("b"), group: z.literal("inner") });
+  const inner = z.discriminatedUnion("type", [a, b]);
+  const c = z.object({ type: z.literal("c").default("c"), group: z.literal("outer") });
+  expect(inner._zod.propValues.type).toEqual(new Set(["a", "b"]));
+  for (const schema of [
+    z.discriminatedUnion("type", [z.lazy(() => inner), c]),
+    z.discriminatedUnion("group", [inner, c]),
+  ]) {
+    expect(schema.parse({ type: "a", group: "inner" })).toEqual({ type: "a", group: "inner" });
+    expect(schema.parse({ group: "outer" })).toEqual({ type: "c", group: "outer" });
+    expect(schema.safeParse({ group: "inner" }).success).toBe(false);
+  }
+  const fallback = z.discriminatedUnion("type", [a, b], { unionFallback: true });
+  expect(fallback._zod.propValues.type.has(undefined)).toBe(true);
+  expect(fallback.parse({ group: "inner" })).toEqual({ type: "a", group: "inner" });
 });
