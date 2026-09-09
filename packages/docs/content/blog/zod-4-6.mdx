@@ -22,6 +22,7 @@ At a glance:
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
 - [`z.iban()`](#ziban) — electronic-format IBAN plus mod-97 checksum
 - [Faster CommonJS](#faster-commonjs) — drops the getter on every export (~3x faster `z.validate()` under `require`)
+- [Memory retention in recursive schemas](#memory-retention-in-recursive-schemas) — releases the parsed input, fixing a 4.5 out-of-memory regression
 - [`@zod/mini`](/packages/mini) — Zod Mini as a standalone package, versioned in lockstep with `zod` since 4.5
 
 ## `z.validate()`
@@ -165,6 +166,19 @@ z.validate(CompiledPlayer, data); // ~3x faster than Zod 4.5
 
 Only calls through the namespace were affected. A method call like `Player.safeParse(data)` never reads the exports object, and the ESM build is unchanged.
 
+## Memory retention in recursive schemas
+
+A recursive schema held the input and output of its last parse until the next parse replaced it, so one long-lived schema pinned every object it had touched. Zod 4.4 released that input and Zod 4.5 did not, which surfaced as an out-of-memory failure on a repository-wide lint run. The parse state is weak throughout now: one parse of a 29k-node tree retains 2.2 MB where it used to retain 10.1 MB, and recursive parses give up about 6% for it. ([#6572](https://github.com/colinhacks/zod/pull/6572))
+
+```ts
+const Category = z.object({
+  name: z.string(),
+  get children() {
+    return z.array(Category);
+  },
+});
+```
+
 ## Bug fixes
 
 ### ⚠️ Error maps run on the first read of `error`
@@ -241,8 +255,13 @@ z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
 
 ## Commits
 
-Zod 4.6 rolls up 62 commits.
+Zod 4.6 rolls up 67 commits.
 
+- [`36f17960`](https://github.com/colinhacks/zod/commit/36f17960) fix(v4): stop the memoizer from pinning a finished parse ([#6572](https://github.com/colinhacks/zod/pull/6572)) by [@colinhacks](https://github.com/colinhacks)
+- [`22bed613`](https://github.com/colinhacks/zod/commit/22bed613) feat(v4): add z.iban() string format with mod-97 checksum ([#6571](https://github.com/colinhacks/zod/pull/6571)) by [@colinhacks](https://github.com/colinhacks)
+- [`c5b9bcb3`](https://github.com/colinhacks/zod/commit/c5b9bcb3) bench: measure what a runtime island's leaked indent cost the generated source by [@colinhacks](https://github.com/colinhacks)
+- [`e54716cb`](https://github.com/colinhacks/zod/commit/e54716cb) docs(ecosystem): add @apical-ts/craft ([#5946](https://github.com/colinhacks/zod/pull/5946)) by [@gunzip](https://github.com/gunzip)
+- [`dcbcf052`](https://github.com/colinhacks/zod/commit/dcbcf052) fix(compile): unwind the doc indent when a child generator throws ([#6570](https://github.com/colinhacks/zod/pull/6570)) by [@colinhacks](https://github.com/colinhacks)
 - [`277613a6`](https://github.com/colinhacks/zod/commit/277613a6) docs: move the release procedure to the maintainer-local notes by [@colinhacks](https://github.com/colinhacks)
 - [`eb1c1089`](https://github.com/colinhacks/zod/commit/eb1c1089) ci: release only on workflow_dispatch behind the npm environment ([#6569](https://github.com/colinhacks/zod/pull/6569)) by [@colinhacks](https://github.com/colinhacks)
 - [`741981ff`](https://github.com/colinhacks/zod/commit/741981ff) perf(compile): for-in record walk, cheaper issue finalization, and a generative compile differential ([#6567](https://github.com/colinhacks/zod/pull/6567)) by [@colinhacks](https://github.com/colinhacks)
