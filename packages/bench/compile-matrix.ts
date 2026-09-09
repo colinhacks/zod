@@ -329,7 +329,7 @@ const selected = filter ? cases.filter(match) : cases;
 const rows: Row[] = [];
 const problems: string[] = [];
 
-// Parent driver: one child per case, each measuring a single schema in a fresh process. Children re-enter this file with the case id; execArgv carries the tsx loader and `--conditions`, so the child resolves zod the same way.
+// Parent driver: one child per case, each measuring a single schema in a fresh process. Children re-enter this file with the case id; execArgv carries the runtime flags and `--conditions`, so the child resolves zod the same way.
 if (!filter && isolate) {
   for (const c of cases) {
     const id = `${c.group}/${c.name}`;

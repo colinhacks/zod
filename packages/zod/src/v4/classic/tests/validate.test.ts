@@ -174,6 +174,19 @@ test("compiled validate agrees with the interpreter, verdict and throw alike", (
     // a codec's decode is the pipe branch's transform, and a plain function can still hand back a promise
     z.codec(z.string(), z.number(), { decode: thenable, encode: String }),
     z.object({ first: z.string(), second: z.codec(z.string(), z.number(), { decode: thenable, encode: String }) }),
+    // a continuable check does not settle the interpreter's walk, so it reaches a throwing callback the compiled path short-circuits past — the first-failure exit does not cover the check chain
+    z
+      .string()
+      .min(5)
+      .refine(() => {
+        throw new RangeError("u");
+      }),
+    z
+      .string()
+      .min(5)
+      .superRefine(() => {
+        throw new RangeError("u");
+      }),
     // a user callback can throw, and compiled code can reject an earlier sibling before ever reaching it
     z.object({
       first: z.string(),

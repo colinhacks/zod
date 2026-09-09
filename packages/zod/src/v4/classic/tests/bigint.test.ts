@@ -53,6 +53,12 @@ test("min max getters", () => {
   expect(z.bigint().max(BigInt(5)).max(BigInt(1)).maxValue).toEqual(BigInt(1));
 });
 
+test("a format check applied after min/max does not widen minValue/maxValue back out", () => {
+  const schema = z.bigint().min(0n).max(23n).check(z.int64());
+  expect(schema.minValue).toEqual(0n);
+  expect(schema.maxValue).toEqual(23n);
+});
+
 test("bigint formats are distinct at the type level", () => {
   expectTypeOf(z.int64()._zod.def.format).toEqualTypeOf<"int64">();
   expectTypeOf(z.uint64()._zod.def.format).toEqualTypeOf<"uint64">();

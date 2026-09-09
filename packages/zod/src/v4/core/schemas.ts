@@ -399,7 +399,8 @@ export interface $ZodString<Input = unknown> extends _$ZodType<$ZodStringInterna
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = [...(inst?._zod.bag?.patterns ?? [])].pop() ?? regexes.string(inst._zod.bag);
+  // a format's own pattern, else unbounded; a template literal derives the check-aware form itself
+  inst._zod.pattern = (def as $ZodStringFormatDef).pattern ?? regexes.anyString;
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -788,14 +789,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
-
-    // these two drop the offset or seconds `date-time` requires — on the bag not the def, since `z.string().check(...)` lands the format on a different schema
-    if (def.local || def.precision === -1) {
-      inst._zod.bag.laxFormat = true;
-      inst._zod.onattach.push((s) => {
-        (s._zod.bag as $ZodStringInternals<unknown>["bag"]).laxFormat = true;
-      });
-    }
   }
 );
 
@@ -872,8 +865,6 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `ipv4`;
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -908,8 +899,6 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
 
-  inst._zod.bag.format = `ipv6`;
-
   inst._zod.check = (payload) => {
     if (!isValidIPv6(payload.value)) {
       payload.issues.push({
@@ -939,8 +928,6 @@ export interface $ZodMAC extends $ZodType {
 export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
   def.pattern ??= regexes.mac(def.delimiter);
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `mac`;
 });
 
 //////////////////////////////   ZodCIDRv4   //////////////////////////////
@@ -1041,8 +1028,6 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= base64Charset;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.bag.contentEncoding = "base64";
-
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
 
@@ -1080,8 +1065,6 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
   (inst, def): void => {
     def.pattern ??= base64urlCharset;
     $ZodStringFormat.init(inst, def);
-
-    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -1277,7 +1260,7 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
 
-  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
+  inst._zod.pattern = regexes.number;
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
@@ -4640,6 +4623,51 @@ export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [
       : never
     : never;
 
+// a leaf's pattern source with its own checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. the fold lives here instead of on `_zod.pattern` so a bundle without template literals never pays for it
+function leafPattern(schema: $ZodType): string | undefined {
+  const def = schema._zod.def as { pattern?: RegExp; format?: string; checks?: checks.$ZodCheck[] };
+  let pattern = def.pattern;
+  let isInt = !!def.format?.includes("int");
+  let minimum: number | undefined;
+  let maximum: number | undefined;
+  for (const ch of def.checks ?? []) {
+    const d = ch._zod.def as { pattern?: RegExp; format?: string; minimum?: number; maximum?: number; length?: number };
+    if (d.pattern) pattern = d.pattern;
+    isInt ||= !!d.format?.includes("int");
+    const lo = d.minimum ?? d.length;
+    const hi = d.maximum ?? d.length;
+    if (lo !== undefined && (minimum === undefined || lo > minimum)) minimum = lo;
+    if (hi !== undefined && (maximum === undefined || hi < maximum)) maximum = hi;
+  }
+  if (pattern) return pattern.source;
+  // an empty range matches nothing at runtime, and `{8,5}` is not a legal quantifier
+  if (minimum !== undefined && maximum !== undefined && minimum > maximum) return "(?!)";
+  if (minimum !== undefined || maximum !== undefined) return regexes.string({ minimum, maximum }).source;
+  const own = schema._zod.pattern;
+  return (isInt && own === regexes.number ? regexes.integer : own)?.source;
+}
+
+// a part's pattern source. a wrapper's pattern embeds its inner pattern's source verbatim, so the folded form is substituted in place without knowing the wrapper's own composition; a union's options are joined the way the union builds its own pattern
+function partPattern(schema: $ZodType): string | undefined {
+  const def = schema._zod.def as { innerType?: $ZodType; options?: $ZodType[] };
+  const own = schema._zod.pattern?.source;
+  // lazy resolves its inner on the internals, not the def
+  const inner = def.innerType ?? (schema._zod as { innerType?: $ZodType }).innerType;
+  if (inner) {
+    const before = inner._zod.pattern?.source;
+    const after = partPattern(inner);
+    if (own && before && after && after !== before) {
+      return own.replace(util.cleanRegex(before), () => util.cleanRegex(after));
+    }
+    return own;
+  }
+  if (def.options) {
+    const sources = def.options.map(partPattern);
+    if (sources.every(Boolean)) return `^(${sources.map((s) => util.cleanRegex(s!)).join("|")})$`;
+  }
+  return leafPattern(schema);
+}
+
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
   "$ZodTemplateLiteral",
   (inst, def) => {
@@ -4648,18 +4676,11 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
     for (const part of def.parts) {
       if (typeof part === "object" && part !== null) {
         // is Zod schema
-        if (!part._zod.pattern) {
-          // if (!source)
+        const source = partPattern(part);
+        if (!source) {
           throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
         }
-
-        const source = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
-
-        if (!source) throw new Error(`Invalid template literal part: ${part._zod.traits}`);
-
-        const start = source.startsWith("^") ? 1 : 0;
-        const end = source.endsWith("$") ? source.length - 1 : source.length;
-        regexParts.push(source.slice(start, end));
+        regexParts.push(util.cleanRegex(source));
       } else if (part === null || util.primitiveTypes.has(typeof part)) {
         regexParts.push(util.escapeRegex(`${part}`));
       } else {

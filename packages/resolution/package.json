@@ -16,7 +16,7 @@
   ],
   "typings": "./lib/index.d.ts",
   "scripts": {
-    "test:all": "pnpm vitest run && tsx test-resolution.ts"
+    "test:all": "nub exec --node vitest run && nub test-resolution.ts"
   },
   "zshy": "./src/index.ts",
   "module": "./dist/index.js",

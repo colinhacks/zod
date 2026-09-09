@@ -79,15 +79,6 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
     $ZodCheck.init(inst, def);
     const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag;
-      const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
-      if (def.value < curr) {
-        if (def.inclusive) bag.maximum = def.value;
-        else bag.exclusiveMaximum = def.value;
-      }
-    });
-
     inst._zod.check = (payload) => {
       if (def.inclusive ? payload.value <= def.value : payload.value < def.value) {
         return;
@@ -130,15 +121,6 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
     $ZodCheck.init(inst, def);
     const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag;
-      const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
-      if (def.value > curr) {
-        if (def.inclusive) bag.minimum = def.value;
-        else bag.exclusiveMinimum = def.value;
-      }
-    });
-
     inst._zod.check = (payload) => {
       if (def.inclusive ? payload.value >= def.value : payload.value > def.value) {
         return;
@@ -180,10 +162,6 @@ export interface $ZodCheckMultipleOf<T extends number | bigint = number | bigint
 export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number | bigint>> =
   /*@__PURE__*/ core.$constructor("$ZodCheckMultipleOf", (inst, def) => {
     $ZodCheck.init(inst, def);
-
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.multipleOf ??= def.value;
-    });
 
     inst._zod.check = (payload) => {
       if (typeof payload.value !== typeof def.value)
@@ -284,14 +262,6 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
     const isInt = def.format?.includes("int");
     const origin = isInt ? "int" : "number";
     const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format];
-
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag;
-      bag.format = def.format;
-      bag.minimum = minimum;
-      bag.maximum = maximum;
-      if (isInt) bag.pattern = regexes.integer;
-    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -413,13 +383,6 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
 
     const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format];
 
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag;
-      bag.format = def.format;
-      bag.minimum = minimum;
-      bag.maximum = maximum;
-    });
-
     inst._zod.check = (payload) => {
       const input = payload.value;
 
@@ -474,11 +437,6 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
 
     inst._zod.def.when ??= _whenHasSize;
 
-    inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
-    });
-
     inst._zod.check = (payload) => {
       const input = payload.value;
       const size = input.size;
@@ -521,11 +479,6 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
 
     inst._zod.def.when ??= _whenHasSize;
 
-    inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
-    });
-
     inst._zod.check = (payload) => {
       const input = payload.value;
       const size = input.size;
@@ -567,13 +520,6 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
     $ZodCheck.init(inst, def);
 
     inst._zod.def.when ??= _whenHasSize;
-
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag;
-      bag.minimum = def.size;
-      bag.maximum = def.size;
-      bag.size = def.size;
-    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -619,11 +565,6 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
 
     inst._zod.def.when ??= _whenHasLength;
 
-    inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
-    });
-
     inst._zod.check = (payload) => {
       const input = payload.value;
       const units = input.length;
@@ -668,11 +609,6 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
     $ZodCheck.init(inst, def);
 
     inst._zod.def.when ??= _whenHasLength;
-
-    inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
-    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -722,13 +658,6 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
     $ZodCheck.init(inst, def);
 
     inst._zod.def.when ??= _whenHasLength;
-
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag;
-      bag.minimum = def.length;
-      bag.maximum = def.length;
-      bag.length = def.length;
-    });
 
     inst._zod.check = (payload) => {
       const input = payload.value;
@@ -808,15 +737,6 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
   "$ZodCheckStringFormat",
   (inst, def) => {
     $ZodCheck.init(inst, def);
-
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.format = def.format;
-      if (def.pattern) {
-        bag.patterns ??= new Set();
-        bag.patterns.add(def.pattern);
-      }
-    });
 
     if (def.pattern)
       inst._zod.check ??= (payload) => {
@@ -982,12 +902,6 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
     // (`{N,}`), not exactly `position` chars (`{N}`).
     const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position},}${escapedRegex}` : escapedRegex);
     def.pattern = pattern;
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.patterns ??= new Set();
-      bag.patterns.add(pattern);
-    });
-
     inst._zod.check = (payload) => {
       if (payload.value.includes(def.includes, def.position)) return;
       payload.issues.push({
@@ -1026,12 +940,6 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
 
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.patterns ??= new Set();
-      bag.patterns.add(pattern);
-    });
-
     inst._zod.check = (payload) => {
       if (payload.value.startsWith(def.prefix)) return;
       payload.issues.push({
@@ -1070,12 +978,6 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
 
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.patterns ??= new Set();
-      bag.patterns.add(pattern);
-    });
-
     inst._zod.check = (payload) => {
       if (payload.value.endsWith(def.suffix)) return;
       payload.issues.push({
@@ -1164,9 +1066,6 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
   (inst, def) => {
     $ZodCheck.init(inst, def);
     const mimeSet = new Set(def.mime);
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.mime = def.mime;
-    });
     inst._zod.check = (payload) => {
       if (mimeSet.has(payload.value.type)) return;
       payload.issues.push({

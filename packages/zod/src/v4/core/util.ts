@@ -964,13 +964,18 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
-  rest.path ??= [];
-  rest.message = message;
-  if (ctx?.reportInput) {
-    rest.input = _input;
+  // an explicit own-key copy beats object rest with excluded keys, which v8 routes through a generic runtime call; Object.keys rather than for-in so an issue pushed with a prototype does not leak inherited keys, and an own __proto__ key is dropped rather than assigned through the setter
+  const full: any = {};
+  for (const k of Object.keys(iss)) {
+    if (k === "inst" || k === "schema" || k === "continue" || k === "input" || k === "__proto__") continue;
+    full[k] = (iss as any)[k];
   }
-  return rest;
+  full.path ??= [];
+  full.message = message;
+  if (ctx?.reportInput) {
+    full.input = iss.input;
+  }
+  return full;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
@@ -1135,6 +1140,28 @@ export function own<T>(inst: object, key: PropertyKey, value: T, enumerable = tr
 /** Like {@link own}, for a member that was never an own data property and has to stay out of `Object.keys`. */
 export function hide<T>(inst: object, key: PropertyKey, value: T): T {
   return own(inst, key, value, false);
+}
+
+/** Adds members a table derives from the instance: each builds on first read and shadows as own data, and assignment shadows the same way, as when these were own properties. */
+export /*@__NO_SIDE_EFFECTS__*/ function derived<T>(
+  computes: { [K in keyof T]?: (inst: T) => T[K] },
+  table: ProtoOf<T>
+): ProtoOf<T> {
+  for (const key in computes) {
+    const compute = computes[key]!;
+    // an object literal's accessor is configurable and enumerable, and `members` copies the descriptor as written
+    Object.defineProperty(table, key, {
+      configurable: true,
+      enumerable: true,
+      get(this: T) {
+        return own(this as object, key, compute(this));
+      },
+      set(this: T, value: T[typeof key]) {
+        own(this as object, key, value);
+      },
+    });
+  }
+  return table;
 }
 
 function defineBound(proto: object, key: PropertyKey, fn: AnyFunc): void {

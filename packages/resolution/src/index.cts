@@ -36,4 +36,10 @@ if (
   throw new Error();
 }
 
+// the CommonJS entrypoint settles its re-export accessors into data properties, so callers do not read every API through a getter
+const validateDescriptor = Object.getOwnPropertyDescriptor(z1, "validate");
+if (typeof validateDescriptor?.value !== "function") {
+  throw new Error("zod's CommonJS exports are still accessors");
+}
+
 console.log("Success!");

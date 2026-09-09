@@ -31,7 +31,7 @@ Write-ups go to `.triage/advisories/<GHSA-ID>/results.md`, scratch files beside 
 ## Order of work
 
 1. **Extract the PoC verbatim** into `.triage/advisories/<GHSA-ID>/poc.ts`. Do not clean it up first — a PoC that only works after you fix it is a finding in itself.
-2. **Reproduce against current `main`**: `pnpm dev .triage/advisories/<GHSA-ID>/poc.ts`. If it does not reproduce, say so and check whether it ever did (`git log -S`, or test the version the reporter named).
+2. **Reproduce against current `main`**: `nub run dev .triage/advisories/<GHSA-ID>/poc.ts`. If it does not reproduce, say so and check whether it ever did (`git log -S`, or test the version the reporter named).
 3. **Decide whether the reproduced behavior is a vulnerability at all.** The recurring question on this repo is whether the attacker controls the **schema** or only the **input**. A schema is application code, so a report needing an attacker-authored schema is usually `not-a-vulnerability`. For prototype reports: is the polluted prototype the returned object's own (contained) or `Object.prototype` itself (real)?
 4. **Enumerate reachability yourself; do not inherit the reporter's.** Reporters test the path they found. Grep every call site that can feed attacker data into the sink and build a route table — precondition per route, and whether each needs only input, or a particular schema shape, or cooperating application code. This is where the severity actually gets decided, and it routinely turns up both routes the reporter missed and routes that are already closed.
 5. **Dedupe the cluster.** Many reports describe one defect. `grep -rl '<keyword>' .triage/advisories/*/results.md`, pick a canonical, cross-link the rest with `duplicate_of`. Fold by underlying defect, never by title keyword.
@@ -49,7 +49,7 @@ So the fix is not a follow-up to the triage. It is a step inside it, and it come
 - **Judge the candidates against the whole defect, not the reported symptom.** A patch that fixes the one function in the PoC while three sibling call sites keep the bug is partial. Build a behavior matrix of the cases that matter, run it against `main` and against each candidate patch, and let that table pick the winner. This is also how you catch a patch that trades a crash for silent data loss.
 - **Extend the base rather than starting over**, and preserve the contributor's commits — AGENTS.md covers pushing to a contributor's head ref.
 - **Run what CI runs** before pushing, then confirm CI itself is green.
-- **Do not bump a version and do not cut a release.** Landing on `main` is the goal. Release timing on a security fix is Colin's, and on this repo a version bump is the one irreversible action.
+- **Do not bump a version and do not cut a release.** Landing on `main` is the goal. Release timing on a security fix is Colin's, and on this repo approving the release workflow's `npm` environment is the one irreversible action.
 
 Only once the fix is merged do you write the comment, and the comment names the merge commit and the PR.
 

@@ -1080,3 +1080,29 @@ describe("safeParse builds the error on first read", () => {
     }
   });
 });
+
+test("a finalized issue copies the raw issue's own keys only", () => {
+  const proto = { inherited: true };
+  const schema = z.string().check((ctx) => {
+    const raw = Object.create(proto);
+    Object.assign(raw, { code: "custom", message: "own", input: ctx.value, extra: 1 });
+    ctx.issues.push(raw);
+  });
+  const issue = schema.safeParse("x").error!.issues[0];
+  expect(issue).toStrictEqual({ code: "custom", message: "own", path: [], extra: 1 });
+  expect("inherited" in issue).toBe(false);
+  // own symbol-keyed fields are not copied either; nothing in zod produces one and the walk stays a string-key walk
+  const sym = Symbol("meta");
+  const symbolic = z.string().check((ctx) => {
+    ctx.issues.push({ code: "custom", message: "sym", input: ctx.value, [sym]: 1 } as never);
+  });
+  expect(Object.getOwnPropertySymbols(symbolic.safeParse("x").error!.issues[0])).toEqual([]);
+  // an own __proto__ key, as JSON.parse produces, neither swaps the prototype nor survives
+  const parsed = z.string().check((ctx) => {
+    ctx.issues.push(JSON.parse('{"code":"custom","message":"json","__proto__":{"polluted":true}}'));
+  });
+  const fromJson = parsed.safeParse("x").error!.issues[0];
+  expect(Object.getPrototypeOf(fromJson)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(fromJson, "__proto__")).toBe(false);
+  expect("polluted" in fromJson).toBe(false);
+});

@@ -3,6 +3,6 @@ if [ -n "$(git ls-files --others --exclude-standard)" ]; then
   git status;
   exit 1
 fi
-pnpm check:semver
-pnpm check:comments
-lint-staged --verbose
+nub run check:semver
+nub run check:comments
+nub exec --node lint-staged --verbose

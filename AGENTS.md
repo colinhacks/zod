@@ -4,28 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-The project uses pnpm workspaces. Key commands:
+Use Nub exclusively for dependency management, scripts, and TypeScript execution. The root `package.json` declares the workspaces and pins Nub; `.nvmrc` selects Node. Nub reads and writes the existing `pnpm-lock.yaml` without requiring pnpm.
 
-- `pnpm build` - Build all packages (runs recursive build command)
-- `pnpm vitest run` - Run all tests with Vitest. Includes the compile-mode project, which re-runs the zod tests with global AOT compilation enabled (see `wiki/compile.md`).
-- `pnpm vitest run <path>` - Run specific test file (e.g., `packages/zod/src/v4/classic/tests/string.test.ts`)
-- `pnpm vitest run <path> -t "<pattern>"` - Run specific test(s) within a file (e.g., `-t "MAC"`)
-- `pnpm vitest run --update` - Update all test snapshots
-- `pnpm vitest run <path> --update` - Update snapshots for specific test file
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm vitest run --coverage` - Run tests with coverage report
-- `pnpm test:compile` - Focused alias for just the compile-mode project. Already covered by `pnpm test`; use this when iterating on compile-related changes.
-- `pnpm dev` - Execute code with tsx under source conditions
-- `pnpm dev <file>` - Execute `<file>` with tsx & proper resolution conditions. Usually use for `play.ts`.
-- `pnpm dev:play` - Quick alias to run play.ts for experimentation
-- `pnpm check:comments` - Fail on stacked `//` comment lines (`--fix` joins them)
-- `pnpm lint` - Run biome linter with auto-fix
-- `pnpm format` - Format code with biome
-- `pnpm fix` - Run both format and lint
+Run scripts with `nub run`, repository TypeScript with `nub <file>`, and installed tools with `nub exec --node <tool>`. Keep third-party tools and built-package compatibility probes on plain Node; Nub's augmentation must not mask resolution errors or change test behavior. Use `nub install --frozen-lockfile` for reproducible installs and `nub add` / `nub remove` to manage dependencies.
+
+Key commands:
+
+- `nub run build` - Build all packages (runs recursive build command)
+- `nub exec --node vitest run` - Run all tests with Vitest. Includes the compile-mode project, which re-runs the zod tests with global AOT compilation enabled (see `wiki/compile.md`).
+- `nub exec --node vitest run <path>` - Run specific test file (e.g., `packages/zod/src/v4/classic/tests/string.test.ts`)
+- `nub exec --node vitest run <path> -t "<pattern>"` - Run specific test(s) within a file (e.g., `-t "MAC"`)
+- `nub exec --node vitest run --update` - Update all test snapshots
+- `nub exec --node vitest run <path> --update` - Update snapshots for specific test file
+- `nub run test:watch` - Run tests in watch mode
+- `nub exec --node vitest run --coverage` - Run tests with coverage report
+- `nub run test:compile` - Focused alias for just the compile-mode project. Already covered by `nub run test`; use this when iterating on compile-related changes.
+- `nub run dev` - Execute TypeScript with Nub under source conditions
+- `nub run dev <file>` - Execute `<file>` with Nub & proper resolution conditions. Usually use for `play.ts`.
+- `nub run dev:play` - Quick alias to run play.ts for experimentation
+- `nub run check:comments` - Fail on stacked `//` comment lines (`--fix` joins them)
+- `nub run lint` - Run biome linter with auto-fix
+- `nub run format` - Format code with biome
+- `nub run fix` - Run both format and lint
 
 ## Rules
 
-- Node.js v24+ required (use nvm if needed); pnpm v10.12.1
+- Nub v0.8.3 and Node.js v24+ required; Nub provisions Node from `.nvmrc`
 - ES modules are used throughout (`"type": "module"`)
 - All tests must be written in TypeScript - never use JavaScript
 - Use `play.ts` for quick experimentation; use proper tests for all permanent test cases
@@ -34,7 +38,7 @@ The project uses pnpm workspaces. Key commands:
 - Test both success and failure cases with edge cases
 - Keep added tests as minimal and dense as possible without sacrificing comprehensiveness; avoid redundant assertions or broad fixtures when a focused case proves the behavior.
 - No log statements (`console.log`, `debugger`) in tests or production code
-- Never stack prose across consecutive `//` lines. Lines have no maximum width here — the editor wraps for display — so a paragraph split across several `//` lines is just a hard-wrapped line, and hard wrapping breaks search, diffs and editing. Write one long `//` instead. `pnpm check:comments` enforces this in pre-commit and CI; `--fix` joins the offenders. Commented-out code, `@ts-`/`@__NO_SIDE_EFFECTS__`-style pragmas, bullet lists, and blocks separated by a bare `//` are exempt. When two adjacent comments describe two different statements, separate them with a blank line rather than joining them.
+- Never stack prose across consecutive `//` lines. Lines have no maximum width here — the editor wraps for display — so a paragraph split across several `//` lines is just a hard-wrapped line, and hard wrapping breaks search, diffs and editing. Write one long `//` instead. `nub run check:comments` enforces this in pre-commit and CI; `--fix` joins the offenders. Commented-out code, `@ts-`/`@__NO_SIDE_EFFECTS__`-style pragmas, bullet lists, and blocks separated by a bare `//` are exempt. When two adjacent comments describe two different statements, separate them with a blank line rather than joining them.
 - Keep comments SHORT AND TIGHT — one lowercase sentence fragment, one clause, no trailing period. Never a capitalized full sentence, and never two of them. Extreme concision: say only what the code cannot say, and cut the setup sentence, the recap, and the same point restated in different words; a comment that needs three sentences usually means the code should be clearer. Identifiers keep their real casing (`Error`, `parse()`), only the prose is lowercase.
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
@@ -46,7 +50,7 @@ The project uses pnpm workspaces. Key commands:
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
 - Format validators (`z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, …) are deliberately narrower than the specs they're named after. "The spec allows X" is not a reason to accept X — see "Format validators: spec compliance is not the bar" below.
-- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
+- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`), and NEVER run `gh workflow run release.yml`. A version bump on `main` publishes nothing by itself, and a dispatched run can be cancelled; the approval in the `npm` environment is what publishes, and that is the one irreversible action in this repo. If a version bump is genuinely needed, ask first.
 
 ## The three axes
 
@@ -56,7 +60,7 @@ Zod is judged on **runtime performance**, **memory consumption**, and **bundle s
 
 | axis    | how to measure                                                                                                                                    |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| runtime | `packages/bench/*.ts` via `pnpm bench <name>`, plus construction cost — parse and construction move independently                                 |
+| runtime | `packages/bench/*.ts` via `nub run bench <name>`, plus construction cost — parse and construction move independently                                 |
 | memory  | `packages/bench/memory/schema-footprint.ts` and `realworld.ts` (retained bytes per schema; run under `--expose-gc`)                               |
 | bundle  | bundle a `packages/treeshake` fixture with esbuild `--minify` under `--conditions=@zod/source` and gzip it, for both a classic and a mini fixture |
 
@@ -82,9 +86,9 @@ If you touch that machinery, three things bite:
 
 ## Cutting a release
 
-Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
+Only do this when the user explicitly asks. A release is two deliberate steps: push the version bump to `main`, then dispatch `.github/workflows/release.yml` and approve its `npm` environment. The workflow publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
 
-Five files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
+Five files must be bumped together — `nub run check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
 
 - `packages/zod/package.json` — `version`
 - `packages/zod/jsr.json` — `version`
@@ -102,9 +106,15 @@ git checkout main && git pull
 git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json packages/mini/jsr.json
 git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
+
+# Then start the release from any machine signed into gh, and approve it when the run pauses on the npm environment.
+gh workflow run release.yml
+gh run watch   # pick the "Release on npm" run
 ```
 
-The release workflow only fires on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, so the bump must include `package.json`. It publishes `zod`, then tags and releases it, then publishes `@zod/mini` to npm and JSR last. Watch the Actions tab to confirm `build_and_publish` succeeds.
+Nothing publishes on push. The dispatch runs the test, lint and circular-dependency gates, then `build_and_publish` waits in the `npm` environment until colinhacks or joeltg approves it (the Actions run page, or `gh api -X POST repos/colinhacks/zod/actions/runs/<run-id>/pending_deployments -F 'environment_ids[]=21517757301' -f state=approved -f comment=ok`). Nub publishes `zod` with npm trusted publishing and provenance, then the workflow tags and releases it and publishes `@zod/mini` to npm and JSR last. Every publish step skips a version that is already on its registry, so a dispatch with no version bump, or a second dispatch of the same version, is harmless. Watch the Actions tab to confirm `build_and_publish` succeeds.
+
+The `npm` environment is what makes the dispatch the only publish path: it deploys `main` only and requires a reviewer, and the npm trusted publishers for `zod` and `@zod/mini` are bound to it, so a workflow on another branch cannot mint a publish token. Keep `actions: write` out of every bot workflow, because a `GITHUB_TOKEN` cannot trigger a push workflow but can trigger a `workflow_dispatch`.
 
 To publish `@zod/mini` at a version zod already shipped without it, dispatch the same workflow; it publishes only the scoped package, with the peer floor set to that minor:
 
@@ -112,9 +122,9 @@ To publish `@zod/mini` at a version zod already shipped without it, dispatch the
 gh workflow run release.yml -f mini_version=4.5.2
 ```
 
-A back-published version below `latest` goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one; remove the tag once the backfill is done: `npm dist-tag rm @zod/mini backfill`. A version that is zod's `latest` is published under `latest` instead. Dispatch one version at a time and let each run finish — concurrent publishes to one package fail with npm `E409` while the previous packument write is still processing.
+A back-published version below `latest` goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one; remove the tag once the backfill is done: `nub dist-tag rm @zod/mini backfill`. A version that is zod's `latest` is published under `latest` instead. Dispatch one version at a time and let each run finish — concurrent publishes to one package fail with npm `E409` while the previous packument write is still processing.
 
-Both release paths end with `pnpm check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and JSR and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin on either registry, when a `@zod/mini` version has no `zod` twin, or when the `latest` tags differ. A `zod` version present on npm but missing on JSR is only warned about, since that publish is recovered by hand and must not hold a release red. Run `pnpm check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
+Both release paths end with `nub run check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and JSR and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin on either registry, when a `@zod/mini` version has no `zod` twin, or when the `latest` tags differ. A `zod` version present on npm but missing on JSR is only warned about, since that publish is recovered by hand and must not hold a release red. Run `nub run check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
 
 ## Format validators: spec compliance is not the bar
 
@@ -149,7 +159,7 @@ When asked to make changes on top of an open PR (e.g. as a maintainer review sug
 git fetch origin pull/<N>/head:pr-<N>
 git worktree add ~/.cursor/worktrees/zod/pr-<N> pr-<N>
 cd ~/.cursor/worktrees/zod/pr-<N>
-pnpm install --frozen-lockfile   # fast, pnpm store is shared across worktrees
+nub install --frozen-lockfile   # fast, Nub's store is shared across worktrees
 
 # 2. Look up the PR's head info — you'll need the contributor's fork URL
 #    and the head ref name to push back.

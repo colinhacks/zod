@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 async function buildZshy() {
   console.log("🔨 Building project with zshy...");
   try {
-    await execa("zshy", [], {
+    await execa("nub", ["exec", "--node", "zshy"], {
       cwd: __dirname,
       stdio: "inherit",
     });
@@ -22,7 +22,7 @@ async function buildZshy() {
 async function buildTsc() {
   console.log("🔨 Building project with tsc...");
   try {
-    await execa("tsc", ["--project", "tsconfig.build.json"], {
+    await execa("nub", ["exec", "--node", "tsc", "--project", "tsconfig.build.json"], {
       cwd: __dirname,
       stdio: "inherit",
     });
@@ -36,7 +36,7 @@ async function buildTsc() {
 async function testCjs() {
   console.log("🧪 Testing CommonJS build...");
   try {
-    await execa("node", ["./dist/index.cjs"], {
+    await execa("nub", ["--node", "./dist/index.cjs"], {
       cwd: __dirname,
       stdio: "inherit",
     });
@@ -50,7 +50,7 @@ async function testCjs() {
 async function testMjs() {
   console.log("🧪 Testing CommonJS build...");
   try {
-    await execa("node", ["./dist/index.mjs"], {
+    await execa("nub", ["--node", "./dist/index.mjs"], {
       cwd: __dirname,
       stdio: "inherit",
     });
@@ -64,7 +64,7 @@ async function testMjs() {
 async function testJs() {
   console.log("🧪 Testing ES Module build...");
   try {
-    await execa("node", ["./dist/index.js"], {
+    await execa("nub", ["--node", "./dist/index.js"], {
       cwd: __dirname,
       stdio: "inherit",
     });

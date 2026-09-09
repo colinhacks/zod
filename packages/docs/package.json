@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "next build --turbopack",
-    "dev": "next dev",
-    "start": "next start",
-    "postinstall": "fumadocs-mdx"
+    "build": "nub exec --node next build --turbopack",
+    "dev": "nub exec --node next dev",
+    "start": "nub exec --node next start",
+    "postinstall": "nub exec --node fumadocs-mdx"
   },
   "dependencies": {
     "@inkeep/cxkit-react": "^0.5.117",

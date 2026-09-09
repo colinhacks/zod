@@ -1,9 +1,8 @@
-import { makeData, randomPick, randomString } from "./benchUtil.js";
+import { makeData, randomPick, randomString, zod4 as z4lib } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 import * as z3 from "zod/v3";
 import * as z4 from "zod/v4";
-import * as z4lib from "zod4/v4";
 
 const z3fields = {
   data1: z3.string(),
