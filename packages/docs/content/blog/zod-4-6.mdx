@@ -225,7 +225,9 @@ Composing `z.base64()` into a template literal now checks the alphabet but not t
 
 `z.email()` opened with two lookaheads, and the second scanned the whole string before the match began. Both are gone, and the rule they enforced — no empty segment in the local part — is expressed structurally instead, so `z.email()` accepts and rejects exactly what it did before. Valid addresses validate roughly twice as fast. ([#6573](https://github.com/colinhacks/zod/pull/6573))
 
-The pattern is visible in three other places. `z.regexes.email` has no capture groups now, and neither of the two it used to expose held a usable value. The `pattern` in `z.toJSONSchema()` output carries no lookahead, which validators outside ECMAScript generally cannot compile. And composing an email into a template literal no longer applies its no-consecutive-dots rule to the rest of the string.
+The pattern string is user-visible, and every copy of it changes: `z.regexes.email`, which has no capture groups now — neither of the two it used to expose held a usable value; `issue.pattern` on a failed `z.email()`; and the `pattern` that `z.toJSONSchema()` emits, which no longer carries a lookahead, so validators outside ECMAScript can compile it.
+
+Composing an email into a template literal also stops applying its no-consecutive-dots rule to the rest of the string.
 
 ```ts
 z.templateLiteral([z.email(), "|", z.string()]).parse("a@b.cc|a..b");
