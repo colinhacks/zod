@@ -4,16 +4,9 @@ name: Release on npm
 on:
   # a version bump on main publishes nothing by itself; a maintainer runs `gh workflow run release.yml` and approves the npm environment
   workflow_dispatch:
-    inputs:
-      mini_version:
-        description: "Leave empty to release what is on main. Set an x.y.z that zod already shipped to back-publish @zod/mini at that version; the peer floor becomes ^x.y.0"
-        required: false
-        type: string
-        default: ""
 
 jobs:
   test-node:
-    if: inputs.mini_version == ''
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -42,7 +35,6 @@ jobs:
       - run: nub run --filter @zod/integration test:all
 
   lint:
-    if: inputs.mini_version == ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,7 +52,6 @@ jobs:
       - run: nub run lint:check
 
   check-circular:
-    if: inputs.mini_version == ''
     runs-on: ubuntu-latest
     name: Check for circular dependencies
     steps:
@@ -74,12 +65,11 @@ jobs:
       - run: nub run check:circular
 
   build_and_publish:
-    if: inputs.mini_version == ''
     needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
     # a required reviewer approves every publish, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can publish
     environment: npm
-    # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing; a stall that outlives them needs the wait moved to its own job rather than a larger number here.
+    # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing: zod gets 240 minutes because it is the one that waits on review, and @zod/mini gets 90 because it publishes after that review has already drained (it cleared in under a minute on 4.6.0). A stall that outlives the pair needs the wait moved to its own job rather than a larger number here, and that costs a second environment approval.
     timeout-minutes: 360
     permissions:
       contents: write
@@ -122,12 +112,12 @@ jobs:
           if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then exit 0; fi
           nub publish --provenance --no-git-checks
 
-      # npm can accept a publish and leave it staged: 4.5.0 sat there 16 minutes and 4.5.3 sat there 25, and neither is an upper bound — this package is downloaded enough that processing is routinely slow. The version does arrive, and the release and the JSR publish are worthless without it, so wait rather than fail. A publish that failed for some other reason waits the whole window and then fails with the publish step's log to read.
+      # npm holds a publish in automated review before serving it, and the version is unavailable until that finishes: 4.5.0 sat 16 minutes, 4.5.3 sat 25, and 4.6.0 sat 116. None of those is an upper bound. The version does arrive, and the release and the JSR publish are worthless without it, so wait rather than fail. A publish that failed for some other reason waits the whole window and then fails with the publish step's log to read.
       - name: Wait for the version to be live on npm
         env:
           VERSION: ${{ steps.version.outputs.zod }}
         run: |
-          for i in $(seq 1 150); do
+          for i in $(seq 1 240); do
             if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
               echo "zod@$VERSION is live"
               exit 0
@@ -200,7 +190,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.mini }}
         run: |
-          for i in $(seq 1 150); do
+          for i in $(seq 1 90); do
             if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
               echo "@zod/mini@$VERSION is live"
               exit 0
@@ -223,98 +213,4 @@ jobs:
           fi
 
       # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two publishes above ran
-      - run: nub run check:lockstep --wait
-
-  backpublish_mini:
-    if: inputs.mini_version != ''
-    runs-on: ubuntu-latest
-    environment: npm
-    timeout-minutes: 360
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v7
-      - run: printf 'latest\n' > .nvmrc
-      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
-        with:
-          nub-version: "0.8.3"
-          node-version: "latest"
-          registry-url: https://registry.npmjs.org/
-      - run: nub install --frozen-lockfile
-      - name: Set the @zod/mini version and peer floor
-        env:
-          VERSION: ${{ inputs.mini_version }}
-        working-directory: ./packages/mini
-        run: |
-          if ! [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.[0-9]+$ ]]; then
-            echo "mini_version must be x.y.z, got '$VERSION'"
-            exit 1
-          fi
-          if ! curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
-            echo "zod@$VERSION is not on npm; @zod/mini only ships versions zod shipped"
-            exit 1
-          fi
-          export MAJOR="${BASH_REMATCH[1]}" MINOR="${BASH_REMATCH[2]}"
-          nub pkg set version="$VERSION" peerDependencies.zod="^${MAJOR}.${MINOR}.0"
-          nub --node -e '
-            const fs = require("fs");
-            const jsr = JSON.parse(fs.readFileSync("jsr.json", "utf8"));
-            jsr.version = process.env.VERSION;
-            jsr.imports["zod/mini"] = "jsr:@zod/zod@^" + process.env.MAJOR + "." + process.env.MINOR + ".0/mini";
-            fs.writeFileSync("jsr.json", JSON.stringify(jsr, null, 2) + "\n");
-          '
-          cat package.json jsr.json
-      - run: nub run build
-
-      # npm refuses a bare publish of a version below latest, so an older version goes out under a throwaway dist-tag that leaves latest alone (remove it afterwards with `nub dist-tag rm @zod/mini backfill`); the version that IS zod's latest takes latest, so the lockstep check can pass
-      - id: tag
-        name: Pick the dist-tag
-        env:
-          VERSION: ${{ inputs.mini_version }}
-        run: |
-          ZOD_LATEST=$(nub view zod version)
-          if [ "$VERSION" = "$ZOD_LATEST" ]; then echo "tag=latest" >> "$GITHUB_OUTPUT"; else echo "tag=backfill" >> "$GITHUB_OUTPUT"; fi
-          echo "zod latest is $ZOD_LATEST; publishing @zod/mini@$VERSION under $([ "$VERSION" = "$ZOD_LATEST" ] && echo latest || echo backfill)"
-
-      # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design
-      - id: publish_mini
-        name: Publish @zod/mini to NPM
-        continue-on-error: true
-        working-directory: ./packages/mini
-        env:
-          VERSION: ${{ inputs.mini_version }}
-          TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then exit 0; fi
-          nub publish --provenance --no-git-checks --access public --ignore-scripts --tag "$TAG"
-
-      # the dispatch input is the version, already checked against npm above, so this does not depend on what the publish step reported
-      - name: Wait for @zod/mini to be live on npm
-        env:
-          VERSION: ${{ inputs.mini_version }}
-        run: |
-          for i in $(seq 1 150); do
-            if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
-              echo "@zod/mini@$VERSION is live"
-              exit 0
-            fi
-            if [ $((i % 15)) -eq 0 ]; then echo "@zod/mini@$VERSION is not on the registry yet ($i minutes)"; fi
-            sleep 60
-          done
-          echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
-          exit 1
-
-      # the version edit above leaves the tree dirty by design
-      - name: Publish @zod/mini to JSR
-        working-directory: ./packages/mini
-        env:
-          VERSION: ${{ inputs.mini_version }}
-        run: |
-          if curl -sfL "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
-            echo "@zod/mini@$VERSION is already on JSR"
-          else
-            nub exec --node jsr publish --allow-slow-types --allow-dirty
-          fi
-
       - run: nub run check:lockstep --wait
