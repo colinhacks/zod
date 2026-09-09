@@ -114,7 +114,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_union":
         if (issue.options && Array.isArray(issue.options) && issue.options.length > 0) {
           const opts = issue.options.map((o) => `'${o}'`).join(" | ");
-          return `Қимати дискриминатори нодуруст: ${opts} интизор мерафт`;
+          return `Қимати нодурусти дискриминатор: ${opts} интизор мерафт`;
         }
         return "Вуруди нодуруст";
 
