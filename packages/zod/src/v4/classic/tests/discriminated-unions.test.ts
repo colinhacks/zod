@@ -740,6 +740,26 @@ test("encode with codec discriminator", () => {
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
 
+test("nested encoding does not select a sibling from forward discriminator values", async () => {
+  const tag = (value: "a" | "b") =>
+    z.codec(z.literal(value).default(value), z.undefined(), {
+      decode: () => undefined,
+      encode: () => value,
+    });
+  const inner = z.discriminatedUnion("type", [
+    z.object({ type: tag("a"), value: z.literal("a") }),
+    z.object({ type: tag("b"), value: z.literal("b") }),
+  ]);
+  const outer = z.discriminatedUnion("type", [inner, z.object({ type: z.undefined(), value: z.string() })]);
+  for (const value of ["a", "b"] as const) {
+    const input = { type: undefined, value };
+    const expected = { type: value, value };
+    expect(z.encode(inner, input)).toEqual(expected);
+    expect(z.encode(outer, input)).toEqual(expected);
+    expect(await z.encodeAsync(outer, input)).toEqual(expected);
+  }
+});
+
 test("getDiscriminatedOption", () => {
   const fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
   const veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
@@ -892,6 +912,7 @@ test("non-undefined discriminator collisions remain schema errors", () => {
   for (const tag of [z.literal("a").default("a"), z.literal(["a", "b"]), z.literal("a").nullable()]) {
     const schema = z.discriminatedUnion("type", [z.object({ type: tag }), z.object({ type: tag })]);
     expect(() => schema.safeParse({ type: "a" })).toThrow(/Duplicate discriminator value/);
+    expect(() => z.encode(schema, { type: "a" })).toThrow(/Duplicate discriminator value/);
     expect(() => z.getDiscriminatedOption(schema, "a")).toThrow(/Duplicate discriminator value/);
   }
   const nullable = z.discriminatedUnion("type", [

@@ -2018,6 +2018,8 @@ z.getDiscriminatedOption(MyResult, "pending"); // ❌ not a declared discriminat
 
 The option is returned as-is, so `.shape` and the other object methods keep working.
 
+If multiple options accept an absent discriminator, looking up `undefined` throws an ambiguity error. Their unique explicit tags remain retrievable.
+
 ## Intersections
 
 Intersection types (`A & B`) represent a logical "AND". 

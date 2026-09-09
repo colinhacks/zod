@@ -2624,7 +2624,7 @@ export type $DiscriminatedOption<Options extends readonly SomeType[], Disc exten
     : never;
 }[number];
 
-/** Returns the option of `union` whose discriminator claims `value`. */
+/** Returns the option whose discriminator claims `value`, or throws if ambiguous. */
 export function getDiscriminatedOption<
   Options extends readonly SomeType[],
   Disc extends string,
@@ -2719,8 +2719,10 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const opt = disc.value.get(input?.[def.discriminator] as any);
-      if (opt) {
+      const value = input?.[def.discriminator];
+      const opt = disc.value.get(value as util.Primitive);
+      // forward metadata cannot choose an encoder for an absent tag
+      if (opt && (value !== undefined || ctx.direction !== "backward")) {
         return opt._zod.run(payload, ctx) as any;
       }
 
