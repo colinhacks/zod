@@ -1869,7 +1869,7 @@ function generateDiscriminatedUnionCheck(
       throw new ZodCompileUnsupportedError("discriminated union option without static discriminator values");
     }
 
-    // Two options claiming one value are not discriminable, and the branch chain below would silently give it to the first. Declining to compile hands that back to the interpreter, whose own map build reports it.
+    // let the interpreter handle collisions instead of compiling first-match dispatch
     for (const value of values) {
       if (claimed.has(value)) {
         throw new ZodCompileUnsupportedError(`duplicate discriminator value ${String(value)}`);
