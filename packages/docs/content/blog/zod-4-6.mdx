@@ -175,10 +175,44 @@ The runtime patterns for `z.base64()` and `z.base64url()` are the character sets
 
 Two consequences. Composing `z.base64()` into a template literal now checks the alphabet but not the length, matching how `z.creditCard()` already behaves there. And `z.regexes.base64url`, which is exported, is now the length-aware form and will overflow on a multi-megabyte input, exactly as `z.regexes.base64` always has.
 
+### ⚠️ Chained checks stop clobbering each other in JSON Schema
+
+Each check used to write its own bounds into the schema as it attached, in chain order, so a format check applied after `.min()` and `.max()` replaced the tighter values with its own range. The converter folds the checks as a conjunction now, so the order they are chained in no longer changes the output. ([#6554](https://github.com/colinhacks/zod/pull/6554), [#6553](https://github.com/colinhacks/zod/pull/6553))
+
+```ts
+z.toJSONSchema(z.number().min(0).max(23).int());
+// 4.5: { minimum: -9007199254740991, maximum: 9007199254740991 }
+// 4.6: { minimum: 0, maximum: 23 }
+```
+
+Runtime parsing always enforced the bounds you wrote; only the emitted schema was wrong. Two other divergences go with it. A repeated `multipleOf` kept the first divisor and dropped the rest, so `z.number().multipleOf(2).multipleOf(3)` emitted a schema that accepts 4. And `z.string().min(8).length(5)` emitted `minLength: 5`, widening a bound the runtime still rejected. Closes [#6550](https://github.com/colinhacks/zod/issues/6550).
+
+### ⚠️ Metadata members materialize on first read
+
+Eight members on a Zod Classic schema — `.format`, `.minLength`, `.maxLength`, `.minValue`, `.maxValue`, `.isInt`, `.minDate` and `.maxDate` — are derived from the checks now rather than written onto every instance at construction. They live on the prototype and shadow as own data the first time you read one. ([#6554](https://github.com/colinhacks/zod/pull/6554))
+
+```ts
+const s = z.string().min(3).max(9);
+
+Object.keys(s); // 4.5: ["format", "minLength", "maxLength"] — 4.6: []
+s.minLength;    // 3 in both
+Object.keys(s); // ["minLength"]
+```
+
+Reading a member gives the same answer it always did. What changed is enumeration: the keys are absent until something reads them, and `Object.assign({}, schema)` copies only what has been read. Deleting one exposes the getter again, so the next read recomputes.
+
 ## Commits
 
-Zod 4.6 rolls up 53 commits.
+Zod 4.6 rolls up 61 commits.
 
+- [`eb1c1089`](https://github.com/colinhacks/zod/commit/eb1c1089) ci: release only on workflow_dispatch behind the npm environment ([#6569](https://github.com/colinhacks/zod/pull/6569)) by [@colinhacks](https://github.com/colinhacks)
+- [`741981ff`](https://github.com/colinhacks/zod/commit/741981ff) perf(compile): for-in record walk, cheaper issue finalization, and a generative compile differential ([#6567](https://github.com/colinhacks/zod/pull/6567)) by [@colinhacks](https://github.com/colinhacks)
+- [`804e0f52`](https://github.com/colinhacks/zod/commit/804e0f52) perf: seal the CommonJS exports so require("zod") stops reading through a getter ([#6564](https://github.com/colinhacks/zod/pull/6564)) by [@colinhacks](https://github.com/colinhacks)
+- [`6f048367`](https://github.com/colinhacks/zod/commit/6f048367) fix(v4): derive JSON Schema constraints by folding checks in the converter ([#6554](https://github.com/colinhacks/zod/pull/6554)) by [@colinhacks](https://github.com/colinhacks)
+- [`e4d67f3e`](https://github.com/colinhacks/zod/commit/e4d67f3e) Migrate development and CI to Nub ([#6562](https://github.com/colinhacks/zod/pull/6562)) by [@colinhacks](https://github.com/colinhacks)
+- [`7a002366`](https://github.com/colinhacks/zod/commit/7a002366) fix(v4): don't let format checks overwrite tighter min/max bounds ([#6553](https://github.com/colinhacks/zod/pull/6553)) by [@colinhacks](https://github.com/colinhacks)
+- [`5489a532`](https://github.com/colinhacks/zod/commit/5489a532) test(v4): pin the check-chain case that keeps compiled validate's definite guard ([#6551](https://github.com/colinhacks/zod/pull/6551)) by [@colinhacks](https://github.com/colinhacks)
+- [`e7604717`](https://github.com/colinhacks/zod/commit/e7604717) docs: attribute the compiled failure cost to the fallback, not the double pass by [@colinhacks](https://github.com/colinhacks)
 - [`764ac59f`](https://github.com/colinhacks/zod/commit/764ac59f) perf(v4): settle z.validate on the first failure in parse order ([#6544](https://github.com/colinhacks/zod/pull/6544)) by [@colinhacks](https://github.com/colinhacks)
 - [`07917f4c`](https://github.com/colinhacks/zod/commit/07917f4c) test(v4): pin the lazy safeParse error's stack behavior ([#6548](https://github.com/colinhacks/zod/pull/6548)) by [@colinhacks](https://github.com/colinhacks)
 - [`62e6624b`](https://github.com/colinhacks/zod/commit/62e6624b) feat(v4): add .validate() and .validateAsync() to Zod Classic ([#6547](https://github.com/colinhacks/zod/pull/6547)) by [@colinhacks](https://github.com/colinhacks)
