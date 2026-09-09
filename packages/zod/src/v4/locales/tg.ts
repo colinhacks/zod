@@ -3,7 +3,7 @@ import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
 const error: () => errors.$ZodErrorMap = () => {
-  // In Tajik a noun after a numeral keeps its singular form, so no plural helper is needed.
+  // singular units after numerals in Tajik
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "аломат", verb: "дошта бошад" },
     file: { unit: "байт", verb: "дошта бошад" },
