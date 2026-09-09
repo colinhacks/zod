@@ -88,6 +88,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: { label: "מחרוזת JSON", gender: "f" },
     e164: { label: "מספר E.164", gender: "m" },
     credit_card: { label: "מספר כרטיס אשראי", gender: "m" },
+    iban: { label: "IBAN", gender: "m" },
     jwt: { label: "JWT", gender: "m" },
     template_literal: { label: "קלט", gender: "m" },
     ends_with: { label: "קלט", gender: "m" },

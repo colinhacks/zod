@@ -46,6 +46,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "نَص على هيئة JSON",
     e164: "رقم هاتف بمعيار E.164",
     credit_card: "رقم بطاقة الائتمان",
+    iban: "IBAN",
     jwt: "JWT",
     template_literal: "مدخل",
   };

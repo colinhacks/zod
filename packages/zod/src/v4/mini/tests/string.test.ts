@@ -338,6 +338,22 @@ test("z.creditCard", () => {
   expect(() => z.parse(a, 123)).toThrow();
 });
 
+test("z.iban", () => {
+  const a = z.iban();
+  // valid iban
+  expect(z.parse(a, "DE89370400440532013000")).toEqual("DE89370400440532013000");
+  expect(z.parse(a, "NO9386011117947")).toEqual("NO9386011117947");
+  // failed mod 97 checksum
+  expect(() => z.parse(a, "DE89370400440532013001")).toThrow();
+  // formatting violations
+  expect(() => z.parse(a, "de89370400440532013000")).toThrow();
+  expect(() => z.parse(a, "DE89 3704 0044 0532 0130 00")).toThrow();
+  expect(() => z.parse(a, "NO938601111794")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+  // wrong type
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
 test("z.jwt", () => {
   const a = z.jwt();
   // valid jwt

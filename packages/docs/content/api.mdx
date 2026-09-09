@@ -274,6 +274,7 @@ z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.creditCard();    // credit card number (Luhn checksum)
+z.iban();          // IBAN (ISO 7064 mod-97 checksum)
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
@@ -584,6 +585,20 @@ card.parse("4111  1111 1111 1111"); // ❌ no repeated separators
 card.parse(" 4111111111111111");    // ❌ no surrounding whitespace
 card.parse("4111.1111.1111.1111");  // ❌ spaces and hyphens only
 card.parse("4111111111111112");     // ❌ failed checksum
+```
+
+### IBANs
+
+Validate an International Bank Account Number (IBAN): 2-letter country code, 2 check digits, and 11 to 30 alphanumeric characters with a valid [ISO 7064 MOD 97-10](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Validating_the_IBAN) checksum. The country registry is not consulted, so any country code is accepted and no country's own account length is enforced. Electronic format only.
+
+```ts
+const iban = z.iban();
+iban.parse("DE89370400440532013000");      // ✅
+iban.parse("NO9386011117947");             // ✅
+iban.parse("DE89 3704 0044 0532 0130 00"); // ❌ no spaces
+iban.parse("de89370400440532013000");      // ❌ uppercase only
+iban.parse("DE89370400440532013001");      // ❌ failed checksum
+iban.parse("DE00000000000000000066");      // ❌ check digits are always 02–98
 ```
 
 ### JWTs
