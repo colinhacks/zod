@@ -1,5 +1,13 @@
+type Company = {
+  name: string;
+  logoSrc: string;
+  url: string;
+  href: string;
+  logoClassName?: string;
+};
+
 export const Silver = () => {
-  const companies = [
+  const companies: Company[] = [
     {
       name: "Subtotal",
       logoSrc: "https://avatars.githubusercontent.com/u/176449348?s=200&v=4",
@@ -57,6 +65,8 @@ export const Silver = () => {
     {
       name: "9thCO",
       logoSrc: "https://avatars.githubusercontent.com/u/117220588?s=200&v=4",
+      // white-on-transparent mark, invisible on the light theme without this
+      logoClassName: "brightness-0 dark:brightness-100",
       url: "9thco.com",
       href: "https://www.9thco.com/?utm_source=zod",
     },
@@ -81,7 +91,7 @@ export const Silver = () => {
                 <img
                   src={company.logoSrc}
                   alt={`${company.name} logo`}
-                  className="h-12 w-12 object-contain mb-2 mt-0"
+                  className={`h-12 w-12 object-contain mb-2 mt-0 ${company.logoClassName ?? ""}`}
                 />
                 <span className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                   {company.url}
