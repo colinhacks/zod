@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
+import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile, compileFn } from "../compile.js";
 import { $ZodAsyncError } from "../core.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
@@ -1349,6 +1349,29 @@ test("runtime island inside array element", () => {
   const aot = compile(z.array(z.xor([z.string(), z.number()])));
   expect(valid(aot, ["a", 1, "b"])).toEqual(["a", 1, "b"]);
   invalid(aot, ["a", true]);
+});
+
+test("an island thrown from inside an indented block leaves the indent level alone", () => {
+  // nullable opens an indented block, coerce throws inside it, and the property islands the pair — two of them so a leak compounds
+  const schema = z.object({ a: z.coerce.number().nullable(), b: z.coerce.number().nullable(), tail: z.string() });
+  expect(compileFn(schema, { debug: true }).code).toMatchInlineSnapshot(`
+    "// Constants: INVALID, c0, c1, c2
+    if (typeof input !== "object" || input === null || Array.isArray(input)) return INVALID;
+    const v0 = input["a"];
+    if (!("a" in input)) return INVALID;
+    const v1 = c1(c0, v0);
+    if (v1 === INVALID) return INVALID;
+    const v2 = input["b"];
+    if (!("b" in input)) return INVALID;
+    const v3 = c1(c2, v2);
+    if (v3 === INVALID) return INVALID;
+    const v4 = input["tail"];
+    if (typeof v4 !== "string") return INVALID;
+    const v5 = { "a": v1, "b": v3, "tail": v4 };
+    return v5;"
+  `);
+  expectMatch(schema, { a: "1", b: null, tail: "x" });
+  expectMatch(schema, { a: "nope", b: null, tail: "x" });
 });
 
 test("url string-format check never assigns to its accessor", () => {
