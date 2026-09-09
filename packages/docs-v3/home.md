@@ -201,6 +201,22 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
+    <td align="center">
+      <p></p>
+      <p>
+      <a href="https://trigger.dev/?utm_source=zod">
+        <picture height="80px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
+          <img alt="Trigger.dev logo" height="80px" src="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
+        </picture>
+      </a>
+      <br  />
+      Build and deploy fully-managed AI agents and workflows
+      <br/>
+      <a href="https://trigger.dev/?utm_source=zod" style="text-decoration:none;">trigger.dev</a>
+      </p>
+      <p></p>
+    </td>
   </tr>
 </table>
 
@@ -213,100 +229,16 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors">
-        <picture height="62px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
-          <img alt="Courier logo" height="62px" src="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
+      <a href="https://zernio.com/?utm_source=zod">
+        <picture height="48px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://zernio.com/brand/logo-white.svg">
+          <img alt="Zernio" height="48px" src="https://zernio.com/brand/logo-primary.svg">
         </picture>
       </a>
       <br  />
-      The API platform for sending notifications
+      Social APIs for developers and AI agents
       <br/>
-      <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors" style="text-decoration:none;">courier.com</a>
-      </p>
-      <p></p>
-    </td>
-    <td align="center">
-      <p></p>
-      <p>
-      <a href="https://liblab.com/?utm_source=zod">
-        <picture height="62px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/34dfa1a2-ce94-46f4-8902-fbfac3e1a9bc">
-          <img alt="LibLab" height="62px" src="https://github.com/user-attachments/assets/3de0b617-5137-49c4-b72d-a033cbe602d8">
-        </picture>
-      </a>
-      <br  />
-      Generate better SDKs for your APIs
-      <br/>
-      <a href="https://liblab.com/?utm_source=zod" style="text-decoration:none;">liblab.com</a>
-      </p>
-      <p></p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <p></p>
-      <p>
-      <a href="https://neon.tech">
-        <picture height="68px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
-          <img alt="Neon" height="68px" src="https://github.com/user-attachments/assets/b5799fc8-81ff-4053-a1c3-b29adf85e7a1">
-        </picture>
-      </a>
-      <br  />
-      Serverless Postgres — Ship faster
-      <br/>
-      <a href="https://neon.tech" style="text-decoration:none;">neon.tech</a>
-      </p>
-      <p></p>
-    </td>
-    <td align="center">
-      <p></p>
-      <p>
-      <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod">
-        <picture height="45px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/ac65013f-aeb4-48dd-a2ee-41040b69cbe6">
-          <img alt="Retool" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
-        </picture>
-      </a>
-      <br  />
-      Build AI apps and workflows with <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a>
-      <br/>
-      <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
-      </p>
-      <p></p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <p></p>
-      <p>
-      <a href="https://stainless.com">
-        <picture height="45px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/f20759c1-3e51-49d0-a31e-bbc43abec665">
-          <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/e9444e44-d991-4bba-a697-dbcfad608e47">
-        </picture>
-      </a>
-      <br  />
-      Generate best-in-class SDKs
-      <br/>
-      <a href="https://stainless.com" style="text-decoration:none;">stainless.com</a>
-      </p>
-      <p></p>
-    </td>
-    <td align="center">
-      <p></p>
-      <p>
-      <a href="https://speakeasy.com/editor?utm_source=zod+docs">
-        <picture height="40px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
-          <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
-        </picture>
-      </a>
-      <br  />
-      SDKs & Terraform providers for your API
-      <br/>
-      <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
+      <a href="https://zernio.com/?utm_source=zod" style="text-decoration:none;">zernio.com</a>
       </p>
       <p></p>
     </td>
@@ -320,9 +252,9 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/72055470?s=200&v=4" height="50px;" alt="Nitric" />
+      <img src="https://avatars.githubusercontent.com/u/176449348?s=200&v=4" height="50px;" alt="Subtotal" />
       <br />
-      <a style="text-decoration:none;" href="https://nitric.io/" target="_blank">Nitric</a>
+      <a style="text-decoration:none;" href="https://www.subtotal.com/?utm_source=zod" target="_blank">Subtotal</a>
     </td>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="50px;" alt="PropelAuth" />
@@ -330,20 +262,9 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a style="text-decoration:none;" href="https://www.propelauth.com/" target="_blank">PropelAuth</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="50px;" alt="Cerbos" />
-      <br />
-      <a style="text-decoration:none;" href="https://cerbos.dev/" target="_blank">Cerbos</a>
-    </td>
-    <td align="center">
       <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="50px;" alt="Scalar.com logo" />
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
-    </td>
-    </tr><tr>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="50px;" alt="Trigger.dev logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="50px;" alt="Transloadit logo" />
@@ -351,26 +272,12 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a style="text-decoration:none;" href="https://transloadit.com/?utm_source=zod&utm_medium=refe
     rral&utm_campaign=sponsorship&utm_content=github" target="_blank">Transloadit</a>
     </td>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" height="50px;" alt="Infisical logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://infisical.com" target="_blank">Infisical</a>
-    </td>
+  </tr>
+  <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="50px;" alt="Whop logo" />
       <br />
       <a style="text-decoration:none;" href="https://whop.com/" target="_blank">Whop</a>
-    </td>
-    </tr><tr>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="50px;" alt="CryptoJobsList logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://cryptojobslist.com/" target="_blank">CryptoJobsList</a>
-    </td>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="50px;" alt="Plain logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://plain.com/" target="_blank">Plain.</a>
     </td>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="50px;" alt="Inngest logo" />
@@ -382,16 +289,22 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux logo" />
       <br />
       <a style="text-decoration:none;" href="https://mux.link/zod" target="_blank">Mux</a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/76428554?s=200&v=4" height="50px;" alt="Cybozu logo" />
       <br />
       <a style="text-decoration:none;" href="https://cybozu.co.jp/index.html" target="_blank">Cybozu</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/117220588?s=200&v=4" height="50px;" alt="9thCO" />
+      <br />
+      <a style="text-decoration:none;" href="https://www.9thco.com/?utm_source=zod" target="_blank">9thCO</a>
     </td>
   </tr>
 </table>
@@ -403,60 +316,23 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
-      <a href="https://www.val.town/">
-        <picture width="100%" height="40px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/36961d2e-d92e-42af-9031-a41885ece5f4">
-          <img alt="val town logo" src="https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d" height="40px">
-        </picture>
-      </a>
-    </td>
-    <td align="center">
       <a href="https://www.route4me.com/">
         <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me logo" />
       </a>
     </td>
     <td align="center">
-      <a href="https://encore.dev">
-        <img src="https://github.com/colinhacks/zod/assets/3084745/5ad94e73-cd34-4957-9979-37da85fcf9cd" height="40px;" alt="Encore.dev logo" />
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.replay.io/">
-        <img src="https://avatars.githubusercontent.com/u/60818315?s=200&v=4" height="40px;" alt="Replay.io logo" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://www.numeric.io">
-        <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" />
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://marcatopartners.com">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://interval.com">
-        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" height="40px;" alt="" />
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://seasoned.cc">
-        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://www.bamboocreative.nz/">
-        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
-      </a>
-    </td>
-    <td align="center">
       <a href="https://github.com/jasonLaster">
         <img src="https://avatars.githubusercontent.com/u/254562?v=4" height="40px;" alt="Jason Laster" />
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://convex.dev/?utm_source=zod">
+        <img src="https://avatars.githubusercontent.com/u/81530787?s=200&v=4" height="40px;" alt="Convex logo" />
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://n8n.io/?utm_source=zod">
+        <img src="https://avatars.githubusercontent.com/u/104988782?s=200&v=4" height="40px;" alt="n8n logo" />
       </a>
     </td>
   </tr>

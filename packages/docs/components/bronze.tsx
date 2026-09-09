@@ -7,12 +7,6 @@ export const Bronze = () => {
       href: "https://github.com/jasonLaster",
     },
     {
-      name: "Clipboard",
-      logoSrc: "https://avatars.githubusercontent.com/u/28880063?s=200&v=4",
-      url: "clipboardhealth.com/engineering",
-      href: "https://www.clipboardhealth.com/engineering",
-    },
-    {
       name: "Convex",
       logoSrc: "https://avatars.githubusercontent.com/u/81530787?s=200&v=4",
       url: "convex.dev",
