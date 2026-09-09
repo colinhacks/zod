@@ -20,6 +20,7 @@ At a glance:
 - [`z.validate()`](#zvalidate) — checks input validity without building a result (up to 35x faster than `.safeParse().success` on a compiled schema)
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
+- [`z.iban()`](#ziban) — electronic-format IBAN plus mod-97 checksum
 - [Faster CommonJS](#faster-commonjs) — drops the getter on every export (~3x faster `z.validate()` under `require`)
 - [`@zod/mini`](/packages/mini) — Zod Mini as a standalone package, versioned in lockstep with `zod` since 4.5
 
@@ -140,6 +141,15 @@ z.fromJSONSchema({
   contains: { type: "number" },   // also minContains and maxContains
   minContains: 2,
 }).parse(["a", 2]);               // ❌ only one number
+```
+
+## `z.iban()`
+
+A new string format: an IBAN in electronic format, with a valid ISO 7064 MOD 97-10 checksum. ([#6571](https://github.com/colinhacks/zod/pull/6571))
+
+```ts
+z.iban().parse("DE89370400440532013000"); // ✅
+z.iban().parse("DE89370400440532013001"); // ❌ bad checksum
 ```
 
 ## Faster CommonJS
