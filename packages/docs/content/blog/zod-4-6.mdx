@@ -162,10 +162,12 @@ z.iban().parse("DE89370400440532013001"); // ❌ bad checksum
 const Player = z.object({ username: z.string(), xp: z.number() });
 
 // isPlayer is a type guard your build step generated
-const Fast = z.withParser(Player, (input) => (isPlayer(input) ? input : z.INVALID));
+const Fast = z.withParser(Player, (input) =>
+  isPlayer(input) ? { username: input.username, xp: input.xp } : z.INVALID
+);
 ```
 
-Returning `z.INVALID` hands the input back to the runtime, which stays the only source of `ZodError`s.
+The supplied parser owns the whole result, so it has to return what the schema would have returned. This one rebuilds the object rather than handing back its input, because `z.object()` strips unknown keys. Returning `z.INVALID` hands the input to the runtime, which stays the only source of `ZodError`s.
 
 ## Faster CommonJS
 
