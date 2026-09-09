@@ -1,12 +1,12 @@
 {
   "name": "@zod/mini",
-  "version": "4.5.4",
+  "version": "4.6.0",
   "exports": {
     "./package.json": "./package.json",
     ".": "./src/index.ts"
   },
   "imports": {
-    "zod/mini": "jsr:@zod/zod@^4.5.0/mini"
+    "zod/mini": "jsr:@zod/zod@^4.6.0/mini"
   },
   "publish": {
     "include": [
