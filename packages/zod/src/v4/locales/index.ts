@@ -49,6 +49,7 @@ export { default as sk } from "./sk.js";
 export { default as sl } from "./sl.js";
 export { default as sv } from "./sv.js";
 export { default as ta } from "./ta.js";
+export { default as tg } from "./tg.js";
 export { default as th } from "./th.js";
 export { default as tk } from "./tk.js";
 export { default as tr } from "./tr.js";
