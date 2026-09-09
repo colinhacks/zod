@@ -188,26 +188,10 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://www.coderabbit.ai/">
-        <picture height="80px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
-          <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
-        </picture>
-      </a>
-      <br  />
-      Cut code review time & bugs in half
-      <br/>
-      <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
-      </p>
-      <p></p>
-    </td>
-    <td align="center">
-      <p></p>
-      <p>
       <a href="https://trigger.dev/?utm_source=zod">
         <picture height="80px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
-          <img alt="Trigger.dev logo" height="80px" src="https://avatars.githubusercontent.com/u/95297378?s=400&v=4">
+          <source media="(prefers-color-scheme: dark)" srcset="https://trigger.dev/docs/logo/dark.png">
+          <img alt="Trigger.dev logo" height="80px" src="https://cdn.jsdelivr.net/gh/triggerdotdev/trigger.dev@c719f84f03bfa2bb4f13fa35251725ed5046a139/apps/webapp/app/assets/images/logo.svg">
         </picture>
       </a>
       <br  />
@@ -229,16 +213,16 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://zernio.com/?utm_source=zod">
-        <picture height="48px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://zernio.com/brand/logo-white.svg">
-          <img alt="Zernio" height="48px" src="https://zernio.com/brand/logo-primary.svg">
+      <a href="https://www.coderabbit.ai/">
+        <picture height="80px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
+          <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
         </picture>
       </a>
       <br  />
-      Social APIs for developers and AI agents
+      Cut code review time & bugs in half
       <br/>
-      <a href="https://zernio.com/?utm_source=zod" style="text-decoration:none;">zernio.com</a>
+      <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
       </p>
       <p></p>
     </td>
@@ -305,6 +289,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <img src="https://avatars.githubusercontent.com/u/117220588?s=200&v=4" height="50px;" alt="9thCO" />
       <br />
       <a style="text-decoration:none;" href="https://www.9thco.com/?utm_source=zod" target="_blank">9thCO</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/28635252?s=200&v=4" height="50px;" alt="StackBlitz" />
+      <br />
+      <a style="text-decoration:none;" href="https://stackblitz.com/?utm_source=zod" target="_blank">StackBlitz</a>
     </td>
   </tr>
 </table>

@@ -60,6 +60,12 @@ export const Silver = () => {
       url: "9thco.com",
       href: "https://www.9thco.com/?utm_source=zod",
     },
+    {
+      name: "StackBlitz",
+      logoSrc: "https://avatars.githubusercontent.com/u/28635252?s=200&v=4",
+      url: "stackblitz.com",
+      href: "https://stackblitz.com/?utm_source=zod",
+    },
   ];
 
   return (

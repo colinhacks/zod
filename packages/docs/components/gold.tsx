@@ -11,13 +11,12 @@ type Company = {
 export const Gold = () => {
   const companies: Company[] = [
     {
-      name: "Zernio",
-      description: "Social APIs for developers and AI agents",
-      logoDark: "https://zernio.com/brand/logo-white.svg",
-      logoLight: "https://zernio.com/brand/logo-primary.svg",
-      logoClassName: "h-12",
-      url: "zernio.com",
-      href: "https://zernio.com/?utm_source=zod",
+      name: "CodeRabbit",
+      description: "Cut code review time & bugs in half",
+      logoDark: "https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d",
+      logoLight: "https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74",
+      url: "coderabbit.ai",
+      href: "https://www.coderabbit.ai/",
     },
   ];
 

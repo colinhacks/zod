@@ -18,6 +18,12 @@ export const Bronze = () => {
       url: "n8n.io",
       href: "https://n8n.io/?utm_source=zod",
     },
+    {
+      name: "Route4Me",
+      logoSrc: "https://avatars.githubusercontent.com/u/7936820?s=200&v=4",
+      url: "route4me.com",
+      href: "https://www.route4me.com/?utm_source=zod",
+    },
   ];
 
   return (

@@ -9,18 +9,11 @@ export const Platinum = () => {
     //   href: "https://www.mobb.ai/?utm_source=zod",
     // },
     {
-      name: "CodeRabbit",
-      description: "Cut code review time & bugs in half",
-      logoDark: "https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d",
-      logoLight: "https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74",
-      url: "coderabbit.ai",
-      href: "https://www.coderabbit.ai/",
-    },
-    {
       name: "Trigger.dev",
       description: "Build and deploy fully-managed AI agents and workflows",
-      logoDark: "https://avatars.githubusercontent.com/u/95297378?s=400&v=4",
-      logoLight: "https://avatars.githubusercontent.com/u/95297378?s=400&v=4",
+      logoDark: "https://trigger.dev/docs/logo/dark.png",
+      // pinned: trigger.dev ships no light-mode wordmark, and this svg's jsx-cased gradient stops make it render solid black
+      logoLight: "https://cdn.jsdelivr.net/gh/triggerdotdev/trigger.dev@c719f84f03bfa2bb4f13fa35251725ed5046a139/apps/webapp/app/assets/images/logo.svg",
       url: "trigger.dev",
       href: "https://trigger.dev/?utm_source=zod",
     },
