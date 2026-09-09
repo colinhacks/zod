@@ -221,6 +221,17 @@ The runtime patterns for `z.base64()` and `z.base64url()` are the character sets
 
 Composing `z.base64()` into a template literal now checks the alphabet but not the length, which is how `z.creditCard()` already behaves there. The exported `z.regexes.base64url` is now the length-aware form, so it overflows on a multi-megabyte input the same way `z.regexes.base64` does.
 
+### ⚠️ The email pattern dropped its lookaheads
+
+`z.email()` opened with two lookaheads, and the second scanned the whole string before the match began. Both are gone, and the rule they enforced — no empty segment in the local part — is expressed structurally instead, so `z.email()` accepts and rejects exactly what it did before. Valid addresses validate roughly twice as fast. ([#6573](https://github.com/colinhacks/zod/pull/6573))
+
+The pattern is visible in three other places. `z.regexes.email` has no capture groups now, and neither of the two it used to expose held a usable value. The `pattern` in `z.toJSONSchema()` output carries no lookahead, which validators outside ECMAScript generally cannot compile. And composing an email into a template literal no longer applies its no-consecutive-dots rule to the rest of the string.
+
+```ts
+z.templateLiteral([z.email(), "|", z.string()]).parse("a@b.cc|a..b");
+// 4.5: ❌ — the lookahead reached past the email segment — 4.6: ✅
+```
+
 ### ⚠️ Chained checks no longer overwrite each other in JSON Schema
 
 Each check used to write its own bounds into the schema as it attached, in chain order, so a format check applied after `.min()` and `.max()` replaced the tighter values with its own range. The converter folds the checks as a conjunction now. The order they are chained in no longer changes the output. ([#6554](https://github.com/colinhacks/zod/pull/6554), [#6553](https://github.com/colinhacks/zod/pull/6553))
@@ -255,8 +266,10 @@ z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
 
 ## Commits
 
-Zod 4.6 rolls up 67 commits.
+Zod 4.6 rolls up 69 commits.
 
+- [`f9465d4e`](https://github.com/colinhacks/zod/commit/f9465d4e) docs: reconcile the sponsor listings with active sponsorships ([#6576](https://github.com/colinhacks/zod/pull/6576)) by [@colinhacks](https://github.com/colinhacks)
+- [`f7fd5548`](https://github.com/colinhacks/zod/commit/f7fd5548) perf(v4): drop the lookaheads from the email regex ([#6573](https://github.com/colinhacks/zod/pull/6573)) by [@colinhacks](https://github.com/colinhacks)
 - [`36f17960`](https://github.com/colinhacks/zod/commit/36f17960) fix(v4): stop the memoizer from pinning a finished parse ([#6572](https://github.com/colinhacks/zod/pull/6572)) by [@colinhacks](https://github.com/colinhacks)
 - [`22bed613`](https://github.com/colinhacks/zod/commit/22bed613) feat(v4): add z.iban() string format with mod-97 checksum ([#6571](https://github.com/colinhacks/zod/pull/6571)) by [@colinhacks](https://github.com/colinhacks)
 - [`c5b9bcb3`](https://github.com/colinhacks/zod/commit/c5b9bcb3) bench: measure what a runtime island's leaked indent cost the generated source by [@colinhacks](https://github.com/colinhacks)
