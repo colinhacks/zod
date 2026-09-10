@@ -87,11 +87,22 @@ test("recursive tuple rests retain native value types", () => {
   expectTypeOf<z.output<z.ZodTuple<[z.ZodNumber], z.ZodString | z.ZodNumber>>>().toEqualTypeOf<
     [number, ...string[]] | [number, ...number[]]
   >();
+  const stringRest: Field = z.tuple([z.number()], z.string());
+  const tupleRest: Field = z.tuple([z.number()], z.tuple([z.number()], z.string()));
+  const mixed = [1, "leaf", [2], "leaf"];
+  expect(stringRest.safeParse(mixed).success).toBe(false);
+  expect(tupleRest.safeParse(mixed).success).toBe(false);
+  const unionRest = z.tuple([z.number()], z.union([z.string(), z.tuple([z.number()])]));
+  const mixedOutput: z.output<typeof unionRest> = [1, "leaf", [2], "leaf"];
+  expect(unionRest.parse(mixed)).toEqual(mixedOutput);
+  expectTypeOf<z.output<typeof unionRest>>().toEqualTypeOf<[number, ...(string | [number])[]]>();
+  // @ts-expect-error a union rest schema is not a union of rest schemas
+  const notField: Field = unionRest;
   // @ts-expect-error recursive rests reject invalid leaves
   const invalid: z.input<Field> = [1, true];
   // @ts-expect-error recursive rests retain the fixed prefix
   const missingPrefix: z.output<Field> = ["leaf"];
-  void [invalid, missingPrefix];
+  void [invalid, missingPrefix, notField];
 });
 
 test("recursive metadata overrides determine object optionality", () => {
