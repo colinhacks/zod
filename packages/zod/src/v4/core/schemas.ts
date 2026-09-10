@@ -1998,7 +1998,7 @@ function handlePropertyResult(
   }
 
   if (result.value === undefined) {
-    if (isPresent) {
+    if (isPresent || (optin === "defaulted" && !isOptionalOut)) {
       (final.value as any)[key] = undefined;
     }
   } else {
@@ -2329,16 +2329,16 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           doc.write(`
         if (${id}.issues.length) {${prefixStr(id, k)}
         }
-        
-        if (${id}.value === undefined) {
-          if (${isPresent}) {
-            newResult[${k}] = undefined;
-          }
-        } else {
+      `);
+          if (optin === "defaulted") {
+            doc.write(`newResult[${k}] = ${id}.value;`);
+          } else {
+            doc.write(`
+        if (${id}.value !== undefined || ${isPresent}) {
           newResult[${k}] = ${id}.value;
         }
-
       `);
+          }
         }
       }
 
@@ -4110,7 +4110,7 @@ export interface $ZodPrefaultDef<T extends { _zod: any } = $ZodType> extends $Zo
 }
 
 export interface $ZodPrefaultInternals<T extends { _zod: any } = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<InferOutput<T>>, InferInput<T> | undefined> {
+  extends $ZodTypeInternals<InferOutput<T>, InferInput<T> | undefined> {
   def: $ZodPrefaultDef<T>;
   optin: "defaulted";
   optout?: "optional" | undefined;

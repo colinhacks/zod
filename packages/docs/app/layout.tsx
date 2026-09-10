@@ -27,9 +27,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="flex flex-col min-h-screen">
-        <Banner id="zod45">
-          💎 Zod 4.5 is out! <span>&nbsp;</span>
-          <a className="underline" href="/blog/zod-4-5">
+        <Banner id="zod46">
+          💎 Zod 4.6 is out! <span>&nbsp;</span>
+          <a className="underline" href="/blog/zod-4-6">
             Read the announcement.
           </a>
         </Banner>
