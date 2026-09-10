@@ -165,6 +165,28 @@ test("z.iso.duration", () => {
   expect(z.safeParse(b, d2).success).toEqual(false);
 });
 
+test("z.prefault preserves undefined output", async () => {
+  const field = z.prefault(z.union([z.string(), z.undefined()]), () => undefined);
+  const schema = z.object({ a: field });
+  expectTypeOf<z.output<typeof field>>().toEqualTypeOf<string | undefined>();
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<{ a: string | undefined }>();
+  expect(z.parse(schema, {})).toStrictEqual({ a: undefined });
+  expect(z.parse(schema, { a: undefined })).toStrictEqual({ a: undefined });
+  expect(z.parse(schema, { a: "value" })).toStrictEqual({ a: "value" });
+  expect(z.safeParse(schema, { a: 123 }).success).toBe(false);
+  expect(await z.parseAsync(schema, {})).toStrictEqual({ a: undefined });
+  expect(z.parse(z.object({ a: z.prefault(z.optional(z.string()), undefined) }), {})).toStrictEqual({ a: undefined });
+  const transformed = z.prefault(
+    z.pipe(
+      z.string(),
+      z.transform(() => undefined)
+    ),
+    "fallback"
+  );
+  expectTypeOf<z.output<typeof transformed>>().toEqualTypeOf<undefined>();
+  expect(z.parse(z.object({ a: transformed }), {})).toStrictEqual({ a: undefined });
+});
+
 test("z.undefined", () => {
   const a = z.undefined();
   expect(z.parse(a, undefined)).toEqual(undefined);

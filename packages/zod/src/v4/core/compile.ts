@@ -1270,9 +1270,9 @@ function generateObjectCheck(
   }
   // else: strip mode (no catchall) - unknown keys ignored, only include known keys
 
-  // Shape keys in declared order, then unknown keys in for...in order. A middle-rung key is included iff present on the input, else iff its output is not undefined.
+  // defaulted required outputs keep their keys even when undefined
   const outputVar = newVar(ctx);
-  const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
+  const hasConditionalKeys = allKeys.some((k) => mayOmitUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
 
   // Assert mode: every declared key is validated above, so the output literal and the unknown-key copy are pure waste. A `never` catchall already emitted its rejection loop; a schema catchall still has to validate the values it would otherwise have stored.
   if (!buildsValue) {
@@ -1301,7 +1301,7 @@ function generateObjectCheck(
       const out = propOutputs.get(k);
       if (dropsWhenAbsent(propShape[k]!)) {
         doc.write(`if (${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
-      } else if (mayOutputUndefined(propShape[k]!)) {
+      } else if (mayOmitUndefined(propShape[k]!)) {
         doc.write(`if (${out} !== undefined || ${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
       } else {
         doc.write(`${outputVar}[${kx}] = ${out};`);
@@ -1464,9 +1464,11 @@ function dropsWhenAbsent(schema: SomeType): boolean {
   return schema._zod.optin === "optional" && schema._zod.optout === "optional";
 }
 
-// Whether a schema's success-path output can be `undefined`. Object output
-// assembly gives such props the runtime's value-or-presence inclusion rule;
-// everything else keeps the unconditional object-literal slot.
+function mayOmitUndefined(schema: SomeType): boolean {
+  return (schema._zod.optin !== "defaulted" || schema._zod.optout === "optional") && mayOutputUndefined(schema);
+}
+
+// whether a schema's success-path output can be undefined
 function mayOutputUndefined(schema: SomeType): boolean {
   const def = schema._zod.def as {
     type: string;
