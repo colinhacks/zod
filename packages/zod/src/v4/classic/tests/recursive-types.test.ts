@@ -76,6 +76,24 @@ test("recursive wrapper schema definitions", () => {
   expect(z.core.parse(pipe(z.string()), "leaf")).toBe("leaf");
 });
 
+test("recursive tuple rests retain native value types", () => {
+  type Field = z.ZodString | z.ZodTuple<[z.ZodNumber], Field>;
+  type TupleValue = [number, ...string[]] | [number, ...TupleValue[]];
+  type Value = string | TupleValue;
+  expectTypeOf<z.input<Field>>().toEqualTypeOf<Value>();
+  expectTypeOf<z.output<Field>>().toEqualTypeOf<Value>();
+  const value: z.output<Field> = [1, [2, "nested"], [3]];
+  expect(value).toEqual([1, [2, "nested"], [3]]);
+  expectTypeOf<z.output<z.ZodTuple<[z.ZodNumber], z.ZodString | z.ZodNumber>>>().toEqualTypeOf<
+    [number, ...string[]] | [number, ...number[]]
+  >();
+  // @ts-expect-error recursive rests reject invalid leaves
+  const invalid: z.input<Field> = [1, true];
+  // @ts-expect-error recursive rests retain the fixed prefix
+  const missingPrefix: z.output<Field> = ["leaf"];
+  void [invalid, missingPrefix];
+});
+
 test("recursive metadata overrides determine object optionality", () => {
   interface Internals extends z.core.$ZodPipeInternals<Child, z.core.$ZodTransform> {
     optin: "optional";
@@ -107,6 +125,40 @@ test("recursive metadata overrides determine object optionality", () => {
   expectTypeOf<z.output<typeof branded>>().toEqualTypeOf<string[] & z.core.$brand<"array">>();
   const nested = z.array(branded);
   expectTypeOf<z.output<typeof nested>>().toEqualTypeOf<(string[] & z.core.$brand<"array">)[]>();
+});
+
+test("recursive pipe projections terminate at opaque leaves", () => {
+  type BigIntChild = z.core.$ZodBigInt | z.core.$ZodPipe<BigIntChild, z.core.$ZodTransform>;
+  type DateChild = z.core.$ZodDate | z.core.$ZodPipe<DateChild, z.core.$ZodTransform>;
+  type CustomChild = z.core.$ZodCustom | z.core.$ZodPipe<CustomChild, z.core.$ZodTransform>;
+  expectTypeOf<z.input<BigIntChild>>().toBeUnknown();
+  expectTypeOf<z.output<BigIntChild>>().toBeUnknown();
+  expectTypeOf<z.input<DateChild>>().toBeUnknown();
+  expectTypeOf<z.output<DateChild>>().toBeUnknown();
+  expectTypeOf<z.input<CustomChild>>().toBeUnknown();
+  expectTypeOf<z.output<CustomChild>>().toBeUnknown();
+
+  type Leaf =
+    | z.core.$ZodString
+    | z.core.$ZodNumber
+    | z.core.$ZodBoolean
+    | z.core.$ZodBigInt
+    | z.core.$ZodSymbol
+    | z.core.$ZodUndefined
+    | z.core.$ZodNull
+    | z.core.$ZodAny
+    | z.core.$ZodUnknown
+    | z.core.$ZodNever
+    | z.core.$ZodVoid
+    | z.core.$ZodDate
+    | z.core.$ZodEnum
+    | z.core.$ZodLiteral
+    | z.core.$ZodFile
+    | z.core.$ZodTransform
+    | z.core.$ZodNaN
+    | z.core.$ZodTemplateLiteral
+    | z.core.$ZodCustom;
+  expectTypeOf<Exclude<Leaf, { _zod: { atomic?: true } }>>().toBeNever();
 });
 
 test("opaque recursive schema views retain explicit input and output", () => {

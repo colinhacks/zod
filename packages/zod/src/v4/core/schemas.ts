@@ -1435,6 +1435,7 @@ export interface $ZodBigIntDef extends $ZodTypeDef {
 }
 
 export interface $ZodBigIntInternals<T = unknown> extends $ZodTypeInternals<bigint, T> {
+  atomic?: true;
   pattern: RegExp;
   /** @internal Internal API, use with caution */
   def: $ZodBigIntDef;
@@ -1511,6 +1512,7 @@ export interface $ZodSymbolDef extends $ZodTypeDef {
 }
 
 export interface $ZodSymbolInternals extends $ZodTypeInternals<symbol, symbol> {
+  atomic?: true;
   def: $ZodSymbolDef;
   isst: errors.$ZodIssueInvalidType;
 }
@@ -1737,6 +1739,7 @@ export interface $ZodVoidDef extends $ZodTypeDef {
 }
 
 export interface $ZodVoidInternals extends $ZodTypeInternals<void, void> {
+  atomic?: true;
   def: $ZodVoidDef;
   isst: errors.$ZodIssueInvalidType;
 }
@@ -1775,6 +1778,7 @@ export interface $ZodDateDef extends $ZodTypeDef {
 }
 
 export interface $ZodDateInternals<T = unknown> extends $ZodTypeInternals<Date, T> {
+  atomic?: true;
   def: $ZodDateDef;
   isst: errors.$ZodIssueInvalidType; // | errors.$ZodIssueInvalidDate;
   bag: util.LoosePartial<{
@@ -2960,7 +2964,7 @@ export interface $ZodTupleDef<
 
 export type $InferTupleInputType<T extends util.TupleItems, Rest extends SomeType | null> = [
   ...TupleInputTypeWithOptionals<T>,
-  ...(Rest extends SomeType ? core.input<Rest>[] : []),
+  ...(Rest extends SomeType ? InferNativeInput<Rest>[] : []),
 ];
 type TupleInputTypeNoOptionals<T extends util.TupleItems> = {
   [k in keyof T]: InferNativeInput<T[k]>;
@@ -2976,7 +2980,7 @@ type TupleInputTypeWithOptionals<T extends util.TupleItems> = T extends readonly
 
 export type $InferTupleOutputType<T extends util.TupleItems, Rest extends SomeType | null> = [
   ...TupleOutputTypeWithOptionals<T>,
-  ...(Rest extends SomeType ? core.output<Rest>[] : []),
+  ...(Rest extends SomeType ? InferNativeOutput<Rest>[] : []),
 ];
 type TupleOutputTypeNoOptionals<T extends util.TupleItems> = {
   [k in keyof T]: InferNativeOutput<T[k]>;
@@ -3616,6 +3620,7 @@ export interface $ZodEnumInternals<
   /** @ts-ignore Cast variance */
   out T extends util.EnumLike = util.EnumLike,
 > extends $ZodTypeInternals<$InferEnumOutput<T>, $InferEnumInput<T>> {
+  atomic?: true;
   // enum: T;
 
   def: $ZodEnumDef<T>;
@@ -3788,6 +3793,7 @@ export interface $ZodFileDef extends $ZodTypeDef {
 }
 
 export interface $ZodFileInternals extends $ZodTypeInternals<File, File> {
+  atomic?: true;
   def: $ZodFileDef;
   isst: errors.$ZodIssueInvalidType;
   bag: util.LoosePartial<{
@@ -4375,6 +4381,7 @@ export interface $ZodNaNDef extends $ZodTypeDef {
 }
 
 export interface $ZodNaNInternals extends $ZodTypeInternals<number, number> {
+  atomic?: true;
   def: $ZodNaNDef;
   isst: errors.$ZodIssueInvalidType;
 }
@@ -4656,6 +4663,7 @@ export interface $ZodTemplateLiteralDef extends $ZodTypeDef {
 }
 export interface $ZodTemplateLiteralInternals<Template extends string = string>
   extends $ZodTypeInternals<Template, Template> {
+  atomic?: true;
   pattern: RegExp;
   def: $ZodTemplateLiteralDef;
   isst: errors.$ZodIssueInvalidType;
@@ -5089,6 +5097,7 @@ export interface $ZodCustomDef<O = unknown> extends $ZodTypeDef, checks.$ZodChec
 export interface $ZodCustomInternals<O = unknown, I = unknown>
   extends $ZodTypeInternals<O, I>,
     checks.$ZodCheckInternals<O> {
+  atomic?: true;
   def: $ZodCustomDef;
   issc: errors.$ZodIssue;
   isst: never;
@@ -5339,7 +5348,7 @@ type InferNativeInput<T> = T extends { _zod: any }
       ? InferNativeInput<E>[]
       : T["_zod"]["def"] extends { items: readonly [infer E]; rest: infer R }
         ? R extends { _zod: any }
-          ? [InferNativeInput<E>, ...core.input<R>[]]
+          ? [InferNativeInput<E>, ...InferNativeInput<R>[]]
           : [InferNativeInput<E>]
         : T["_zod"]["input"]
     : T["_zod"]["input"]
@@ -5351,7 +5360,7 @@ type InferNativeOutput<T> = T extends { _zod: any }
       ? InferNativeOutput<E>[]
       : T["_zod"]["def"] extends { items: readonly [infer E]; rest: infer R }
         ? R extends { _zod: any }
-          ? [InferNativeOutput<E>, ...core.output<R>[]]
+          ? [InferNativeOutput<E>, ...InferNativeOutput<R>[]]
           : [InferNativeOutput<E>]
         : T["_zod"]["output"]
     : T["_zod"]["output"]
@@ -5362,8 +5371,8 @@ type NativeNext<T> = T extends { _zod: { atomic?: true } }
   : T extends { _zod: { def: infer D } }
     ? D extends { element: infer E }
       ? E
-      : D extends { items: readonly [infer E] }
-        ? E
+      : D extends { items: readonly [infer E]; rest: infer R }
+        ? E | R
         : never
     : never;
 type NativeIdentity<T> = T extends { _zod: { def: infer D } }
