@@ -1,6 +1,55 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("recursive native containers preserve brands", () => {
+  type Field = z.ZodString | z.ZodArray<Field>;
+  const field: z.ZodArray<Field> = z.array(z.string());
+  const output = field.brand<"output">();
+  const input = field.brand<"input", "in">();
+  const both = field.brand<"both", "inout">();
+  const nested = z.array(output);
+  const nestedInput = z.array(input);
+  const nestedBoth = z.tuple([both]);
+  const twice = z.array(output.brand<"second">());
+  expectTypeOf<z.output<typeof nested>[number]>().toEqualTypeOf<z.output<typeof output>>();
+  expectTypeOf<z.input<typeof nested>[number]>().toEqualTypeOf<z.input<typeof field>>();
+  expectTypeOf<z.input<typeof nestedInput>[number]>().toEqualTypeOf<z.input<typeof input>>();
+  expectTypeOf<z.output<typeof nestedInput>[number]>().toEqualTypeOf<z.output<typeof field>>();
+  expectTypeOf<z.input<typeof nestedBoth>[0]>().toEqualTypeOf<z.input<typeof both>>();
+  expectTypeOf<z.output<typeof nestedBoth>[0]>().toEqualTypeOf<z.output<typeof both>>();
+  expectTypeOf<z.output<typeof twice>[number]>().toEqualTypeOf<
+    z.output<typeof field> & z.core.$brand<"output"> & z.core.$brand<"second">
+  >();
+  type TupleField = z.ZodString | z.ZodTuple<[TupleField], null>;
+  const tuple: z.ZodTuple<[TupleField], null> = z.tuple([z.string()]);
+  const brandedTuple = tuple.brand<"tuple">();
+  const nestedTuple = z.array(brandedTuple);
+  expectTypeOf<z.output<typeof nestedTuple>[number]>().toEqualTypeOf<z.output<typeof brandedTuple>>();
+  // @ts-expect-error recursive array output retains its brand
+  const invalidOutput: z.output<typeof nested> = [["unbranded"]];
+  // @ts-expect-error recursive array input retains its brand
+  const invalidInput: z.input<typeof nestedInput> = [["unbranded"]];
+  // @ts-expect-error recursive tuple output retains its brand
+  const invalidTuple: z.output<typeof nestedTuple> = [["unbranded"]];
+  void [invalidOutput, invalidInput, invalidTuple];
+  expect(nested.parse([["leaf"]])).toEqual([["leaf"]]);
+});
+
+test("recursive native containers preserve predicate narrowing", () => {
+  type Field = z.ZodString | z.ZodArray<Field>;
+  const field: z.ZodArray<Field> = z.array(z.string());
+  const narrowed = field.refine((value): value is string[] => value.every((item) => typeof item === "string"));
+  const nested = z.array(narrowed);
+  expectTypeOf<z.output<typeof nested>[number]>().toEqualTypeOf<z.output<typeof narrowed>>();
+  expectTypeOf<z.input<typeof nested>[number]>().toEqualTypeOf<z.input<typeof field>>();
+  type Narrow = z.core.$ZodNarrow<typeof field, string[]>;
+  expectTypeOf<z.output<z.ZodArray<Narrow>>[number]>().toEqualTypeOf<z.output<Narrow>>();
+  // @ts-expect-error nested arrays do not satisfy the predicate
+  const invalid: z.output<typeof nested> = [[["leaf"]]];
+  void invalid;
+  expect(nested.parse([["leaf"]])).toEqual([["leaf"]]);
+});
+
 test("recursive schema containers retain native value types", () => {
   type ArrayField = z.ZodString | z.ZodArray<ArrayField>;
   type ArrayValue = string | ArrayValue[];

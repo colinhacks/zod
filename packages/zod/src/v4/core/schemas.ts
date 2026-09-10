@@ -5419,15 +5419,27 @@ type OptionalInSource<T> = T extends { _zod: { def: infer D } }
           ? I
           : never
   : never;
-type HasOptionalInCycle<T, Seen = never> = util.IsAny<T> extends true
+type MetadataSource<T, K extends string> = K extends "optin"
+  ? OptionalInSource<T>
+  : K extends "optout"
+    ? OptionalOutSource<T>
+    : K extends "values"
+      ? ValuesSource<T>
+      : K extends "propValues"
+        ? PropertyValuesSource<T>
+        : K extends "pattern"
+          ? PatternSource<T>
+          : never;
+type HasMetadataCycle<T, K extends string, Seen = never> = util.IsAny<T> extends true
   ? false
   : T extends { _zod: { def: infer D } }
-    ? [OptionalInSource<T>] extends [never]
+    ? [MetadataSource<T, K>] extends [never]
       ? false
       : D extends Seen
         ? true
-        : HasOptionalInCycle<OptionalInSource<T>, Seen | D>
+        : HasMetadataCycle<MetadataSource<T, K>, K, Seen | D>
     : false;
+type HasOptionalInCycle<T> = HasMetadataCycle<T, "optin">;
 type ResolveOptionalIn<T, Seen = never> = T extends { _zod: any }
   ? util.IsAny<T["_zod"]["optin"]> extends true
     ? T["_zod"]["optin"]
@@ -5468,15 +5480,7 @@ type OptionalOutSource<T> = T extends { _zod: { def: infer D } }
           ? I
           : never
   : never;
-type HasOptionalOutCycle<T, Seen = never> = util.IsAny<T> extends true
-  ? false
-  : T extends { _zod: { def: infer D } }
-    ? [OptionalOutSource<T>] extends [never]
-      ? false
-      : D extends Seen
-        ? true
-        : HasOptionalOutCycle<OptionalOutSource<T>, Seen | D>
-    : false;
+type HasOptionalOutCycle<T> = HasMetadataCycle<T, "optout">;
 type ResolveOptionalOut<T, Seen = never> = T extends { _zod: any }
   ? util.IsAny<T["_zod"]["optout"]> extends true
     ? T["_zod"]["optout"]
@@ -5518,15 +5522,7 @@ type ValuesSource<T> = T extends { _zod: { def: infer D } }
         ? I
         : never
   : never;
-type HasValuesCycle<T, Seen = never> = util.IsAny<T> extends true
-  ? false
-  : T extends { _zod: { def: infer D } }
-    ? [ValuesSource<T>] extends [never]
-      ? false
-      : D extends Seen
-        ? true
-        : HasValuesCycle<ValuesSource<T>, Seen | D>
-    : false;
+type HasValuesCycle<T> = HasMetadataCycle<T, "values">;
 
 type PropertyValuesSource<T> = T extends { _zod: { def: infer D } }
   ? D extends { type: "readonly"; innerType: infer I }
@@ -5537,15 +5533,7 @@ type PropertyValuesSource<T> = T extends { _zod: { def: infer D } }
         ? I
         : never
   : never;
-type HasPropertyValuesCycle<T, Seen = never> = util.IsAny<T> extends true
-  ? false
-  : T extends { _zod: { def: infer D } }
-    ? [PropertyValuesSource<T>] extends [never]
-      ? false
-      : D extends Seen
-        ? true
-        : HasPropertyValuesCycle<PropertyValuesSource<T>, Seen | D>
-    : false;
+type HasPropertyValuesCycle<T> = HasMetadataCycle<T, "propValues">;
 
 type PatternSource<T> = T extends { _zod: { def: infer D } }
   ? D extends { type: "nullable" | "optional"; innerType: infer I }
@@ -5556,15 +5544,7 @@ type PatternSource<T> = T extends { _zod: { def: infer D } }
         ? I
         : never
   : never;
-type HasPatternCycle<T, Seen = never> = util.IsAny<T> extends true
-  ? false
-  : T extends { _zod: { def: infer D } }
-    ? [PatternSource<T>] extends [never]
-      ? false
-      : D extends Seen
-        ? true
-        : HasPatternCycle<PatternSource<T>, Seen | D>
-    : false;
+type HasPatternCycle<T> = HasMetadataCycle<T, "pattern">;
 
 // cycle bounds defer optionality to the object resolver
 type ForwardOptionalIn<T> = T extends { _zod: any }

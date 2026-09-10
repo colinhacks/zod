@@ -1,6 +1,19 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/mini";
 
+test("recursive native containers preserve brands", () => {
+  type Field = z.ZodMiniString<string> | z.ZodMiniArray<Field>;
+  const field: z.ZodMiniArray<Field> = z.array(z.string());
+  const branded = field.brand<"array", "inout">();
+  const nested = z.array(branded);
+  expectTypeOf<z.input<typeof nested>[number]>().toEqualTypeOf<z.input<typeof branded>>();
+  expectTypeOf<z.output<typeof nested>[number]>().toEqualTypeOf<z.output<typeof branded>>();
+  // @ts-expect-error recursive output retains its brand
+  const invalid: z.output<typeof nested> = [["unbranded"]];
+  void invalid;
+  expect(nested.parse([["leaf"]])).toEqual([["leaf"]]);
+});
+
 test("recursive array and tuple schema views", () => {
   type ArrayField = z.ZodMiniString<string> | z.ZodMiniArray<ArrayField>;
   type ArrayValue = string | ArrayValue[];
