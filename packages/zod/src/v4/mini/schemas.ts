@@ -1597,7 +1597,7 @@ export const ZodMiniPrefault: core.$constructor<ZodMiniPrefault> = /*@__PURE__*/
 // @__NO_SIDE_EFFECTS__
 export function prefault<T extends SomeType>(
   innerType: T,
-  defaultValue: util.NoUndefined<core.input<T>> | (() => util.NoUndefined<core.input<T>>)
+  defaultValue: core.input<T> | (() => core.input<T>)
 ): ZodMiniPrefault<T> {
   return new ZodMiniPrefault({
     type: "prefault",

@@ -1983,7 +1983,7 @@ function handlePropertyResult(
   }
 
   if (result.value === undefined) {
-    if (isPresent) {
+    if (isPresent || (optin === "defaulted" && !isOptionalOut)) {
       (final.value as any)[key] = undefined;
     }
   } else {
@@ -2314,16 +2314,16 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           doc.write(`
         if (${id}.issues.length) {${prefixStr(id, k)}
         }
-        
-        if (${id}.value === undefined) {
-          if (${isPresent}) {
-            newResult[${k}] = undefined;
-          }
-        } else {
+      `);
+          if (optin === "defaulted") {
+            doc.write(`newResult[${k}] = ${id}.value;`);
+          } else {
+            doc.write(`
+        if (${id}.value !== undefined || ${isPresent}) {
           newResult[${k}] = ${id}.value;
         }
-
       `);
+          }
         }
       }
 
@@ -4077,7 +4077,7 @@ export interface $ZodPrefaultDef<T extends SomeType = $ZodType> extends $ZodType
 }
 
 export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
+  extends $ZodTypeInternals<core.output<T>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
   optin: "defaulted";
   optout?: "optional" | undefined;
