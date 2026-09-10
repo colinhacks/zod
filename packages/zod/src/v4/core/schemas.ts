@@ -2424,12 +2424,6 @@ export interface $ZodUnionInternals<T extends readonly { _zod: any }[] = readonl
   // if any element in the union is optional, then the union is optional
   optin: ResolveUnion<T[number], "optin">;
   optout: ResolveUnion<T[number], "optout">;
-  metaSources?: () => {
-    pattern: T[number];
-    values: T[number];
-    optin: { union: T[number] };
-    optout: { union: T[number] };
-  };
 }
 
 export interface $ZodUnion<T extends readonly { _zod: any }[] = readonly $ZodType[]>
@@ -3898,7 +3892,6 @@ export interface $ZodOptionalInternals<T extends { _zod: any } = $ZodType>
   isst: never;
   values: ForwardValues<T>;
   pattern: ForwardPattern<T>;
-  metaSources?: () => { values: T; pattern: T };
 }
 
 export interface $ZodOptional<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4004,7 +3997,6 @@ export interface $ZodNullableInternals<T extends { _zod: any } = $ZodType> exten
   isst: never;
   values: ForwardValues<T>;
   pattern: ForwardPattern<T>;
-  metaSources?: () => { optin: T; optout: T; values: T; pattern: T };
 }
 
 export interface $ZodNullable<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4057,7 +4049,6 @@ export interface $ZodDefaultInternals<T extends { _zod: any } = $ZodType>
   optout?: "optional" | undefined; // required
   isst: never;
   values: ForwardValues<T>;
-  metaSources?: () => { values: T };
 }
 
 export interface $ZodDefault<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4125,7 +4116,6 @@ export interface $ZodPrefaultInternals<T extends { _zod: any } = $ZodType>
   optout?: "optional" | undefined;
   isst: never;
   values: ForwardValues<T>;
-  metaSources?: () => { values: T };
 }
 
 export interface $ZodPrefault<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4173,7 +4163,6 @@ export interface $ZodNonOptionalInternals<T extends { _zod: any } = $ZodType>
   values: ForwardValues<T>;
   optin: "optional" | undefined;
   optout: "optional" | undefined;
-  metaSources?: () => { values: T };
 }
 
 export interface $ZodNonOptional<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4270,7 +4259,6 @@ export interface $ZodSuccessInternals<T extends { _zod: any } = $ZodType>
   isst: never;
   optin: ForwardOptionalIn<T>;
   optout: "optional" | undefined;
-  metaSources?: () => { optin: T };
 }
 
 export interface $ZodSuccess<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4326,7 +4314,6 @@ export interface $ZodCatchInternals<T extends { _zod: any } = $ZodType>
   optout: ForwardOptionalOut<T>;
   isst: never;
   values: ForwardValues<T>;
-  metaSources?: () => { optin: T; optout: T; values: T };
 }
 
 export interface $ZodCatch<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4440,7 +4427,6 @@ export interface $ZodPipeInternals<A extends { _zod: any } = $ZodType, B extends
   optin: ForwardOptionalIn<A>;
   optout: ForwardOptionalOut<B>;
   propValues: ForwardPropertyValues<A>;
-  metaSources?: () => { values: A; optin: A; optout: B; propValues: A };
 }
 
 export interface $ZodPipe<A extends { _zod: any } = $ZodType, B extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4502,7 +4488,6 @@ export interface $ZodCodecInternals<A extends { _zod: any } = $ZodType, B extend
   optin: ForwardOptionalIn<A>;
   optout: ForwardOptionalOut<B>;
   propValues: ForwardPropertyValues<A>;
-  metaSources?: () => { values: A; optin: A; optout: B; propValues: A };
 }
 
 export interface $ZodCodec<A extends { _zod: any } = $ZodType, B extends { _zod: any } = $ZodType> extends $ZodType {
@@ -4586,7 +4571,6 @@ export interface $ZodPreprocessInternals<B extends { _zod: any } = $ZodType, I =
   def: $ZodPreprocessDef<B, I>;
   optin: ForwardOptionalIn<B>;
   optout: ForwardOptionalOut<B>;
-  metaSources?: $ZodPipeInternals<$ZodTransform<unknown, I>, B>["metaSources"] & (() => { optin: B; optout: B });
 }
 
 export interface $ZodPreprocess<B extends { _zod: any } = $ZodType, I = unknown>
@@ -4623,7 +4607,6 @@ export interface $ZodReadonlyInternals<T extends { _zod: any } = $ZodType> exten
   isst: never;
   propValues: ForwardPropertyValues<T>;
   values: ForwardValues<T>;
-  metaSources?: () => { optin: T; optout: T; propValues: T; values: T };
 }
 
 export interface $ZodReadonly<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -5062,7 +5045,6 @@ export interface $ZodLazyInternals<T extends { _zod: any } = $ZodType> extends _
   propValues: ForwardPropertyValues<T>;
   optin: ForwardOptionalIn<T>;
   optout: ForwardOptionalOut<T>;
-  metaSources?: () => { pattern: T; propValues: T; optin: T; optout: T };
 }
 
 export interface $ZodLazy<T extends { _zod: any } = $ZodType> extends $ZodType {
@@ -5417,12 +5399,16 @@ type ResolveMeta<T extends { _zod: any }, K extends "optin" | "optout", Seen = n
   : ResolveOptionalOut<T, Seen>;
 
 // separate resolvers preserve generic assignability
-type OptionalInSource<T> = T extends { _zod: { metaSources?: (...args: any[]) => infer M } }
-  ? "optin" extends keyof M
-    ? M["optin"] extends { union: infer U }
-      ? U
-      : M["optin"]
-    : never
+type OptionalInSource<T> = T extends { _zod: { def: infer D } }
+  ? D extends { type: "nullable" | "readonly" | "catch" | "success"; innerType: infer I }
+    ? I
+    : D extends { type: "pipe"; in: infer I }
+      ? I
+      : D extends { type: "lazy"; getter: () => infer I }
+        ? I
+        : D extends { type: "union"; options: readonly (infer I)[] }
+          ? I
+          : never
   : never;
 type HasOptionalInCycle<T, Seen = never> = util.IsAny<T> extends true
   ? false
@@ -5443,15 +5429,15 @@ type ResolveOptionalIn<T, Seen = never> = T extends { _zod: any }
 type EvaluateOptionalIn<T, Seen = never> = T extends { _zod: any }
   ? T["_zod"]["def"] extends Seen
     ? _$ZodTypeInternals["optin"]
-    : T["_zod"] extends { metaSources?: (...args: any[]) => infer M }
-      ? "optin" extends keyof M
-        ? M["optin"] extends { union: infer U }
-          ? ResolveOptionalInUnion<U, Seen | T["_zod"]["def"]>
-          : M["optin"] extends { _zod: any }
-            ? ResolveOptionalIn<M["optin"], Seen | T["_zod"]["def"]>
+    : T["_zod"]["def"] extends { type: "union"; options: readonly (infer I)[] }
+      ? ResolveOptionalInUnion<I, Seen | T["_zod"]["def"]>
+      : T["_zod"]["def"] extends { type: "nullable" | "readonly" | "catch" | "success"; innerType: infer I }
+        ? ResolveOptionalIn<I, Seen | T["_zod"]["def"]>
+        : T["_zod"]["def"] extends { type: "pipe"; in: infer I }
+          ? ResolveOptionalIn<I, Seen | T["_zod"]["def"]>
+          : T["_zod"]["def"] extends { type: "lazy"; getter: () => infer I }
+            ? ResolveOptionalIn<I, Seen | T["_zod"]["def"]>
             : T["_zod"]["optin"]
-        : T["_zod"]["optin"]
-      : T["_zod"]["optin"]
   : never;
 type HasOptionalIn<T, Seen> = T extends { _zod: any }
   ? EvaluateOptionalIn<T, Seen> extends "optional" | "defaulted"
@@ -5462,12 +5448,16 @@ type ResolveOptionalInUnion<T, Seen> = HasOptionalIn<T, Seen> extends false
   ? _$ZodTypeInternals["optin"]
   : Exclude<_$ZodTypeInternals["optin"], undefined>;
 
-type OptionalOutSource<T> = T extends { _zod: { metaSources?: (...args: any[]) => infer M } }
-  ? "optout" extends keyof M
-    ? M["optout"] extends { union: infer U }
-      ? U
-      : M["optout"]
-    : never
+type OptionalOutSource<T> = T extends { _zod: { def: infer D } }
+  ? D extends { type: "nullable" | "readonly" | "catch"; innerType: infer I }
+    ? I
+    : D extends { type: "pipe"; out: infer I }
+      ? I
+      : D extends { type: "lazy"; getter: () => infer I }
+        ? I
+        : D extends { type: "union"; options: readonly (infer I)[] }
+          ? I
+          : never
   : never;
 type HasOptionalOutCycle<T, Seen = never> = util.IsAny<T> extends true
   ? false
@@ -5488,15 +5478,15 @@ type ResolveOptionalOut<T, Seen = never> = T extends { _zod: any }
 type EvaluateOptionalOut<T, Seen = never> = T extends { _zod: any }
   ? T["_zod"]["def"] extends Seen
     ? _$ZodTypeInternals["optout"]
-    : T["_zod"] extends { metaSources?: (...args: any[]) => infer M }
-      ? "optout" extends keyof M
-        ? M["optout"] extends { union: infer U }
-          ? ResolveOptionalOutUnion<U, Seen | T["_zod"]["def"]>
-          : M["optout"] extends { _zod: any }
-            ? ResolveOptionalOut<M["optout"], Seen | T["_zod"]["def"]>
+    : T["_zod"]["def"] extends { type: "union"; options: readonly (infer I)[] }
+      ? ResolveOptionalOutUnion<I, Seen | T["_zod"]["def"]>
+      : T["_zod"]["def"] extends { type: "nullable" | "readonly" | "catch"; innerType: infer I }
+        ? ResolveOptionalOut<I, Seen | T["_zod"]["def"]>
+        : T["_zod"]["def"] extends { type: "pipe"; out: infer I }
+          ? ResolveOptionalOut<I, Seen | T["_zod"]["def"]>
+          : T["_zod"]["def"] extends { type: "lazy"; getter: () => infer I }
+            ? ResolveOptionalOut<I, Seen | T["_zod"]["def"]>
             : T["_zod"]["optout"]
-        : T["_zod"]["optout"]
-      : T["_zod"]["optout"]
   : never;
 type HasOptionalOut<T, Seen> = T extends { _zod: any }
   ? EvaluateOptionalOut<T, Seen> extends "optional"
@@ -5507,12 +5497,17 @@ type ResolveOptionalOutUnion<T, Seen> = HasOptionalOut<T, Seen> extends false
   ? _$ZodTypeInternals["optout"]
   : Exclude<_$ZodTypeInternals["optout"], undefined>;
 
-type ValuesSource<T> = T extends { _zod: { metaSources?: (...args: any[]) => infer M } }
-  ? "values" extends keyof M
-    ? M["values"] extends { union: infer U }
-      ? U
-      : M["values"]
-    : never
+type ValuesSource<T> = T extends { _zod: { def: infer D } }
+  ? D extends {
+      type: "nullable" | "readonly" | "catch" | "optional" | "default" | "prefault" | "nonoptional";
+      innerType: infer I;
+    }
+    ? I
+    : D extends { type: "pipe"; in: infer I }
+      ? I
+      : D extends { type: "union"; options: readonly (infer I)[] }
+        ? I
+        : never
   : never;
 type HasValuesCycle<T, Seen = never> = util.IsAny<T> extends true
   ? false
@@ -5524,12 +5519,14 @@ type HasValuesCycle<T, Seen = never> = util.IsAny<T> extends true
         : HasValuesCycle<ValuesSource<T>, Seen | D>
     : false;
 
-type PropertyValuesSource<T> = T extends { _zod: { metaSources?: (...args: any[]) => infer M } }
-  ? "propValues" extends keyof M
-    ? M["propValues"] extends { union: infer U }
-      ? U
-      : M["propValues"]
-    : never
+type PropertyValuesSource<T> = T extends { _zod: { def: infer D } }
+  ? D extends { type: "readonly"; innerType: infer I }
+    ? I
+    : D extends { type: "pipe"; in: infer I }
+      ? I
+      : D extends { type: "lazy"; getter: () => infer I }
+        ? I
+        : never
   : never;
 type HasPropertyValuesCycle<T, Seen = never> = util.IsAny<T> extends true
   ? false
@@ -5541,12 +5538,14 @@ type HasPropertyValuesCycle<T, Seen = never> = util.IsAny<T> extends true
         : HasPropertyValuesCycle<PropertyValuesSource<T>, Seen | D>
     : false;
 
-type PatternSource<T> = T extends { _zod: { metaSources?: (...args: any[]) => infer M } }
-  ? "pattern" extends keyof M
-    ? M["pattern"] extends { union: infer U }
-      ? U
-      : M["pattern"]
-    : never
+type PatternSource<T> = T extends { _zod: { def: infer D } }
+  ? D extends { type: "nullable" | "optional"; innerType: infer I }
+    ? I
+    : D extends { type: "lazy"; getter: () => infer I }
+      ? I
+      : D extends { type: "union"; options: readonly (infer I)[] }
+        ? I
+        : never
   : never;
 type HasPatternCycle<T, Seen = never> = util.IsAny<T> extends true
   ? false

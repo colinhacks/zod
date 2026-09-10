@@ -123,6 +123,15 @@ test("opaque recursive schema views retain explicit input and output", () => {
   expectTypeOf<z.input<z.ZodArray<Custom>>>().toEqualTypeOf<string[][]>();
 });
 
+test("definition-based optionality preserves declared pipe overrides", () => {
+  type Target = z.core.$ZodOptional<z.core.$ZodString>;
+  type Preprocess = z.core.$ZodPreprocess<Target>;
+  type Pipe = z.core.$ZodPipe<z.core.$ZodTransform<unknown, unknown>, Target>;
+  expectTypeOf<Preprocess["_zod"]["def"]>().toEqualTypeOf<Pipe["_zod"]["def"]>();
+  expectTypeOf<z.input<z.core.$ZodObject<{ field: Preprocess }, z.core.$strip>>>().toEqualTypeOf<{ field?: unknown }>();
+  expectTypeOf<z.input<z.core.$ZodObject<{ field: Pipe }, z.core.$strip>>>().toEqualTypeOf<{ field: unknown }>();
+});
+
 test("recursive core schema graphs support narrowing and traversal", () => {
   type Primitive = z.core.$ZodString | z.core.$ZodNumber | z.core.$ZodBoolean | z.core.$ZodNull | z.core.$ZodUndefined;
   interface ObjectField extends z.core.$ZodObject<FieldShape, z.core.$strict> {}
