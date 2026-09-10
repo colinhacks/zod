@@ -1,6 +1,23 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/mini";
 
+test("recursive array and tuple schema views", () => {
+  type ArrayField = z.ZodMiniString<string> | z.ZodMiniArray<ArrayField>;
+  type ArrayValue = string | ArrayValue[];
+  type TupleField = z.ZodMiniString<string> | z.ZodMiniTuple<[TupleField], null>;
+  type TupleValue = string | [TupleValue];
+  type UnionField = z.ZodMiniUnion<[z.ZodMiniString<string>, UnionField]>;
+  expectTypeOf<z.output<ArrayField>>().toEqualTypeOf<ArrayValue>();
+  expectTypeOf<z.input<ArrayField>>().toEqualTypeOf<ArrayValue>();
+  expectTypeOf<z.output<TupleField>>().toEqualTypeOf<TupleValue>();
+  expectTypeOf<UnionField["_zod"]["def"]["options"][0]>().toEqualTypeOf<z.ZodMiniString<string>>();
+  const schema: ArrayField = z.array(z.string());
+  expect(schema.parse(["leaf"])).toEqual(["leaf"]);
+  // @ts-expect-error recursive array inference rejects numeric leaves
+  const invalid: z.output<ArrayField> = [[123]];
+  void invalid;
+});
+
 test("recursive object schema type aliases", () => {
   type ObjectField = z.ZodMiniObject<{ [k: string]: ObjectField }>;
   type Field = z.ZodMiniString<string> | z.ZodMiniObject<{ [k: string]: Field }>;

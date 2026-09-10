@@ -1,6 +1,179 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("recursive schema containers retain native value types", () => {
+  type ArrayField = z.ZodString | z.ZodArray<ArrayField>;
+  type ArrayValue = string | ArrayValue[];
+  type TupleField = z.ZodString | z.ZodTuple<[TupleField], null>;
+  type TupleValue = string | [TupleValue];
+  type DefaultTupleField = z.ZodString | z.ZodTuple<[DefaultTupleField]>;
+  type UnionField = z.ZodUnion<[z.ZodString, UnionField]>;
+  type Combined =
+    | z.ZodString
+    | z.ZodArray<Combined>
+    | z.ZodTuple<[Combined], null>
+    | z.ZodObject<{ [key: string]: Combined }>;
+
+  expectTypeOf<z.input<ArrayField>>().toEqualTypeOf<ArrayValue>();
+  expectTypeOf<z.output<ArrayField>>().toEqualTypeOf<ArrayValue>();
+  expectTypeOf<z.output<TupleField>>().toEqualTypeOf<TupleValue>();
+  expectTypeOf<z.input<TupleField>>().toEqualTypeOf<TupleValue>();
+  expectTypeOf<UnionField["_zod"]["def"]["options"][0]>().toEqualTypeOf<z.ZodString>();
+  const array: ArrayField = z.array(z.string());
+  const tuple: TupleField = z.tuple([z.string()]);
+  const defaultTuple: z.output<DefaultTupleField> = [["leaf"]];
+  const combined: z.output<Combined> = { children: ["leaf", { child: "leaf" }] };
+  expect(array.parse(["leaf"])).toEqual(["leaf"]);
+  expect(tuple.parse(["leaf"])).toEqual(["leaf"]);
+  expect(defaultTuple).toEqual([["leaf"]]);
+  expect(combined).toEqual({ children: ["leaf", { child: "leaf" }] });
+
+  function negative(
+    values: Readonly<z.output<z.ZodArray<ArrayField>>>,
+    tuple: z.output<z.ZodTuple<[TupleField], null>>
+  ) {
+    // @ts-expect-error native readonly arrays cannot mutate
+    values.push("leaf");
+    // @ts-expect-error fixed tuples remain out of bounds
+    tuple[1];
+    // @ts-expect-error recursive arrays reject numeric leaves
+    const badArray: z.output<ArrayField> = [[123]];
+    // @ts-expect-error recursive tuples reject numeric leaves
+    const badTuple: z.output<TupleField> = [[123]];
+    // @ts-expect-error combined containers reject numeric leaves
+    const badCombined: z.output<Combined> = { child: [123] };
+    void [badArray, badTuple, badCombined];
+  }
+  void negative;
+});
+
+test("recursive wrapper schema definitions", () => {
+  type Optional = z.ZodOptional<Optional>;
+  type Nullable = z.ZodNullable<Nullable>;
+  type Default = z.ZodDefault<Default>;
+  type Prefault = z.ZodPrefault<Prefault>;
+  type NonOptional = z.ZodNonOptional<NonOptional>;
+  type Catch = z.ZodCatch<Catch>;
+  type Readonly = z.ZodReadonly<Readonly>;
+  type Lazy = z.ZodLazy<Lazy>;
+  type Pipe = z.core.$ZodPipe<Child, z.core.$ZodTransform>;
+  type Child = z.core.$ZodString | Pipe;
+
+  expectTypeOf<Optional["_zod"]["def"]["innerType"]>().toEqualTypeOf<Optional>();
+  expectTypeOf<Nullable["_zod"]["def"]["innerType"]>().toEqualTypeOf<Nullable>();
+  expectTypeOf<Default["_zod"]["def"]["innerType"]>().toEqualTypeOf<Default>();
+  expectTypeOf<Prefault["_zod"]["def"]["innerType"]>().toEqualTypeOf<Prefault>();
+  expectTypeOf<NonOptional["_zod"]["def"]["innerType"]>().toEqualTypeOf<NonOptional>();
+  expectTypeOf<Catch["_zod"]["def"]["innerType"]>().toEqualTypeOf<Catch>();
+  expectTypeOf<Readonly["_zod"]["def"]["innerType"]>().toEqualTypeOf<Readonly>();
+  expectTypeOf<ReturnType<Lazy["_zod"]["def"]["getter"]>>().toEqualTypeOf<Lazy>();
+  function pipe(source: Child): Pipe {
+    return z.pipe(
+      source,
+      z.transform((value: unknown) => value)
+    );
+  }
+  expect(z.core.parse(pipe(z.string()), "leaf")).toBe("leaf");
+});
+
+test("recursive metadata overrides determine object optionality", () => {
+  interface Internals extends z.core.$ZodPipeInternals<Child, z.core.$ZodTransform> {
+    optin: "optional";
+    optout: "optional";
+    values: undefined;
+    propValues: undefined;
+    input: unknown;
+    output: unknown;
+  }
+  interface Custom extends z.core.$ZodPipe<Child, z.core.$ZodTransform> {
+    _zod: Internals;
+  }
+  type Child = z.core.$ZodString | Custom;
+  type Wrapped = z.core.$ZodReadonly<Custom>;
+  expectTypeOf<Wrapped["_zod"]["optin"]>().toEqualTypeOf<z.core._$ZodTypeInternals["optin"]>();
+  const absent: z.input<z.core.$ZodObject<{ field: Wrapped }>> = {};
+  expect(absent).toEqual({});
+  interface AnyInternals extends Internals {
+    optin: any;
+    optout: any;
+  }
+  interface AnyCustom extends Custom {
+    _zod: AnyInternals;
+  }
+  const anyAbsent: z.input<z.core.$ZodObject<{ field: AnyCustom }>> = {};
+  expect(anyAbsent).toEqual({});
+
+  const branded = z.array(z.string()).brand<"array">();
+  expectTypeOf<z.output<typeof branded>>().toEqualTypeOf<string[] & z.core.$brand<"array">>();
+  const nested = z.array(branded);
+  expectTypeOf<z.output<typeof nested>>().toEqualTypeOf<(string[] & z.core.$brand<"array">)[]>();
+});
+
+test("opaque recursive schema views retain explicit input and output", () => {
+  interface Internals extends z.core.$ZodArrayInternals<Field> {
+    atomic?: true;
+    input: string[];
+    output: string[];
+  }
+  interface Custom extends z.core.$ZodArray<Field> {
+    _zod: Internals;
+  }
+  type Field = z.core.$ZodString | Custom;
+  expectTypeOf<z.output<z.ZodArray<Custom>>>().toEqualTypeOf<string[][]>();
+  expectTypeOf<z.input<z.ZodArray<Custom>>>().toEqualTypeOf<string[][]>();
+});
+
+test("recursive core schema graphs support narrowing and traversal", () => {
+  type Primitive = z.core.$ZodString | z.core.$ZodNumber | z.core.$ZodBoolean | z.core.$ZodNull | z.core.$ZodUndefined;
+  interface ObjectField extends z.core.$ZodObject<FieldShape, z.core.$strict> {}
+  interface ArrayField extends z.core.$ZodArray<Field> {}
+  interface TupleField extends z.core.$ZodTuple<readonly [Field, ...Field[]]> {}
+  interface LazyField extends z.core.$ZodLazy<Field> {}
+  interface NullableField extends z.core.$ZodNullable<Field> {}
+  interface ReadonlyField extends z.core.$ZodReadonly<Field> {}
+  interface PipeField extends z.core.$ZodPipe<Field, z.core.$ZodTransform> {}
+  type Field =
+    | Primitive
+    | ObjectField
+    | ArrayField
+    | TupleField
+    | LazyField
+    | NullableField
+    | ReadonlyField
+    | PipeField;
+  type FieldShape = Record<string, Field>;
+
+  function isObject(schema: unknown): schema is ObjectField {
+    return schema instanceof z.core.$ZodObject;
+  }
+  function unwrap(schema: Field): Field {
+    switch (schema._zod.def.type) {
+      case "object":
+        return schema._zod.def.shape.value;
+      case "array":
+        return schema._zod.def.element;
+      case "tuple":
+        return schema._zod.def.items[0];
+      case "nullable":
+      case "readonly":
+        return schema._zod.def.innerType;
+      case "lazy":
+        return schema._zod.def.getter();
+      case "pipe":
+        return schema._zod.def.in;
+      default:
+        return schema;
+    }
+  }
+  const schema = z.strictObject({ value: z.string() });
+  const unknownSchema: unknown = schema;
+  if (!isObject(unknownSchema)) throw new Error("expected an object schema");
+  expect(unwrap(unknownSchema)).toBe(schema.shape.value);
+  expect(schema.parse({ value: "leaf" })).toEqual({ value: "leaf" });
+  expect(schema.safeParse({ value: 123 }).success).toBe(false);
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<{ value: string }>();
+});
+
 test("recursive object schema type aliases", () => {
   type ObjectField = z.ZodObject<{ [k: string]: ObjectField }>;
   type MixedField = z.ZodString | z.ZodObject<{ [k: string]: MixedField }>;
