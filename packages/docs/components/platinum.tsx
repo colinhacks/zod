@@ -11,9 +11,9 @@ export const Platinum = () => {
     {
       name: "Trigger.dev",
       description: "Build and deploy fully-managed AI agents and workflows",
-      logoDark: "https://trigger.dev/docs/logo/dark.png",
-      // pinned: trigger.dev ships no light-mode wordmark, and this svg's jsx-cased gradient stops make it render solid black
-      logoLight: "https://cdn.jsdelivr.net/gh/triggerdotdev/trigger.dev@c719f84f03bfa2bb4f13fa35251725ed5046a139/apps/webapp/app/assets/images/logo.svg",
+      // trigger.dev names these by ink colour, so their --light lockup is the bright one that goes on dark
+      logoDark: "https://trigger.dev/assets/triggerdev-lockup--light.svg",
+      logoLight: "https://trigger.dev/assets/triggerdev-lockup--dark.svg",
       url: "trigger.dev",
       href: "https://trigger.dev/?utm_source=zod",
     },
