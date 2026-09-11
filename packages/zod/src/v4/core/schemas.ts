@@ -298,45 +298,21 @@ type HasMetadataCycle<T, K extends string, Seen = never> = util.IsAny<T> extends
         : HasMetadataCycle<MetadataSource<T, K>, K, Seen | D>
     : false;
 
-type HasOptionalInCycle<T> = HasMetadataCycle<T, "optin">;
-
-type HasOptionalOutCycle<T> = HasMetadataCycle<T, "optout">;
-
-type HasValuesCycle<T> = HasMetadataCycle<T, "values">;
-
-type HasPropertyValuesCycle<T> = HasMetadataCycle<T, "propValues">;
-
-type HasPatternCycle<T> = HasMetadataCycle<T, "pattern">;
-
-type ForwardOptionalIn<T> = T extends $ZodTypeRef
-  ? true extends HasOptionalInCycle<T>
-    ? _$ZodTypeInternals["optin"]
-    : T["_zod"]["optin"]
+type ForwardMetadata<T, K extends "optin" | "optout" | "values" | "propValues" | "pattern"> = T extends $ZodTypeRef
+  ? true extends HasMetadataCycle<T, K>
+    ? _$ZodTypeInternals[K]
+    : T["_zod"][K]
   : never;
 
-type ForwardOptionalOut<T> = T extends $ZodTypeRef
-  ? true extends HasOptionalOutCycle<T>
-    ? _$ZodTypeInternals["optout"]
-    : T["_zod"]["optout"]
-  : never;
+type ForwardOptionalIn<T> = ForwardMetadata<T, "optin">;
 
-type ForwardValues<T> = T extends $ZodTypeRef
-  ? true extends HasValuesCycle<T>
-    ? _$ZodTypeInternals["values"]
-    : T["_zod"]["values"]
-  : never;
+type ForwardOptionalOut<T> = ForwardMetadata<T, "optout">;
 
-type ForwardPropertyValues<T> = T extends $ZodTypeRef
-  ? true extends HasPropertyValuesCycle<T>
-    ? _$ZodTypeInternals["propValues"]
-    : T["_zod"]["propValues"]
-  : never;
+type ForwardValues<T> = ForwardMetadata<T, "values">;
 
-type ForwardPattern<T> = T extends $ZodTypeRef
-  ? true extends HasPatternCycle<T>
-    ? _$ZodTypeInternals["pattern"]
-    : T["_zod"]["pattern"]
-  : never;
+type ForwardPropertyValues<T> = ForwardMetadata<T, "propValues">;
+
+type ForwardPattern<T> = ForwardMetadata<T, "pattern">;
 
 export interface $ZodType<
   O = unknown,

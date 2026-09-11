@@ -256,6 +256,60 @@ test("recursive pipe projections terminate at opaque leaves", () => {
   expectTypeOf<Exclude<Leaf, { _zod: { atomic?: true } }>>().toBeNever();
 });
 
+test("pipe output opacity preserves recursive inputs", () => {
+  type Field = z.core.$ZodString | z.core.$ZodReadonly<Field> | z.core.$ZodPipe<Field, z.core.$ZodTransform>;
+  function schema(field: Field): z.core.$ZodType {
+    return field;
+  }
+  expectTypeOf<z.output<Field>>().toBeUnknown();
+  const pipe = z.string().transform((value) => value.length);
+  expectTypeOf<z.input<typeof pipe>>().toEqualTypeOf<string>();
+  expectTypeOf<z.output<typeof pipe>>().toEqualTypeOf<number>();
+  const branded = pipe.brand<"length">();
+  expectTypeOf<z.output<z.ZodArray<typeof branded>>>().toEqualTypeOf<(number & z.core.$brand<"length">)[]>();
+  const identity = z.pipe(
+    z.string(),
+    z.transform((value) => value)
+  );
+  expect(z.core.parse(schema(z.readonly(identity)), "leaf")).toBe("leaf");
+  expect(pipe.parse("leaf")).toBe(4);
+  expect(pipe.safeParse(42).success).toBe(false);
+  expect("atomic" in pipe._zod).toBe(false);
+});
+
+test("replacement pipe internals preserve output opacity", () => {
+  interface Internals extends z.core.$ZodTypeInternals {
+    def: z.core.$ZodPipeDef<Field, z.core.$ZodTransform>;
+    isst: never;
+    values: undefined;
+    propValues: undefined;
+    optin: z.core._$ZodTypeInternals["optin"];
+    optout: z.core._$ZodTypeInternals["optout"];
+  }
+  interface Custom extends z.core.$ZodPipe<Field, z.core.$ZodTransform> {
+    _zod: Internals;
+  }
+  type Field = z.core.$ZodString | z.core.$ZodReadonly<Field> | Custom;
+  function schema(field: Field): z.core.$ZodType {
+    return field;
+  }
+  expect(schema(z.string())._zod.def.type).toBe("string");
+});
+
+test("recursive metadata without atomic leaves retains schema bounds", () => {
+  type Nullable = z.core.$ZodNullable<Nullable>;
+  type Lazy = z.core.$ZodLazy<Lazy>;
+  type Readonly = z.core.$ZodReadonly<Readonly>;
+  type Pipe = z.core.$ZodPipe<z.core.$ZodString, Pipe>;
+  function schema(value: Nullable | Lazy | Readonly | Pipe): z.core.SomeType {
+    return value;
+  }
+  expectTypeOf<Nullable["_zod"]["optin"]>().toEqualTypeOf<z.core._$ZodTypeInternals["optin"]>();
+  expectTypeOf<Lazy["_zod"]["pattern"]>().toEqualTypeOf<RegExp | undefined>();
+  expectTypeOf<Readonly["_zod"]["values"]>().toEqualTypeOf<z.core._$ZodTypeInternals["values"]>();
+  void schema;
+});
+
 test("opaque recursive schema views retain explicit input and output", () => {
   interface Internals extends z.core.$ZodArrayInternals<Field> {
     atomic?: true;
