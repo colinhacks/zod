@@ -1888,14 +1888,14 @@ test("compiled validators take precedence over boolean patterns", () => {
   expect(z.validate(compiled, "invalid", { skipChecks: true } as any)).toBe(true);
 
   const source = z.email();
-  const originalRun = source._zod.run;
+  const installed = withParser(source, () => INVALID);
+  const bag = installed._zod.bag as { fallbackRun: typeof source._zod.run };
+  const originalRun = bag.fallbackRun;
   let fallbackRuns = 0;
-  source._zod.run = (payload, ctx) => {
+  bag.fallbackRun = (payload, ctx) => {
     fallbackRuns++;
     return originalRun(payload, ctx);
   };
-  const installed = withParser(source, () => INVALID);
-  fallbackRuns = 0;
   expect(hasBooleanPattern(installed)).toBe(true);
   expect(z.validate(installed, "invalid")).toBe(false);
   expect(fallbackRuns).toBeGreaterThan(0);
