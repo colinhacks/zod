@@ -3,8 +3,8 @@ import * as z from "zod/mini";
 import type { util } from "zod/v4/core";
 
 test("factory checks", () => {
-  const string = z.string({ checks: [z.minLength(1), z.maxLength(3)] });
-  const number = z.number({ checks: [z.minimum(1), z.maximum(3)] });
+  const string = z.string({ checks: [z.minLength(1), z.maxLength(3)] as const });
+  const number = z.number({ checks: [z.minimum(1), z.maximum(3)] as const });
   expectTypeOf<z.output<typeof string>>().toEqualTypeOf<string>();
   expectTypeOf<z.output<typeof number>>().toEqualTypeOf<number>();
   for (const [schema, valid, invalid] of [
@@ -21,6 +21,25 @@ test("factory checks", () => {
   z.string({ checks: [z.minimum(1)] });
   // @ts-expect-error length checks cannot validate numbers
   z.number({ checks: [z.minLength(1)] });
+});
+
+test("factory checks snapshot caller arrays", () => {
+  for (const factory of [z.string, z.coerce.string]) {
+    const checks = [z.minLength(1)];
+    const schema = factory({ checks });
+    checks.push(z.minLength(10));
+    expect(z.validate(schema, "long")).toBe(true);
+    expect(z.validate(z.compile(schema), "long")).toBe(true);
+    expect(z.toJSONSchema(schema).minLength).toBe(1);
+  }
+  for (const factory of [z.number, z.coerce.number]) {
+    const checks = [z.minimum(1)];
+    const schema = factory({ checks });
+    checks.push(z.minimum(10));
+    expect(z.validate(schema, 3)).toBe(true);
+    expect(z.validate(z.compile(schema), 3)).toBe(true);
+    expect(z.toJSONSchema(schema).minimum).toBe(1);
+  }
 });
 
 test("z.boolean", () => {

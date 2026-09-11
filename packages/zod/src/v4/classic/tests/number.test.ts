@@ -3,7 +3,7 @@ import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 test("number factory checks", () => {
-  const schema = z.number({ checks: [z.gte(1), z.lte(3)] });
+  const schema = z.number({ checks: [z.gte(1), z.lte(3)] as const });
   const chained = z.number().min(1).max(3);
   expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<number>();
   for (const value of [0, 1, 3, 4, Number.NaN, "2", undefined]) {
@@ -19,6 +19,18 @@ test("number factory checks", () => {
   expect(z.validate(overwritten, 0)).toBe(false);
   // @ts-expect-error length checks cannot validate numbers
   z.number({ checks: [z.minLength(1)] });
+});
+
+test("number factory checks snapshot caller arrays", () => {
+  for (const factory of [z.number, z.coerce.number]) {
+    const checks = [z.gte(1)];
+    const schema = factory({ checks });
+    const before = z.toJSONSchema(schema);
+    checks.push(z.gte(10));
+    expect(z.validate(schema, 3)).toBe(true);
+    expect(z.validate(z.compile(schema), 3)).toBe(true);
+    expect(z.toJSONSchema(schema)).toEqual(before);
+  }
 });
 
 test("z.number() basic validation", () => {

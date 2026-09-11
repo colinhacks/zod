@@ -13,7 +13,7 @@ const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
 
 test("string factory checks", async () => {
-  const schema = z.string({ checks: [z.minLength(1), z.maxLength(3)] });
+  const schema = z.string({ checks: [z.minLength(1), z.maxLength(3)] as const });
   const chained = z.string().min(1).max(3);
   expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
   for (const value of ["", "ab", "abcd", 1, undefined]) {
@@ -43,6 +43,21 @@ test("string factory checks", async () => {
   expect((await asyncSchema.safeParseAsync("bad")).success).toBe(false);
   // @ts-expect-error numeric checks cannot validate strings
   z.string({ checks: [z.gte(1)] });
+});
+
+test("factory checks snapshot caller arrays", () => {
+  for (const factory of [z.string, z.coerce.string]) {
+    for (const initial of [[], [z.minLength(1)]]) {
+      const schema = factory({ checks: initial });
+      const before = z.toJSONSchema(schema);
+      initial.push(z.minLength(10));
+      expect(schema._zod.def.checks).not.toBe(initial);
+      expect(z.validate(schema, "long")).toBe(true);
+      expect(z.validate(z.compile(schema), "long")).toBe(true);
+      expect(z.toJSONSchema(schema)).toEqual(before);
+      expect(z.validate(schema.check(z.minLength(2)), "long")).toBe(true);
+    }
+  }
 });
 
 test("length checks", () => {

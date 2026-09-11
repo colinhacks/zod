@@ -59,8 +59,16 @@ export type CheckTypeParams<
 
 // String
 export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce"> & {
-  checks?: checks.$ZodCheck<string>[];
+  checks?: readonly checks.$ZodCheck<string>[];
 };
+
+function normalizeCheckedParams<T extends checks.$ZodCheck<never>>(
+  params?: string | (Omit<$ZodStringParams, "checks"> & { checks?: readonly T[] })
+) {
+  const normalized = util.normalizeParams(params);
+  if (normalized.checks) return { ...normalized, checks: [...normalized.checks] };
+  return normalized as Omit<typeof normalized, "checks">;
+}
 // @__NO_SIDE_EFFECTS__
 export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
@@ -68,7 +76,7 @@ export function _string<T extends schemas.$ZodString>(
 ): T {
   return new Class({
     type: "string",
-    ...util.normalizeParams(params),
+    ...normalizeCheckedParams(params),
   });
 }
 
@@ -80,7 +88,7 @@ export function _coercedString<T extends schemas.$ZodString>(
   return new Class({
     type: "string",
     coerce: true,
-    ...util.normalizeParams(params),
+    ...normalizeCheckedParams(params),
   });
 }
 
@@ -611,7 +619,7 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 
 // Number
 export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce"> & {
-  checks?: checks.$ZodCheck<number>[];
+  checks?: readonly checks.$ZodCheck<number>[];
 };
 export type $ZodNumberFormatParams = CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
 export type $ZodCheckNumberFormatParams = CheckParams<checks.$ZodCheckNumberFormat, "format" | "when">;
@@ -623,7 +631,7 @@ export function _number<T extends schemas.$ZodNumber>(
   return new Class({
     type: "number",
     checks: [],
-    ...util.normalizeParams(params),
+    ...normalizeCheckedParams(params),
   });
 }
 
@@ -636,7 +644,7 @@ export function _coercedNumber<T extends schemas.$ZodNumber>(
     type: "number",
     coerce: true,
     checks: [],
-    ...util.normalizeParams(params),
+    ...normalizeCheckedParams(params),
   });
 }
 
