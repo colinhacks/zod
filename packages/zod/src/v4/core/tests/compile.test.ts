@@ -1787,13 +1787,31 @@ test("compiled records walk own enumerable keys without Reflect.ownKeys", () => 
   expect(compile(plain).parse(revealing())).toStrictEqual({ a: 1, b: 2 });
 });
 
-type BooleanPatternBag = { booleanPattern?: { pattern?: RegExp }; validator?: unknown };
+test("validate honors custom checks composed with format traits", () => {
+  const postProcessor = z.core.globalConfig.postProcessor;
+  z.core.globalConfig.postProcessor = undefined;
+  try {
+    const CustomEmail = z.core.$constructor<z.core.$ZodEmail>("CustomEmail", (inst, def) => {
+      inst._zod.check = (payload) => {
+        if (payload.value !== "custom") payload.issues.push({ code: "custom", input: payload.value });
+      };
+      z.core.$ZodEmail.init(inst, def);
+    });
+    const schema = new CustomEmail({ type: "string", format: "email", check: "string_format" });
+    for (const [input, valid] of [
+      ["custom", true],
+      ["test@example.com", false],
+      [42, false],
+    ] as const) {
+      expect(z.safeParse(schema, input).success).toBe(valid);
+      expect(z.validate(schema, input)).toBe(valid);
+    }
+  } finally {
+    z.core.globalConfig.postProcessor = postProcessor;
+  }
+});
 
-function hasBooleanPattern(schema: z.ZodType): boolean {
-  return (schema._zod.bag as BooleanPatternBag).booleanPattern !== undefined;
-}
-
-test("validate uses boolean patterns only for pure standalone formats", () => {
+test("validate honors standalone format checks", () => {
   const cases = [
     [z.iso.datetime(), "2021-01-01T00:00:00Z"],
     [z.iso.date(), "2021-01-01"],
@@ -1807,7 +1825,6 @@ test("validate uses boolean patterns only for pure standalone formats", () => {
   for (const [schema, valid] of cases) {
     expect(schema._zod.traits.has("$ZodStringFormat")).toBe(true);
     expect(schema instanceof z.core.$ZodStringFormat).toBe(true);
-    expect(hasBooleanPattern(schema)).toBe(true);
     expect(z.validate(schema, valid)).toBe(true);
     expect(z.validate(schema, "invalid")).toBe(false);
     expect(z.validate(schema, 1)).toBe(false);
@@ -1820,10 +1837,6 @@ test("validate uses boolean patterns only for pure standalone formats", () => {
   const coerced = source.clone(coercedDef);
   const checkedDef = Object.assign(Object.create({ checks: refined._zod.def.checks }), source._zod.def);
   const inheritedChecked = source.clone(checkedDef);
-  expect(hasBooleanPattern(refined)).toBe(false);
-  expect(hasBooleanPattern(asyncRefined)).toBe(false);
-  expect(hasBooleanPattern(coerced)).toBe(false);
-  expect(hasBooleanPattern(inheritedChecked)).toBe(false);
   expect(z.validate(refined, "test@example.com")).toBe(false);
   expect(z.validate(refined, "x@example.com")).toBe(true);
   expect(z.validate(inheritedChecked, "test@example.com")).toBe(false);
@@ -1831,57 +1844,60 @@ test("validate uses boolean patterns only for pure standalone formats", () => {
   expect(z.validate(coerced, { toString: () => "test@example.com" })).toBe(true);
 });
 
-test("boolean patterns preserve contexts, getters, errors, and regex state", () => {
-  const source = z.email();
-  expect(z.validate(source, "invalid", { skipChecks: true } as any)).toBe(true);
+test("runtime validate preserves contexts, getters, errors, and regex state", () => {
+  const postProcessor = z.core.globalConfig.postProcessor;
+  z.core.globalConfig.postProcessor = undefined;
+  try {
+    const source = z.email();
+    expect(z.validate(source, "invalid", { skipChecks: true } as any)).toBe(true);
 
-  let whenReads = 0;
-  const whenProto = Object.defineProperty({}, "when", {
-    enumerable: true,
-    get() {
-      whenReads++;
-      return () => false;
-    },
-  });
-  const whenDef = Object.assign(Object.create(whenProto), source._zod.def);
-  const gated = source.clone(whenDef as typeof source._zod.def);
-  expect(whenReads).toBe(0);
-  expect(hasBooleanPattern(gated)).toBe(false);
-  expect(z.validate(gated, "invalid")).toBe(true);
-  expect(whenReads).toBeGreaterThan(0);
+    let whenReads = 0;
+    const whenProto = Object.defineProperty({}, "when", {
+      enumerable: true,
+      get() {
+        whenReads++;
+        return () => false;
+      },
+    });
+    const whenDef = Object.assign(Object.create(whenProto), source._zod.def);
+    const gated = source.clone(whenDef as typeof source._zod.def);
+    expect(whenReads).toBe(0);
+    expect(z.validate(gated, "invalid")).toBe(true);
+    expect(whenReads).toBeGreaterThan(0);
 
-  let errorReads = 0;
-  const errorDef = Object.defineProperties({}, Object.getOwnPropertyDescriptors(source._zod.def));
-  Object.defineProperty(errorDef, "error", {
-    enumerable: true,
-    get() {
-      errorReads++;
-      return () => "custom";
-    },
-  });
-  const customError = source.clone(errorDef as typeof source._zod.def);
-  expect(hasBooleanPattern(customError)).toBe(true);
-  expect(z.validate(customError, "invalid")).toBe(false);
-  expect(errorReads).toBe(0);
-  const result = customError.safeParse("invalid");
-  expect(errorReads).toBe(0);
-  if (result.success) expect.unreachable();
-  expect(result.error.issues[0]?.message).toBe("custom");
-  expect(errorReads).toBeGreaterThan(0);
+    let errorReads = 0;
+    const errorDef = Object.defineProperties({}, Object.getOwnPropertyDescriptors(source._zod.def));
+    Object.defineProperty(errorDef, "error", {
+      enumerable: true,
+      get() {
+        errorReads++;
+        return () => "custom";
+      },
+    });
+    const customError = source.clone(errorDef as typeof source._zod.def);
+    expect(z.validate(customError, "invalid")).toBe(false);
+    expect(errorReads).toBe(0);
+    const result = customError.safeParse("invalid");
+    expect(errorReads).toBe(0);
+    if (result.success) expect.unreachable();
+    expect(result.error.issues[0]?.message).toBe("custom");
+    expect(errorReads).toBeGreaterThan(0);
 
-  const pattern = /^a$/g;
-  const cloned = source.clone({ ...source._zod.def, pattern });
-  expect(hasBooleanPattern(cloned)).toBe(true);
-  for (let i = 0; i < 3; i++) expect(z.validate(cloned, "a")).toBe(true);
-  expect(z.validate(cloned, "b")).toBe(false);
-  expect(pattern.lastIndex).toBe(0);
-  const replacement = /^b$/g;
-  cloned._zod.def.pattern = replacement;
-  expect(z.validate(cloned, "a")).toBe(false);
-  expect(z.validate(cloned, "b")).toBe(true);
+    const pattern = /^a$/g;
+    const cloned = source.clone({ ...source._zod.def, pattern });
+    for (let i = 0; i < 3; i++) expect(z.validate(cloned, "a")).toBe(true);
+    expect(z.validate(cloned, "b")).toBe(false);
+    expect(pattern.lastIndex).toBe(0);
+    const replacement = /^b$/g;
+    cloned._zod.def.pattern = replacement;
+    expect(z.validate(cloned, "a")).toBe(false);
+    expect(z.validate(cloned, "b")).toBe(true);
+  } finally {
+    z.core.globalConfig.postProcessor = postProcessor;
+  }
 });
 
-test("boolean patterns preserve live pattern accessor reads", () => {
+test("validate preserves live pattern accessor reads", () => {
   const postProcessor = z.core.globalConfig.postProcessor;
   z.core.globalConfig.postProcessor = undefined;
   try {
@@ -1900,32 +1916,37 @@ test("boolean patterns preserve live pattern accessor reads", () => {
   }
 });
 
-test.each(["when", "coerce"] as const)("boolean patterns recheck live %s options", (option) => {
-  for (const inherited of [false, true]) {
-    const schema = z.email();
-    const input = option === "when" ? "invalid" : { toString: () => "test@example.com" };
-    expect(z.validate(schema, input)).toBe(false);
+test.each(["when", "coerce"] as const)("runtime validate honors live %s options", (option) => {
+  const postProcessor = z.core.globalConfig.postProcessor;
+  z.core.globalConfig.postProcessor = undefined;
+  try {
+    for (const inherited of [false, true]) {
+      const schema = z.email();
+      const input = option === "when" ? "invalid" : { toString: () => "test@example.com" };
+      expect(z.validate(schema, input)).toBe(false);
 
-    const target = inherited ? Object.create(Object.getPrototypeOf(schema.def)) : schema.def;
-    let reads = 0;
-    Object.defineProperty(target, option, {
-      get() {
-        reads++;
-        return option === "when" ? () => false : true;
-      },
-    });
-    if (inherited) Object.setPrototypeOf(schema.def, target);
-    expect(reads).toBe(0);
-    expect(z.validate(schema, input)).toBe(true);
-    expect(reads).toBeGreaterThan(0);
-    expect(schema.safeParse(input).success).toBe(true);
+      const target = inherited ? Object.create(Object.getPrototypeOf(schema.def)) : schema.def;
+      let reads = 0;
+      Object.defineProperty(target, option, {
+        get() {
+          reads++;
+          return option === "when" ? () => false : true;
+        },
+      });
+      if (inherited) Object.setPrototypeOf(schema.def, target);
+      expect(reads).toBe(0);
+      expect(z.validate(schema, input)).toBe(true);
+      expect(reads).toBeGreaterThan(0);
+      expect(schema.safeParse(input).success).toBe(true);
+    }
+  } finally {
+    z.core.globalConfig.postProcessor = postProcessor;
   }
 });
 
-test("compiled validators take precedence over boolean patterns", () => {
+test("validate uses compiled validators and runtime fallbacks", () => {
   const compiled = compile(z.email());
-  expect(hasBooleanPattern(compiled)).toBe(true);
-  expect((compiled._zod.bag as BooleanPatternBag).validator).toBeTypeOf("function");
+  expect((compiled._zod.bag as { validator?: unknown }).validator).toBeTypeOf("function");
   expect(z.validate(compiled, "test@example.com")).toBe(true);
   expect(z.validate(compiled, "invalid")).toBe(false);
   expect(z.validate(compiled, "invalid", { skipChecks: true } as any)).toBe(true);
@@ -1939,7 +1960,6 @@ test("compiled validators take precedence over boolean patterns", () => {
     fallbackRuns++;
     return originalRun(payload, ctx);
   };
-  expect(hasBooleanPattern(installed)).toBe(true);
   expect(z.validate(installed, "invalid")).toBe(false);
   expect(fallbackRuns).toBeGreaterThan(0);
 });

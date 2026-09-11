@@ -444,12 +444,6 @@ export const $ZodStringFormat: core.$constructor<$ZodStringFormat> = /*@__PURE__
   }
 );
 
-function markBooleanPattern(inst: $ZodStringFormat, def: $ZodStringFormatDef): void {
-  if (!("coerce" in def) && !("when" in def) && !("checks" in def)) {
-    (inst._zod.bag as { booleanPattern?: $ZodStringFormatDef }).booleanPattern = def;
-  }
-}
-
 //////////////////////////////   ZodGUID   //////////////////////////////
 export interface $ZodGUIDDef extends $ZodStringFormatDef<"guid"> {}
 export interface $ZodGUIDInternals extends $ZodStringFormatInternals<"guid"> {}
@@ -494,7 +488,6 @@ export const $ZodUUID: core.$constructor<$ZodUUID> = /*@__PURE__*/ core.$constru
     def.pattern ??= regexes.uuid(v);
   } else def.pattern ??= regexes.uuid();
   $ZodStringFormat.init(inst, def);
-  markBooleanPattern(inst, def);
 });
 
 //////////////////////////////   ZodEmail   //////////////////////////////
@@ -510,7 +503,6 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
   (inst, def): void => {
     def.pattern ??= regexes.email;
     $ZodStringFormat.init(inst, def);
-    markBooleanPattern(inst, def);
   }
 );
 
@@ -826,7 +818,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
-    markBooleanPattern(inst, def);
   }
 );
 
@@ -844,7 +835,6 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
   (inst, def): void => {
     def.pattern ??= regexes.date;
     $ZodStringFormat.init(inst, def);
-    markBooleanPattern(inst, def);
   }
 );
 
@@ -867,7 +857,6 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
     $ZodStringFormat.init(inst, def);
-    markBooleanPattern(inst, def);
   }
 );
 
@@ -885,7 +874,6 @@ export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.duration;
     $ZodStringFormat.init(inst, def);
-    markBooleanPattern(inst, def);
   }
 );
 
@@ -906,7 +894,6 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-  markBooleanPattern(inst, def);
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
