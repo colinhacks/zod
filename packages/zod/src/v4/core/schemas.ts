@@ -212,19 +212,21 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
     const defChecks = inst._zod.def.checks;
     // if inst is itself a checks.$ZodCheck, run it as a check
-    const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+    const checks: checks.$ZodCheck<never>[] | undefined = inst._zod.traits.has("$ZodCheck")
       ? [inst as any, ...(defChecks ?? [])]
       : defChecks?.length
         ? [...defChecks]
-        : [];
+        : undefined;
 
-    for (const ch of checks) {
-      for (const fn of ch._zod.onattach) {
-        fn(inst);
+    if (checks) {
+      for (const ch of checks) {
+        for (const fn of ch._zod.onattach) {
+          fn(inst);
+        }
       }
     }
 
-    if (checks.length === 0) {
+    if (!checks) {
       // deferred initializer inst._zod.parse is not yet defined
       inst._zod.deferred ??= [];
       inst._zod.deferred?.push(() => {
@@ -444,6 +446,13 @@ export const $ZodStringFormat: core.$constructor<$ZodStringFormat> = /*@__PURE__
   }
 );
 
+function initBooleanPattern(inst: $ZodStringFormat, def: $ZodStringFormatDef): void {
+  $ZodStringFormat.init(inst, def);
+  if (!("coerce" in def) && !("when" in def) && !("checks" in def)) {
+    (inst._zod.bag as { booleanPattern?: $ZodStringFormatDef }).booleanPattern = def;
+  }
+}
+
 //////////////////////////////   ZodGUID   //////////////////////////////
 export interface $ZodGUIDDef extends $ZodStringFormatDef<"guid"> {}
 export interface $ZodGUIDInternals extends $ZodStringFormatInternals<"guid"> {}
@@ -487,7 +496,7 @@ export const $ZodUUID: core.$constructor<$ZodUUID> = /*@__PURE__*/ core.$constru
     if (v === undefined) throw new Error(`Invalid UUID version: "${def.version}"`);
     def.pattern ??= regexes.uuid(v);
   } else def.pattern ??= regexes.uuid();
-  $ZodStringFormat.init(inst, def);
+  initBooleanPattern(inst, def);
 });
 
 //////////////////////////////   ZodEmail   //////////////////////////////
@@ -502,7 +511,7 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
   "$ZodEmail",
   (inst, def): void => {
     def.pattern ??= regexes.email;
-    $ZodStringFormat.init(inst, def);
+    initBooleanPattern(inst, def);
   }
 );
 
@@ -523,10 +532,30 @@ export interface $ZodURL extends $ZodType {
 
 /** The `://` guard rejected the input before the URL constructor saw it. */
 export const URL_BAD_FORMAT = 1;
-/** The URL constructor rejected the input. */
+/** The URL parser rejected the input. */
 export const URL_UNPARSEABLE = 2;
 
-/** Parses a URL for `$ZodURL`, applying the one guard the URL constructor cannot express. Returns the parsed URL, or a code naming the stage that rejected it — the runtime needs that distinction to pick an issue note, and compiled code only needs to know it is not a URL. */
+export function canParseURL(input: string): boolean {
+  try {
+    if (typeof URL !== "undefined" && typeof URL.canParse === "function") return URL.canParse(input);
+    new URL(input);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function validateURL(
+  trimmed: string,
+  def: Pick<$ZodURLDef, "protocol" | "hostname" | "normalize">
+): URL | true | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE {
+  if (!def.normalize && !def.hostname && !def.protocol) {
+    return canParseURL(trimmed) || URL_UNPARSEABLE;
+  }
+  return parseURLObject(trimmed, def);
+}
+
+/** Parses a URL while preserving the non-normalizing HTTP guard. */
 export function parseURLObject(
   trimmed: string,
   def: Pick<$ZodURLDef, "protocol" | "normalize">
@@ -537,6 +566,10 @@ export function parseURLObject(
   }
 
   try {
+    if (typeof URL !== "undefined") {
+      const URLStatic = URL as typeof URL & { parse?: (input: string) => URL | null };
+      if (typeof URLStatic.parse === "function") return URLStatic.parse(trimmed) ?? URL_UNPARSEABLE;
+    }
     // @ts-ignore
     return new URL(trimmed);
   } catch {
@@ -567,7 +600,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
-      const url = parseURLObject(trimmed, def);
+      const url = validateURL(trimmed, def);
 
       if (url === URL_BAD_FORMAT) {
         payload.issues.push({
@@ -589,6 +622,11 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
           inst,
           continue: !def.abort,
         });
+        return;
+      }
+
+      if (url === true) {
+        payload.value = stripTabAndNewline(trimmed);
         return;
       }
 
@@ -788,7 +826,7 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   "$ZodISODateTime",
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
-    $ZodStringFormat.init(inst, def);
+    initBooleanPattern(inst, def);
   }
 );
 
@@ -805,7 +843,7 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
   "$ZodISODate",
   (inst, def): void => {
     def.pattern ??= regexes.date;
-    $ZodStringFormat.init(inst, def);
+    initBooleanPattern(inst, def);
   }
 );
 
@@ -827,7 +865,7 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   "$ZodISOTime",
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
-    $ZodStringFormat.init(inst, def);
+    initBooleanPattern(inst, def);
   }
 );
 
@@ -844,7 +882,7 @@ export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/
   "$ZodISODuration",
   (inst, def): void => {
     def.pattern ??= regexes.duration;
-    $ZodStringFormat.init(inst, def);
+    initBooleanPattern(inst, def);
   }
 );
 
@@ -864,7 +902,7 @@ export interface $ZodIPv4 extends $ZodType {
 
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
-  $ZodStringFormat.init(inst, def);
+  initBooleanPattern(inst, def);
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -886,13 +924,7 @@ const ipv6Alphabet = /^[0-9a-fA-F:.]+$/;
 
 export function isValidIPv6(value: string): boolean {
   if (!ipv6Alphabet.test(value)) return false;
-  try {
-    // @ts-ignore
-    new URL(`http://[${value}]`);
-    return true;
-  } catch {
-    return false;
-  }
+  return canParseURL(`http://[${value}]`);
 }
 
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
@@ -1850,7 +1882,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     }
 
     payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
-    const proms: Promise<any>[] = [];
+    let proms: Promise<any>[] | undefined;
     const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1863,6 +1895,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       );
 
       if (result instanceof Promise) {
+        proms ??= [];
         proms.push(result.then((result) => handleArrayResult(result, payload, i)));
       } else {
         handleArrayResult(result, payload, i);
@@ -1871,7 +1904,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       }
     }
 
-    if (proms.length) {
+    if (proms) {
       return Promise.all(proms).then(() => payload);
     }
 

@@ -1,5 +1,5 @@
 import { Validator } from "@seriousme/openapi-schema-validator";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import * as z from "zod";
 // import * as zCore from "zod/v4/core";
 
@@ -3235,11 +3235,31 @@ test("basic registry", () => {
   `);
 });
 
-test("large registry converts in linear time", () => {
-  const count = 2000;
-  const convert = (withIntersection: boolean) => {
+function countMapScanWork<T>(convert: () => T): { result: T; work: number } {
+  const entries = Map.prototype.entries;
+  const values = Map.prototype.values;
+  let work = 0;
+  const entriesSpy = vi.spyOn(Map.prototype, "entries").mockImplementation(function (this: Map<unknown, unknown>) {
+    work += this.size;
+    return entries.call(this);
+  } as typeof Map.prototype.entries);
+  const valuesSpy = vi.spyOn(Map.prototype, "values").mockImplementation(function (this: Map<unknown, unknown>) {
+    work += this.size;
+    return values.call(this);
+  } as typeof Map.prototype.values);
+  try {
+    return { result: convert(), work };
+  } finally {
+    entriesSpy.mockRestore();
+    valuesSpy.mockRestore();
+  }
+}
+
+test("large registry conversion performs linear map-scan work", () => {
+  const count = 64;
+  const convert = (size: number, withIntersection: boolean) => {
     const registry = z.registry<{ id: string }>();
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < size; i++) {
       registry.add(
         z.object({ id: z.string(), name: z.string(), count: z.number(), nested: z.object({ a: z.boolean() }) }),
         { id: `Type${i}` }
@@ -3247,55 +3267,53 @@ test("large registry converts in linear time", () => {
     }
     if (withIntersection) registry.add(z.object({ a: z.string() }).and(z.object({ b: z.string() })), { id: "Inter" });
 
-    const start = performance.now();
-    const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
-    return { schemas, elapsed: performance.now() - start };
+    return countMapScanWork(() => z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` }));
   };
 
-  const plain = convert(false);
-  expect(Object.keys(plain.schemas)).toHaveLength(count);
-  expect(plain.schemas.Type0).toMatchObject({
+  const plain = convert(count, false);
+  const plainDouble = convert(count * 2, false);
+  expect(Object.keys(plain.result.schemas)).toHaveLength(count);
+  expect(plain.result.schemas.Type0).toMatchObject({
     $id: "https://example.com/Type0.json",
     type: "object",
     properties: { nested: { type: "object" } },
   });
-  expect(plain.schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
+  expect(plain.result.schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
+  expect(plain.work).toBeGreaterThan(0);
+  expect(plainDouble.work).toBeLessThanOrEqual(plain.work * 2);
 
-  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
-  expect(plain.elapsed).toBeLessThan(5000);
-
-  // The intersection fold walks the whole map as well, so it has to run inside the same guard. Hoisting it back out costs ~10x at this size. Comparing the two conversions rather than asserting a fixed budget keeps this independent of how fast the machine is.
-  const folded = convert(true);
-  expect(folded.schemas.Inter).toMatchObject({ type: "object", properties: { a: {}, b: {} } });
-  expect(folded.elapsed).toBeLessThan(plain.elapsed * 4 + 100);
+  const folded = convert(count, true);
+  const foldedDouble = convert(count * 2, true);
+  expect(folded.result.schemas.Inter).toMatchObject({ type: "object", properties: { a: {}, b: {} } });
+  expect(folded.work).toBeGreaterThan(0);
+  expect(foldedDouble.work).toBeLessThanOrEqual(folded.work * 2);
 });
 
-test("a registry of records with numeric keys converts in linear time", () => {
-  const count = 2000;
-  const convert = (key: (i: number) => z.core.$ZodType) => {
+test("a registry of records with numeric keys performs linear map-scan work", () => {
+  const count = 64;
+  const convert = (size: number, key: (i: number) => z.core.$ZodType) => {
     const registry = z.registry<{ id: string }>();
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < size; i++) {
       registry.add(z.object({ m: z.record(key(i) as z.core.$ZodRecordKey, z.boolean()) }), { id: `Type${i}` });
     }
-    const start = performance.now();
-    const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
-    return { schemas, elapsed: performance.now() - start };
+    return countMapScanWork(() => z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` }));
   };
 
-  const string = convert(() => z.string());
-  const numeric = convert(() => z.number());
-  expect(numeric.schemas.Type0).toMatchObject({
+  const numeric = convert(count, () => z.number());
+  const numericDouble = convert(count * 2, () => z.number());
+  expect(numeric.result.schemas.Type0).toMatchObject({
     properties: { m: { propertyNames: { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" } } },
   });
+  expect(numeric.work).toBeGreaterThan(0);
+  expect(numericDouble.work).toBeLessThanOrEqual(numeric.work * 2);
 
-  // The rewrite has to find every carrier the flatten copied `propertyNames` onto, which means a pass over the whole seen map. Running that once per record rather than once per conversion cost ~10x at this size. A string key needs no rewrite at all, so comparing against it keeps this independent of how fast the machine is.
-  expect(numeric.elapsed).toBeLessThan(string.elapsed * 2 + 50);
-
-  // An extracted key resolves through a map built once per conversion rather than a search per reference. There is no stable timing control for that — extraction has its own $defs cost, which swamps the difference — so this only pins the shape.
-  const extracted = convert((i) => z.number().meta({ id: `Key${i}` }));
-  expect(extracted.schemas.Type0).toMatchObject({
+  const extracted = convert(count, (i) => z.number().meta({ id: `Key${i}` }));
+  const extractedDouble = convert(count * 2, (i) => z.number().meta({ id: `Key${i}` }));
+  expect(extracted.result.schemas.Type0).toMatchObject({
     properties: { m: { propertyNames: { type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" } } },
   });
+  expect(extracted.work).toBeGreaterThan(0);
+  expect(extractedDouble.work).toBeLessThanOrEqual(extracted.work * 2);
 });
 
 test("registry extracts unregistered subschemas into __shared", () => {
@@ -3847,6 +3865,31 @@ test("input JSON schema resolves requiredness past transform and catch wrappers"
   // nested preprocess and the legacy transform-pipe form both resolve through to the inner schema
   expect(required(z.object({ a: z.preprocess(id, z.preprocess(id, z.string())) }))).toEqual(["a"]);
   expect(required(z.object({ a: z.transform((v: unknown) => String(v)).pipe(z.string()) }))).toEqual(["a"]);
+});
+
+test("object required keys preserve shape order and direction", () => {
+  const symbol = Symbol("symbol");
+  const shape: z.ZodRawShape = {
+    10: z.string(),
+    2: z.string().optional(),
+    plain: z.string(),
+    optional: z.string().optional(),
+    defaulted: z.string().default("x"),
+    caught: z.string().catch("x"),
+    [symbol]: z.string(),
+  };
+  Object.defineProperty(shape, "__proto__", { value: z.string(), enumerable: true });
+  Object.defineProperty(shape, "hidden", { value: z.string(), enumerable: false });
+
+  const input = z.toJSONSchema(z.object(shape), { io: "input", unrepresentable: "any" });
+  const output = z.toJSONSchema(z.object(shape), { io: "output", unrepresentable: "any" });
+
+  expect(Object.keys(input.properties!)).toEqual(["2", "10", "plain", "optional", "defaulted", "caught", "__proto__"]);
+  expect(input.required).toEqual(["10", "plain", "caught", "__proto__"]);
+  expect(output.required).toEqual(["10", "plain", "defaulted", "caught", "__proto__"]);
+  expect(Object.prototype.hasOwnProperty.call(input.properties!, "__proto__")).toBe(true);
+  expect(input.properties).not.toHaveProperty("hidden");
+  expect(Object.getOwnPropertySymbols(input.properties!)).toEqual([]);
 });
 
 test("strip output-side examples from input JSON schema for codec", () => {

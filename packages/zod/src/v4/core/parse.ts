@@ -125,6 +125,7 @@ const COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 interface CompiledBag {
   validator?: ((input: unknown) => unknown) & { definite?: boolean | undefined };
   fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
+  booleanPattern?: { pattern?: RegExp | undefined } | undefined;
 }
 
 export type $Validate = <T extends schemas.$ZodType>(
@@ -144,6 +145,15 @@ export const validate: $Validate = ((
     if (validator(value) !== COMPILE_INVALID) return true;
     // a definite sentinel means the runtime would reject, so skip the re-parse; a ctx can still change the answer
     if (validator.definite === true && _ctx === undefined) return false;
+  }
+  if (validator === undefined && _ctx === undefined) {
+    const booleanPattern = (schema._zod.bag as CompiledBag).booleanPattern;
+    if (booleanPattern !== undefined) {
+      if (typeof value !== "string") return false;
+      const regex = booleanPattern.pattern!;
+      regex.lastIndex = 0;
+      return regex.test(value);
+    }
   }
   return validateFallback(schema, value, _ctx);
 }) as $Validate;

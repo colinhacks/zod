@@ -1787,6 +1787,120 @@ test("compiled records walk own enumerable keys without Reflect.ownKeys", () => 
   expect(compile(plain).parse(revealing())).toStrictEqual({ a: 1, b: 2 });
 });
 
+type BooleanPatternBag = { booleanPattern?: { pattern?: RegExp }; validator?: unknown };
+
+function hasBooleanPattern(schema: z.ZodType): boolean {
+  return (schema._zod.bag as BooleanPatternBag).booleanPattern !== undefined;
+}
+
+test("validate uses boolean patterns only for pure standalone formats", () => {
+  const cases = [
+    [z.iso.datetime(), "2021-01-01T00:00:00Z"],
+    [z.iso.date(), "2021-01-01"],
+    [z.iso.time(), "00:00:00"],
+    [z.iso.duration(), "P1Y2M3DT4H5M6S"],
+    [z.email(), "test@example.com"],
+    [z.uuid(), "20354d7a-e4fe-47af-8ff6-187bca92f3f9"],
+    [z.ipv4(), "192.168.0.1"],
+  ] as const;
+
+  for (const [schema, valid] of cases) {
+    expect(hasBooleanPattern(schema)).toBe(true);
+    expect(z.validate(schema, valid)).toBe(true);
+    expect(z.validate(schema, "invalid")).toBe(false);
+    expect(z.validate(schema, 1)).toBe(false);
+  }
+
+  const source = z.email();
+  const refined = source.refine((value) => value.startsWith("x"));
+  const asyncRefined = source.refine(async () => true);
+  const coercedDef = Object.assign(Object.create({ coerce: true }), source._zod.def);
+  const coerced = source.clone(coercedDef);
+  const checkedDef = Object.assign(Object.create({ checks: refined._zod.def.checks }), source._zod.def);
+  const inheritedChecked = source.clone(checkedDef);
+  expect(hasBooleanPattern(refined)).toBe(false);
+  expect(hasBooleanPattern(asyncRefined)).toBe(false);
+  expect(hasBooleanPattern(coerced)).toBe(false);
+  expect(hasBooleanPattern(inheritedChecked)).toBe(false);
+  expect(z.validate(refined, "test@example.com")).toBe(false);
+  expect(z.validate(refined, "x@example.com")).toBe(true);
+  expect(z.validate(inheritedChecked, "test@example.com")).toBe(false);
+  expect(() => z.validate(asyncRefined, "test@example.com")).toThrow($ZodAsyncError);
+  expect(z.validate(coerced, { toString: () => "test@example.com" })).toBe(true);
+});
+
+test("boolean patterns preserve contexts, getters, errors, and regex state", () => {
+  const source = z.email();
+  expect(z.validate(source, "invalid", { skipChecks: true } as any)).toBe(true);
+
+  let whenReads = 0;
+  const whenProto = Object.defineProperty({}, "when", {
+    enumerable: true,
+    get() {
+      whenReads++;
+      return () => false;
+    },
+  });
+  const whenDef = Object.assign(Object.create(whenProto), source._zod.def);
+  const gated = source.clone(whenDef as typeof source._zod.def);
+  expect(whenReads).toBe(0);
+  expect(hasBooleanPattern(gated)).toBe(false);
+  expect(z.validate(gated, "invalid")).toBe(true);
+  expect(whenReads).toBeGreaterThan(0);
+
+  let errorReads = 0;
+  const errorDef = Object.defineProperties({}, Object.getOwnPropertyDescriptors(source._zod.def));
+  Object.defineProperty(errorDef, "error", {
+    enumerable: true,
+    get() {
+      errorReads++;
+      return () => "custom";
+    },
+  });
+  const customError = source.clone(errorDef as typeof source._zod.def);
+  expect(hasBooleanPattern(customError)).toBe(true);
+  expect(z.validate(customError, "invalid")).toBe(false);
+  expect(errorReads).toBe(0);
+  const result = customError.safeParse("invalid");
+  expect(errorReads).toBe(0);
+  if (result.success) expect.unreachable();
+  expect(result.error.issues[0]?.message).toBe("custom");
+  expect(errorReads).toBeGreaterThan(0);
+
+  const pattern = /^a$/g;
+  const cloned = source.clone({ ...source._zod.def, pattern });
+  expect(hasBooleanPattern(cloned)).toBe(true);
+  for (let i = 0; i < 3; i++) expect(z.validate(cloned, "a")).toBe(true);
+  expect(z.validate(cloned, "b")).toBe(false);
+  expect(pattern.lastIndex).toBe(0);
+  const replacement = /^b$/g;
+  cloned._zod.def.pattern = replacement;
+  expect(z.validate(cloned, "a")).toBe(false);
+  expect(z.validate(cloned, "b")).toBe(true);
+});
+
+test("compiled validators take precedence over boolean patterns", () => {
+  const compiled = compile(z.email());
+  expect(hasBooleanPattern(compiled)).toBe(true);
+  expect((compiled._zod.bag as BooleanPatternBag).validator).toBeTypeOf("function");
+  expect(z.validate(compiled, "test@example.com")).toBe(true);
+  expect(z.validate(compiled, "invalid")).toBe(false);
+  expect(z.validate(compiled, "invalid", { skipChecks: true } as any)).toBe(true);
+
+  const source = z.email();
+  const originalRun = source._zod.run;
+  let fallbackRuns = 0;
+  source._zod.run = (payload, ctx) => {
+    fallbackRuns++;
+    return originalRun(payload, ctx);
+  };
+  const installed = withParser(source, () => INVALID);
+  fallbackRuns = 0;
+  expect(hasBooleanPattern(installed)).toBe(true);
+  expect(z.validate(installed, "invalid")).toBe(false);
+  expect(fallbackRuns).toBeGreaterThan(0);
+});
+
 // withParser: a parser Zod did not generate, installed on the same wrapper compile() uses.
 
 // tags its output so a test fails loudly if the runtime ran instead of the supplied parser

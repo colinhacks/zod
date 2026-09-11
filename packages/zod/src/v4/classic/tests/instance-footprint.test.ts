@@ -7,6 +7,21 @@ import * as core from "zod/v4/core";
 // V8 sizes an instance's property backing store in steps, and schema instances get no in-object slots (their constructor assigns nothing itself): 12 own properties cost 128 bytes, 13 cost 848, 21 cost 1616. Methods therefore live on the prototype and materialize per instance on first read. These bounds are what keeps a schema graph small; crossing one silently multiplies its memory by 6x.
 const MAX_OWN_PROPS = 12;
 
+test("unchecked schemas retain deferred initializer ordering", () => {
+  const events: boolean[] = [];
+  const Custom = core.$constructor<core.$ZodType>("DeferredOrder", (inst, def) => {
+    inst._zod.deferred ??= [];
+    inst._zod.deferred.push(() => events.push(inst._zod.run === undefined));
+    core.$ZodType.init(inst, def);
+    inst._zod.parse = (payload) => payload;
+    inst._zod.deferred.push(() => events.push(inst._zod.run === inst._zod.parse));
+  });
+  const schema = new Custom({ type: "string" });
+  expect(events).toEqual([true, true]);
+  expect(Object.prototype.hasOwnProperty.call(schema._zod, "deferred")).toBe(true);
+  expect(schema._zod.deferred).toBeUndefined();
+});
+
 test("schema instances stay under V8's property-count step", () => {
   const cases: Array<[string, object]> = [
     ["string", z.string()],
