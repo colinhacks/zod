@@ -1,6 +1,20 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("deferred projections preserve unions and top and bottom types", () => {
+  type Mixed = z.ZodPipe<z.ZodString, z.ZodNumber> | z.ZodBoolean;
+  expectTypeOf<z.input<z.ZodNullable<Mixed>>>().toEqualTypeOf<string | boolean | null>();
+  expectTypeOf<z.output<z.ZodNullable<Mixed>>>().toEqualTypeOf<number | boolean | null>();
+  expectTypeOf<z.input<z.ZodNullable<z.ZodUnknown | z.ZodString>>>().toBeUnknown();
+  expectTypeOf<z.output<z.ZodNullable<z.ZodUnknown | z.ZodString>>>().toBeUnknown();
+  expectTypeOf<z.input<z.ZodNullable<z.ZodAny | z.ZodString>>>().toBeAny();
+  expectTypeOf<z.output<z.ZodNullable<z.ZodAny | z.ZodString>>>().toBeAny();
+  expectTypeOf<z.input<z.ZodNullable<never>>>().toEqualTypeOf<null>();
+  expectTypeOf<z.output<z.ZodNullable<never>>>().toEqualTypeOf<null>();
+  expectTypeOf<z.input<z.ZodPipe<never, never>>>().toBeNever();
+  expectTypeOf<z.output<z.ZodPipe<never, never>>>().toBeNever();
+});
+
 test("shallow schema references retain strict factory constraints", () => {
   function reference<T extends z.core.$ZodTypeRef>(schema: T): T {
     return schema;

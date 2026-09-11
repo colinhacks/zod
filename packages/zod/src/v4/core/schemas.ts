@@ -194,29 +194,28 @@ export type SomeType = { _zod: _$ZodTypeInternals };
 export type $ZodTypeRef = { _zod: any };
 
 // input and output projections
-type AtomicInput<T> = T extends { _zod: { atomic?: true } } ? core.input<T> : never;
+type AtomicInput<T extends $ZodTypeRef> = T extends { _zod: { atomic?: true } } ? T["_zod"]["input"] : never;
 
-type InferInput<T, All = T> = T extends $ZodTypeRef
+// distribute over members while preserving the full union in All
+type InferInput<T extends $ZodTypeRef, All extends $ZodTypeRef = T> = T extends unknown
   ? unknown extends AtomicInput<All>
     ? AtomicInput<All>
     : T["_zod"]["input"]
-  : unknown;
-
-type AtomicOutput<T> = T extends $ZodTypeRef
-  ? T["_zod"]["def"] extends { out: infer B }
-    ? B extends { _zod: { atomic?: true } }
-      ? T["_zod"]["output"]
-      : never
-    : T extends { _zod: { atomic?: true } }
-      ? T["_zod"]["output"]
-      : never
   : never;
 
-type InferOutput<T, All = T> = T extends $ZodTypeRef
+type AtomicOutput<T extends $ZodTypeRef> = T extends { _zod: { def: { out: infer B } } }
+  ? B extends { _zod: { atomic?: true } }
+    ? T["_zod"]["output"]
+    : never
+  : T extends { _zod: { atomic?: true } }
+    ? T["_zod"]["output"]
+    : never;
+
+type InferOutput<T extends $ZodTypeRef, All extends $ZodTypeRef = T> = T extends unknown
   ? unknown extends AtomicOutput<All>
     ? AtomicOutput<All>
     : T["_zod"]["output"]
-  : unknown;
+  : never;
 
 //////////////////////////////   METADATA FORWARDING   ///////////////////////////////////////
 
@@ -4696,7 +4695,7 @@ export const $ZodNaN: core.$constructor<$ZodNaN> = /*@__PURE__*/ core.$construct
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-interface DeferredPipeTypes<A, B> {
+interface DeferredPipeTypes<A extends $ZodTypeRef, B extends $ZodTypeRef> {
   output: InferOutput<B>;
   input: InferInput<A>;
 }
