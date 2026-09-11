@@ -1,6 +1,27 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("shallow schema references retain strict factory constraints", () => {
+  function reference<T extends z.core.$ZodTypeRef>(schema: T): T {
+    return schema;
+  }
+  const schema = reference(z.string());
+  expectTypeOf(schema).toEqualTypeOf<z.ZodString>();
+  expect(z.array(schema).parse(["leaf"])).toEqual(["leaf"]);
+
+  function negative(ref: z.core.$ZodTypeRef, shape: { _zod: { def: { type: "string" } } }) {
+    expectTypeOf<z.ZodArray<typeof shape>["element"]>().toEqualTypeOf<typeof shape>();
+    // @ts-expect-error a schema description is not an executable schema
+    const executable: z.core.SomeType = shape;
+    // @ts-expect-error factories still require executable schema internals
+    z.array(shape);
+    // @ts-expect-error a schema reference does not declare parse methods
+    ref.parse("leaf");
+    void executable;
+  }
+  void negative;
+});
+
 test("recursive native containers preserve brands", () => {
   type Field = z.ZodString | z.ZodArray<Field>;
   const field: z.ZodArray<Field> = z.array(z.string());
