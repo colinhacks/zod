@@ -417,6 +417,27 @@ test("replacement pipe internals declare output opacity", () => {
   void schema;
 });
 
+test("output opacity retains mixed destinations without widening values", () => {
+  type Mixed = z.core.$ZodPipe<z.core.$ZodString, z.core.$ZodTransform> | z.core.$ZodArray<z.core.$ZodString>;
+  type Field = z.core.$ZodString | z.core.$ZodReadonly<Field> | z.core.$ZodPipe<Field, Mixed>;
+  type CodecField = z.core.$ZodString | z.core.$ZodReadonly<CodecField> | z.core.$ZodCodec<CodecField, Mixed>;
+  type Nested =
+    | z.core.$ZodString
+    | z.core.$ZodReadonly<Nested>
+    | z.core.$ZodPipe<Nested, z.core.$ZodPipe<z.core.$ZodString, Mixed>>;
+  type NestedCodec =
+    | z.core.$ZodString
+    | z.core.$ZodReadonly<NestedCodec>
+    | z.core.$ZodCodec<NestedCodec, z.core.$ZodCodec<z.core.$ZodString, Mixed>>;
+  type Concrete = z.ZodPipe<z.ZodString, z.ZodString | z.ZodArray<z.ZodString>>;
+  expectTypeOf<z.output<Field>>().toBeUnknown();
+  expectTypeOf<z.output<CodecField>>().toBeUnknown();
+  expectTypeOf<z.output<Nested>>().toBeUnknown();
+  expectTypeOf<z.output<NestedCodec>>().toBeUnknown();
+  expectTypeOf<z.input<Concrete>>().toEqualTypeOf<string>();
+  expectTypeOf<z.output<Concrete>>().toEqualTypeOf<string | string[]>();
+});
+
 test("recursive metadata without atomic leaves retains schema bounds", () => {
   type Nullable = z.core.$ZodNullable<Nullable>;
   type Lazy = z.core.$ZodLazy<Lazy>;
