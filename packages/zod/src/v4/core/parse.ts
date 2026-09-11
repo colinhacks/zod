@@ -150,9 +150,8 @@ export const validate: $Validate = ((
     const booleanPattern = (schema._zod.bag as CompiledBag).booleanPattern;
     if (booleanPattern !== undefined && !("coerce" in booleanPattern) && !("when" in booleanPattern)) {
       if (typeof value !== "string") return false;
-      const regex = booleanPattern.pattern!;
-      regex.lastIndex = 0;
-      return regex.test(value);
+      booleanPattern.pattern!.lastIndex = 0;
+      return booleanPattern.pattern!.test(value);
     }
   }
   return validateFallback(schema, value, _ctx);

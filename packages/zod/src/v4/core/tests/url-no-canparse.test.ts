@@ -40,6 +40,30 @@ describe("URL parser fallbacks", () => {
     expect(parse).not.toHaveBeenCalled();
   });
 
+  test("URL fast-path selection preserves live option getter reads", async () => {
+    const z = await import("../../index.js");
+    const postProcessor = z.core.globalConfig.postProcessor;
+    z.core.globalConfig.postProcessor = undefined;
+    try {
+      for (const inherited of [false, true]) {
+        const schema = z.url();
+        const target = inherited ? Object.create(Object.getPrototypeOf(schema.def)) : schema.def;
+        let reads = 0;
+        Object.defineProperty(target, "hostname", {
+          get: () => (++reads === 1 ? /^example\.com$/ : undefined),
+        });
+        if (inherited) Object.setPrototypeOf(schema.def, target);
+        expect(z.validate(schema, "https://example.com")).toBe(false);
+        expect(reads).toBe(2);
+        reads = 0;
+        expect(schema.safeParse("https://example.com").success).toBe(false);
+        expect(reads).toBe(2);
+      }
+    } finally {
+      z.core.globalConfig.postProcessor = postProcessor;
+    }
+  });
+
   test("the exported object parser still returns a URL", async () => {
     const { parseURLObject } = await import("../schemas.js");
     const result = parseURLObject("https://example.com", {});

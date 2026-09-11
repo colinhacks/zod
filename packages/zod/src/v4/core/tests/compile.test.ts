@@ -1805,6 +1805,8 @@ test("validate uses boolean patterns only for pure standalone formats", () => {
   ] as const;
 
   for (const [schema, valid] of cases) {
+    expect(schema._zod.traits.has("$ZodStringFormat")).toBe(true);
+    expect(schema instanceof z.core.$ZodStringFormat).toBe(true);
     expect(hasBooleanPattern(schema)).toBe(true);
     expect(z.validate(schema, valid)).toBe(true);
     expect(z.validate(schema, "invalid")).toBe(false);
@@ -1877,6 +1879,25 @@ test("boolean patterns preserve contexts, getters, errors, and regex state", () 
   cloned._zod.def.pattern = replacement;
   expect(z.validate(cloned, "a")).toBe(false);
   expect(z.validate(cloned, "b")).toBe(true);
+});
+
+test("boolean patterns preserve live pattern accessor reads", () => {
+  const postProcessor = z.core.globalConfig.postProcessor;
+  z.core.globalConfig.postProcessor = undefined;
+  try {
+    const schema = z.email();
+    let reads = 0;
+    Object.defineProperty(schema.def, "pattern", {
+      get: () => (++reads % 2 === 1 ? /^a$/ : /^b$/),
+    });
+    expect(schema.safeParse("b").success).toBe(true);
+    expect(reads).toBe(2);
+    reads = 0;
+    expect(z.validate(schema, "b")).toBe(true);
+    expect(reads).toBe(2);
+  } finally {
+    z.core.globalConfig.postProcessor = postProcessor;
+  }
 });
 
 test.each(["when", "coerce"] as const)("boolean patterns recheck live %s options", (option) => {

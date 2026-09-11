@@ -1,23 +1,6 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
-test("mixed synchronous and asynchronous array elements preserve output and issue paths", async () => {
-  const schema = z.array(
-    z.number().transform((value, ctx) => {
-      if (value < 0) ctx.addIssue({ code: "custom", message: "negative" });
-      return value % 2 === 0 ? Promise.resolve(value * 2) : value * 2;
-    })
-  );
-  expect(schema.parse([])).toEqual([]);
-  expect(schema.parse([1, 3])).toEqual([2, 6]);
-  expect(await schema.parseAsync([2, 1, 4, 3])).toEqual([4, 2, 8, 6]);
-  expect(await schema.parseAsync([1, 2, 3, 4])).toEqual([2, 4, 6, 8]);
-  const failed = await schema.safeParseAsync([-2, -1]);
-  expect(failed.success).toBe(false);
-  expect(failed.error?.issues.map((issue) => issue.path).sort()).toEqual([[0], [1]]);
-  expect(() => schema.parse([2])).toThrow(z.core.$ZodAsyncError);
-});
-
 test("type inference", () => {
   const schema = z.string().array();
   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<string[]>();

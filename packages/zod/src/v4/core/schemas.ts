@@ -212,21 +212,19 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
     const defChecks = inst._zod.def.checks;
     // if inst is itself a checks.$ZodCheck, run it as a check
-    const checks: checks.$ZodCheck<never>[] | undefined = inst._zod.traits.has("$ZodCheck")
+    const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
       ? [inst as any, ...(defChecks ?? [])]
       : defChecks?.length
         ? [...defChecks]
-        : undefined;
+        : [];
 
-    if (checks) {
-      for (const ch of checks) {
-        for (const fn of ch._zod.onattach) {
-          fn(inst);
-        }
+    for (const ch of checks) {
+      for (const fn of ch._zod.onattach) {
+        fn(inst);
       }
     }
 
-    if (!checks) {
+    if (checks.length === 0) {
       // deferred initializer inst._zod.parse is not yet defined
       inst._zod.deferred ??= [];
       inst._zod.deferred?.push(() => {
@@ -446,8 +444,7 @@ export const $ZodStringFormat: core.$constructor<$ZodStringFormat> = /*@__PURE__
   }
 );
 
-function initBooleanPattern(inst: $ZodStringFormat, def: $ZodStringFormatDef): void {
-  $ZodStringFormat.init(inst, def);
+function markBooleanPattern(inst: $ZodStringFormat, def: $ZodStringFormatDef): void {
   if (!("coerce" in def) && !("when" in def) && !("checks" in def)) {
     (inst._zod.bag as { booleanPattern?: $ZodStringFormatDef }).booleanPattern = def;
   }
@@ -496,7 +493,8 @@ export const $ZodUUID: core.$constructor<$ZodUUID> = /*@__PURE__*/ core.$constru
     if (v === undefined) throw new Error(`Invalid UUID version: "${def.version}"`);
     def.pattern ??= regexes.uuid(v);
   } else def.pattern ??= regexes.uuid();
-  initBooleanPattern(inst, def);
+  $ZodStringFormat.init(inst, def);
+  markBooleanPattern(inst, def);
 });
 
 //////////////////////////////   ZodEmail   //////////////////////////////
@@ -511,7 +509,8 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
   "$ZodEmail",
   (inst, def): void => {
     def.pattern ??= regexes.email;
-    initBooleanPattern(inst, def);
+    $ZodStringFormat.init(inst, def);
+    markBooleanPattern(inst, def);
   }
 );
 
@@ -549,7 +548,7 @@ export function validateURL(
   trimmed: string,
   def: Pick<$ZodURLDef, "protocol" | "hostname" | "normalize">
 ): URL | true | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE {
-  if (!def.normalize && !def.hostname && !def.protocol) {
+  if (!("normalize" in def) && !("hostname" in def) && !("protocol" in def)) {
     return canParseURL(trimmed) || URL_UNPARSEABLE;
   }
   return parseURLObject(trimmed, def);
@@ -826,7 +825,8 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   "$ZodISODateTime",
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
-    initBooleanPattern(inst, def);
+    $ZodStringFormat.init(inst, def);
+    markBooleanPattern(inst, def);
   }
 );
 
@@ -843,7 +843,8 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
   "$ZodISODate",
   (inst, def): void => {
     def.pattern ??= regexes.date;
-    initBooleanPattern(inst, def);
+    $ZodStringFormat.init(inst, def);
+    markBooleanPattern(inst, def);
   }
 );
 
@@ -865,7 +866,8 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   "$ZodISOTime",
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
-    initBooleanPattern(inst, def);
+    $ZodStringFormat.init(inst, def);
+    markBooleanPattern(inst, def);
   }
 );
 
@@ -882,7 +884,8 @@ export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/
   "$ZodISODuration",
   (inst, def): void => {
     def.pattern ??= regexes.duration;
-    initBooleanPattern(inst, def);
+    $ZodStringFormat.init(inst, def);
+    markBooleanPattern(inst, def);
   }
 );
 
@@ -902,7 +905,8 @@ export interface $ZodIPv4 extends $ZodType {
 
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
-  initBooleanPattern(inst, def);
+  $ZodStringFormat.init(inst, def);
+  markBooleanPattern(inst, def);
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -1882,7 +1886,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     }
 
     payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
-    let proms: Promise<any>[] | undefined;
+    const proms: Promise<any>[] = [];
     const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1895,7 +1899,6 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       );
 
       if (result instanceof Promise) {
-        proms ??= [];
         proms.push(result.then((result) => handleArrayResult(result, payload, i)));
       } else {
         handleArrayResult(result, payload, i);
@@ -1904,7 +1907,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       }
     }
 
-    if (proms) {
+    if (proms.length) {
       return Promise.all(proms).then(() => payload);
     }
 
