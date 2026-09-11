@@ -379,6 +379,23 @@ test("pipe output opacity preserves recursive inputs", () => {
   expect("atomic" in pipe._zod).toBe(false);
 });
 
+test("output opacity composes through pipes and codecs", () => {
+  type PipeEnd = z.core.$ZodPipe<z.core.$ZodString, z.core.$ZodTransform>;
+  type CodecEnd = z.core.$ZodCodec<z.core.$ZodString, z.core.$ZodTransform>;
+  type Field = z.core.$ZodString | z.core.$ZodReadonly<Field> | z.core.$ZodPipe<Field, PipeEnd | CodecEnd>;
+  type CodecField =
+    | z.core.$ZodString
+    | z.core.$ZodReadonly<CodecField>
+    | z.core.$ZodCodec<CodecField, PipeEnd | CodecEnd>;
+  expectTypeOf<z.output<Field>>().toBeUnknown();
+  expectTypeOf<z.output<CodecField>>().toBeUnknown();
+  const nested = z.string().pipe(z.string().transform((value) => value.length));
+  expectTypeOf<z.input<typeof nested>>().toEqualTypeOf<string>();
+  expectTypeOf<z.output<typeof nested>>().toEqualTypeOf<number>();
+  expect(nested.parse("leaf")).toBe(4);
+  expect(nested.safeParse(4).success).toBe(false);
+});
+
 test("replacement pipe internals declare output opacity", () => {
   interface Internals extends z.core.$ZodTypeInternals {
     atomic?: { output: true };

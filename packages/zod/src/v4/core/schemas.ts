@@ -4596,7 +4596,7 @@ export interface $ZodPipeInternals<A extends $ZodTypeRef = $ZodType, B extends $
   extends _$ZodTypeInternals,
     DeferredPipeTypes<A, B> {
   // output opacity does not close a recursive input
-  atomic?: true | { output: B extends { _zod: { atomic?: true } } ? true : false };
+  atomic?: true | { output: B extends { _zod: { atomic?: true | { output: true } } } ? true : false };
   def: $ZodPipeDef<A, B>;
   isst: never;
   values: _$ZodTypeInternals["values"];
@@ -4658,7 +4658,7 @@ export interface $ZodCodecDef<A extends $ZodTypeRef = $ZodType, B extends $ZodTy
 
 export interface $ZodCodecInternals<A extends $ZodTypeRef = $ZodType, B extends $ZodTypeRef = $ZodType>
   extends $ZodTypeInternals<InferOutput<B>, InferInput<A>> {
-  atomic?: true | { output: B extends { _zod: { atomic?: true } } ? true : false };
+  atomic?: true | { output: B extends { _zod: { atomic?: true | { output: true } } } ? true : false };
   def: $ZodCodecDef<A, B>;
   isst: never;
   values: _$ZodTypeInternals["values"];
