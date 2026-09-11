@@ -1879,6 +1879,28 @@ test("boolean patterns preserve contexts, getters, errors, and regex state", () 
   expect(z.validate(cloned, "b")).toBe(true);
 });
 
+test.each(["when", "coerce"] as const)("boolean patterns recheck live %s options", (option) => {
+  for (const inherited of [false, true]) {
+    const schema = z.email();
+    const input = option === "when" ? "invalid" : { toString: () => "test@example.com" };
+    expect(z.validate(schema, input)).toBe(false);
+
+    const target = inherited ? Object.create(Object.getPrototypeOf(schema.def)) : schema.def;
+    let reads = 0;
+    Object.defineProperty(target, option, {
+      get() {
+        reads++;
+        return option === "when" ? () => false : true;
+      },
+    });
+    if (inherited) Object.setPrototypeOf(schema.def, target);
+    expect(reads).toBe(0);
+    expect(z.validate(schema, input)).toBe(true);
+    expect(reads).toBeGreaterThan(0);
+    expect(schema.safeParse(input).success).toBe(true);
+  }
+});
+
 test("compiled validators take precedence over boolean patterns", () => {
   const compiled = compile(z.email());
   expect(hasBooleanPattern(compiled)).toBe(true);

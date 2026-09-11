@@ -148,7 +148,7 @@ export const validate: $Validate = ((
   }
   if (validator === undefined && _ctx === undefined) {
     const booleanPattern = (schema._zod.bag as CompiledBag).booleanPattern;
-    if (booleanPattern !== undefined) {
+    if (booleanPattern !== undefined && !("coerce" in booleanPattern) && !("when" in booleanPattern)) {
       if (typeof value !== "string") return false;
       const regex = booleanPattern.pattern!;
       regex.lastIndex = 0;
