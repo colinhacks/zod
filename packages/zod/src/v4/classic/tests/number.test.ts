@@ -25,6 +25,14 @@ test("number factory checks snapshot caller arrays", () => {
   for (const factory of [z.number, z.coerce.number]) {
     const checks = [z.gte(1)];
     const schema = factory({ checks });
+    let reads = 0;
+    factory({
+      get checks() {
+        if (++reads > 1) throw new Error("checks read twice");
+        return checks;
+      },
+    });
+    expect(reads).toBe(1);
     const before = z.toJSONSchema(schema);
     checks.push(z.gte(10));
     expect(z.validate(schema, 3)).toBe(true);

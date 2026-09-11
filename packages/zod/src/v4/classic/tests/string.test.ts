@@ -49,6 +49,15 @@ test("factory checks snapshot caller arrays", () => {
   for (const factory of [z.string, z.coerce.string]) {
     for (const initial of [[], [z.minLength(1)]]) {
       const schema = factory({ checks: initial });
+      let reads = 0;
+      const getterSchema = factory({
+        get checks() {
+          if (++reads > 1) throw new Error("checks read twice");
+          return initial;
+        },
+      });
+      expect(reads).toBe(1);
+      expect(z.validate(getterSchema, "long")).toBe(true);
       const before = z.toJSONSchema(schema);
       initial.push(z.minLength(10));
       expect(schema._zod.def.checks).not.toBe(initial);

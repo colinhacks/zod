@@ -62,22 +62,16 @@ export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce"> 
   checks?: readonly checks.$ZodCheck<string>[];
 };
 
-function normalizeCheckedParams<T extends checks.$ZodCheck<never>>(
-  params?: string | (Omit<$ZodStringParams, "checks"> & { checks?: readonly T[] })
-) {
-  const normalized = util.normalizeParams(params);
-  if (normalized.checks) return { ...normalized, checks: [...normalized.checks] };
-  return normalized as Omit<typeof normalized, "checks">;
+function snapshotChecks<T extends { checks?: readonly checks.$ZodCheck<never>[] }>(def: T) {
+  if (def.checks) def.checks = [...def.checks];
+  return def as T & { checks?: NonNullable<T["checks"]>[number][] };
 }
 // @__NO_SIDE_EFFECTS__
 export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    ...normalizeCheckedParams(params),
-  });
+  return new Class(snapshotChecks({ type: "string" as const, ...util.normalizeParams(params) }));
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -85,11 +79,7 @@ export function _coercedString<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    coerce: true,
-    ...normalizeCheckedParams(params),
-  });
+  return new Class(snapshotChecks({ type: "string" as const, coerce: true, ...util.normalizeParams(params) }));
 }
 
 export type $ZodStringFormatParams = CheckTypeParams<
@@ -628,11 +618,7 @@ export function _number<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
 ): T {
-  return new Class({
-    type: "number",
-    checks: [],
-    ...normalizeCheckedParams(params),
-  });
+  return new Class(snapshotChecks({ type: "number" as const, checks: [], ...util.normalizeParams(params) }));
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -640,12 +626,9 @@ export function _coercedNumber<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
 ): T {
-  return new Class({
-    type: "number",
-    coerce: true,
-    checks: [],
-    ...normalizeCheckedParams(params),
-  });
+  return new Class(
+    snapshotChecks({ type: "number" as const, coerce: true, checks: [], ...util.normalizeParams(params) })
+  );
 }
 
 // @__NO_SIDE_EFFECTS__

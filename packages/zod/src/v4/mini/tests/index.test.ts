@@ -27,6 +27,14 @@ test("factory checks snapshot caller arrays", () => {
   for (const factory of [z.string, z.coerce.string]) {
     const checks = [z.minLength(1)];
     const schema = factory({ checks });
+    let reads = 0;
+    factory({
+      get checks() {
+        if (++reads > 1) throw new Error("checks read twice");
+        return checks;
+      },
+    });
+    expect(reads).toBe(1);
     checks.push(z.minLength(10));
     expect(z.validate(schema, "long")).toBe(true);
     expect(z.validate(z.compile(schema), "long")).toBe(true);
@@ -35,6 +43,14 @@ test("factory checks snapshot caller arrays", () => {
   for (const factory of [z.number, z.coerce.number]) {
     const checks = [z.minimum(1)];
     const schema = factory({ checks });
+    let reads = 0;
+    factory({
+      get checks() {
+        if (++reads > 1) throw new Error("checks read twice");
+        return checks;
+      },
+    });
+    expect(reads).toBe(1);
     checks.push(z.minimum(10));
     expect(z.validate(schema, 3)).toBe(true);
     expect(z.validate(z.compile(schema), 3)).toBe(true);
