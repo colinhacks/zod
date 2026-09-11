@@ -2,6 +2,27 @@ import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/mini";
 import type { util } from "zod/v4/core";
 
+test("factory checks", () => {
+  const string = z.string({ checks: [z.minLength(1), z.maxLength(3)] });
+  const number = z.number({ checks: [z.minimum(1), z.maximum(3)] });
+  expectTypeOf<z.output<typeof string>>().toEqualTypeOf<string>();
+  expectTypeOf<z.output<typeof number>>().toEqualTypeOf<number>();
+  for (const [schema, valid, invalid] of [
+    [string, "ab", ""],
+    [number, 2, 4],
+  ] as const) {
+    expect(z.validate(schema, valid)).toBe(true);
+    expect(z.validate(schema, invalid)).toBe(false);
+    expect(schema._zod.parent).toBeUndefined();
+    expect(z.validate(z.compile(schema), valid)).toBe(true);
+    expect(z.validate(z.compile(schema), invalid)).toBe(false);
+  }
+  // @ts-expect-error numeric checks cannot validate strings
+  z.string({ checks: [z.minimum(1)] });
+  // @ts-expect-error length checks cannot validate numbers
+  z.number({ checks: [z.minLength(1)] });
+});
+
 test("z.boolean", () => {
   const a = z.boolean();
   expect(z.parse(a, true)).toEqual(true);

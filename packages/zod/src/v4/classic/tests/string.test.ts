@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -11,6 +11,39 @@ const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+
+test("string factory checks", async () => {
+  const schema = z.string({ checks: [z.minLength(1), z.maxLength(3)] });
+  const chained = z.string().min(1).max(3);
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
+  for (const value of ["", "ab", "abcd", 1, undefined]) {
+    expect(z.validate(schema, value)).toBe(z.validate(chained, value));
+    expect(schema.safeParse(value)).toEqual(chained.safeParse(value));
+  }
+  expect(z.toJSONSchema(schema)).toEqual(z.toJSONSchema(chained));
+  expect(schema.minLength).toBe(1);
+  expect(schema.maxLength).toBe(3);
+  expect(schema._zod.parent).toBeUndefined();
+  expect([...schema._zod.traits]).toEqual([...chained._zod.traits]);
+  const extended = schema.max(2);
+  expect(extended._zod.parent).toBe(schema);
+  expect(z.validate(schema, "abc")).toBe(true);
+  expect(z.validate(extended, "abc")).toBe(false);
+  const coerce = z.coerce.string({ checks: [z.minLength(2)] });
+  expect(coerce.parse(12)).toBe("12");
+  expect(z.validate(coerce, 1)).toBe(false);
+  const asyncSchema = z.string({
+    checks: [
+      z.check<string>(async (ctx) => {
+        if (ctx.value !== "ok") ctx.issues.push({ code: "custom", input: ctx.value });
+      }),
+    ],
+  });
+  expect(await asyncSchema.safeParseAsync("ok")).toEqual({ success: true, data: "ok" });
+  expect((await asyncSchema.safeParseAsync("bad")).success).toBe(false);
+  // @ts-expect-error numeric checks cannot validate strings
+  z.string({ checks: [z.gte(1)] });
+});
 
 test("length checks", () => {
   minFive.parse("12345");

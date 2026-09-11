@@ -58,7 +58,9 @@ export type CheckTypeParams<
 > = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // String
-export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce">;
+export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce"> & {
+  checks?: checks.$ZodCheck<string>[];
+};
 // @__NO_SIDE_EFFECTS__
 export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
@@ -608,7 +610,9 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 }
 
 // Number
-export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce">;
+export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce"> & {
+  checks?: checks.$ZodCheck<number>[];
+};
 export type $ZodNumberFormatParams = CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
 export type $ZodCheckNumberFormatParams = CheckParams<checks.$ZodCheckNumberFormat, "format" | "when">;
 // @__NO_SIDE_EFFECTS__
