@@ -1,6 +1,108 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("demand-driven metadata preserves generic builders", () => {
+  function discriminated<T extends readonly [z.core.$ZodTypeDiscriminable, ...z.core.$ZodTypeDiscriminable[]]>(
+    options: T
+  ) {
+    return z.discriminatedUnion("kind", options);
+  }
+  function template<const T extends z.core.$ZodTemplateLiteralPart[]>(parts: T) {
+    return z.templateLiteral(parts);
+  }
+  function wrapped<T extends z.ZodType>(schema: T) {
+    return z.object({ value: schema.optional().readonly() });
+  }
+  function forwardedTemplate<const T extends z.core.$ZodTemplateLiteralCandidate[]>(
+    parts: T & z.core.$ValidateTemplateParts<T>
+  ) {
+    return z.templateLiteral<T>(parts);
+  }
+  function forwardedUnion<T extends readonly [z.core.SomeType, ...z.core.SomeType[]]>(
+    options: T & z.core.$ValidateDiscriminatedOptions<T>
+  ) {
+    return z.discriminatedUnion<T, "kind">("kind", options);
+  }
+  const object = wrapped(z.string());
+  const union = discriminated([z.object({ kind: z.literal("a") })]);
+  const literal = template(["a", z.string()]);
+  const forwarded = forwardedTemplate(["a", z.string().optional()]);
+  const readonly = forwardedUnion([z.object({ kind: z.literal("a") }).readonly()]);
+  expectTypeOf<z.output<typeof object>>().toEqualTypeOf<{ value?: string | undefined }>();
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<{ kind: "a" }>();
+  expectTypeOf<z.output<typeof literal>>().toEqualTypeOf<`a${string}`>();
+  expectTypeOf<z.output<typeof forwarded>>().toEqualTypeOf<`a${string}`>();
+  expectTypeOf<z.output<typeof readonly>>().toEqualTypeOf<Readonly<{ kind: "a" }>>();
+  expect(object.parse({})).toEqual({});
+});
+
+test("metadata consumers validate forwarded capabilities", () => {
+  const option = z.lazy(() => z.object({ kind: z.literal("a") }).readonly());
+  const union = z.discriminatedUnion("kind", [option]);
+  const literal = z.templateLiteral([
+    "a",
+    z.lazy(() => z.union([z.literal("b"), z.literal("c").nullable()])).optional(),
+  ]);
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<Readonly<{ kind: "a" }>>();
+  expectTypeOf<z.output<typeof literal>>().toEqualTypeOf<"a" | "ab" | "ac" | "anull">();
+  expect(union.parse({ kind: "a" })).toEqual({ kind: "a" });
+  expect(union.safeParse({ kind: "b" }).success).toBe(false);
+  expect(literal.parse("anull")).toBe("anull");
+  expect(literal.safeParse("ad").success).toBe(false);
+  function negative(
+    noPattern: z.ZodOptional<z.ZodString> & { _zod: { pattern: undefined } },
+    noValues: z.ZodReadonly<z.ZodObject<{ kind: z.ZodLiteral<"a"> }>> & { _zod: { propValues: undefined } }
+  ) {
+    // @ts-expect-error explicit metadata overrides remain authoritative
+    z.templateLiteral([noPattern]);
+    // @ts-expect-error explicit metadata overrides remain authoritative
+    z.discriminatedUnion("kind", [noValues]);
+    // @ts-expect-error an optional object does not forward discriminator metadata
+    z.discriminatedUnion("kind", [z.object({ kind: z.literal("a") }).optional()]);
+    // @ts-expect-error a union must provide a pattern for every option
+    z.templateLiteral([z.union([z.string(), z.custom<string>()])]);
+  }
+  void negative;
+});
+
+test("presence is resolved at object tuple and record consumers", () => {
+  const value = z.string().optional().nullable().readonly();
+  const object = z.object({ value });
+  const tuple = z.tuple([z.number(), value]);
+  const record = z.record(z.enum(["a", "b"]), value);
+  const both = z.object({ value: z.intersection(z.string().optional(), z.string().optional()) });
+  const one = z.object({ value: z.intersection(z.string().optional(), z.string()) });
+  expectTypeOf<z.input<typeof object>>().toEqualTypeOf<{ value?: string | null | undefined }>();
+  expectTypeOf<z.output<typeof object>>().toEqualTypeOf<{ value?: string | null | undefined }>();
+  expectTypeOf<z.input<typeof tuple>>().toEqualTypeOf<[number, (string | null | undefined)?]>();
+  expectTypeOf<z.output<typeof tuple>>().toEqualTypeOf<[number, (string | null | undefined)?]>();
+  expectTypeOf<z.input<typeof record>>().toEqualTypeOf<{
+    a?: string | null | undefined;
+    b?: string | null | undefined;
+  }>();
+  expectTypeOf<z.output<typeof record>>().toEqualTypeOf<{
+    a: string | null | undefined;
+    b: string | null | undefined;
+  }>();
+  expectTypeOf<z.output<typeof both>>().toEqualTypeOf<{ value?: string | undefined }>();
+  expectTypeOf<z.output<typeof one>>().toEqualTypeOf<{ value: string }>();
+  expect(tuple.parse([1])).toEqual([1]);
+  expect(record.parse({})).toEqual({ a: undefined, b: undefined });
+  expect(both.parse({ value: undefined })).toEqual({ value: undefined });
+  expect(one.safeParse({}).success).toBe(false);
+});
+
+test("presence resolution preserves explicit overrides and tuple bounds", () => {
+  type Required = z.ZodNullable<z.ZodOptional<z.ZodString>> & { _zod: { optin: undefined; optout: undefined } };
+  type Union = z.ZodUnion<[Required, z.ZodString]>;
+  expectTypeOf<z.input<z.ZodObject<{ value: Union }>>>().toEqualTypeOf<{ value: string | null | undefined }>();
+  expectTypeOf<z.output<z.ZodObject<{ value: Union }>>>().toEqualTypeOf<{ value: string | null | undefined }>();
+  expectTypeOf<z.input<z.ZodTuple<[any], null>>>().toEqualTypeOf<[any?] | [any]>();
+  expectTypeOf<z.output<z.ZodTuple<[any], null>>>().toEqualTypeOf<[any?] | [any]>();
+  expectTypeOf<z.input<z.ZodTuple<[never], null>>>().toEqualTypeOf<[never?]>();
+  expectTypeOf<z.output<z.ZodTuple<[never], null>>>().toEqualTypeOf<[never?]>();
+});
+
 test("deferred projections preserve unions and top and bottom types", () => {
   type Mixed = z.ZodPipe<z.ZodString, z.ZodNumber> | z.ZodBoolean;
   expectTypeOf<z.input<z.ZodNullable<Mixed>>>().toEqualTypeOf<string | boolean | null>();
@@ -277,8 +379,9 @@ test("pipe output opacity preserves recursive inputs", () => {
   expect("atomic" in pipe._zod).toBe(false);
 });
 
-test("replacement pipe internals preserve output opacity", () => {
+test("replacement pipe internals declare output opacity", () => {
   interface Internals extends z.core.$ZodTypeInternals {
+    atomic?: { output: true };
     def: z.core.$ZodPipeDef<Field, z.core.$ZodTransform>;
     isst: never;
     values: undefined;

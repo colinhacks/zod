@@ -1186,6 +1186,17 @@ export function discriminatedUnion<
   discriminator: Disc,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
+): ZodMiniDiscriminatedUnion<Types, Disc>;
+export function discriminatedUnion<Types extends readonly [core.SomeType, ...core.SomeType[]], Disc extends string>(
+  discriminator: Disc,
+  options: Types & core.$ValidateDiscriminatedOptions<Types>,
+  params?: string | core.$ZodDiscriminatedUnionParams
+): ZodMiniDiscriminatedUnion<Types, Disc>;
+// @__NO_SIDE_EFFECTS__
+export function discriminatedUnion<Types extends readonly [core.SomeType, ...core.SomeType[]], Disc extends string>(
+  discriminator: Disc,
+  options: Types,
+  params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodMiniDiscriminatedUnion<Types, Disc> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
@@ -1807,6 +1818,15 @@ export const ZodMiniTemplateLiteral: core.$constructor<ZodMiniTemplateLiteral> =
 
 // @__NO_SIDE_EFFECTS__
 export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart[]>(
+  parts: Parts,
+  params?: string | core.$ZodTemplateLiteralParams
+): ZodMiniTemplateLiteral<core.$PartsToTemplateLiteral<Parts>>;
+export function templateLiteral<const Parts extends core.$ZodTemplateLiteralCandidate[]>(
+  parts: Parts & core.$ValidateTemplateParts<Parts>,
+  params?: string | core.$ZodTemplateLiteralParams
+): ZodMiniTemplateLiteral<core.$PartsToTemplateLiteral<Parts>>;
+// @__NO_SIDE_EFFECTS__
+export function templateLiteral<const Parts extends core.$ZodTemplateLiteralCandidate[]>(
   parts: Parts,
   params?: string | core.$ZodTemplateLiteralParams
 ): ZodMiniTemplateLiteral<core.$PartsToTemplateLiteral<Parts>> {

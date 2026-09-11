@@ -1,6 +1,32 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/mini";
 
+test("demand-driven metadata preserves factories and generic builders", () => {
+  function template<const T extends z.core.$ZodTemplateLiteralPart[]>(parts: T) {
+    return z.templateLiteral(parts);
+  }
+  function discriminated<T extends readonly [z.core.$ZodTypeDiscriminable, ...z.core.$ZodTypeDiscriminable[]]>(
+    options: T
+  ) {
+    return z.discriminatedUnion("kind", options);
+  }
+  const option = z.object({ kind: z.literal("a") });
+  const plain = discriminated([option]);
+  const union = z.discriminatedUnion("kind", [z.lazy(() => z.readonly(option))]);
+  const literal = z.templateLiteral(["a", z.optional(z.lazy(() => z.literal("b")))]);
+  const generic = template(["a", z.string()]);
+  const tuple = z.tuple([z.number(), z.readonly(z.optional(z.string()))]);
+  expectTypeOf<z.output<typeof plain>>().toEqualTypeOf<{ kind: "a" }>();
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<Readonly<{ kind: "a" }>>();
+  expectTypeOf<z.output<typeof literal>>().toEqualTypeOf<"a" | "ab">();
+  expectTypeOf<z.output<typeof generic>>().toEqualTypeOf<`a${string}`>();
+  expectTypeOf<z.output<typeof tuple>>().toEqualTypeOf<[number, (string | undefined)?]>();
+  expect(union.parse({ kind: "a" })).toEqual({ kind: "a" });
+  expect(literal.parse("a")).toBe("a");
+  expect(literal.safeParse("ac").success).toBe(false);
+  expect(tuple.parse([1])).toEqual([1]);
+});
+
 test("recursive native containers preserve brands", () => {
   type Field = z.ZodMiniString<string> | z.ZodMiniArray<Field>;
   const field: z.ZodMiniArray<Field> = z.array(z.string());

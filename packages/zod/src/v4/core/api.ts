@@ -1283,6 +1283,19 @@ export function _discriminatedUnion<
   discriminator: Disc,
   options: Types,
   params?: string | $ZodDiscriminatedUnionParams
+): schemas.$ZodDiscriminatedUnion<Types, Disc>;
+export function _discriminatedUnion<Types extends [schemas.SomeType, ...schemas.SomeType[]], Disc extends string>(
+  Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
+  discriminator: Disc,
+  options: Types & schemas.$ValidateDiscriminatedOptions<Types>,
+  params?: string | $ZodDiscriminatedUnionParams
+): schemas.$ZodDiscriminatedUnion<Types, Disc>;
+// @__NO_SIDE_EFFECTS__
+export function _discriminatedUnion<Types extends [schemas.SomeType, ...schemas.SomeType[]], Disc extends string>(
+  Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
+  discriminator: Disc,
+  options: Types,
+  params?: string | $ZodDiscriminatedUnionParams
 ): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
@@ -1615,6 +1628,17 @@ export function _readonly<T extends schemas.$ZodObject>(
 export type $ZodTemplateLiteralParams = TypeParams<schemas.$ZodTemplateLiteral, "parts">;
 // @__NO_SIDE_EFFECTS__
 export function _templateLiteral<const Parts extends schemas.$ZodTemplateLiteralPart[]>(
+  Class: util.SchemaClass<schemas.$ZodTemplateLiteral>,
+  parts: Parts,
+  params?: string | $ZodTemplateLiteralParams
+): schemas.$ZodTemplateLiteral<schemas.$PartsToTemplateLiteral<Parts>>;
+export function _templateLiteral<const Parts extends schemas.$ZodTemplateLiteralCandidate[]>(
+  Class: util.SchemaClass<schemas.$ZodTemplateLiteral>,
+  parts: Parts & schemas.$ValidateTemplateParts<Parts>,
+  params?: string | $ZodTemplateLiteralParams
+): schemas.$ZodTemplateLiteral<schemas.$PartsToTemplateLiteral<Parts>>;
+// @__NO_SIDE_EFFECTS__
+export function _templateLiteral<const Parts extends schemas.$ZodTemplateLiteralCandidate[]>(
   Class: util.SchemaClass<schemas.$ZodTemplateLiteral>,
   parts: Parts,
   params?: string | $ZodTemplateLiteralParams

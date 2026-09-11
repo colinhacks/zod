@@ -1842,6 +1842,16 @@ export function discriminatedUnion<
   discriminator: Disc,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
+): ZodDiscriminatedUnion<Types, Disc>;
+export function discriminatedUnion<Types extends readonly [core.SomeType, ...core.SomeType[]], Disc extends string>(
+  discriminator: Disc,
+  options: Types & core.$ValidateDiscriminatedOptions<Types>,
+  params?: string | core.$ZodDiscriminatedUnionParams
+): ZodDiscriminatedUnion<Types, Disc>;
+export function discriminatedUnion<Types extends readonly [core.SomeType, ...core.SomeType[]], Disc extends string>(
+  discriminator: Disc,
+  options: Types,
+  params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodDiscriminatedUnion<Types, Disc> {
   // const [options, params] = args;
   return new ZodDiscriminatedUnion({
@@ -2658,6 +2668,14 @@ export const ZodTemplateLiteral: core.$constructor<ZodTemplateLiteral> = /*@__PU
 );
 
 export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart[]>(
+  parts: Parts,
+  params?: string | core.$ZodTemplateLiteralParams
+): ZodTemplateLiteral<core.$PartsToTemplateLiteral<Parts>>;
+export function templateLiteral<const Parts extends core.$ZodTemplateLiteralCandidate[]>(
+  parts: Parts & core.$ValidateTemplateParts<Parts>,
+  params?: string | core.$ZodTemplateLiteralParams
+): ZodTemplateLiteral<core.$PartsToTemplateLiteral<Parts>>;
+export function templateLiteral<const Parts extends core.$ZodTemplateLiteralCandidate[]>(
   parts: Parts,
   params?: string | core.$ZodTemplateLiteralParams
 ): ZodTemplateLiteral<core.$PartsToTemplateLiteral<Parts>> {
