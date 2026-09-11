@@ -293,7 +293,8 @@ test("replacement pipe internals preserve output opacity", () => {
   function schema(field: Field): z.core.$ZodType {
     return field;
   }
-  expect(schema(z.string())._zod.def.type).toBe("string");
+  expectTypeOf<z.output<Field>>().toBeUnknown();
+  void schema;
 });
 
 test("recursive metadata without atomic leaves retains schema bounds", () => {
