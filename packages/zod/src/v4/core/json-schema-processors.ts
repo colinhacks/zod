@@ -16,7 +16,6 @@ import {
   finalize,
   handleUnrepresentable,
   initializeContext,
-  isTransforming,
   processSchema,
 } from "./to-json-schema.js";
 import { BIGINT_FORMAT_RANGES, NUMBER_FORMAT_RANGES, assignProp, getEnumValues } from "./util.js";
@@ -481,54 +480,6 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   }
 };
 
-// asserts named properties in place and passes everything else through, so no additionalProperties constraint is emitted
-export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, ctx, _json, params) => {
-  const json = _json as JSONSchema.ObjectSchema;
-  const def = schema._zod.def;
-
-  // dropping a symbol key silently would emit a schema that asserts less than this one does
-  if (
-    Object.getOwnPropertySymbols(def.shape).length &&
-    handleUnrepresentable(schema, ctx, json, params, "Symbol keys cannot be represented in JSON Schema")
-  ) {
-    return;
-  }
-
-  // the parsed value is the input, so an output-mode emission would describe a transformed value this schema never returns
-  if (ctx.io === "output") {
-    for (const key in def.shape) {
-      if (
-        isTransforming(def.shape[key]!) &&
-        handleUnrepresentable(
-          schema,
-          ctx,
-          json,
-          params,
-          `z.properties() returns its input, so the output of a transforming schema at key "${key}" cannot be represented in JSON Schema`
-        )
-      ) {
-        return;
-      }
-    }
-  }
-
-  json.type = "object";
-  json.properties = {};
-  for (const key in def.shape) {
-    assignProp(
-      json.properties,
-      key,
-      processSchema(def.shape[key]!, ctx as any, {
-        ...params,
-        path: [...params.path, "properties", key],
-      })
-    );
-  }
-  // input-side optionality in both modes: the parsed value is the input, so a defaulted key that stays absent must not be required of the output either
-  const required = Object.keys(def.shape).filter((key) => inputOptin(def.shape[key]!) === undefined);
-  if (required.length > 0) json.required = required;
-};
-
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
   // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
@@ -904,7 +855,6 @@ export const allProcessors: Record<string, Processor<any>> = {
   file: fileProcessor,
   success: successProcessor,
   custom: customProcessor,
-  properties: propertiesProcessor,
   function: functionProcessor,
   transform: transformProcessor,
   map: mapProcessor,

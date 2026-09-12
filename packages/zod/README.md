@@ -155,13 +155,13 @@ try {
         expected: 'string',
         code: 'invalid_type',
         path: [ 'username' ],
-        message: 'Invalid input: expected string'
+        message: 'Invalid input: expected string, received number'
       },
       {
         expected: 'number',
         code: 'invalid_type',
         path: [ 'xp' ],
-        message: 'Invalid input: expected number'
+        message: 'Invalid input: expected number, received string'
       }
     ] */
   }

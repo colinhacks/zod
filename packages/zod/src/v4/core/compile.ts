@@ -18,7 +18,7 @@ import {
   urlHostnameOk,
   urlProtocolOk,
 } from "./schemas.js";
-import type { $ZodProperties, $ZodPropertiesDef, ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
+import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
 /** @internal Sentinel the compiled fast path returns when validation fails. */
@@ -89,7 +89,7 @@ type SupportedCheck =
   | checks.$ZodCheckLengthEquals
   | checks.$ZodCheckStringFormat
   | checks.$ZodCheckProperty
-  | $ZodProperties
+  | checks.$ZodCheckProperties
   | checks.$ZodCheckMimeType
   | checks.$ZodCheckOverwrite
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
@@ -455,7 +455,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generatePropertyCheck(doc, ctx, def, currentAccessor);
         break;
       case "properties":
-        generatePropertiesChecks(doc, ctx, def, currentAccessor, false);
+        generatePropertiesChecks(doc, ctx, def, currentAccessor);
         break;
       case "overwrite": {
         // Overwrite transforms the value - create new variable for transformed result
@@ -616,20 +616,15 @@ function generateMimeTypeCheck(
 function generatePropertiesChecks(
   doc: Doc,
   ctx: CompileContext,
-  def: $ZodPropertiesDef,
-  accessor: string,
-  schemaRole: boolean
+  def: checks.$ZodCheckPropertiesDef,
+  accessor: string
 ): void {
-  // a custom `when` gates the assertion at runtime; inside a union a wrongly-run branch is absorbed as a branch failure rather than falling back, so refuse at codegen the way the check role does
+  // a custom `when` gates the assertion at runtime; inside a union a wrongly-run branch is absorbed as a branch failure rather than falling back, so refuse at codegen
   if (def.when) {
     throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
   }
-  // matches the runtime gate for whichever role this is: a schema rejects a primitive outright, a check only a nullish value
-  doc.write(
-    schemaRole
-      ? `if (${accessor} === null || (typeof ${accessor} !== "object" && typeof ${accessor} !== "function")) return INVALID;`
-      : `if (${accessor} == null) return INVALID;`
-  );
+  // matches the runtime gate: the base schema already typed the value, so only a nullish one is rejected
+  doc.write(`if (${accessor} == null) return INVALID;`);
   const shape = def.shape as Record<string | symbol, SomeType>;
   for (const key of Reflect.ownKeys(shape)) {
     // a symbol has no source literal, so it is hoisted as a constant
@@ -934,7 +929,6 @@ type SupportedSchemaType =
   | "lazy"
   | "pipe"
   | "custom"
-  | "properties"
   | "transform"
   | "catch";
 
@@ -1078,10 +1072,6 @@ function generateCheck(
       break;
     case "custom":
       typeAccessor = generateCustomCheck(doc, ctx, schema, accessor);
-      break;
-    case "properties":
-      generatePropertiesChecks(doc, ctx, (schema as $ZodProperties)._zod.def, accessor, true);
-      typeAccessor = accessor;
       break;
     case "transform":
       typeAccessor = generateTransformCheck(doc, ctx, schema, accessor);
