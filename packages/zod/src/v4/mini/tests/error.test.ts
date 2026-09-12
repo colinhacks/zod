@@ -11,12 +11,31 @@ test("no locale by default", () => {
 test("error inheritance", () => {
   const e1 = z.string().safeParse(123).error!;
   expect(e1).toBeInstanceOf(z.core.$ZodError);
-  // expect(e1).not.toBeInstanceOf(Error);
+  expect(e1).toBeInstanceOf(Error);
 
+  let e2: unknown;
   try {
     z.string().parse(123);
-  } catch (e2) {
-    expect(e2).toBeInstanceOf(z.core.$ZodRealError);
-    expect(e2).toBeInstanceOf(Error);
+  } catch (err) {
+    e2 = err;
   }
+  expect(e2).toBeInstanceOf(z.core.$ZodRealError);
+  expect(e2).toBeInstanceOf(Error);
+});
+
+test("a thrown error carries a stack rooted at the parse call site", () => {
+  function callSite() {
+    z.parse(z.string(), 123);
+  }
+
+  let thrown: unknown;
+  try {
+    callSite();
+  } catch (err) {
+    thrown = err;
+  }
+  expect(thrown).toBeInstanceOf(Error);
+  const stack = (thrown as Error).stack!;
+  expect(stack.startsWith("$ZodError: [")).toBe(true);
+  expect(stack).toContain("callSite");
 });

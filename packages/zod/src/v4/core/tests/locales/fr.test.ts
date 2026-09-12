@@ -8,7 +8,7 @@ test("French locale - type name translations in too_small errors", () => {
   const stringResult = z.string().min(5).safeParse("abc");
   expect(stringResult.success).toBe(false);
   if (!stringResult.success) {
-    expect(stringResult.error.issues[0].message).toBe("Trop petit : chaîne doit avoir >=5 caractères");
+    expect(stringResult.error.issues[0].message).toBe("Trop petit : chaîne de caractères doit avoir >=5 caractères");
   }
 
   const numberResult = z.number().min(10).safeParse(5);
@@ -39,7 +39,7 @@ test("French locale - type name translations in too_big errors", () => {
   const stringResult = z.string().max(3).safeParse("abcde");
   expect(stringResult.success).toBe(false);
   if (!stringResult.success) {
-    expect(stringResult.error.issues[0].message).toBe("Trop grand : chaîne doit avoir <=3 caractères");
+    expect(stringResult.error.issues[0].message).toBe("Trop grand : chaîne de caractères doit avoir <=3 caractères");
   }
 
   const numberResult = z.number().max(10).safeParse(15);
@@ -61,7 +61,7 @@ test("French locale - type name translations in invalid_type errors", () => {
   const stringResult = z.string().safeParse(123);
   expect(stringResult.success).toBe(false);
   if (!stringResult.success) {
-    expect(stringResult.error.issues[0].message).toBe("Entrée invalide : chaîne attendu, nombre reçu");
+    expect(stringResult.error.issues[0].message).toBe("Entrée invalide : chaîne de caractères attendu, nombre reçu");
   }
 
   const arrayResult = z.array(z.string()).safeParse({});

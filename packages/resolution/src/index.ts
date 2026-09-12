@@ -1,3 +1,4 @@
+import * as z9 from "@zod/mini";
 import * as z1 from "zod";
 import z2 from "zod";
 import { z as z3 } from "zod";
@@ -16,6 +17,7 @@ console.log(z5.string().parse("Hello, world!"));
 console.log(z6.string().parse("Hello, world!"));
 console.log(z7.string().parse("Hello, world!"));
 console.log(z8.string().parse("Hello, world!"));
+console.log(z9.string().parse("Hello, world!"));
 
 z4.config(fr());
 const schema = z4.object({
@@ -29,7 +31,7 @@ if (success !== `{"success":true,"data":{"name":"John Doe"}}`) {
 const failure = JSON.stringify(schema.safeParse({ name: 123 }));
 if (
   failure !==
-  '{"success":false,"error":{"name":"ZodError","message":"[\\n  {\\n    \\"expected\\": \\"string\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"name\\"\\n    ],\\n    \\"message\\": \\"Entrée invalide : chaîne attendu, nombre reçu\\"\\n  }\\n]"}}'
+  '{"success":false,"error":{"name":"ZodError","message":"[\\n  {\\n    \\"expected\\": \\"string\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"name\\"\\n    ],\\n    \\"message\\": \\"Entrée invalide : chaîne de caractères attendu, nombre reçu\\"\\n  }\\n]"}}'
 ) {
   throw new Error();
 }

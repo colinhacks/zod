@@ -61,3 +61,36 @@ if (!isPackageJsonValid || !isJsrJsonValid) {
     console.log(`✅ Versions match: ${packageJsonVersion} starts with ${versionsVersion}`);
   }
 }
+
+// @zod/mini ships in lockstep with zod and its peer floor is the minor it shipped with; only latest releases are checked, since a caret floor is unsatisfiable by a prerelease and zod's own prereleases must not be blocked by a stale mini
+if (tag !== "latest") {
+  if (process.env.npm_package_name === "@zod/mini") {
+    console.error(`❌ @zod/mini is not published on prerelease tags (tag: ${tag})`);
+    process.exit(1);
+  }
+} else {
+  const miniPackageJson = JSON.parse(readFileSync(join(__dirname, "..", "packages", "mini", "package.json"), "utf8"));
+  const miniJsrJson = JSON.parse(readFileSync(join(__dirname, "..", "packages", "mini", "jsr.json"), "utf8"));
+  const miniVersion = miniPackageJson.version as string;
+  const miniJsrVersion = miniJsrJson.version as string;
+  const miniPeer = miniPackageJson.peerDependencies?.zod as string | undefined;
+  const miniJsrImport = miniJsrJson.imports?.["zod/mini"] as string | undefined;
+  const expectedMiniPeer = `^${version.major}.${version.minor}.0`;
+  const expectedMiniJsrImport = `jsr:@zod/zod@${expectedMiniPeer}/mini`;
+  if (
+    miniVersion !== versionsVersion ||
+    miniJsrVersion !== versionsVersion ||
+    miniPeer !== expectedMiniPeer ||
+    miniJsrImport !== expectedMiniJsrImport
+  ) {
+    console.error(`❌ @zod/mini version mismatch:`);
+    console.error(`   packages/mini/package.json version: ${miniVersion} (expected ${versionsVersion})`);
+    console.error(`   packages/mini/jsr.json version: ${miniJsrVersion} (expected ${versionsVersion})`);
+    console.error(`   packages/mini/package.json peerDependencies.zod: ${miniPeer} (expected ${expectedMiniPeer})`);
+    console.error(
+      `   packages/mini/jsr.json imports["zod/mini"]: ${miniJsrImport} (expected ${expectedMiniJsrImport})`
+    );
+    process.exit(1);
+  }
+  console.log(`✅ @zod/mini ${miniVersion} with peer zod@${miniPeer} (npm + jsr)`);
+}

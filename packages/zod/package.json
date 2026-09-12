@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "4.4.3",
+  "version": "4.6.3",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
@@ -10,7 +10,11 @@
   "llmsFull": "https://zod.dev/llms-full.txt",
   "mcpServer": "https://mcp.inkeep.com/zod/mcp",
   "funding": "https://github.com/sponsors/colinhacks",
-  "sideEffects": false,
+  "sideEffects": [
+    "./compile.js",
+    "./compile.cjs",
+    "./src/compile.ts"
+  ],
   "files": [
     "src",
     "**/*.js",
@@ -36,6 +40,7 @@
       "./package.json": "./package.json",
       ".": "./src/index.ts",
       "./mini": "./src/mini/index.ts",
+      "./compile": "./src/compile.ts",
       "./locales": "./src/locales/index.ts",
       "./v3": "./src/v3/index.ts",
       "./v4": "./src/v4/index.ts",
@@ -47,7 +52,8 @@
     },
     "conditions": {
       "@zod/source": "src"
-    }
+    },
+    "sealCjsExports": true
   },
   "exports": {
     "./package.json": "./package.json",
@@ -62,6 +68,12 @@
       "types": "./mini/index.d.cts",
       "import": "./mini/index.js",
       "require": "./mini/index.cjs"
+    },
+    "./compile": {
+      "@zod/source": "./src/compile.ts",
+      "types": "./compile.d.cts",
+      "import": "./compile.js",
+      "require": "./compile.cjs"
     },
     "./locales": {
       "@zod/source": "./src/locales/index.ts",
@@ -126,10 +138,10 @@
   },
   "scripts": {
     "clean": "git clean -xdf . -e node_modules",
-    "build": "zshy --project tsconfig.build.json",
-    "postbuild": "tsx ../../scripts/write-stub-package-jsons.ts && pnpm biome check --write .",
-    "test:watch": "pnpm vitest",
-    "test": "pnpm vitest run",
-    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub ../../scripts/write-stub-package-jsons.ts && nub exec --node biome check --write .",
+    "test:watch": "nub exec --node vitest",
+    "test": "nub exec --node vitest run",
+    "prepublishOnly": "nub ../../scripts/check-versions.ts"
   }
 }

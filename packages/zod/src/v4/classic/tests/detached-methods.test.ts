@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import * as z from "zod/v4";
 
 /**
@@ -151,17 +151,19 @@ test("detached object methods work", () => {
   const pick = schema.pick;
   const omit = schema.omit;
   const partial = schema.partial;
+  const exactPartial = schema.exactPartial;
   const extend = schema.extend;
 
   expect(Object.keys(pick({ a: true })._zod.def.shape)).toEqual(["a"]);
   expect(Object.keys(omit({ a: true })._zod.def.shape)).toEqual(["b"]);
   expect(partial().safeParse({}).success).toBe(true);
+  expect(exactPartial().safeParse({}).success).toBe(true);
+  expect(exactPartial().safeParse({ a: undefined }).success).toBe(false);
   const extended = extend({ c: z.boolean() });
   expect(Object.keys(extended._zod.def.shape).sort()).toEqual(["a", "b", "c"]);
 });
 
-// Sweep across many builder methods at once. If any of them break with the
-// `const m = schema.foo; m(...)` pattern, this test will report which.
+// Sweep across many builder methods at once. If any of them break with the `const m = schema.foo; m(...)` pattern, this test will report which.
 test("broad sweep: detaching builder methods does not throw or produce a corrupt schema", () => {
   const stringSchema = z.string();
   const numberSchema = z.number();
@@ -177,13 +179,11 @@ test("broad sweep: detaching builder methods does not throw or produce a corrupt
 
     try {
       const result = detached(...args);
-      // If the detached call returned a schema, sanity-check it parses
-      // its base type. (e.g. `optional()` should accept its inner type.)
+      // If the detached call returned a schema, sanity-check it parses its base type. (e.g. `optional()` should accept its inner type.)
       if (result && typeof result === "object" && "_zod" in result && typeof (result as any).safeParse === "function") {
         const probeValue = target === stringSchema ? "x" : 1;
         const r = (result as any).safeParse(probeValue);
-        // success or a clean failure are both fine — we only fail on throw or
-        // on a schema with corrupt internal state (innerType undefined etc).
+        // success or a clean failure are both fine — we only fail on throw or on a schema with corrupt internal state (innerType undefined etc).
         if (r === undefined || (typeof r === "object" && !("success" in r))) {
           broken.push({ method: methodName, reason: "safeParse returned malformed result" });
         }
@@ -194,4 +194,28 @@ test("broad sweep: detaching builder methods does not throw or produce a corrupt
   }
 
   expect(broken).toEqual([]);
+});
+
+test("vi.spyOn wraps a prototype method that was never read", () => {
+  const schema = z.object({ a: z.string() });
+  const spy = vi.spyOn(schema, "safeParse").mockReturnValue({ success: true, data: { a: "mocked" } });
+
+  expect(schema.safeParse({})).toEqual({ success: true, data: { a: "mocked" } });
+  expect(spy).toHaveBeenCalledOnce();
+
+  spy.mockRestore();
+  expect(schema.safeParse({ a: "x" })).toEqual({ success: true, data: { a: "x" } });
+  expect(schema.safeParse({}).success).toBe(false);
+
+  const json = vi.spyOn(schema, "toJSONSchema").mockReturnValue({ type: "null" } as any);
+  expect(schema.toJSONSchema()).toEqual({ type: "null" });
+  json.mockRestore();
+  expect(schema.toJSONSchema().type).toBe("object");
+});
+
+test("a getter member answers a bare read without a receiver", () => {
+  const schema = z.string();
+  const get = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(schema), "spa")!.get!;
+  expect(get.call(undefined)).toBeUndefined();
+  expect(schema.spa).toBe(schema.safeParseAsync);
 });

@@ -104,3 +104,21 @@ test("z.stringbool codec round trip", () => {
   const encodedFalse = z.encode(schema, decodedFalse);
   expect(encodedFalse).toEqual("disabled"); // First element of falsy array
 });
+
+test("z.stringbool exposes truthy/falsy/case via _zod.bag", () => {
+  const a = z.stringbool();
+  expect(a._zod.bag.truthy).toEqual(["true", "1", "yes", "on", "y", "enabled"]);
+  expect(a._zod.bag.falsy).toEqual(["false", "0", "no", "off", "n", "disabled"]);
+  expect(a._zod.bag.case).toEqual("insensitive");
+
+  // values are normalized when case-insensitive
+  const b = z.stringbool({ truthy: ["Y", "yes"], falsy: ["N"] });
+  expect(b._zod.bag.truthy).toEqual(["y", "yes"]);
+  expect(b._zod.bag.falsy).toEqual(["n"]);
+  expect(b._zod.bag.case).toEqual("insensitive");
+
+  const c = z.stringbool({ truthy: ["Y"], falsy: ["N"], case: "sensitive" });
+  expect(c._zod.bag.truthy).toEqual(["Y"]);
+  expect(c._zod.bag.falsy).toEqual(["N"]);
+  expect(c._zod.bag.case).toEqual("sensitive");
+});

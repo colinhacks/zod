@@ -13,11 +13,12 @@
     "typescript": "^5.8.2"
   },
   "scripts": {
-    "test:all": "pnpm test:source && pnpm test:built",
-    "test:source": "tsc --project fixtures/drizzle-zod/tsconfig.json 2>&1 | (! grep -q 'excessively deep') && tsc --project fixtures/ai-sdk/tsconfig.json",
-    "test:built": "tsc --project fixtures/internal-types/tsconfig.bundler.json && tsc --project fixtures/internal-types/tsconfig.nodenext.json && tsc --project fixtures/internal-types/tsconfig.node16-cjs.json"
+    "test:all": "nub run test:source && nub run test:built",
+    "test:source": "nub exec --node tsc --project fixtures/drizzle-zod/tsconfig.json 2>&1 | (! grep -q 'excessively deep') && nub exec --node tsc --project fixtures/ai-sdk/tsconfig.json",
+    "test:built": "nub exec --node tsc --project fixtures/internal-types/tsconfig.bundler.json && nub exec --node tsc --project fixtures/internal-types/tsconfig.nodenext.json && nub exec --node tsc --project fixtures/internal-types/tsconfig.node16-cjs.json"
   },
   "dependencies": {
-    "zod": "workspace:*"
+    "zod": "workspace:*",
+    "@zod/mini": "workspace:*"
   }
 }

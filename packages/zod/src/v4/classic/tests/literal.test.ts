@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -114,4 +114,15 @@ test("literal pattern", () => {
       "success": false,
     }
   `);
+});
+
+test("empty literal matches nothing", () => {
+  const empty = z.literal([]);
+  expectTypeOf<z.infer<typeof empty>>().toEqualTypeOf<never>();
+  expect(empty.safeParse("").success).toEqual(false);
+  expect(empty.safeParse(undefined).success).toEqual(false);
+  expect(z.templateLiteral(["", empty]).safeParse("").success).toEqual(false);
+  expect(z.toJSONSchema(empty)).toMatchObject({ not: {} });
+
+  expect(z.literal("").safeParse("").success).toEqual(true);
 });

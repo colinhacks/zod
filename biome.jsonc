@@ -78,7 +78,9 @@
       ".next",
 
       "packages/treeshake",
-      ".source"
+      ".source",
+      ".frizz",
+      ".triage"
     ]
   }
 }

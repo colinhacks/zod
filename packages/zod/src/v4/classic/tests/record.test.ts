@@ -76,6 +76,37 @@ test("enum exhaustiveness", () => {
   `);
 });
 
+test("optional-in value type", () => {
+  const defaulted = z.record(z.enum(["Tuna", "Salmon"]), z.string().default("unknown"));
+  expectTypeOf<z.input<typeof defaulted>>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string | undefined>>>();
+  expectTypeOf<z.output<typeof defaulted>>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expect(defaulted.parse({ Tuna: "asdf" })).toEqual({ Tuna: "asdf", Salmon: "unknown" });
+
+  const prefaulted = z.record(z.enum(["Tuna", "Salmon"]), z.string().prefault("unknown"));
+  expectTypeOf<z.input<typeof prefaulted>>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string | undefined>>>();
+  expect(prefaulted.parse({ Tuna: "asdf" })).toEqual({ Tuna: "asdf", Salmon: "unknown" });
+
+  const optional = z.record(z.enum(["Tuna", "Salmon"]), z.string().optional());
+  expectTypeOf<z.input<typeof optional>>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string | undefined>>>();
+  // toStrictEqual, not toEqual: an exhaustive record assigns every key, and toEqual cannot tell an absent key from one holding undefined.
+  expect(optional.parse({ Tuna: "asdf" })).toStrictEqual({ Tuna: "asdf", Salmon: undefined });
+
+  // A value that needs a slot keeps the key required, and a non-enumerable key stays an index signature either way.
+  const required = z.record(z.enum(["Tuna", "Salmon"]), z.string());
+  expectTypeOf<z.input<typeof required>>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  const indexed = z.record(z.string(), z.string().default("unknown"));
+  expectTypeOf<z.input<typeof indexed>>().toEqualTypeOf<Record<string, string | undefined>>();
+
+  // A catch and a preprocess pipe declare no static optin, so the key stays required even where the parser can fill it. The static predicate and the one the JSON Schema emitter uses resolve these differently, and the two have to keep agreeing.
+  const caught = z.record(z.enum(["Tuna", "Salmon"]), z.string().catch("unknown"));
+  expectTypeOf<z.input<typeof caught>>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  const preprocessed = z.record(
+    z.enum(["Tuna", "Salmon"]),
+    z.preprocess((v) => v, z.string())
+  );
+  expectTypeOf<z.input<typeof preprocessed>>().toEqualTypeOf<Record<"Tuna" | "Salmon", unknown>>();
+});
+
 test("typescript enum exhaustiveness", () => {
   enum BigFish {
     Tuna = 0,
@@ -402,6 +433,44 @@ test("is not vulnerable to prototype pollution", async () => {
   }
 });
 
+test("key schema cannot normalize an input key into __proto__", async () => {
+  const value = z.object({ a: z.string() });
+  const payload = { a: "evil" };
+  const wire = (key: string) => JSON.parse(JSON.stringify({ [key]: payload }));
+
+  const cases = [
+    [z.record(z.string().toLowerCase(), value), wire("__PROTO__")],
+    [z.record(z.string().trim(), value), wire(" __proto__ ")],
+    [z.record(z.string().normalize("NFKC"), value), wire("＿＿ｐｒｏｔｏ＿＿")],
+    [
+      z.record(
+        z.string().transform((s) => s.slice(2)),
+        value
+      ),
+      wire("x:__proto__"),
+    ],
+  ] as const;
+
+  for (const [schema, data] of cases) {
+    const result = schema.parse(data);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.keys(result)).toEqual([]);
+    expect((result as any).a).toBeUndefined();
+
+    expect(Object.getPrototypeOf(await schema.parseAsync(data))).toBe(Object.prototype);
+  }
+
+  // an async value schema takes the promise write path
+  const asyncValue = z.record(
+    z.string().toLowerCase(),
+    value.refine(async () => true)
+  );
+  expect(Object.getPrototypeOf(await asyncValue.parseAsync(wire("__PROTO__")))).toBe(Object.prototype);
+
+  // ordinary normalization still lands as an own key
+  expect(z.record(z.string().toLowerCase(), value).parse({ KEY: payload })).toEqual({ key: payload });
+});
+
 test("dont remove undefined values", () => {
   const result1 = z.record(z.string(), z.any()).parse({ foo: undefined });
 
@@ -523,24 +592,12 @@ test("partialRecord with z.literal([key, ...])", () => {
     {
       "error": [ZodError: [
       {
-        "code": "invalid_key",
-        "origin": "record",
-        "issues": [
-          {
-            "code": "invalid_value",
-            "values": [
-              "id",
-              "name",
-              "email"
-            ],
-            "path": [],
-            "message": "Invalid option: expected one of \\"id\\"|\\"name\\"|\\"email\\""
-          }
-        ],
-        "path": [
+        "code": "unrecognized_keys",
+        "keys": [
           "foo"
         ],
-        "message": "Invalid key in record"
+        "path": [],
+        "message": "Unrecognized key: \\"foo\\""
       }
     ]],
       "success": false,
@@ -591,6 +648,45 @@ test("looseRecord passes through non-matching keys", () => {
   expect(schema.parse({ S_name: "John", other: "value" })).toEqual({ S_name: "John", other: "value" });
   expect(schema.parse({ S_name: "John", count: 123 })).toEqual({ S_name: "John", count: 123 });
   expect(schema.parse({ other: "value" })).toEqual({ other: "value" });
+});
+
+test("looseRecord with closed key schema passes through unrecognized keys", () => {
+  const enumSchema = z.looseRecord(z.enum(["foo", "bar"]), z.any());
+  expect(enumSchema.parse({ foo: 123, bar: {}, baz: null })).toEqual({
+    foo: 123,
+    bar: {},
+    baz: null,
+  });
+
+  const literalSchema = z.looseRecord(z.literal(["foo", "bar"]), z.any());
+  expect(literalSchema.parse({ foo: 123, bar: {}, baz: null })).toEqual({
+    foo: 123,
+    bar: {},
+    baz: null,
+  });
+
+  // Recognized keys are still validated
+  const validated = z.looseRecord(z.enum(["foo", "bar"]), z.string());
+  expect(validated.parse({ foo: "ok", bar: "ok", baz: 123 })).toEqual({
+    foo: "ok",
+    bar: "ok",
+    baz: 123,
+  });
+  expect(() => validated.parse({ foo: 123 })).toThrow();
+});
+
+test("record with closed key schema still rejects unrecognized keys", () => {
+  const schema = z.record(z.enum(["foo", "bar"]), z.any());
+  expect(schema.safeParse({ foo: 123, bar: {}, baz: null }).success).toBe(false);
+});
+
+// __proto__ in input must not replace the prototype of the parsed object via the assignment setter on the result {}. https://github.com/colinhacks/zod/security/advisories/GHSA-r34p-xfmx-58wv
+test("looseRecord with closed key schema drops __proto__", () => {
+  const schema = z.looseRecord(z.enum(["foo", "bar"]), z.any());
+  const parsed = schema.parse(JSON.parse('{"foo":1,"bar":2,"__proto__":{"isAdmin":true}}'));
+  expect(Object.keys(parsed)).toEqual(["foo", "bar"]);
+  expect((parsed as any).isAdmin).toBeUndefined();
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
 });
 
 test("intersection of loose records", () => {
@@ -706,12 +802,84 @@ test("v3-compat single-arg form: z.record(valueType)", () => {
   expect(withMessage.keyType._zod.def.type).toEqual("string");
   expect(withMessage.valueType._zod.def.type).toEqual("number");
 
-  // toJSONSchema should produce a well-formed schema (regression: previously produced
-  // additionalProperties from undefined valueType, crashing process())
+  // toJSONSchema should produce a well-formed schema (regression: previously produced additionalProperties from undefined valueType, crashing process())
   const json = z.toJSONSchema(schema);
   expect(json).toMatchObject({
     type: "object",
     propertyNames: { type: "string" },
     additionalProperties: { type: "number" },
   });
+});
+
+test("__proto__ in a finite key set is stripped", () => {
+  const data = JSON.parse('{"__proto__":{"a":"declared"},"b":{"a":"good"}}');
+
+  for (const schema of [
+    z.record(z.enum(["__proto__", "b"]), z.object({ a: z.string() })),
+    z.record(z.literal(["__proto__", "b"]), z.object({ a: z.string() })),
+  ]) {
+    const parsed: any = schema.parse(data);
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+    expect(Object.keys(parsed)).toEqual(["b"]);
+    expect(parsed.a).toBeUndefined();
+  }
+
+  expect(({} as any).a).toBeUndefined();
+});
+
+test("a raw __proto__ input key stays skipped in loose mode", () => {
+  const parsed: any = z.looseRecord(z.iso.datetime(), z.unknown()).parse(JSON.parse('{"__proto__":{"a":1}}'));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+});
+
+test("partialRecord strips a declared __proto__ key", () => {
+  const schema = z.partialRecord(z.enum(["__proto__", "b"]), z.string());
+  const parsed: any = schema.parse(Object.fromEntries([["__proto__", "declared"]]));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(parsed).toEqual({});
+  expect(schema.parse({})).toEqual({});
+  expect(schema.safeParse({ other: "x" }).success).toBe(false);
+});
+
+test("partialRecord strips a declared __proto__ key in loose mode", () => {
+  const key = z.enum(["__proto__"]).refine(() => false);
+  const schema = z.partialRecord(key, z.unknown(), { mode: "loose" });
+  const value = { marker: true };
+  const parsed: any = schema.parse(Object.fromEntries([["__proto__", value]]));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(parsed).toEqual({});
+  expect(parsed.marker).toBeUndefined();
+});
+
+test("partial is internal to partialRecord", () => {
+  // @ts-expect-error partial is not a public record parameter
+  z.record(z.enum(["a"]), z.string(), { partial: true });
+
+  const schema = z.partialRecord(z.enum(["a"]), z.string(), { partial: false } as any);
+  expect(schema.parse({})).toEqual({});
+});
+
+test("partialRecord strips a declared __proto__ key before transforms", () => {
+  const schema = z.partialRecord(
+    z.literal("__proto__").transform(() => "safe" as const),
+    z.string()
+  );
+
+  expect(schema.parse(Object.fromEntries([["__proto__", "value"]]))).toEqual({});
+});
+
+test("a finite __proto__ key is ignored whether present or missing", () => {
+  const schema = z.record(z.enum(["__proto__"]), z.string());
+  const parsed: any = schema.parse({});
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(schema.parse(Object.fromEntries([["__proto__", 123]]))).toEqual({});
 });

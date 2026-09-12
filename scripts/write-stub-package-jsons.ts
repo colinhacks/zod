@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env nub
 
 import { readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

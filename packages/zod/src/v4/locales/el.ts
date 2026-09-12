@@ -45,6 +45,8 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "συμβολοσειρά κωδικοποιημένη σε base64url",
     json_string: "συμβολοσειρά JSON",
     e164: "αριθμός E.164",
+    credit_card: "αριθμός πιστωτικής κάρτας",
+    iban: "IBAN",
     jwt: "JWT",
     template_literal: "είσοδος",
   };

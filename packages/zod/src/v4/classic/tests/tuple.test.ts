@@ -170,8 +170,7 @@ test("tuple with all optional elements", () => {
 });
 
 test("tuple fills defaults for missing trailing elements", () => {
-  // Issue #5229: trailing `.default()`/`.prefault()` elements should be
-  // filled in when the input array is shorter than the tuple.
+  // Issue #5229: trailing `.default()`/`.prefault()` elements should be filled in when the input array is shorter than the tuple.
   const t = z.tuple([z.string(), z.string().default("bravo")]);
   expectTypeOf<typeof t._output>().toEqualTypeOf<[string, string]>();
   expectTypeOf<typeof t._input>().toEqualTypeOf<[string, (string | undefined)?]>();
@@ -188,8 +187,7 @@ test("tuple fills defaults for missing trailing elements", () => {
   // Prefault parity
   expect(z.tuple([z.string(), z.string().prefault("delta")]).parse(["alpha"])).toEqual(["alpha", "delta"]);
 
-  // Defaults wrapped in modifiers: `optout` propagates through these, so the
-  // fix is not type-name specific.
+  // Defaults wrapped in modifiers: `optout` propagates through these, so the fix is not type-name specific.
   expect(z.tuple([z.string(), z.string().default("x").nullable()]).parse(["alpha"])).toEqual(["alpha", "x"]);
   expect(z.tuple([z.string(), z.string().default("x").readonly()]).parse(["alpha"])).toEqual(["alpha", "x"]);
   expect(z.tuple([z.string(), z.string().default("x").catch("y")]).parse(["alpha"])).toEqual(["alpha", "x"]);
@@ -202,18 +200,13 @@ test("tuple fills defaults under async parse", async () => {
 });
 
 test("tuple keeps length-1 array for missing `.optional()` elements", () => {
-  // Backwards compat: a trailing `.optional()` element that is omitted from
-  // the input must NOT be filled with `undefined` — the result stays length-1.
-  // Only schemas that produce a defined value get materialized.
+  // Backwards compat: a trailing `.optional()` element that is omitted from the input must NOT be filled with `undefined` — the result stays length-1. Only schemas that produce a defined value get materialized.
   const t = z.tuple([z.string(), z.string().optional()]);
   const out = t.parse(["alpha"]);
   expect(out).toEqual(["alpha"]);
   expect(out.length).toEqual(1);
 
-  // `z.undefined()` is NOT a synonym for `.optional()` — its value type is
-  // *must be undefined*, so the slot is required input. Omitting it triggers
-  // a single `too_small` (no element-level errors, matching v3's abort
-  // semantics); passing explicit `undefined` succeeds and is preserved.
+  // `z.undefined()` is NOT a synonym for `.optional()` — its value type is *must be undefined*, so the slot is required input. Omitting it triggers a single `too_small` (no element-level errors, matching v3's abort semantics); passing explicit `undefined` succeeds and is preserved.
   expect(z.tuple([z.string(), z.undefined()]).safeParse(["alpha"]).error!.issues).toMatchInlineSnapshot(`
     [
       {
@@ -232,14 +225,12 @@ test("tuple keeps length-1 array for missing `.optional()` elements", () => {
   // optin/optout flags through the nullable wrapper.
   expect(z.tuple([z.string(), z.string().optional().nullable()]).parse(["alpha"])).toHaveLength(1);
 
-  // Multiple trailing optionals trim the same way — we don't fill the tail
-  // with literal `undefined`s.
+  // Multiple trailing optionals trim the same way — we don't fill the tail with literal `undefined`s.
   const many = z.tuple([z.string(), z.string().optional(), z.string().optional(), z.string().optional()]);
   expect(many.parse(["alpha"])).toEqual(["alpha"]);
   expect(many.parse(["alpha", "beta"])).toEqual(["alpha", "beta"]);
 
-  // Explicit `undefined` inside `input.length` IS preserved — only slots
-  // past the input get trimmed.
+  // Explicit `undefined` inside `input.length` IS preserved — only slots past the input get trimmed.
   const r = many.parse(["alpha", undefined]);
   expect(r.length).toEqual(2);
   expect(1 in r).toEqual(true);
@@ -261,15 +252,13 @@ test("tuple result is dense when optional precedes a default", () => {
   expect(1 in r).toEqual(true);
   expect(JSON.stringify(r)).toEqual('["alpha",null,"z"]');
 
-  // Trailing optional after a default is still dropped (no later default
-  // forces it to materialize).
+  // Trailing optional after a default is still dropped (no later default forces it to materialize).
   expect(z.tuple([z.string(), z.string().default("d"), z.string().optional()]).parse(["alpha"])).toEqual([
     "alpha",
     "d",
   ]);
 
-  // Multiple interleaved optional/default — every slot up to the last
-  // default must be present and dense.
+  // Multiple interleaved optional/default — every slot up to the last default must be present and dense.
   const interleaved = z.tuple([
     z.string(),
     z.string().optional(),
@@ -283,9 +272,7 @@ test("tuple result is dense when optional precedes a default", () => {
 });
 
 test("tuple truncates absent optional rejections only when the output tail is optional", () => {
-  // An absent optional-output slot can only be swallowed when every later
-  // output slot is optional too. If a later default would make the output tail
-  // required, truncating would violate the tuple's output type.
+  // An absent optional-output slot can only be swallowed when every later output slot is optional too. If a later default would make the output tail required, truncating would violate the tuple's output type.
   const refusesUndefined = z
     .string()
     .optional()
@@ -296,8 +283,7 @@ test("tuple truncates absent optional rejections only when the output tail is op
   expect(r1.success).toBe(false);
   expect(r1.error!.issues[0].path).toEqual([1]);
 
-  // Optional slots BEFORE the rejected one still cannot hide a later required
-  // output slot.
+  // Optional slots BEFORE the rejected one still cannot hide a later required output slot.
   const beforeReject = z.tuple([z.string(), z.string().optional(), refusesUndefined, z.string().default("d")]);
   const r2 = beforeReject.safeParse(["alpha"]);
   expect(r2.success).toBe(false);
@@ -333,8 +319,7 @@ test("tuple rejects absent exact optional before defaulted output", () => {
   expect(schema.parse(["alpha", "bravo"])).toEqual(["alpha", "bravo", "fallback"]);
   expect(schema.safeParse(["alpha", undefined]).success).toBe(false);
 
-  // With no later required output slot, exact optional still behaves like an
-  // omitted tuple tail and truncates cleanly.
+  // With no later required output slot, exact optional still behaves like an omitted tuple tail and truncates cleanly.
   expect(z.tuple([z.string(), z.string().exactOptional(), z.string().optional()]).parse(["alpha"])).toEqual(["alpha"]);
 });
 
@@ -371,10 +356,7 @@ test("tuple preserves explicit undefined inside input even for optional-out sche
 });
 
 test("tuple does NOT break when a required slot fails past input length", () => {
-  // A required slot (no `.optional()` chain, so optout !== "optional") past
-  // input length must still surface an issue rather than silently swallowing
-  // it. Otherwise we'd accept arbitrarily short tuples for required-tail
-  // schemas. The precheck collapses this into a single `too_small`.
+  // A required slot (no `.optional()` chain, so optout !== "optional") past input length must still surface an issue rather than silently swallowing it. Otherwise we'd accept arbitrarily short tuples for required-tail schemas. The precheck collapses this into a single `too_small`.
   const schema = z.tuple([z.string(), z.string()]);
   expect(schema.safeParse(["alpha"]).error!.issues).toMatchInlineSnapshot(`
     [
@@ -493,4 +475,37 @@ test("too_big tuple still surfaces element-wise type errors for present indices"
       },
     ]
   `);
+});
+
+test("partial", () => {
+  const schema = z.tuple([z.string(), z.number(), z.boolean()]).partial();
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<
+    [(string | undefined)?, (number | undefined)?, (boolean | undefined)?]
+  >();
+
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["a"])).toEqual(["a"]);
+  expect(schema.parse(["a", 1, true])).toEqual(["a", 1, true]);
+  expect(schema.safeParse(["a", "b"]).success).toEqual(false);
+  expect(schema.safeParse(["a", 1, true, 4]).success).toEqual(false);
+
+  // the arity relaxation has to survive the JSON Schema round trip: `minItems` disappears
+  expect(z.toJSONSchema(schema)).toEqual(
+    z.toJSONSchema(z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]))
+  );
+});
+
+test("partial leaves rest alone", () => {
+  const schema = z.tuple([z.string()], z.number()).partial();
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<[(string | undefined)?, ...number[]]>();
+
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["a", 1, 2])).toEqual(["a", 1, 2]);
+  // discriminating input: `true` only if rest had been wrapped too
+  expect(schema.safeParse(["a", undefined]).success).toEqual(false);
+});
+
+test("partial rejects a tuple carrying refinements", () => {
+  const schema = z.tuple([z.string(), z.number()]).refine(([a]) => a.length > 0);
+  expect(() => schema.partial()).toThrow("cannot be used on tuple schemas containing refinements");
 });

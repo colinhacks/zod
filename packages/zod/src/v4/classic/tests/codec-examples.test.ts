@@ -554,8 +554,7 @@ test("codec transform error handling", () => {
     expect(validResult.data).toEqual({ valid: "json" });
   }
 
-  // Test invalid JSON that should create a single "invalid_format" issue
-  // Verifies that the transform error aborts before reaching the output schema
+  // Test invalid JSON that should create a single "invalid_format" issue. Verifies that the transform error aborts before reaching the output schema
   const invalidResult = z.safeDecode(anyJSON, '{"invalid":,}');
   expect(invalidResult.success).toBe(false);
   if (!invalidResult.success) {

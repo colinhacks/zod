@@ -323,6 +323,7 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("🦰🦱🦲🦳"); // both Extended_Pictographic and Emoji_Component
   emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");
@@ -335,6 +336,11 @@ test("emoji validations", () => {
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
   expect(() => emoji.parse("😀stuff")).toThrow();
   expect(() => emoji.parse("stuff😀")).toThrow();
+
+  // a failing match over the overlapping code points used to backtrack exponentially
+  const start = performance.now();
+  expect(emoji.safeParse(`${"🦰".repeat(26)} `).success).toBe(false);
+  expect(performance.now() - start).toBeLessThan(100);
 });
 
 test("uuid", () => {

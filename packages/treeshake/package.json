@@ -4,9 +4,9 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "bundle": "rollup -c rollup.config.js --input",
-    "bundle:rollup": "rollup --input",
-    "bundle:esbuild": "esbuild --bundle ./in.ts --conditions=@zod/source --outfile=./out.js --bundle --format=esm"
+    "bundle": "nub exec --node rollup -c rollup.config.js --input",
+    "bundle:rollup": "nub exec --node rollup --input",
+    "bundle:esbuild": "nub exec --node esbuild --bundle ./in.ts --conditions=@zod/source --outfile=./out.js --bundle --format=esm"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.2",

@@ -1,6 +1,45 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
+
+test("number factory checks", () => {
+  const schema = z.number({ checks: [z.gte(1), z.lte(3)] as const });
+  const chained = z.number().min(1).max(3);
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<number>();
+  for (const value of [0, 1, 3, 4, Number.NaN, "2", undefined]) {
+    expect(z.validate(schema, value)).toBe(z.validate(chained, value));
+    expect(schema.safeParse(value)).toEqual(chained.safeParse(value));
+  }
+  expect(z.toJSONSchema(schema)).toEqual(z.toJSONSchema(chained));
+  expect(schema.minValue).toBe(1);
+  expect(schema.maxValue).toBe(3);
+  expect(z.coerce.number({ checks: [z.gte(1)] }).parse("2")).toBe(2);
+  const overwritten = z.number({ checks: [z.overwrite<number>((value) => value + 1), z.gte(2)] });
+  expect(overwritten.parse(1)).toBe(2);
+  expect(z.validate(overwritten, 0)).toBe(false);
+  // @ts-expect-error length checks cannot validate numbers
+  z.number({ checks: [z.minLength(1)] });
+});
+
+test("number factory checks snapshot caller arrays", () => {
+  for (const factory of [z.number, z.coerce.number]) {
+    const checks = [z.gte(1)];
+    const schema = factory({ checks });
+    let reads = 0;
+    factory({
+      get checks() {
+        if (++reads > 1) throw new Error("checks read twice");
+        return checks;
+      },
+    });
+    expect(reads).toBe(1);
+    const before = z.toJSONSchema(schema);
+    checks.push(z.gte(10));
+    expect(z.validate(schema, 3)).toBe(true);
+    expect(z.validate(z.compile(schema), 3)).toBe(true);
+    expect(z.toJSONSchema(schema)).toEqual(before);
+  }
+});
 
 test("z.number() basic validation", () => {
   const schema = z.number();
@@ -22,7 +61,7 @@ test("Infinity validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -34,9 +73,9 @@ test("Infinity validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
@@ -137,6 +176,16 @@ test("multipleOf", () => {
   expect(() => schemas.schema7.parse(numbers.number8)).toThrow();
 });
 
+test(".multipleOf() accepts exact decimal multiples", () => {
+  // 2.03 === 29 * 0.07, but the quotient lands 2 ULP below 29, so the old tolerance rejected it while the neighbouring multiples 1.96 and 2.10 passed.
+  const schema = z.number().multipleOf(0.07);
+  expect(schema.safeParse(2.03).success).toBe(true);
+  expect(schema.safeParse(4.06).success).toBe(true);
+  expect(schema.safeParse(8.54).success).toBe(true);
+  // genuine non-multiples must still be rejected
+  expect(schema.safeParse(2.04).success).toBe(false);
+});
+
 test(".multipleOf() with positive divisor", () => {
   const schema = z.number().multipleOf(5);
   expect(schema.parse(15)).toEqual(15);
@@ -154,8 +203,7 @@ test(".multipleOf() with negative divisor", () => {
 });
 
 test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
-  // Regression test for https://github.com/colinhacks/zod/pull/5687
-  // The regex was using \d? which only matches single-digit exponents
+  // Regression test for https://github.com/colinhacks/zod/pull/5687 — the regex was using \d? which only matches single-digit exponents
   const schema = z.number().multipleOf(1e-10);
 
   // These should all pass - they are valid multiples of 1e-10
@@ -208,7 +256,7 @@ test(".finite() validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -220,9 +268,9 @@ test(".finite() validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
@@ -322,4 +370,32 @@ test("negative zero edge case", () => {
 test("error customization", () => {
   z.number().gte(5, { error: (iss) => "Min: " + iss.minimum.valueOf() });
   z.number().lte(5, { error: (iss) => "Max: " + iss.maximum.valueOf() });
+});
+
+test("number formats are distinct at the type level", () => {
+  expectTypeOf(z.int()._zod.def.format).toEqualTypeOf<"safeint">();
+  expectTypeOf(z.int32()._zod.def.format).toEqualTypeOf<"int32">();
+  expectTypeOf(z.uint32()._zod.def.format).toEqualTypeOf<"uint32">();
+  expectTypeOf(z.float32()._zod.def.format).toEqualTypeOf<"float32">();
+  expectTypeOf(z.float64()._zod.def.format).toEqualTypeOf<"float64">();
+
+  z.int() satisfies z.ZodNumberFormat;
+  z.int() satisfies z.ZodNumber;
+
+  // @ts-expect-error a float32 schema is not a ZodInt
+  z.float32() satisfies z.ZodInt;
+  // @ts-expect-error a uint32 schema is not a ZodInt32
+  z.uint32() satisfies z.ZodInt32;
+
+  // the point of the distinction: dispatching on the schema type in a conditional type
+  type Sql<T> = T extends z.ZodUInt32
+    ? "BIGINT"
+    : T extends z.ZodInt32
+      ? "INTEGER"
+      : T extends z.ZodFloat32
+        ? "REAL"
+        : never;
+  expectTypeOf<Sql<z.ZodUInt32>>().toEqualTypeOf<"BIGINT">();
+  expectTypeOf<Sql<z.ZodInt32>>().toEqualTypeOf<"INTEGER">();
+  expectTypeOf<Sql<z.ZodFloat32>>().toEqualTypeOf<"REAL">();
 });

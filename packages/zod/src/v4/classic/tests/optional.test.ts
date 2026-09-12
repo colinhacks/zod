@@ -27,7 +27,7 @@ test("optionality", () => {
   expect(b._zod.optout).toEqual("optional");
 
   const c = z.string().default("asdf");
-  expect(c._zod.optin).toEqual("optional");
+  expect(c._zod.optin).toEqual("defaulted");
   expect(c._zod.optout).toEqual(undefined);
 
   const d = z.string().optional().nullable();
@@ -35,27 +35,27 @@ test("optionality", () => {
   expect(d._zod.optout).toEqual("optional");
 
   const e = z.string().default("asdf").nullable();
-  expect(e._zod.optin).toEqual("optional");
+  expect(e._zod.optin).toEqual("defaulted");
   expect(e._zod.optout).toEqual(undefined);
 
   // z.undefined should NOT be optional
   const f = z.undefined();
   expect(f._zod.optin).toEqual(undefined);
   expect(f._zod.optout).toEqual(undefined);
-  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
   expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   // z.union should be optional if any of the types are optional
   const g = z.union([z.string(), z.undefined()]);
   expect(g._zod.optin).toEqual(undefined);
   expect(g._zod.optout).toEqual(undefined);
-  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
   expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   const h = z.union([z.string(), z.optional(z.string())]);
   expect(h._zod.optin).toEqual("optional");
   expect(h._zod.optout).toEqual("optional");
-  expectTypeOf<typeof h._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof h._zod.optin>().toEqualTypeOf<"optional" | "defaulted">();
   expectTypeOf<typeof h._zod.optout>().toEqualTypeOf<"optional">();
 });
 
@@ -64,7 +64,7 @@ test("pipe optionality", () => {
   const a = z.string().optional().pipe(z.string());
   expect(a._zod.optin).toEqual("optional");
   expect(a._zod.optout).toEqual(undefined);
-  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional" | "defaulted">();
   expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   const b = z
@@ -73,11 +73,11 @@ test("pipe optionality", () => {
     .pipe(z.string().optional());
   expect(b._zod.optin).toEqual(undefined);
   expect(b._zod.optout).toEqual("optional");
-  expectTypeOf<typeof b._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof b._zod.optin>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
   expectTypeOf<typeof b._zod.optout>().toEqualTypeOf<"optional">();
 
   const c = z.string().default("asdf").pipe(z.string());
-  expect(c._zod.optin).toEqual("optional");
+  expect(c._zod.optin).toEqual("defaulted");
   expect(c._zod.optout).toEqual(undefined);
 
   const d = z
@@ -202,7 +202,7 @@ test("exactOptional optionality", () => {
   const a = z.string().exactOptional();
   expect(a._zod.optin).toEqual("optional");
   expect(a._zod.optout).toEqual("optional");
-  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional" | "defaulted">();
   expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional">();
 });
 
@@ -268,10 +268,7 @@ test("exactOptional vs optional comparison", () => {
   expect(exactOptionalSchema.safeParse({ a: undefined }).success).toEqual(false);
 });
 
-// Defensive inference coverage: every schema that propagates `optout` participates
-// in object-key optionality inference. If anyone ever changes the set of values that
-// `optout` can take (or how OptionalOutSchema matches them), these assertions must
-// continue to hold or downstream `z.infer<typeof obj>` types silently flip required keys.
+// Defensive inference coverage: every schema that propagates `optout` participates in object-key optionality inference. If anyone ever changes the set of values that `optout` can take (or how OptionalOutSchema matches them), these assertions must continue to hold or downstream `z.infer<typeof obj>` types silently flip required keys.
 test("object key optionality through optout propagation", () => {
   const direct = z.object({ k: z.string().optional() });
   expectTypeOf<z.infer<typeof direct>>().toEqualTypeOf<{ k?: string | undefined }>();
@@ -317,9 +314,7 @@ test("object key optionality through optout propagation", () => {
   }>();
 });
 
-// Defensive: tuple optional-tail inference also reads optout. The PR that introduced
-// `"includeUndefined"` had to update TupleOutputTypeWithOptionals; pin the result so
-// any future flag change has to keep this contract.
+// Defensive: tuple optional-tail inference also reads optout. The PR that introduced `"includeUndefined"` had to update TupleOutputTypeWithOptionals; pin the result so any future flag change has to keep this contract.
 test("tuple tail optionality through optout propagation", () => {
   const trailingOptional = z.tuple([z.string(), z.number().optional()]);
   expectTypeOf<z.output<typeof trailingOptional>>().toEqualTypeOf<[string, (number | undefined)?]>();
@@ -330,4 +325,42 @@ test("tuple tail optionality through optout propagation", () => {
   // Interior optional must NOT make the tail optional
   const interiorOptional = z.tuple([z.string(), z.number().optional(), z.string()]);
   expectTypeOf<z.output<typeof interiorOptional>>().toEqualTypeOf<[string, number | undefined, string]>();
+});
+
+// An absent optional key whose check fails has its issue swallowed; the value the check wrote must go with it, on the JIT fastpass as well as the interpreted path.
+test("swallowed issue on an absent optional key drops its value", async () => {
+  const schema = z.object({
+    a: z
+      .string()
+      .optional()
+      .superRefine((_v, ctx) => {
+        ctx.addIssue({ code: "custom", message: "bad" });
+        ctx.value = "leaked";
+      }),
+  });
+
+  for (const result of [
+    schema.safeParse({}),
+    schema.safeParse({}, { jitless: true }),
+    await schema.safeParseAsync({}),
+  ]) {
+    expect(result.success).toEqual(true);
+    expect("a" in result.data!).toEqual(false);
+  }
+
+  // A present key keeps both the issue and its value.
+  expect(schema.safeParse({ a: "x" }).success).toEqual(false);
+  expect(schema.safeParse({ a: "x" }, { jitless: true }).success).toEqual(false);
+});
+
+test("optional does not swallow an issue it did not cause", () => {
+  // A pipe hands its `out` schema the caller's issues array so an unrecognized key can survive to an enclosing intersection. A defaulted inner substituting for absence must not read that as its own failing and drop it.
+  const result = z
+    .strictObject({ a: z.string() })
+    .transform((): number | undefined => undefined)
+    .pipe(z.number().default(5).optional())
+    .safeParse({ a: "x", extra: 1 });
+
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.map((i) => i.code)).toEqual(["unrecognized_keys"]);
 });

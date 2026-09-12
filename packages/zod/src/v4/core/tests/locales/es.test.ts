@@ -109,8 +109,7 @@ test("Spanish locale - type name translations in invalid_type errors", () => {
 test("Spanish locale - fallback for unknown type names", () => {
   z.config(es());
 
-  // Test with a type that's not in the TypeNames dictionary
-  // This will test the fallback behavior
+  // Test with a type that's not in the TypeNames dictionary. This will test the fallback behavior
   const dateSchema = z.date().min(new Date("2025-01-01"));
   const dateResult = dateSchema.safeParse(new Date("2024-01-01"));
   expect(dateResult.success).toBe(false);

@@ -32,29 +32,35 @@ export const safeParseAsync: <T extends core.$ZodType>(
   _ctx?: core.ParseContext<core.$ZodIssue>
 ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodRealError) as any;
 
+export { validate, validateAsync } from "../core/index.js";
+
 // Codec functions
 export const encode: <T extends core.$ZodType>(
   schema: T,
   value: core.output<T>,
-  _ctx?: core.ParseContext<core.$ZodIssue>
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => core.input<T> = /* @__PURE__ */ core._encode(ZodRealError);
 
 export const decode: <T extends core.$ZodType>(
   schema: T,
   value: core.input<T>,
-  _ctx?: core.ParseContext<core.$ZodIssue>
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => core.output<T> = /* @__PURE__ */ core._decode(ZodRealError);
 
 export const encodeAsync: <T extends core.$ZodType>(
   schema: T,
   value: core.output<T>,
-  _ctx?: core.ParseContext<core.$ZodIssue>
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => Promise<core.input<T>> = /* @__PURE__ */ core._encodeAsync(ZodRealError);
 
 export const decodeAsync: <T extends core.$ZodType>(
   schema: T,
   value: core.input<T>,
-  _ctx?: core.ParseContext<core.$ZodIssue>
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => Promise<core.output<T>> = /* @__PURE__ */ core._decodeAsync(ZodRealError);
 
 export const safeEncode: <T extends core.$ZodType>(

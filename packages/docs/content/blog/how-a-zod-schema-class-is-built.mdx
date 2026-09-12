@@ -1,0 +1,110 @@
+---
+title: How a Zod schema class is built
+author: Colin McDonnell
+date: 2026-08-24
+description: Zod's schema classes aren't plain classes. They're built from composable, typesafe traits that let one class inherit from both Zod Core and Zod's fluent API.
+draft: true
+---
+
+import { ThemedImage } from "@/components/themed-image";
+
+Both Zod and Zod Mini are user-facing "API frontends" over a shared set of internal validators Zod Core (`"zod/core"`). 
+
+Zod is fluent (method-first) and optimizes for readability/discoverability, whereas Zod Mini is functional and optimized for treeshakability and bundle size. 
+
+This presents some tricky problems. Zod's class structure is not purely hierarchical. A regular Zod string schema must functionally extend both Zod Core's `$ZodString` class—which implements all string validation—as well as the `ZodType` class—defining Zod's base methods like `.optional()`, `.nullable()`, etc. This is the classic "diamond inheritance" problem.
+
+<ThemedImage
+  lightSrc="/blog/diamond-light.png"
+  darkSrc="/blog/diamond-dark.png"
+  alt="Diamond inheritance: $ZodType at the top, splitting into $ZodString (Zod Core, string validation) and ZodType (classic, .optional() / .nullable()), which meet at ZodString."
+  caption="The ZodString inheritance diamond"
+/>
+
+Since JavaScript doesn't support multiple inheritance, Zod implements a *typesafe trait pattern*. Each "trait" is an interface coupled with an initializer function.
+
+```ts
+import { $constructor } from "zod/v4/core";
+
+interface Pet {
+  _zod: { def: { name: string } };
+  name: string;
+  greet(): string;
+}
+
+const Pet: $constructor<Pet> = $constructor("Pet", (inst, def) => {
+  inst.name = def.name;
+  inst.greet = () => `${inst.name} says hi`;
+});
+```
+
+If this sounds exactly like a regular class so far, you're right. You can create an instance with `new Pet({...})` like normal.
+
+```ts
+new Pet({ name: "Rex" }).greet(); // "Rex says hi"
+```
+
+You can also retroactively augment an existing object with the trait's functionality via the static `.init()` method. Think of it like a constructor but you can "apply" it to pre-existing objects.
+
+```ts
+const obj = {};
+
+Pet.init(obj, { name: "Rex" });
+obj.greet(); // => "Rex says hi"
+```
+
+This enables multiple inheritance-style patterns. Instead of being restricted to a single `super()` call inside a class constructor, you can define traits that themselves compose multiple other traits.
+
+Let's see an example. Below we define simple `Swimmer` and `Flyer` traits.
+
+```ts
+interface Swimmer extends Pet {
+  swim(): string;
+}
+const Swimmer: $constructor<Swimmer> = $constructor("Swimmer", (inst, def) => {
+  Pet.init(inst, def);
+  inst.swim = () => `${inst.name} swims`;
+});
+
+interface Flyer extends Pet {
+  fly(): string;
+}
+const Flyer: $constructor<Flyer> = $constructor("Flyer", (inst, def) => {
+  Pet.init(inst, def);
+  inst.fly = () => `${inst.name} flies`;
+});
+```
+
+We can now define `Duck`, a new class that extends both (really a "composite trait"):
+
+```ts
+interface Duck extends Swimmer, Flyer {}
+
+const Duck: $constructor<Duck> = $constructor("Duck", (inst, def) => {
+  Swimmer.init(inst, def);
+  Flyer.init(inst, def);
+});
+```
+
+This lets us create instances using the Duck constructor like normal, but the resulting instances have inherited runtime functionality from multiple parent classes (in a typesafe way).
+
+```ts
+const duck = new Duck({ name: "Rex" });
+duck.greet(); // "Rex says hi"
+duck.swim(); // "Rex swims"
+duck.fly(); // "Rex flies"
+
+duck._zod.traits; // a Set of implemented traits
+// => Set(['Duck', 'Swimmer', 'Pet', 'Flyer'])
+```
+
+This is the same diamond inheritance pattern Zod uses.
+
+
+```
+                  Pet
+               /       \
+        Swimmer         Flyer
+               \       /
+                  Duck
+```

@@ -238,21 +238,31 @@ export class ZodError<T = any> extends Error {
             const el = issue.path[i]!;
             const terminal = i === issue.path.length - 1;
 
-            if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-              // if (typeof el === "string") {
-              //   curr[el] = curr[el] || { _errors: [] };
-              // } else if (typeof el === "number") {
-              //   const errorArray: any = [];
-              //   errorArray._errors = [];
-              //   curr[el] = curr[el] || errorArray;
-              // }
-            } else {
-              curr[el] = curr[el] || { _errors: [] };
-              curr[el]._errors.push(mapper(issue));
+            // `_errors` is reserved by this legacy format, so merge a matching path segment into the current node instead of treating its array as a child.
+            if (el === "_errors") {
+              if (terminal) curr._errors.push(mapper(issue));
+              i++;
+              continue;
+            }
+
+            // Create `el` as an own data property. A segment naming an inherited member ("toString", "constructor") would otherwise read through to the prototype, and assigning "__proto__" would hit the setter and walk into Object.prototype.
+            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
+              if (el === "__proto__") {
+                Object.defineProperty(curr, el, {
+                  value: { _errors: [] },
+                  writable: true,
+                  enumerable: true,
+                  configurable: true,
+                });
+              } else {
+                curr[el] = { _errors: [] };
+              }
             }
 
             curr = curr[el];
+            if (terminal) {
+              curr._errors.push(mapper(issue));
+            }
             i++;
           }
         }

@@ -1,18 +1,25 @@
 type ModeWriter = (doc: Doc, modes: { execution: "sync" | "async" }) => void;
 
 export class Doc {
-  args!: string[];
+  args: string[];
+  /** Bindings the compiled function closes over, by name. */
+  closed: Record<string, unknown>;
   content: string[] = [];
   indent = 0;
 
-  constructor(args: string[] = []) {
-    if (this) this.args = args;
+  constructor(args: string[] = [], closed: Record<string, unknown> = {}) {
+    this.args = args;
+    this.closed = closed;
   }
 
+  // the compiler catches a child's throw and keeps writing into this doc, so the indent has to unwind with it
   indented(fn: (doc: Doc) => void) {
     this.indent += 1;
-    fn(this);
-    this.indent -= 1;
+    try {
+      fn(this);
+    } finally {
+      this.indent -= 1;
+    }
   }
 
   write(fn: ModeWriter): void;
@@ -35,10 +42,11 @@ export class Doc {
 
   compile(): any {
     const F = Function;
-    const args = this?.args;
     const content = this?.content ?? [``];
-    const lines = [...content.map((x) => `  ${x}`)];
-    // console.log(lines.join("\n"));
-    return new F(...args, lines.join("\n")) as any;
+    const factory = new F(
+      ...Object.keys(this.closed),
+      `return function (${this.args.join(", ")}) {\n${content.join("\n")}\n};`
+    );
+    return factory(...Object.values(this.closed)) as any;
   }
 }

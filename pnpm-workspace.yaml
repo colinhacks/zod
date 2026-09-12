@@ -1,5 +1,0 @@
-packages:
-  - packages/*
-hoistWorkspacePackages: false
-saveWorkspaceProtocol: false
-linkWorkspacePackages: true

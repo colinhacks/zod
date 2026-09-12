@@ -87,6 +87,15 @@ test("enum from non-const inputs", () => {
 
 test("get options", () => {
   expect(z.enum(["tuna", "trout"]).options).toEqual(["tuna", "trout"]);
+
+  enum Fish {
+    Tuna = 0,
+    Trout = 1,
+  }
+
+  // numeric enums carry reverse-mapping keys; options lists only what parse accepts
+  expect(z.enum(Fish).options).toEqual([Fish.Tuna, Fish.Trout]);
+  expect(z.enum(Fish).safeParse("Tuna").success).toEqual(false);
 });
 
 test("readonly enum", () => {
@@ -158,6 +167,17 @@ test("exclude", () => {
   const EmptyFoodEnum = FoodEnum.exclude(foods);
   expectTypeOf<typeof EmptyFoodEnum>().toEqualTypeOf<z.ZodEnum<{}>>();
   expectTypeOf<z.infer<typeof EmptyFoodEnum>>().toEqualTypeOf<never>();
+});
+
+test("empty enum matches nothing", () => {
+  const Empty = z.enum([]);
+  expect(Empty._zod.pattern.test("")).toEqual(false);
+  expect(z.templateLiteral(["", Empty]).safeParse("").success).toEqual(false);
+  expect(z.templateLiteral(["", z.object({}).keyof()]).safeParse("").success).toEqual(false);
+
+  expect(z.toJSONSchema(Empty)).toMatchObject({ not: {} });
+
+  expect(z.templateLiteral(["", z.enum([""])]).safeParse("").success).toEqual(true);
 });
 
 test("error map inheritance", () => {

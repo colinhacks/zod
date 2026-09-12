@@ -549,3 +549,38 @@ test("when the message is falsy, it is used as is provided", () => {
 //     expect(result.error.issues.length).toEqual(2);
 //   }
 // });
+
+test("format() handles Object.prototype names in the issue path", () => {
+  const result = z
+    .record(z.string(), z.object({ pwn: z.number() }))
+    .safeParse(JSON.parse('{"__proto__": {"pwn": "x"}}'));
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    // the node must be a real own data property, not the inherited accessor
+    const node = Object.getOwnPropertyDescriptor(result.error.format(), "__proto__")!.value;
+    expect(node.pwn._errors).toHaveLength(1);
+  }
+  expect(({} as any).pwn).toBeUndefined();
+
+  const inherited = z.record(z.string(), z.string()).safeParse(JSON.parse('{"toString": 1}'));
+  expect(inherited.success).toEqual(false);
+  if (!inherited.success) {
+    expect((inherited.error.format() as any).toString._errors).toHaveLength(1);
+  }
+});
+
+test("format() handles an input-derived _errors path", () => {
+  const result = z.object({ parent: z.record(z.string()) }).safeParse({ parent: { _errors: 1 } });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.format().parent?._errors).toEqual(["Expected string, received number"]);
+  }
+
+  const nested = z
+    .object({ parent: z.record(z.object({ child: z.string() })) })
+    .safeParse({ parent: { _errors: { child: 1 } } });
+  expect(nested.success).toEqual(false);
+  if (!nested.success) {
+    expect((nested.error.format() as any).parent.child._errors).toEqual(["Expected string, received number"]);
+  }
+});

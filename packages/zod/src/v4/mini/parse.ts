@@ -1,4 +1,6 @@
 export {
+  validate,
+  validateAsync,
   parse,
   safeParse,
   parseAsync,

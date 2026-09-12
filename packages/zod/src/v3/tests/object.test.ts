@@ -122,14 +122,12 @@ test("catchall inference", () => {
 test("catchall overrides strict", () => {
   const o1 = z.object({ first: z.string().optional() }).strict().catchall(z.number());
 
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
+  // should run fine setting a catchall overrides the unknownKeys behavior
   o1.parse({
     asdf: 1234,
   });
 
-  // should only run catchall validation
-  // against unknown keys
+  // should only run catchall validation against unknown keys
   o1.parse({
     first: "asdf",
     asdf: 1234,
@@ -144,8 +142,7 @@ test("catchall overrides strict", () => {
     .strict()
     .catchall(z.number());
 
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
+  // should run fine setting a catchall overrides the unknownKeys behavior
   o1.parse({
     first: "asdf",
     asdf: 1234,

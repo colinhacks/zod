@@ -16,23 +16,29 @@ jobs:
   test-node:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
-        typescript: ["5.5", "latest"]
+        typescript: ["5.5", "6", "latest"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
+          nub-version: "0.8.3"
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
-      - run: pnpm build
-      - run: pnpm test
-      - run: pnpm run --filter @zod/resolution test:all
-      - run: pnpm run --filter @zod/integration test:all
+      - run: nub install --frozen-lockfile
+      # Build with the repo-pinned TypeScript: zshy uses the classic compiler API,
+      # which TypeScript 7 no longer ships. The matrix version applies to the tests.
+      - run: nub run build
+      - run: nub add typescript@${{ matrix.typescript }} -Dw
+      - run: nub run test
+      # test-resolution.ts shells out to zshy, so it can't run under TypeScript 7.
+      - run: nub run --filter @zod/resolution test:all
+        if: matrix.typescript != 'latest'
+      - run: nub run --filter @zod/integration test:all
 
   lint:
     runs-on: ubuntu-latest
@@ -41,23 +47,26 @@ jobs:
         node: ["latest"]
     name: Lint on Node ${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
+          nub-version: "0.8.3"
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm format:check
-      - run: pnpm lint:check
+      - run: nub install --frozen-lockfile
+      - run: nub run format:check
+      - run: nub run lint:check
+      - run: nub run check:comments
 
   check-circular:
     runs-on: ubuntu-latest
     name: Check for circular dependencies
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - run: printf 'latest\n' > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
+          nub-version: "0.8.3"
           node-version: "latest"
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm check:circular
+      - run: nub install --frozen-lockfile
+      - run: nub run check:circular

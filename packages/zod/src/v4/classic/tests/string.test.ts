@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -11,6 +11,63 @@ const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+
+test("string factory checks", async () => {
+  const schema = z.string({ checks: [z.minLength(1), z.maxLength(3)] as const });
+  const chained = z.string().min(1).max(3);
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
+  for (const value of ["", "ab", "abcd", 1, undefined]) {
+    expect(z.validate(schema, value)).toBe(z.validate(chained, value));
+    expect(schema.safeParse(value)).toEqual(chained.safeParse(value));
+  }
+  expect(z.toJSONSchema(schema)).toEqual(z.toJSONSchema(chained));
+  expect(schema.minLength).toBe(1);
+  expect(schema.maxLength).toBe(3);
+  expect(schema._zod.parent).toBeUndefined();
+  expect([...schema._zod.traits]).toEqual([...chained._zod.traits]);
+  const extended = schema.max(2);
+  expect(extended._zod.parent).toBe(schema);
+  expect(z.validate(schema, "abc")).toBe(true);
+  expect(z.validate(extended, "abc")).toBe(false);
+  const coerce = z.coerce.string({ checks: [z.minLength(2)] });
+  expect(coerce.parse(12)).toBe("12");
+  expect(z.validate(coerce, 1)).toBe(false);
+  const asyncSchema = z.string({
+    checks: [
+      z.check<string>(async (ctx) => {
+        if (ctx.value !== "ok") ctx.issues.push({ code: "custom", input: ctx.value });
+      }),
+    ],
+  });
+  expect(await asyncSchema.safeParseAsync("ok")).toEqual({ success: true, data: "ok" });
+  expect((await asyncSchema.safeParseAsync("bad")).success).toBe(false);
+  // @ts-expect-error numeric checks cannot validate strings
+  z.string({ checks: [z.gte(1)] });
+});
+
+test("factory checks snapshot caller arrays", () => {
+  for (const factory of [z.string, z.coerce.string]) {
+    for (const initial of [[], [z.minLength(1)]]) {
+      const schema = factory({ checks: initial });
+      let reads = 0;
+      const getterSchema = factory({
+        get checks() {
+          if (++reads > 1) throw new Error("checks read twice");
+          return initial;
+        },
+      });
+      expect(reads).toBe(1);
+      expect(z.validate(getterSchema, "long")).toBe(true);
+      const before = z.toJSONSchema(schema);
+      initial.push(z.minLength(10));
+      expect(schema._zod.def.checks).not.toBe(initial);
+      expect(z.validate(schema, "long")).toBe(true);
+      expect(z.validate(z.compile(schema), "long")).toBe(true);
+      expect(z.toJSONSchema(schema)).toEqual(before);
+      expect(z.validate(schema.check(z.minLength(2)), "long")).toBe(true);
+    }
+  }
+});
 
 test("length checks", () => {
   minFive.parse("12345");
@@ -217,9 +274,7 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
-    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips
-    // whitespace internally before validating, so the length check alone would
-    // accept "123 " etc.
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips whitespace internally before validating, so the length check alone would accept "123 " etc.
     "123 ", // bypasses length-mod-4 via trailing whitespace
     "SGVsbG8gV29ybGQ= ", // trailing space
     " SGVsbG8gV29ybGQ=", // leading space
@@ -266,6 +321,7 @@ test("base64url validations", () => {
 
   const invalidBase64URLStrings = [
     "w7/Dv8O+w74K", // Has + and / characters (is base64)
+    "A", // Invalid length (1 mod 4 carries no whole byte)
     "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
     "12345===", // Not padded correctly
     "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
@@ -293,6 +349,18 @@ test("big base64 and base64url", () => {
   z.base64().parse(bigbase64);
   const bigbase64url = randomBytes(1024 * 1024 * 10).toString("base64url");
   z.base64url().parse(bigbase64url);
+
+  // template literals compose def.pattern and test it on every parse; the quantified block forms overflowed the regex stack here
+  expect(z.templateLiteral(["id-", z.base64()]).safeParse(`id-${bigbase64}`).success).toBe(true);
+  expect(z.templateLiteral(["id-", z.base64url()]).safeParse(`id-${bigbase64url}`).success).toBe(true);
+});
+
+test("template literal composes base64 without alternation leaks", () => {
+  // the ^$| alternation in regexes.base64 used to leak: "AAAA" matched with the prefix dropped and "id-AAAA" was rejected
+  const tl = z.templateLiteral(["id-", z.base64()]);
+  expect(tl.safeParse("id-AAAA").success).toBe(true);
+  expect(tl.safeParse("id-").success).toBe(true);
+  expect(tl.safeParse("AAAA").success).toBe(false);
 });
 
 function makeJwt(header: object, payload: object) {
@@ -386,6 +454,44 @@ test("url trims whitespace", () => {
   expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
 });
 
+test("url returns the string the parser validated", () => {
+  // The URL parser deletes ASCII tab, LF and CR instead of failing, so `new URL()` reports on a string that is not the one it was given. The host is the consequential case: this validated example.com and used to hand back a URL naming a different host.
+  expect(z.url().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\tmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\rmple.com")).toBe("https://example.com");
+  expect(z.httpUrl().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url({ hostname: /^a\.com$/ }).parse("https://a\n.com")).toBe("https://a.com");
+  expect(z.url().parse("https://example.com/a\nb?c=\td#e")).toBe("https://example.com/ab?c=d#e");
+
+  // Nothing that parsed before stops parsing, and normalize still wins where it applies.
+  expect(z.url().parse("https://example.com/path")).toBe("https://example.com/path");
+  expect(z.url({ normalize: true }).parse("https://exa\nmple.com")).toBe("https://example.com/");
+});
+
+test("ipv6 and cidrv6 reject anything outside the address alphabet", () => {
+  // `new URL("http://[...]")` parses an authority rather than an address, so a delimiter re-splits it and the parser validates something else entirely.
+  expect(z.ipv6().safeParse("::@1\\").success).toBe(false); // used to validate against the host 0.0.0.1
+  expect(z.ipv6().safeParse("::]/1").success).toBe(false);
+  expect(z.ipv6().safeParse("@[::1").success).toBe(false);
+  expect(z.cidrv6().safeParse("::@1\\/64").success).toBe(false);
+
+  for (const c of ["\t", "\n", "\r"]) {
+    expect(z.ipv6().safeParse(`2001:db8::${c}1`).success).toBe(false);
+    expect(z.ipv6().safeParse(`::1${c}`).success).toBe(false);
+    expect(z.cidrv6().safeParse(`::1${c}/64`).success).toBe(false);
+  }
+
+  // A rejection has to surface as an issue, not just success: false.
+  const result = z.ipv6().safeParse("::1\n");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]).toMatchObject({ code: "invalid_format", format: "ipv6" });
+
+  expect(z.ipv6().parse("2001:db8::1")).toBe("2001:db8::1");
+  expect(z.ipv6().parse("::ffff:192.0.2.1")).toBe("::ffff:192.0.2.1");
+  expect(z.ipv6().parse("2001:DB8::1")).toBe("2001:DB8::1");
+  expect(z.cidrv6().parse("::ffff:192.0.2.1/96")).toBe("::ffff:192.0.2.1/96");
+});
+
 test("url normalize flag", () => {
   const normalizeUrl = z.url({ normalize: true });
   const preserveUrl = z.url(); // normalize: false/undefined by default
@@ -430,7 +536,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   });
 
   httpUrl.parse("https://example.com");
@@ -464,6 +570,16 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // total host length over the RFC 1035 limit of 253 chars (built from valid-length labels)
+  const longHost = `${`${"a".repeat(50)}.`.repeat(5)}com`; // 5 * 51 + 3 = 258 chars
+  expect(longHost.length).toBeGreaterThan(253);
+  expect(() => httpUrl.parse(`http://${longHost}`)).toThrow();
+  // TLD over the 63-char label limit
+  expect(() => httpUrl.parse(`http://example.${"a".repeat(64)}`)).toThrow();
+  // a host at exactly the 253-char limit is still accepted, one char more is not
+  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaaaa`; // 4 * 62 + 5 = 253 chars
+  httpUrl.parse(`http://${maxHost}`);
+  expect(() => httpUrl.parse(`http://${maxHost}a`)).toThrow();
   // missing // after protocol
   expect(() => httpUrl.parse("http:example.com")).toThrow();
   expect(() => httpUrl.parse("https:example.com")).toThrow();
@@ -493,6 +609,7 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("🦰🦱🦲🦳"); // both Extended_Pictographic and Emoji_Component
   emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");
@@ -505,6 +622,18 @@ test("emoji validations", () => {
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
   expect(() => emoji.parse("😀stuff")).toThrow();
   expect(() => emoji.parse("stuff😀")).toThrow();
+
+  emoji.parse("1\u{FE0F}\u{20E3}"); // keycap sequences stay valid
+  emoji.parse("#\u{FE0F}\u{20E3}");
+
+  // `\p{Emoji_Component}` alone covers ASCII digits, "#", "*", ZWJ, variation selectors and skin tone modifiers; none is an emoji without a base, so a component-only string is not one either
+  expect(() => emoji.parse("123")).toThrow();
+  expect(() => emoji.parse("#")).toThrow();
+  expect(() => emoji.parse("*")).toThrow();
+  expect(() => emoji.parse("\u{200D}")).toThrow();
+  expect(() => emoji.parse("\u{FE0F}")).toThrow();
+  expect(() => emoji.parse("\u{1F3FD}")).toThrow();
+  expect(() => emoji.parse("1\u{FE0F}")).toThrow();
 });
 
 test("nanoid", () => {
@@ -614,6 +743,26 @@ test("bad guid", () => {
   }
 });
 
+test("nanoid custom length", () => {
+  const nanoid64 = z.nanoid({ length: 64 });
+  nanoid64.parse("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_");
+  expect(nanoid64.safeParse("lfNZluvAxMkf7Q8C5H-QS")).toMatchObject({ success: false });
+
+  // the deprecated method and the default length both still work
+  expect(z.string().nanoid({ length: 10 }).safeParse("IRFa-VaY2b")).toMatchObject({ success: true });
+  expect(z.nanoid().safeParse("lfNZluvAxMkf7Q8C5H-QS")).toMatchObject({ success: true });
+
+  expect(z.nanoid({ length: 64, error: "custom error" }).safeParse("abc").error!.issues[0].message).toEqual(
+    "custom error"
+  );
+});
+
+test("nanoid rejects a length that is not a positive integer", () => {
+  expect(() => z.nanoid({ length: 0 })).toThrow("Invalid nanoid length: 0");
+  expect(() => z.nanoid({ length: -1 })).toThrow("Invalid nanoid length: -1");
+  expect(() => z.nanoid({ length: 1.5 })).toThrow("Invalid nanoid length: 1.5");
+});
+
 test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");
@@ -683,6 +832,12 @@ test("ulid", () => {
   const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
   expect(caseInsensitive.success).toEqual(true);
 
+  // first char is capped at 7: the spec's largest ULID is 7ZZZZZZZZZZZZZZZZZZZZZZZZZ, so 8-9 and every letter overflow 2^48-1
+  expect(ulid.safeParse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").success).toEqual(true);
+  for (const first of ["8", "9", "A", "Z", "z"]) {
+    expect(ulid.safeParse(`${first}AAAAAAAAAAAAAAAAAAAAAAAAA`).success).toEqual(false);
+  }
+
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
   expect(result.error).toMatchInlineSnapshot(`
     [ZodError: [
@@ -690,7 +845,7 @@ test("ulid", () => {
         "origin": "string",
         "code": "invalid_format",
         "format": "ulid",
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "pattern": "/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/",
         "path": [],
         "message": "Invalid ULID"
       }
@@ -858,6 +1013,47 @@ test("boundary cases with zero length", () => {
   expect(maxZero.parse("")).toEqual("");
   expect(() => maxZero.parse("a")).toThrow();
   expect(() => maxZero.parse("hello")).toThrow();
+});
+
+test("length checks count Unicode code points, not UTF-16 code units", () => {
+  // "\u{1F600}" is one code point but two UTF-16 code units
+  const five = "\u{1F600}\u{1F600}\u{1F600}\u{1F600}\u{1F600}";
+  expect(z.string().max(5).safeParse(five).success).toBe(true);
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").success
+  ).toBe(false);
+  expect(z.string().min(5).safeParse(five).success).toBe(true);
+  expect(z.string().min(5).safeParse("\u{1F600}\u{1F600}\u{1F600}\u{1F600}").success).toBe(false);
+  expect(z.string().length(5).safeParse(five).success).toBe(true);
+  expect(z.string().length(1).safeParse("\u{1F600}").success).toBe(true);
+  expect(z.string().nonempty().safeParse("\u{1F600}").success).toBe(true);
+
+  // code points, not graphemes: a combining mark and a ZWJ sequence each stay several
+  expect(z.string().length(2).safeParse("e\u0301").success).toBe(true);
+  expect(z.string().length(3).safeParse("\u{1F9D1}\u200D\u{1F37C}").success).toBe(true);
+
+  // an unpaired surrogate is its own code point
+  expect(z.string().length(1).safeParse("\uD83D").success).toBe(true);
+  expect(z.string().length(2).safeParse("\uDE00\uD83D").success).toBe(true);
+
+  // the reported bound is still the declared one
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").error!.issues[0]
+  ).toMatchObject({
+    code: "too_big",
+    maximum: 5,
+    origin: "string",
+  });
+
+  // other lengthables keep counting elements
+  expect(z.array(z.string()).max(2).safeParse(["a", "b", "c"]).success).toBe(false);
+  expect(z.array(z.string()).length(2).safeParse(["\u{1F600}", "\u{1F600}"]).success).toBe(true);
 });
 
 test("trim", () => {

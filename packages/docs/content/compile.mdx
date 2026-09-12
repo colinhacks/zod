@@ -1,0 +1,185 @@
+---
+title: AOT compilation
+description: "Ahead-of-time schema compilation for hot validation paths"
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { ThemedImage } from "@/components/themed-image";
+
+Zod can compile a schema ahead of time into a flat, loop-free validator that runs several times faster than the standard parser. Results and errors are identical.
+
+```ts
+import * as z from "zod";
+
+const Player = z.object({
+  username: z.string(),
+  bio: z.string(),
+  xp: z.number(),
+  // ...20 more properties...
+});
+
+const CompiledPlayer = z.compile(Player);
+```
+
+Use it exactly like `Player`:
+
+```ts
+Player.parse({ ... });
+CompiledPlayer.parse({ ... }); // ~9x faster
+```
+
+A compiled schema like `CompiledPlayer` is a Zod schema like any other. *There are no special rules around compiled schemas.*
+
+- Same methods: `.parse()`, `.safeParse()`, `.extend()`, `.optional()`, etc.
+- Same inferred input and output types
+- Same issues and error messages
+
+Zod's entire test suite runs twice—once normally and again with auto-compilation enabled globally—to ensure perfect fidelity.
+
+Containers like objects and tuples benefit the most, since compilation unrolls the runtime's per-key walk into flat loop-free validation logic that can be optimized by the JS engine.
+
+<ThemedImage
+  lightSrc="/blog/compile-speedup-light.svg"
+  darkSrc="/blog/compile-speedup-dark.svg"
+  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 377 ns to 68 ns (5.5x), a 20-key object 301 ns to 38 ns (7.8x), an array of 10 strings 241 ns to 33 ns (7.3x), a union of 3 objects 190 ns to 36 ns (5.3x), a 3-element tuple 119 ns to 33 ns (3.6x), a 5-key strict object 117 ns to 32 ns (3.7x), a discriminated union 92 ns to 27 ns (3.4x), a 5-key object 76 ns to 28 ns (2.8x); up to 7.8x faster when compiled"
+  caption={<>Time per parse, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
+/>
+
+There are two ways to opt in.
+
+## `z.compile()`
+
+Compiles a single schema and returns a compiled copy. The original schema is unchanged.
+
+Methods that derive a *new* schema (`.refine()`, `.extend()`, `.optional()`, `.meta()`, …) return uncompiled schemas. Compile the final schema, not an intermediate:
+
+```ts
+// ❌ the .refine() result is not compiled
+const schema = z.compile(z.string()).refine((val) => val.length > 1);
+
+// ✅ compile last
+const schema2 = z.compile(z.string().refine((val) => val.length > 1));
+```
+
+## `import "zod/compile"`
+
+Enables compilation globally. Every schema constructed *after* this import is compiled automatically the first time it parses.
+
+```ts
+import "zod/compile"; // must come before modules that define schemas
+import * as z from "zod";
+
+const schema = z.object({ name: z.string() });
+schema.parse({ name: "ok" }); // compiled on first parse
+```
+
+Compilation is lazy, so only the schemas you actually parse with get compiled.
+
+It also works as a Node.js CLI flag, which guarantees it runs before any module defines a schema:
+
+```sh
+node --import zod/compile app.js   # ESM
+node --require zod/compile app.cjs # CommonJS
+```
+
+Or set `preload` in [`bunfig.toml`](https://bun.com/docs/runtime/bunfig#preload) or [`nub.jsonc`](https://nubjs.com/docs/config#preload).
+
+```jsonc title="nub.jsonc"
+{
+  "preload": ["zod/compile"]
+}
+```
+
+This import is for applications, not libraries.
+
+## How it works
+
+Under the hood, `z.compile()` walks the entire schema once and produces a hyperoptimized snippet of flat, loop-free JavaScript that can validate inputs far faster than a standard runtime validator. This snippet can be executed via `new Function()` (effectively a more powerful `eval`) to serve as a fast-path validator. Schemas use this to "fast check" validity, falling back to the regular runtime logic on validation failure to provide granular error information.
+
+<include>../snippets/how-z-compile-works.mdx</include>
+
+On invalid input the fallback runs the uncompiled schema, so the error is the uncompiled schema's error. Two consequences:
+
+- Invalid inputs pay for both the fast path and the fallback, so compilation barely speeds up failures. Nearly all of that cost is the fallback, which is what produces the errors.
+- Refinements and transforms run once on valid input, and at most twice on invalid input.
+
+## Unsupported schemas
+
+Some features can't be compiled or don't benefit from compilation. In these cases, `z.compile()` ejects from compilation and returns the original schema unchanged:
+
+```ts
+const Schema = z.string().refine(async (val) => isAvailable(val));
+
+z.compile(Schema); // returns Schema itself, uncompiled
+```
+
+- `async` refinements, transforms, and checks
+- `z.xor()`
+- recursive schemas
+- `z.coerce.*`
+- checks with a custom `when`
+- `.catch()` given a callback (`.catch(value)` with a constant compiles normally)
+
+Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled. A union with an unsupported member, a `.catch()` callback, or anything async anywhere in the subtree makes the whole schema fall back.
+
+Encoding (`z.encode()`, the codec `"backward"` direction) and async parsing always use the standard parser.
+
+Pass `strict` to throw instead of falling back — for example, to confirm that a schema on a hot path really did compile:
+
+```ts
+z.compile(Schema, { strict: true }); // throws ZodCompileAsyncError
+```
+
+`ZodCompileAsyncError` is thrown for async schemas and `ZodCompileUnsupportedError` for everything else. Both are thrown only under `strict`.
+
+## Content Security Policy
+
+Compilation uses `new Function`, which is unavailable in CSP/no-`eval` environments. Global mode stands down when `jitless` is set:
+
+```ts
+z.config({ jitless: true });
+```
+
+Calling `z.compile()` directly is an explicit opt-in, so it attempts code generation regardless of `jitless`. Where the environment rejects `new Function`, the schema comes back uncompiled like any other refusal.
+
+## Bundle size
+
+The compiler is a lot of code, and invoking it via `z.compile()` or `"zod/compile"` means it will be included in your bundle. It adds about 7 KB gzipped (28 KB minified). A bundle that never calls `z.compile()` or imports `zod/compile` pays nothing; it will be tree-shaken completely during bundling.
+
+| bundle (four-key object schema) | without compiler | with compiler |
+| --- | --- | --- |
+| Zod | 24.1 KB | 31.1 KB |
+| Zod Mini | 4.6 KB | 13.2 KB |
+
+## Benchmarks
+
+The benefits scale with schema complexity. Each schema here is measured alone in a tight loop — the standard parser's best case — so the ratios run lower than in the chart at the top of the page ([benchmark](https://github.com/colinhacks/zod/blob/main/packages/bench/compile-scaling.ts)).
+
+| schema | speedup |
+| --- | --- |
+| object, 5 keys | 1.8x |
+| object, 10 keys | 2.2x |
+| object, 20 keys | 5.0x |
+| object, 50 keys | 10.2x |
+| tuple, 1 item | 2.2x |
+| tuple, 3 items | 2.5x |
+| tuple, 5 items | 3.0x |
+| tuple, 10 items | 3.7x |
+
+Results on the [Moltar benchmark](https://github.com/moltar/typescript-runtime-type-benchmarks) fixture, comparing Zod compiled and uncompiled with other libraries. The `parseSafe` category returns a new object with unknown keys stripped.
+
+<ThemedImage
+  lightSrc="/blog/moltar-light.svg"
+  darkSrc="/blog/moltar-dark.svg"
+  alt="Bar chart of operations per second on the moltar benchmark fixture, parseSafe category: Zod 4 compiled 47.5M, typia 45.3M, Zod 4 11.6M, valibot 1.8M, effect 1.7M, Zod 3 1.2M, arktype 152k, yup 121k"
+  caption={<>Throughput on the moltar benchmark fixture (parseSafe: returns a new object with unknown keys stripped) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
+/>
+
+The `assertLoose` category returns a boolean and allows unknown keys. Zod runs it through [`z.validate()`](/basics#handling-errors).
+
+<ThemedImage
+  lightSrc="/blog/moltar-assertLoose-light.svg"
+  darkSrc="/blog/moltar-assertLoose-dark.svg"
+  alt="Bar chart of operations per second on the moltar benchmark fixture, assertLoose category: typia 74.9M, arktype 66.2M, Zod 4 compiled 60.6M, Zod 4 6.5M, valibot 1.9M, effect 1.7M, Zod 3 1.2M, yup 124k"
+  caption={<>Throughput on the moltar benchmark fixture (assertLoose: returns a boolean, unknown keys allowed) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
+/>

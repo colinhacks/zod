@@ -407,3 +407,49 @@ test("direction-aware defaults", () => {
     }
   `);
 });
+
+test("default factory runs once per parse inside a container", () => {
+  let calls = 0;
+  const schema = z.object({
+    a: z.string().default(() => {
+      calls++;
+      return "d";
+    }),
+  });
+
+  expect(schema.parse({})).toEqual({ a: "d" });
+  expect(calls).toBe(1);
+
+  // the key is present, so the factory has nothing to produce
+  expect(schema.parse({ a: "given" })).toEqual({ a: "given" });
+  expect(calls).toBe(1);
+});
+
+test("prefault factory runs once per parse inside a container", () => {
+  let calls = 0;
+  const schema = z.object({
+    a: z.string().prefault(() => {
+      calls++;
+      return "d";
+    }),
+  });
+
+  expect(schema.parse({})).toEqual({ a: "d" });
+  expect(calls).toBe(1);
+});
+
+test("default factory does not run at compile time", () => {
+  let calls = 0;
+  const compiled = z.compile(
+    z.object({
+      a: z.string().default(() => {
+        calls++;
+        return "d";
+      }),
+    })
+  );
+
+  expect(calls).toBe(0);
+  expect(compiled.parse({})).toEqual({ a: "d" });
+  expect(calls).toBe(1);
+});

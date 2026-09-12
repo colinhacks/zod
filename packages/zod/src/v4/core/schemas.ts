@@ -1,10 +1,11 @@
-import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
+import type { $ZodNumberFormats } from "./checks.js";
+import type { $ZodBigIntFormats } from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
-import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
+import { parse, parseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
@@ -29,6 +30,15 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  /** Set only by `validate`/`validateAsync`. A container may stop before its next child, never inside one, so a map entry and a tuple's fixed items parse whole. */
+  readonly abortEarly?: boolean;
+}
+
+/** Gives a container cycle support: `attach` wraps its parse, and `alloc` registers the object it builds into before any child is parsed so a reference back to the same input resolves to it. */
+export interface $ZodMemoizer {
+  attach(inst: $ZodType): void;
+  guard(inst: $ZodType): void;
+  alloc<T extends object>(inst: $ZodType, payload: ParsePayload, empty: T, ctx: ParseContextInternal): T;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -36,11 +46,9 @@ export interface ParsePayload<T = unknown> {
   issues: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
-  /** @internal Marks a value as a fallback that an outer wrapper (e.g.
-   * $ZodOptional) may override with its own interpretation when input was
-   * undefined. Set by $ZodCatch when catchValue substitutes and by every
-   * $ZodTransform invocation. */
-  fallback?: boolean | undefined;
+  /** @internal Set when the value came from a repeat visit to a node still being
+   * parsed. Its checks run on the node itself, against the finished value. */
+  memo?: boolean | undefined;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -120,8 +128,13 @@ export interface _$ZodTypeInternals {
    * @default Required
    */
 
-  /** @internal */
-  optin?: "optional" | undefined;
+  /** @internal Three rungs, each strictly stronger than the last:
+   *   undefined    — required; the container may not omit this slot
+   *   "optional"   — the container may omit it; nothing is supplied in its place
+   *   "defaulted"  — the container may omit it AND this schema substitutes a value
+   * Consumers asking "may the slot be absent?" test `!== undefined`.
+   * $ZodOptional asks the stronger question and tests `=== "defaulted"`. */
+  optin?: "optional" | "defaulted" | undefined;
   /** @internal */
   optout?: "optional" | undefined;
 
@@ -187,137 +200,164 @@ export interface $ZodType<
 export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
   extends $ZodType<T["output"], T["input"], T> {}
 
-export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
-  inst ??= {} as any;
+export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor<$ZodType>(
+  "$ZodType",
+  (inst, def) => {
+    inst ??= {} as any;
 
-  inst._zod.def = def; // set _def property
-  inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
-  inst._zod.version = version;
+    inst._zod.def = def; // set _def property
+    inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
+    inst._zod.version = version;
 
-  const checks = [...(inst._zod.def.checks ?? [])];
+    const defChecks = inst._zod.def.checks;
+    // if inst is itself a checks.$ZodCheck, run it as a check
+    const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+      ? [inst as any, ...(defChecks ?? [])]
+      : defChecks?.length
+        ? [...defChecks]
+        : [];
 
-  // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst as any);
-  }
-
-  for (const ch of checks) {
-    for (const fn of ch._zod.onattach) {
-      fn(inst);
+    for (const ch of checks) {
+      for (const fn of ch._zod.onattach) {
+        fn(inst);
+      }
     }
-  }
 
-  if (checks.length === 0) {
-    // deferred initializer
-    // inst._zod.parse is not yet defined
-    inst._zod.deferred ??= [];
-    inst._zod.deferred?.push(() => {
-      inst._zod.run = inst._zod.parse;
-    });
-  } else {
-    const runChecks = (
-      payload: ParsePayload,
-      checks: checks.$ZodCheck<never>[],
-      ctx?: ParseContextInternal | undefined
-    ): util.MaybeAsync<ParsePayload> => {
-      let isAborted = util.aborted(payload);
+    if (checks.length === 0) {
+      // deferred initializer inst._zod.parse is not yet defined
+      inst._zod.deferred ??= [];
+      inst._zod.deferred?.push(() => {
+        inst._zod.run = inst._zod.parse;
+      });
+    } else {
+      const runChecks = (
+        payload: ParsePayload,
+        checks: checks.$ZodCheck<never>[],
+        ctx?: ParseContextInternal | undefined
+      ): util.MaybeAsync<ParsePayload> => {
+        if (payload.memo) return payload;
 
-      let asyncResult!: Promise<unknown> | undefined;
-      for (const ch of checks) {
-        if (ch._zod.def.when) {
-          if (util.explicitlyAborted(payload)) continue;
-          const shouldRun = ch._zod.def.when(payload);
-          if (!shouldRun) continue;
-        } else if (isAborted) {
-          continue;
-        }
-        const currLen = payload.issues.length;
-        const _ = ch._zod.check(payload as any) as any as ParsePayload;
+        let isAborted = util.aborted(payload);
 
-        if (_ instanceof Promise && ctx?.async === false) {
-          throw new core.$ZodAsyncError();
-        }
-        if (asyncResult || _ instanceof Promise) {
-          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
-            await _;
+        let asyncResult!: Promise<unknown> | undefined;
+        for (const ch of checks) {
+          if (ch._zod.def.when) {
+            if (util.explicitlyAborted(payload)) continue;
+            const shouldRun = ch._zod.def.when(payload);
+            if (!shouldRun) continue;
+          } else if (isAborted) {
+            continue;
+          }
+          const currLen = payload.issues.length;
+          const _ = ch._zod.check(payload as any) as any as ParsePayload;
+
+          if (_ instanceof Promise && ctx?.async === false) {
+            throw new core.$ZodAsyncError();
+          }
+          if (asyncResult || _ instanceof Promise) {
+            asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
+              await _;
+              const nextLen = payload.issues.length;
+              if (nextLen === currLen) return;
+              util.attachSchema(payload.issues, currLen, inst);
+              if (!isAborted) isAborted = util.aborted(payload, currLen);
+            });
+          } else {
             const nextLen = payload.issues.length;
-            if (nextLen === currLen) return;
+            if (nextLen === currLen) continue;
+            util.attachSchema(payload.issues, currLen, inst);
             if (!isAborted) isAborted = util.aborted(payload, currLen);
-          });
-        } else {
-          const nextLen = payload.issues.length;
-          if (nextLen === currLen) continue;
-          if (!isAborted) isAborted = util.aborted(payload, currLen);
-        }
-      }
-
-      if (asyncResult) {
-        return asyncResult.then(() => {
-          return payload;
-        });
-      }
-      return payload;
-    };
-
-    const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
-      // abort if the canary is aborted
-      if (util.aborted(canary)) {
-        canary.aborted = true;
-        return canary;
-      }
-
-      // run checks first, then
-      const checkResult = runChecks(payload, checks, ctx);
-      if (checkResult instanceof Promise) {
-        if (ctx.async === false) throw new core.$ZodAsyncError();
-        return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
-      }
-      return inst._zod.parse(checkResult, ctx);
-    };
-
-    inst._zod.run = (payload, ctx) => {
-      if (ctx.skipChecks) {
-        return inst._zod.parse(payload, ctx);
-      }
-      if (ctx.direction === "backward") {
-        // run canary
-        // initial pass (no checks)
-        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
-
-        if (canary instanceof Promise) {
-          return canary.then((canary) => {
-            return handleCanaryResult(canary, payload, ctx);
-          });
+          }
         }
 
-        return handleCanaryResult(canary, payload, ctx);
-      }
+        if (asyncResult) {
+          return asyncResult.then(() => {
+            return payload;
+          });
+        }
+        return payload;
+      };
 
-      // forward
-      const result = inst._zod.parse(payload, ctx);
-      if (result instanceof Promise) {
-        if (ctx.async === false) throw new core.$ZodAsyncError();
-        return result.then((result) => runChecks(result, checks, ctx));
-      }
+      const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
+        // abort if the canary is aborted
+        if (util.aborted(canary)) {
+          canary.aborted = true;
+          return canary;
+        }
 
-      return runChecks(result, checks, ctx);
-    };
+        // run checks first, then
+        const checkResult = runChecks(payload, checks, ctx);
+        if (checkResult instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
+        }
+        return inst._zod.parse(checkResult, ctx);
+      };
+
+      inst._zod.run = (payload, ctx) => {
+        if (ctx.skipChecks) {
+          return inst._zod.parse(payload, ctx);
+        }
+        if (ctx.direction === "backward") {
+          // run canary initial pass (no checks)
+          const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
+
+          if (canary instanceof Promise) {
+            return canary.then((canary) => {
+              return handleCanaryResult(canary, payload, ctx);
+            });
+          }
+
+          return handleCanaryResult(canary, payload, ctx);
+        }
+
+        // forward
+        const result = inst._zod.parse(payload, ctx);
+        if (result instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return result.then((result) => runChecks(result, checks, ctx));
+        }
+
+        return runChecks(result, checks, ctx);
+      };
+    }
+  },
+  {
+    // Wrappers extend this by installing a richer factory over it; reading it eagerly would defeat the laziness.
+    get "~standard"(): StandardSchemaV1.Props<any, any> {
+      return util.hide(this, "~standard", standardProps(this));
+    },
+    set "~standard"(value: StandardSchemaV1.Props<any, any>) {
+      util.own(this, "~standard", value);
+    },
   }
+);
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+// a Standard Schema result only reports issues, so a failure finalizes them straight off the raw payload: no ZodError, and no lazy result to read through
+const toStandardResult = (r: ParsePayload, ctx: ParseContextInternal) =>
+  r.issues.length ? { issues: r.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())) } : { value: r.value };
+
+async function validateAsync(inst: $ZodType, value: unknown) {
+  const ctx: ParseContextInternal = { async: true };
+  return toStandardResult((await inst._zod.run({ value, issues: [] }, ctx)) as ParsePayload, ctx);
+}
+
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
     validate: (value: unknown) => {
+      const ctx: ParseContextInternal = { async: false };
       try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
-      } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
-      }
+        const r = inst._zod.run({ value, issues: [] }, ctx);
+        if (!(r instanceof Promise)) return toStandardResult(r, ctx);
+      } catch (_) {}
+      // async function so a synchronously throwing check rejects instead of escaping validate
+      return validateAsync(inst, value);
     },
     vendor: "zod",
     version: 1 as const,
-  }));
-});
+  };
+}
 
 export { clone } from "./util.js";
 
@@ -347,6 +387,8 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
     patterns: Set<RegExp>;
     format: string;
     contentEncoding: string;
+    /** the pattern admits strings its `format` keyword forbids, so `toJSONSchema` must not emit it */
+    laxFormat: boolean;
   }>;
 }
 
@@ -356,7 +398,8 @@ export interface $ZodString<Input = unknown> extends _$ZodType<$ZodStringInterna
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = [...(inst?._zod.bag?.patterns ?? [])].pop() ?? regexes.string(inst._zod.bag);
+  // a format's own pattern, else unbounded; a template literal derives the check-aware form itself
+  inst._zod.pattern = (def as $ZodStringFormatDef).pattern ?? regexes.anyString;
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -477,70 +520,132 @@ export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
 }
 
+/** The `://` guard rejected the input before the URL constructor saw it. */
+export const URL_BAD_FORMAT = 1;
+/** The URL parser rejected the input. */
+export const URL_UNPARSEABLE = 2;
+
+export function canParseURL(input: string): boolean {
+  try {
+    if (typeof URL !== "undefined" && typeof URL.canParse === "function") return URL.canParse(input);
+    new URL(input);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function validateURL(
+  trimmed: string,
+  def: Pick<$ZodURLDef, "protocol" | "hostname" | "normalize">
+): URL | true | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE {
+  if (!("normalize" in def) && !("hostname" in def) && !("protocol" in def)) {
+    return canParseURL(trimmed) || URL_UNPARSEABLE;
+  }
+  return parseURLObject(trimmed, def);
+}
+
+/** Parses a URL while preserving the non-normalizing HTTP guard. */
+export function parseURLObject(
+  trimmed: string,
+  def: Pick<$ZodURLDef, "protocol" | "normalize">
+): URL | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE {
+  // When normalize is off, require :// for http/https URLs. This prevents strings like "http:example.com" or "https:/path" from being silently accepted
+  if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source && !/^https?:\/\//i.test(trimmed)) {
+    return URL_BAD_FORMAT;
+  }
+
+  try {
+    if (typeof URL !== "undefined") {
+      const URLStatic = URL as typeof URL & { parse?: (input: string) => URL | null };
+      if (typeof URLStatic.parse === "function") return URLStatic.parse(trimmed) ?? URL_UNPARSEABLE;
+    }
+    // @ts-ignore
+    return new URL(trimmed);
+  } catch {
+    return URL_UNPARSEABLE;
+  }
+}
+
+const asciiTabOrNewline = /[\t\n\r]/g;
+
+/** The URL parser deletes every ASCII tab, LF and CR from its input before it parses, so `new URL("https://exa\nmple.com")` reports on `example.com`. Applying the same deletion to the returned value closes the half of that divergence which can move the host; the parser's other rewrite, stripping C0 controls at the edges, cannot. */
+export function stripTabAndNewline(value: string): string {
+  return value.replace(asciiTabOrNewline, "");
+}
+
+export function urlHostnameOk(url: URL, hostname: RegExp): boolean {
+  hostname.lastIndex = 0;
+  return hostname.test(url.hostname);
+}
+
+export function urlProtocolOk(url: URL, protocol: RegExp): boolean {
+  protocol.lastIndex = 0;
+  return protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol);
+}
+
 export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$constructor("$ZodURL", (inst, def) => {
   $ZodStringFormat.init(inst, def);
   inst._zod.check = (payload) => {
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
+      const url = validateURL(trimmed, def);
 
-      // When normalize is off, require :// for http/https URLs
-      // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
-      if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
-        if (!/^https?:\/\//i.test(trimmed)) {
-          payload.issues.push({
-            code: "invalid_format",
-            format: "url",
-            note: "Invalid URL format",
-            input: payload.value,
-            inst,
-            continue: !def.abort,
-          });
-          return;
-        }
+      if (url === URL_BAD_FORMAT) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid URL format",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
       }
 
-      // @ts-ignore
-      const url = new URL(trimmed);
-
-      if (def.hostname) {
-        def.hostname.lastIndex = 0;
-        if (!def.hostname.test(url.hostname)) {
-          payload.issues.push({
-            code: "invalid_format",
-            format: "url",
-            note: "Invalid hostname",
-            pattern: def.hostname.source,
-            input: payload.value,
-            inst,
-            continue: !def.abort,
-          });
-        }
+      if (url === URL_UNPARSEABLE) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
       }
 
-      if (def.protocol) {
-        def.protocol.lastIndex = 0;
-        if (!def.protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
-          payload.issues.push({
-            code: "invalid_format",
-            format: "url",
-            note: "Invalid protocol",
-            pattern: def.protocol.source,
-            input: payload.value,
-            inst,
-            continue: !def.abort,
-          });
-        }
+      if (url === true) {
+        payload.value = stripTabAndNewline(trimmed);
+        return;
+      }
+
+      if (def.hostname && !urlHostnameOk(url, def.hostname)) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid hostname",
+          pattern: def.hostname.source,
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+      }
+
+      if (def.protocol && !urlProtocolOk(url, def.protocol)) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid protocol",
+          pattern: def.protocol.source,
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
       }
 
       // Set the output value based on normalize flag
-      if (def.normalize) {
-        // Use normalized URL
-        payload.value = url.href;
-      } else {
-        // Preserve the original input (trimmed)
-        payload.value = trimmed;
-      }
+      payload.value = def.normalize ? url.href : stripTabAndNewline(trimmed);
 
       return;
     } catch (_) {
@@ -574,8 +679,12 @@ export const $ZodEmoji: core.$constructor<$ZodEmoji> = /*@__PURE__*/ core.$const
 
 //////////////////////////////   ZodNanoID   //////////////////////////////
 
-export interface $ZodNanoIDDef extends $ZodStringFormatDef<"nanoid"> {}
-export interface $ZodNanoIDInternals extends $ZodStringFormatInternals<"nanoid"> {}
+export interface $ZodNanoIDDef extends $ZodStringFormatDef<"nanoid"> {
+  length?: number | undefined;
+}
+export interface $ZodNanoIDInternals extends $ZodStringFormatInternals<"nanoid"> {
+  def: $ZodNanoIDDef;
+}
 
 export interface $ZodNanoID extends $ZodType {
   _zod: $ZodNanoIDInternals;
@@ -584,7 +693,9 @@ export interface $ZodNanoID extends $ZodType {
 export const $ZodNanoID: core.$constructor<$ZodNanoID> = /*@__PURE__*/ core.$constructor(
   "$ZodNanoID",
   (inst, def): void => {
-    def.pattern ??= regexes.nanoid;
+    if (def.length !== undefined && (!Number.isInteger(def.length) || def.length < 1))
+      throw new Error(`Invalid nanoid length: ${def.length}`);
+    def.pattern ??= def.length === undefined ? regexes.nanoid : regexes.nanoidOfLength(def.length);
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -782,8 +893,6 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `ipv4`;
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -800,18 +909,20 @@ export interface $ZodIPv6 extends $ZodType {
   _zod: $ZodIPv6Internals;
 }
 
+/** An IPv6 address is written with hex digits, colons and dots, and nothing else. The guard is what makes the check below an IPv6 check: `new URL("http://[...]")` parses an authority, not an address, so `@` and `\` re-delimit it and `"::@1\\"` validates against the host `0.0.0.1`. The URL parser also deletes ASCII tab, LF and CR rather than failing, which is how `"::1\n"` validated as `::1`. */
+const ipv6Alphabet = /^[0-9a-fA-F:.]+$/;
+
+export function isValidIPv6(value: string): boolean {
+  if (!ipv6Alphabet.test(value)) return false;
+  return canParseURL(`http://[${value}]`);
+}
+
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
 
-  inst._zod.bag.format = `ipv6`;
-
   inst._zod.check = (payload) => {
-    try {
-      // @ts-ignore
-      new URL(`http://[${payload.value}]`);
-      // return;
-    } catch {
+    if (!isValidIPv6(payload.value)) {
       payload.issues.push({
         code: "invalid_format",
         format: "ipv6",
@@ -839,8 +950,6 @@ export interface $ZodMAC extends $ZodType {
 export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
   def.pattern ??= regexes.mac(def.delimiter);
   $ZodStringFormat.init(inst, def);
-
-  inst._zod.bag.format = `mac`;
 });
 
 //////////////////////////////   ZodCIDRv4   //////////////////////////////
@@ -879,6 +988,17 @@ export interface $ZodCIDRv6 extends $ZodType {
   _zod: $ZodCIDRv6Internals;
 }
 
+export function isValidCIDRv6(value: string): boolean {
+  const parts = value.split("/");
+  if (parts.length !== 2) return false;
+  const [address, prefix] = parts;
+  if (!prefix) return false;
+  const prefixNum = Number(prefix);
+  if (`${prefixNum}` !== prefix) return false;
+  if (prefixNum < 0 || prefixNum > 128) return false;
+  return isValidIPv6(address);
+}
+
 export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$constructor(
   "$ZodCIDRv6",
   (inst, def): void => {
@@ -886,17 +1006,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      const parts = payload.value.split("/");
-      try {
-        if (parts.length !== 2) throw new Error();
-        const [address, prefix] = parts;
-        if (!prefix) throw new Error();
-        const prefixNum = Number(prefix);
-        if (`${prefixNum}` !== prefix) throw new Error();
-        if (prefixNum < 0 || prefixNum > 128) throw new Error();
-        // @ts-ignore
-        new URL(`http://[${address}]`);
-      } catch {
+      if (!isValidCIDRv6(payload.value)) {
         payload.issues.push({
           code: "invalid_format",
           format: "cidrv6",
@@ -931,13 +1041,14 @@ export interface $ZodBase64 extends $ZodType {
   _zod: $ZodBase64Internals;
 }
 
+// lax on purpose: the quantified regexes.base64 overflows the regex stack on multi-MB input and its leading ^$| alternation leaks through template-literal composition; isValidBase64 enforces length and padding
+export const base64Charset: RegExp = /^[0-9a-zA-Z+/]*={0,2}$/;
+
 export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64",
   (inst, def): void => {
-    def.pattern ??= regexes.base64;
+    def.pattern ??= base64Charset;
     $ZodStringFormat.init(inst, def);
-
-    inst._zod.bag.contentEncoding = "base64";
 
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
@@ -953,9 +1064,12 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
   }
 );
 
-//////////////////////////////   ZodBase64   //////////////////////////////
+//////////////////////////////   ZodBase64URL   //////////////////////////////
+// lax on purpose: the quantified regexes.base64url overflows the regex stack on multi-MB input; isValidBase64 enforces length on the padded string
+export const base64urlCharset: RegExp = /^[A-Za-z0-9_-]*$/;
+
 export function isValidBase64URL(data: string): boolean {
-  if (!regexes.base64url.test(data)) return false;
+  if (!base64urlCharset.test(data)) return false;
   const base64 = data.replace(/[-_]/g, (c) => (c === "-" ? "+" : "/"));
   const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
   return isValidBase64(padded);
@@ -971,10 +1085,8 @@ export interface $ZodBase64URL extends $ZodType {
 export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64URL",
   (inst, def): void => {
-    def.pattern ??= regexes.base64url;
+    def.pattern ??= base64urlCharset;
     $ZodStringFormat.init(inst, def);
-
-    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -1002,6 +1114,103 @@ export interface $ZodE164 extends $ZodType {
 export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constructor("$ZodE164", (inst, def): void => {
   def.pattern ??= regexes.e164;
   $ZodStringFormat.init(inst, def);
+});
+
+//////////////////////////////   ZodCreditCard   //////////////////////////////
+
+const CC_SANITIZE = /[- ]/g;
+
+/** Luhn checksum on a digit-only string. Adapted from valibot (MIT). */
+function isLuhnAlgo(digits: string): boolean {
+  let length = digits.length;
+  let bit = 1;
+  let sum = 0;
+  while (length) {
+    const value = digits.charCodeAt(--length) - 48;
+    bit ^= 1;
+    sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
+  }
+  return sum % 10 === 0;
+}
+
+export function isValidCreditCard(input: string): boolean {
+  if (!regexes.creditCard.test(input)) return false;
+  return isLuhnAlgo(input.replace(CC_SANITIZE, ""));
+}
+
+export interface $ZodCreditCardDef extends $ZodStringFormatDef<"credit_card"> {}
+export interface $ZodCreditCardInternals extends $ZodStringFormatInternals<"credit_card"> {
+  def: $ZodCreditCardDef;
+}
+
+export interface $ZodCreditCard extends $ZodType {
+  _zod: $ZodCreditCardInternals;
+}
+
+export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "$ZodCreditCard",
+  (inst, def): void => {
+    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of `pattern` (JSON Schema, template literals) get the length and separator rules alone.
+    def.pattern ??= regexes.creditCard;
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      if (isValidCreditCard(payload.value)) return;
+      payload.issues.push({
+        code: "invalid_format",
+        format: "credit_card",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+//////////////////////////////   ZodIBAN   //////////////////////////////
+
+// iso 7064 mod 97-10 checksum without BigInt
+function isIso7064Mod97(iban: string): boolean {
+  let remainder = 0;
+  const len = iban.length;
+  for (let i = 4; i < len; i++) {
+    const code = iban.charCodeAt(i);
+    remainder = (code >= 65 ? remainder * 100 + (code - 55) : remainder * 10 + (code - 48)) % 97;
+  }
+  for (let i = 0; i < 4; i++) {
+    const code = iban.charCodeAt(i);
+    remainder = (code >= 65 ? remainder * 100 + (code - 55) : remainder * 10 + (code - 48)) % 97;
+  }
+  return remainder === 1;
+}
+
+export function isValidIBAN(input: string): boolean {
+  if (!regexes.iban.test(input)) return false;
+  return isIso7064Mod97(input);
+}
+
+export interface $ZodIBANDef extends $ZodStringFormatDef<"iban"> {}
+export interface $ZodIBANInternals extends $ZodStringFormatInternals<"iban"> {
+  def: $ZodIBANDef;
+}
+
+export interface $ZodIBAN extends $ZodType {
+  _zod: $ZodIBANInternals;
+}
+
+export const $ZodIBAN: core.$constructor<$ZodIBAN> = /*@__PURE__*/ core.$constructor("$ZodIBAN", (inst, def): void => {
+  // shape only — checksum is not expressible as a pattern
+  def.pattern ??= regexes.iban;
+  $ZodStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    if (isValidIBAN(payload.value)) return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "iban",
+      input: payload.value,
+      inst,
+      continue: !def.abort,
+    });
+  };
 });
 
 //////////////////////////////   ZodJWT   //////////////////////////////
@@ -1120,7 +1329,7 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
 
-  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
+  inst._zod.pattern = regexes.number;
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
@@ -1136,7 +1345,7 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
         ? Number.isNaN(input)
           ? "NaN"
           : !Number.isFinite(input)
-            ? "Infinity"
+            ? String(input)
             : undefined
         : undefined;
 
@@ -1155,15 +1364,19 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
 ///////////////////////////////////////////////
 //////////      ZodNumberFormat      //////////
 ///////////////////////////////////////////////
-export interface $ZodNumberFormatDef extends $ZodNumberDef, checks.$ZodCheckNumberFormatDef {}
+export interface $ZodNumberFormatDef<Format extends $ZodNumberFormats = $ZodNumberFormats>
+  extends $ZodNumberDef,
+    checks.$ZodCheckNumberFormatDef<Format> {}
 
-export interface $ZodNumberFormatInternals extends $ZodNumberInternals<number>, checks.$ZodCheckNumberFormatInternals {
-  def: $ZodNumberFormatDef;
+export interface $ZodNumberFormatInternals<Format extends $ZodNumberFormats = $ZodNumberFormats>
+  extends $ZodNumberInternals<number>,
+    checks.$ZodCheckNumberFormatInternals<Format> {
+  def: $ZodNumberFormatDef<Format>;
   isst: errors.$ZodIssueInvalidType;
 }
 
-export interface $ZodNumberFormat extends $ZodType {
-  _zod: $ZodNumberFormatInternals;
+export interface $ZodNumberFormat<Format extends $ZodNumberFormats = $ZodNumberFormats> extends $ZodType {
+  _zod: $ZodNumberFormatInternals<Format>;
 }
 
 export const $ZodNumberFormat: core.$constructor<$ZodNumberFormat> = /*@__PURE__*/ core.$constructor(
@@ -1278,16 +1491,20 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
 ///////////////////////////////////////////////
 //////////      ZodBigIntFormat      //////////
 ///////////////////////////////////////////////
-export interface $ZodBigIntFormatDef extends $ZodBigIntDef, checks.$ZodCheckBigIntFormatDef {
+export interface $ZodBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends $ZodBigIntDef,
+    checks.$ZodCheckBigIntFormatDef<Format> {
   check: "bigint_format";
 }
 
-export interface $ZodBigIntFormatInternals extends $ZodBigIntInternals<bigint>, checks.$ZodCheckBigIntFormatInternals {
-  def: $ZodBigIntFormatDef;
+export interface $ZodBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends $ZodBigIntInternals<bigint>,
+    checks.$ZodCheckBigIntFormatInternals<Format> {
+  def: $ZodBigIntFormatDef<Format>;
 }
 
-export interface $ZodBigIntFormat extends $ZodType {
-  _zod: $ZodBigIntFormatInternals;
+export interface $ZodBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodType {
+  _zod: $ZodBigIntFormatInternals<Format>;
 }
 
 export const $ZodBigIntFormat: core.$constructor<$ZodBigIntFormat> = /*@__PURE__*/ core.$constructor(
@@ -1637,6 +1854,9 @@ function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>
 export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
 
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
+
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
 
@@ -1651,8 +1871,9 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = Array(input.length);
+    payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
+    const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
       const result = def.element._zod.run(
@@ -1667,6 +1888,8 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
         proms.push(result.then((result) => handleArrayResult(result, payload, i)));
       } else {
         handleArrayResult(result, payload, i);
+        // the element's payload is authoritative here, since handleArrayResult forwards every issue; an object's is not, because it drops a failed absent optional
+        if (abortEarly && result.issues.length !== 0 && util.aborted(result)) break;
       }
     }
 
@@ -1687,12 +1910,12 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////
 
 type OptionalOutSchema = { _zod: { optout: "optional" } };
-type OptionalInSchema = { _zod: { optin: "optional" } };
+type OptionalInSchema = { _zod: { optin: "optional" | "defaulted" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
-    : Record<string, core.output<T[keyof T]>>
+    : { [k in string]: core.output<T[keyof T]> }
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
@@ -1736,7 +1959,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
 export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
-    : Record<string, core.input<T[keyof T]>>
+    : { [k in string]: core.input<T[keyof T]> }
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
@@ -1752,19 +1975,24 @@ function handlePropertyResult(
   final: ParsePayload,
   key: PropertyKey,
   input: any,
-  isOptionalIn: boolean,
-  isOptionalOut: boolean
+  optin: "optional" | "defaulted" | undefined,
+  optout: "optional" | undefined
 ) {
   const isPresent = key in input;
+  const isOptionalOut = optout === "optional";
+  // The middle rung means "absence permitted, nothing supplied in its place", so an absent key contributes nothing — whatever the schema made of `undefined` is invented, not substituted. Only `optional` reaches this with a value: `defaulted` substitutes, and a schema that isn't optional-out has to keep the key.
+  if (!isPresent && isOptionalOut && optin === "optional") {
+    return;
+  }
   if (result.issues.length) {
     // For optional-in/out schemas, ignore errors on absent keys.
-    if (isOptionalIn && isOptionalOut && !isPresent) {
+    if (optin !== undefined && isOptionalOut && !isPresent) {
       return;
     }
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
-  if (!isPresent && !isOptionalIn) {
+  if (!isPresent && optin === undefined) {
     if (!result.issues.length) {
       final.issues.push({
         code: "invalid_type",
@@ -1777,7 +2005,7 @@ function handlePropertyResult(
   }
 
   if (result.value === undefined) {
-    if (isPresent) {
+    if (isPresent || (optin === "defaulted" && !isOptionalOut)) {
       (final.value as any)[key] = undefined;
     }
   } else {
@@ -1835,18 +2063,27 @@ export interface $ZodObject<
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {}
 
+// one shared instance; a fresh [] per schema cost 56 bytes retained
+const NO_SYMBOL_KEYS: symbol[] = [];
+
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
-  for (const k of keys) {
-    if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
-      throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+  const ownSymbols = Object.getOwnPropertySymbols(def.shape);
+  const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
+  // aliases `keys` when there are no symbols, so a string-only shape keeps one array
+  const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
+  for (const k of allKeys) {
+    if (!(def.shape as any)?.[k]?._zod?.traits?.has("$ZodType")) {
+      throw new Error(`Invalid element at key "${String(k)}": expected a Zod schema`);
     }
   }
   const okeys = util.optionalKeys(def.shape);
 
   return {
     ...def,
-    keys,
+    allKeys,
+    symbolKeys,
+    // string-only: handleCatchall matches it against `for...in`, which never yields a symbol
     keySet: new Set(keys),
     numKeys: keys.length,
     optionalKeys: new Set(okeys),
@@ -1857,21 +2094,31 @@ function handleCatchall(
   proms: Promise<any>[],
   input: any,
   payload: ParsePayload,
-  ctx: ParseContext,
+  ctx: ParseContextInternal,
   def: ReturnType<typeof normalizeDef>,
-  inst: $ZodObject
+  inst: $ZodObject,
+  abortEarly: boolean
 ) {
   const unrecognized: string[] = [];
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
-  const isOptionalIn = _catchall.optin === "optional";
-  const isOptionalOut = _catchall.optout === "optional";
+  const optin = _catchall.optin;
+  const optout = _catchall.optout;
+  // starts at 0, not the current length: the shape phase already ran and may have aborted
+  let seen = 0;
   for (const key in input) {
-    // skip __proto__ so it can't replace the result prototype via the
-    // assignment setter on the plain {} we build into
-    if (key === "__proto__") continue;
+    if (abortEarly && payload.issues.length !== seen) {
+      if (util.aborted(payload, seen)) break;
+      seen = payload.issues.length;
+    }
+    // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
+    // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would replace the result prototype. But in strict mode it is still an unknown key, so report it before skipping.
+    if (key === "__proto__") {
+      if (t === "never") unrecognized.push(key);
+      continue;
+    }
     if (t === "never") {
       unrecognized.push(key);
       continue;
@@ -1879,9 +2126,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
     } else {
-      handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+      handlePropertyResult(r, payload, key, input, optin, optout);
     }
   }
 
@@ -1891,6 +2138,8 @@ function handleCatchall(
       keys: unrecognized,
       input,
       inst,
+      // Describes the shape of the input, not the validity of the parsed value, so it never aborts. The parse still fails; the schema's own checks just get to run first, and an enclosing intersection can reconcile the key against a sibling operand.
+      continue: true,
     });
   }
 
@@ -1903,32 +2152,35 @@ function handleCatchall(
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
-  // const sh = def.shape;
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
-  if (!desc?.get) {
-    const sh = def.shape;
-    Object.defineProperty(def, "shape", {
-      get: () => {
-        const newSh = { ...sh };
-        Object.defineProperty(def, "shape", {
-          value: newSh,
-        });
-
-        return newSh;
-      },
-    });
+  // a cloned def carries its source's accessor, which knows the shape it answers from; adopting that keeps the clone's keys readable without running it
+  const sh = desc?.get ? (desc.get as util.ShapeGetter).raw : (def.shape ?? {});
+  if (sh) {
+    // Freezes the shape on first read, so its getters resolve once and every later read sees the same schemas.
+    const get: util.ShapeGetter = () => {
+      const newSh = { ...sh };
+      Object.defineProperty(def, "shape", { value: newSh });
+      get.raw = newSh;
+      return newSh;
+    };
+    get.raw = sh;
+    Object.defineProperty(def, "shape", { get });
   }
 
   const _normalized = util.cached(() => normalizeDef(def));
 
-  util.defineLazy(inst._zod, "propValues", () => {
-    const shape = def.shape;
+  util.defineLazyInternal(inst, "propValues", (zod) => {
+    const shape = zod.def.shape;
     const propValues: util.PropValues = {};
     for (const key in shape) {
       const field = shape[key]!._zod;
       if (field.values) {
-        propValues[key] ??= new Set();
+        if (!Object.prototype.hasOwnProperty.call(propValues, key)) {
+          util.assignProp(propValues, key, new Set());
+        }
         for (const v of field.values) propValues[key].add(v);
+        // An omittable slot reads back as undefined at a discriminator lookup, so it has to claim undefined: two options that can both omit the key are not discriminable on it.
+        if (field.optin !== undefined) propValues[key].add(undefined);
       }
     }
     return propValues;
@@ -1938,6 +2190,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const catchall = def.catchall;
 
   let value!: typeof _normalized.value;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     value ??= _normalized.value;
@@ -1952,21 +2206,28 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    payload.value = {};
+    payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
+    const abortEarly = ctx?.abortEarly;
+    let seen = payload.issues.length;
 
-    for (const key of value.keys) {
-      const el = shape[key]!;
-      const isOptionalIn = el._zod.optin === "optional";
-      const isOptionalOut = el._zod.optout === "optional";
+    for (const key of value.allKeys) {
+      if (abortEarly && payload.issues.length !== seen) {
+        if (util.aborted(payload, seen)) break;
+        seen = payload.issues.length;
+      }
+      if (key === "__proto__") continue;
+      const el = (shape as any)[key]!;
+      const optin = el._zod.optin;
+      const optout = el._zod.optout;
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
       } else {
-        handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+        handlePropertyResult(r, payload, key, input, optin, optout);
       }
     }
 
@@ -1974,7 +2235,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
 
-    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst, abortEarly === true);
   };
 });
 
@@ -1987,63 +2248,71 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
-    const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx"]);
-      const normalized = _normalized.value;
+    const memo = core.globalConfig.memoizer;
 
-      const parseStr = (key: string) => {
-        const k = util.esc(key);
-        return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
-      };
+    const generateFastpass = (shape: any) => {
+      const normalized = _normalized.value;
+      const syms = normalized.symbolKeys;
+      // a symbol has no source literal, so it is read as `syms[i]` off the closed-over scope
+      const doc = new Doc(["payload", "ctx"], { shape, inst, memo, syms });
+
+      const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+
+      // prefixes in place, like util.prefixIssues. newResult must land before the early return: a catchall runs after this and would otherwise write onto the caller's input
+      const prefixStr = (id: string, k: string) => `
+          let ${id}_ab = false;
+          for (let i = 0; i < ${id}.issues.length; i++) {
+            const iss = ${id}.issues[i];
+            iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
+            payload.issues.push(iss);
+            if (iss.continue !== true) ${id}_ab = true;
+          }
+          if (${id}_ab && ctx && ctx.abortEarly) {
+            payload.value = newResult;
+            return payload;
+          }`;
 
       doc.write(`const input = payload.value;`);
 
       const ids: any = Object.create(null);
       let counter = 0;
-      for (const key of normalized.keys) {
+      for (const key of normalized.allKeys) {
         ids[key] = `key_${counter++}`;
       }
 
       // A: preserve key order {
-      doc.write(`const newResult = {};`);
-      for (const key of normalized.keys) {
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
+      for (const key of normalized.allKeys) {
+        if (key === "__proto__") continue;
         const id = ids[key];
-        const k = util.esc(key);
+        const k = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : util.esc(key);
+        const isPresent = `${k} in input`;
         const schema = shape[key];
-        const isOptionalIn = schema?._zod?.optin === "optional";
+        const optin = schema?._zod?.optin;
+        const isOptionalIn = optin !== undefined;
         const isOptionalOut = schema?._zod?.optout === "optional";
 
-        doc.write(`const ${id} = ${parseStr(key)};`);
+        doc.write(`const ${id} = ${parseStr(k)};`);
 
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys
+          // For optional-in/out schemas, ignore errors on absent keys — and, like the interpreted path, drop the value produced alongside them. The middle rung goes further: it permits absence without supplying anything in its place, so an absent key contributes nothing at all.
+          const assign = optin === "optional" ? `${id}_present` : `${id}.value !== undefined || ${id}_present`;
           doc.write(`
-        if (${id}.issues.length) {
-          if (${k} in input) {
-            payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-              ...iss,
-              path: iss.path ? [${k}, ...iss.path] : [${k}]
-            })));
+        const ${id}_present = ${isPresent};
+        if (!${id}.issues.length || ${id}_present) {
+          if (${id}.issues.length) {${prefixStr(id, k)}
+          }
+
+          if (${assign}) {
+            newResult[${k}] = ${id}.value;
           }
         }
-        
-        if (${id}.value === undefined) {
-          if (${k} in input) {
-            newResult[${k}] = undefined;
-          }
-        } else {
-          newResult[${k}] = ${id}.value;
-        }
-        
+
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id}_present = ${k} in input;
-        if (${id}.issues.length) {
-          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${k}, ...iss.path] : [${k}]
-          })));
+        const ${id}_present = ${isPresent};
+        if (${id}.issues.length) {${prefixStr(id, k)}
         }
         if (!${id}_present && !${id}.issues.length) {
           payload.issues.push({
@@ -2052,42 +2321,38 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             input: undefined,
             path: [${k}]
           });
+          if (ctx && ctx.abortEarly) {
+            payload.value = newResult;
+            return payload;
+          }
         }
 
         if (${id}_present) {
-          if (${id}.value === undefined) {
-            newResult[${k}] = undefined;
-          } else {
-            newResult[${k}] = ${id}.value;
-          }
+          newResult[${k}] = ${id}.value;
         }
 
       `);
         } else {
           doc.write(`
-        if (${id}.issues.length) {
-          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${k}, ...iss.path] : [${k}]
-          })));
+        if (${id}.issues.length) {${prefixStr(id, k)}
         }
-        
-        if (${id}.value === undefined) {
-          if (${k} in input) {
-            newResult[${k}] = undefined;
-          }
-        } else {
+      `);
+          if (optin === "defaulted") {
+            doc.write(`newResult[${k}] = ${id}.value;`);
+          } else {
+            doc.write(`
+        if (${id}.value !== undefined || ${isPresent}) {
           newResult[${k}] = ${id}.value;
         }
-        
       `);
+          }
         }
       }
 
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
-      const fn = doc.compile();
-      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      // closing `shape` in is what pays: turbofan specializes the parser against that one shape object, so every `shape[k]._zod.run` folds to a known callee. as a parameter it stays a generic load and measures 13% slower even with the forwarding frame gone
+      return doc.compile() as (payload: any, ctx: any) => any;
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
@@ -2120,7 +2385,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         payload = fastpass(payload, ctx);
 
         if (!catchall) return payload;
-        return handleCatchall([], input, payload, ctx, value, inst);
+        return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true);
       }
 
       return superParse(payload, ctx);
@@ -2155,7 +2420,7 @@ export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $Zo
   output: $InferUnionOutput<T[number]>;
   input: $InferUnionInput<T[number]>;
   // if any element in the union is optional, then the union is optional
-  optin: IsOptionalIn<T[number]> extends false ? "optional" | undefined : "optional";
+  optin: IsOptionalIn<T[number]> extends false ? "optional" | "defaulted" | undefined : "optional" | "defaulted";
   optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
 }
 
@@ -2192,24 +2457,28 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
 
-  util.defineLazy(inst._zod, "optin", () =>
-    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+  util.defineLazyInternal(inst, "optin", (zod) =>
+    zod.def.options.some((o) => o._zod.optin === "defaulted")
+      ? "defaulted"
+      : zod.def.options.some((o) => o._zod.optin !== undefined)
+        ? "optional"
+        : undefined
   );
 
-  util.defineLazy(inst._zod, "optout", () =>
-    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+  util.defineLazyInternal(inst, "optout", (zod) =>
+    zod.def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
   );
 
-  util.defineLazy(inst._zod, "values", () => {
-    if (def.options.every((o) => o._zod.values)) {
-      return new Set<util.Primitive>(def.options.flatMap((option) => Array.from(option._zod.values!)));
+  util.defineLazyInternal(inst, "values", (zod) => {
+    if (zod.def.options.every((o) => o._zod.values)) {
+      return new Set<util.Primitive>(zod.def.options.flatMap((option) => Array.from(option._zod.values!)));
     }
     return undefined;
   });
 
-  util.defineLazy(inst._zod, "pattern", () => {
-    if (def.options.every((o) => o._zod.pattern)) {
-      const patterns = def.options.map((o) => o._zod.pattern);
+  util.defineLazyInternal(inst, "pattern", (zod) => {
+    if (zod.def.options.every((o) => o._zod.pattern)) {
+      const patterns = zod.def.options.map((o) => o._zod.pattern);
       return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
     }
     return undefined;
@@ -2254,14 +2523,17 @@ function handleExclusiveUnionResults(
   inst: $ZodUnion,
   ctx?: ParseContext
 ) {
-  const successes = results.filter((r) => r.issues.length === 0);
+  const matches: number[] = [];
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].issues.length === 0) matches.push(i);
+  }
 
-  if (successes.length === 1) {
-    final.value = successes[0].value;
+  if (matches.length === 1) {
+    final.value = results[matches[0]].value;
     return final;
   }
 
-  if (successes.length === 0) {
+  if (matches.length === 0) {
     // No matches - same as regular union
     final.issues.push({
       code: "invalid_union",
@@ -2277,6 +2549,7 @@ function handleExclusiveUnionResults(
       inst,
       errors: [],
       inclusive: false,
+      matches,
     });
   }
 
@@ -2348,6 +2621,65 @@ export interface $ZodDiscriminatedUnionInternals<
 > extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
+  bag: util.LoosePartial<{
+    optionsMap: Map<util.Primitive, $ZodType | null>;
+  }>;
+}
+
+/** The discriminator values a member of `Options` can declare. An omittable discriminator contributes `undefined`, matching what `propValues` claims for it. */
+export type $DiscriminatorValue<Options extends readonly SomeType[], Disc extends string> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Disc extends keyof Out
+      ? Out[Disc]
+      : never
+    : never;
+}[number];
+
+/** The member of `Options` that declares `V`. */
+export type $DiscriminatedOption<Options extends readonly SomeType[], Disc extends string, V> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Disc extends keyof Out
+      ? V extends Out[Disc]
+        ? Options[I]
+        : never
+      : never
+    : never;
+}[number];
+
+/** Returns the option whose discriminator claims `value`, or throws if ambiguous. */
+export function getDiscriminatedOption<
+  Options extends readonly SomeType[],
+  Disc extends string,
+  const V extends $DiscriminatorValue<Options, Disc>,
+>(union: $ZodDiscriminatedUnion<Options, Disc>, value: V): $DiscriminatedOption<Options, Disc, V> {
+  const internals = union._zod;
+  let map = internals.bag.optionsMap;
+  if (!map) {
+    map = discriminatorMap(internals.def);
+    internals.bag.optionsMap = map;
+  }
+  const option = map.get(value as util.Primitive);
+  if (option === null) throw new Error(`Ambiguous discriminator value "${String(value)}"`);
+  return option as any;
+}
+
+function discriminatorMap(def: $ZodDiscriminatedUnionDef<readonly SomeType[]>): Map<util.Primitive, $ZodType | null> {
+  const map = new Map<util.Primitive, $ZodType | null>();
+  for (const option of def.options as readonly $ZodType[]) {
+    const values = option._zod.propValues?.[def.discriminator];
+    if (!values || values.size === 0)
+      throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
+    for (const value of values) {
+      if (map.has(value)) {
+        if (value !== undefined) throw new Error(`Duplicate discriminator value "${String(value)}"`);
+        // keep the collision marked so a later member cannot reclaim it
+        map.set(value, null);
+      } else {
+        map.set(value, option);
+      }
+    }
+  }
+  return map;
 }
 
 export interface $ZodDiscriminatedUnion<
@@ -2365,38 +2697,36 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     $ZodUnion.init(inst, def);
 
     const _super = inst._zod.parse;
-    util.defineLazy(inst._zod, "propValues", () => {
+    util.defineLazyInternal(inst, "propValues", (zod) => {
       const propValues: util.PropValues = {};
-      for (const option of def.options) {
+      let undefinedCount = 0;
+      for (const option of zod.def.options) {
         const pv = option._zod.propValues;
         if (!pv || Object.keys(pv).length === 0)
-          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
+          throw new Error(`Invalid discriminated union option at index "${zod.def.options.indexOf(option)}"`);
+        if (pv[zod.def.discriminator]?.has(undefined)) undefinedCount++;
         for (const [k, v] of Object.entries(pv!)) {
-          if (!propValues[k]) propValues[k] = new Set();
+          if (!Object.prototype.hasOwnProperty.call(propValues, k)) {
+            util.assignProp(propValues, k, new Set());
+          }
           for (const val of v) {
             propValues[k].add(val);
           }
         }
       }
+      if (!zod.def.unionFallback && undefinedCount > 1) propValues[zod.def.discriminator]?.delete(undefined);
       return propValues;
     });
 
-    const disc = util.cached(() => {
-      const opts = def.options as $ZodTypeDiscriminable[];
-      const map: Map<util.Primitive, $ZodType> = new Map();
-      for (const o of opts) {
-        const values = o._zod.propValues?.[def.discriminator];
-        if (!values || values.size === 0)
-          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
-        for (const v of values) {
-          if (map.has(v)) {
-            throw new Error(`Duplicate discriminator value "${String(v)}"`);
-          }
-          map.set(v, o);
-        }
+    // Checked now rather than in the lookup map below, so an option that lacks the discriminator fails at the `discriminatedUnion` call instead of on the first object parsed. Options whose shape cannot be enumerated without resolving it — pipes and lazies — are left to the map.
+    def.options.forEach((option, i) => {
+      const propShape = util.rawShape(option._zod.def);
+      if (propShape && !Object.prototype.hasOwnProperty.call(propShape, def.discriminator)) {
+        throw new Error(`Invalid discriminated union option at index "${i}"`);
       }
-      return map;
     });
+
+    const disc = util.cached(() => discriminatorMap(def));
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
@@ -2411,15 +2741,16 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const opt = disc.value.get(input?.[def.discriminator] as any);
-      if (opt) {
+      const value = input?.[def.discriminator];
+      const opt = disc.value.get(value as util.Primitive);
+      // forward metadata cannot choose an encoder for an absent tag
+      if (opt && (value !== undefined || ctx.direction !== "backward")) {
         return opt._zod.run(payload, ctx) as any;
       }
 
       // Fall back to union matching when the fast discriminator path fails:
       // - explicitly enabled via unionFallback, or
-      // - during backward direction (encode), since codec-based discriminators
-      //   have different values in forward vs backward directions
+      // - during backward direction (encode), since codec-based discriminators have different values in forward vs backward directions
       if (def.unionFallback || ctx.direction === "backward") {
         return _super(payload, ctx);
       }
@@ -2430,7 +2761,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
-        options: Array.from(disc.value.keys()),
+        options: Array.from(disc.value.keys()).filter((value) => disc.value.get(value) !== null),
         input,
         path: [def.discriminator],
         inst,
@@ -2492,7 +2823,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
   }
 );
 
-function mergeValues(
+export function mergeValues(
   a: any,
   b: any
 ): { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } {
@@ -2510,7 +2841,9 @@ function mergeValues(
     const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
+    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
     for (const key of sharedKeys) {
+      if (key === "__proto__") continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return {
@@ -2551,44 +2884,52 @@ function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  // Track which side(s) report each key as unrecognized
+  // Track which side(s) reject each key. A key rejection is reported only when BOTH sides reject it, so a key owned by one branch survives the other's key schema. strictObject reports these as unrecognized_keys; a record with an open key schema reports one invalid_key per key.
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
+  const keyIssues = new Map<string, errors.$ZodRawIssue>();
+
+  const collect = (iss: errors.$ZodRawIssue, side: "l" | "r"): boolean => {
+    let keys: string[];
+    if (iss.code === "unrecognized_keys" && !iss.path?.length) {
+      unrecIssue ??= iss;
+      keys = iss.keys as string[];
+    } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
+      const k = String(iss.path[0]);
+      if (!keyIssues.has(k)) keyIssues.set(k, iss);
+      keys = [k];
+    } else {
+      return false;
+    }
+    for (const k of keys) {
+      if (!unrecKeys.has(k)) unrecKeys.set(k, {});
+      unrecKeys.get(k)![side] = true;
+    }
+    return true;
+  };
 
   for (const iss of left.issues) {
-    if (iss.code === "unrecognized_keys") {
-      unrecIssue ??= iss;
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.l = true;
-      }
-    } else {
-      result.issues.push(iss);
-    }
+    if (!collect(iss, "l")) result.issues.push(iss);
   }
 
   for (const iss of right.issues) {
-    if (iss.code === "unrecognized_keys") {
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.r = true;
-      }
-    } else {
-      result.issues.push(iss);
+    if (!collect(iss, "r")) result.issues.push(iss);
+  }
+
+  // Report only keys rejected by BOTH sides
+  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
+  if (bothKeys.length) {
+    const aggregated = unrecIssue ? bothKeys.filter((k) => (unrecIssue!.keys as string[]).includes(k)) : [];
+    if (aggregated.length) result.issues.push({ ...unrecIssue!, keys: aggregated });
+    for (const k of bothKeys) {
+      if (!aggregated.includes(k) && keyIssues.has(k)) result.issues.push(keyIssues.get(k)!);
     }
   }
-
-  // Report only keys unrecognized by BOTH sides
-  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
-  if (bothKeys.length && unrecIssue) {
-    result.issues.push({ ...unrecIssue, keys: bothKeys });
-  }
-
-  if (util.aborted(result)) return result;
 
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
@@ -2624,7 +2965,7 @@ type TupleInputTypeWithOptionals<T extends util.TupleItems> = T extends readonly
   ...infer Prefix extends SomeType[],
   infer Tail extends SomeType,
 ]
-  ? Tail["_zod"]["optin"] extends "optional"
+  ? Tail["_zod"]["optin"] extends "optional" | "defaulted"
     ? [...TupleInputTypeWithOptionals<Prefix>, core.input<Tail>?]
     : TupleInputTypeNoOptionals<T>
   : [];
@@ -2666,6 +3007,8 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2679,7 +3022,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = [];
+    payload.value = memo ? memo.alloc(inst, payload, [] as unknown[], ctx) : [];
     const proms: Promise<any>[] = [];
 
     const optinStart = getTupleOptStart(items, "optin");
@@ -2709,11 +3052,11 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       }
     }
 
-    // Run every item in parallel, collecting results into an indexed
-    // array. The post-processing in `handleTupleResults` walks them in
-    // order so it can decide whether an absent optional-output error can
-    // truncate the tail or must be reported to preserve required output.
+    // Run every item in parallel, collecting results into an indexed array. The post-processing in `handleTupleResults` walks them in order so it can decide whether an absent optional-output error can truncate the tail or must be reported to preserve required output.
     const itemResults: ParsePayload[] = new Array(items.length);
+    // only tracked when there is a rest loop to skip
+    const abortEarly = def.rest ? ctx?.abortEarly : undefined;
+    let itemAborted = false;
     for (let i = 0; i < items.length; i++) {
       const r = items[i]._zod.run({ value: input[i], issues: [] }, ctx);
       if (r instanceof Promise) {
@@ -2724,13 +3067,20 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
         );
       } else {
         itemResults[i] = r;
+        if (abortEarly && !itemAborted && r.issues.length) itemAborted = util.aborted(r);
       }
     }
 
-    if (def.rest) {
+    // sound because rest is non-empty exactly when every fixed index is present, the one case handleTupleResults cannot discard an item's issues
+    if (def.rest && !itemAborted) {
       let i = items.length - 1;
       const rest = input.slice(items.length);
+      let seen = payload.issues.length;
       for (const el of rest) {
+        if (abortEarly && payload.issues.length !== seen) {
+          if (util.aborted(payload, seen)) break;
+          seen = payload.issues.length;
+        }
         i++;
         const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
@@ -2750,7 +3100,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
 function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
   for (let i = items.length - 1; i >= 0; i--) {
-    if (items[i]._zod[key] !== "optional") return i + 1;
+    // optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
+    const omittable = key === "optin" ? items[i]._zod.optin !== undefined : items[i]._zod.optout === "optional";
+    if (!omittable) return i + 1;
   }
   return 0;
 }
@@ -2769,12 +3121,15 @@ function handleTupleResults(
   input: unknown[],
   optoutStart: number
 ) {
-  // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
-  // rule, but only after `optoutStart`: the first index where the output
-  // tuple tail can be absent.
+  // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional rule, but only after `optoutStart`: the first index where the output tuple tail can be absent.
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
     const isPresent = i < input.length;
+    // The array analog of `handlePropertyResult`'s absent-key early return: the middle rung permits absence without supplying anything in its place, so the tail truncates here instead of materializing whatever the item made of `undefined`.
+    if (!isPresent && i >= optoutStart && items[i]._zod.optin === "optional") {
+      final.value.length = i;
+      break;
+    }
     if (r.issues.length) {
       if (!isPresent && i >= optoutStart) {
         final.value.length = i;
@@ -2817,6 +3172,7 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
   valueType: Value;
   /** @default "strict" - errors on keys not matching keyType. "loose" passes through non-matching keys unchanged. */
   mode?: "strict" | "loose";
+  partial?: boolean;
 }
 
 // export type $InferZodRecordOutput<
@@ -2856,7 +3212,10 @@ export type $InferZodRecordInput<
   Value extends SomeType = $ZodType,
 > = Key extends $partial
   ? Partial<Record<core.input<Key> & PropertyKey, core.input<Value>>>
-  : Record<core.input<Key> & PropertyKey, core.input<Value>>;
+  : // A value schema that accepts an absent slot makes the key omittable on the way in, exactly as it does in an object shape. The output side keeps every key, since the parser fills each one.
+    [Value] extends [OptionalInSchema]
+    ? Partial<Record<core.input<Key> & PropertyKey, core.input<Value>>>
+    : Record<core.input<Key> & PropertyKey, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
   extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
@@ -2874,6 +3233,8 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 
 export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2889,15 +3250,18 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       return payload;
     }
 
+    // no guard in either loop below: a record's invalid_key aborts but an enclosing intersection can reconcile it, so a stopped loop hides keys the sibling does not own and the intersection then rejects nothing
     const proms: Promise<any>[] = [];
 
     const values = def.keyType._zod.values;
-    if (values) {
-      payload.value = {};
+    if (values && !def.partial) {
+      payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           recordKeys.add(typeof key === "number" ? key.toString() : key);
+          // A declared __proto__ is stripped but is not an unrecognized key.
+          if (key === "__proto__") continue;
           const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
           if (keyResult instanceof Promise) {
             throw new Error("Async schemas not supported in object keys currently");
@@ -2914,6 +3278,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             continue;
           }
           const outKey = keyResult.value as PropertyKey;
+          if (outKey === "__proto__") continue;
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
           if (result instanceof Promise) {
@@ -2937,8 +3302,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       let unrecognized!: string[];
       for (const key in input) {
         if (!recordKeys.has(key)) {
-          unrecognized = unrecognized ?? [];
-          unrecognized.push(key);
+          if (def.mode === "loose") {
+            // skip __proto__ so it can't replace the result prototype via the assignment setter on the plain {} we build into
+            if (key === "__proto__") continue;
+            payload.value[key] = input[key];
+          } else {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key);
+          }
         }
       }
       if (unrecognized && unrecognized.length > 0) {
@@ -2948,10 +3319,13 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           input,
           inst,
           keys: unrecognized,
+          continue: true,
         });
       }
     } else {
-      payload.value = {};
+      payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
+      // An enumerable key schema declares which keys the record owns, so a key outside the set is unrecognized. A non-enumerable one (regex, refine) is a constraint every key must satisfy, so a failing key is invalid. Only the former is reconcilable against the other side of an intersection.
+      let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
@@ -2961,8 +3335,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           throw new Error("Async schemas not supported in object keys currently");
         }
 
-        // Numeric string fallback: if key is a numeric string and failed, retry with Number(key)
-        // This handles z.number(), z.literal([1, 2, 3]), and unions containing numeric literals
+        // Numeric string fallback: if key is a numeric string and failed, retry with Number(key). This handles z.number(), z.literal([1, 2, 3]), and unions containing numeric literals
         const checkNumericKey = typeof key === "string" && regexes.number.test(key) && keyResult.issues.length;
         if (checkNumericKey) {
           const retryResult = def.keyType._zod.run({ value: Number(key), issues: [] }, ctx);
@@ -2978,6 +3351,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           if (def.mode === "loose") {
             // Pass through unchanged
             payload.value[key] = input[key];
+          } else if (values) {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key as string);
           } else {
             // Default "strict" behavior: error on invalid key
             payload.issues.push({
@@ -2992,6 +3368,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           continue;
         }
 
+        // the guard above tests the raw input key, but the key schema can normalize an ordinary key into __proto__; re-check the key we actually write under
+        const outKey = keyResult.value as PropertyKey;
+        if (outKey === "__proto__") continue;
+
         const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
         if (result instanceof Promise) {
@@ -3000,15 +3380,26 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              payload.value[keyResult.value as PropertyKey] = result.value;
+              payload.value[outKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          payload.value[keyResult.value as PropertyKey] = result.value;
+          payload.value[outKey] = result.value;
         }
+      }
+
+      if (unrecognized && unrecognized.length > 0) {
+        payload.issues.push({
+          code: "unrecognized_keys",
+
+          input,
+          inst,
+          keys: unrecognized,
+          continue: true,
+        });
       }
     }
 
@@ -3046,6 +3437,8 @@ export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType
 
 export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3061,9 +3454,15 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
     }
 
     const proms: Promise<any>[] = [];
-    payload.value = new Map();
+    payload.value = memo ? memo.alloc(inst, payload, new Map(), ctx) : new Map();
+    const abortEarly = ctx?.abortEarly;
+    let seen = payload.issues.length;
 
     for (const [key, value] of input) {
+      if (abortEarly && payload.issues.length !== seen) {
+        if (util.aborted(payload, seen)) break;
+        seen = payload.issues.length;
+      }
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
       const valueResult = def.valueType._zod.run({ value: value, issues: [] }, ctx);
 
@@ -3150,6 +3549,8 @@ export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3164,8 +3565,14 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
     }
 
     const proms: Promise<any>[] = [];
-    payload.value = new Set();
+    payload.value = memo ? memo.alloc(inst, payload, new Set(), ctx) : new Set();
+    const abortEarly = ctx?.abortEarly;
+    let seen = payload.issues.length;
     for (const item of input) {
+      if (abortEarly && payload.issues.length !== seen) {
+        if (util.aborted(payload, seen)) break;
+        seen = payload.issues.length;
+      }
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleSetResult(result, payload)));
@@ -3224,12 +3631,13 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   const valuesSet = new Set<util.Primitive>(values);
   inst._zod.values = valuesSet;
 
-  inst._zod.pattern = new RegExp(
-    `^(${values
-      .filter((k) => util.propertyKeyTypes.has(typeof k))
-      .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
-      .join("|")})$`
-  );
+  util.defineLazyInternal(inst, "pattern", (zod) => {
+    const patternValues = util.getEnumValues(zod.def.entries).filter((k) => util.propertyKeyTypes.has(typeof k));
+    // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
+    return new RegExp(
+      patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^[^\\s\\S]$"
+    );
+  });
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
@@ -3275,18 +3683,23 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
   "$ZodLiteral",
   (inst, def) => {
     $ZodType.init(inst, def);
-    if (def.values.length === 0) {
-      throw new Error("Cannot create literal schema with no valid values");
-    }
 
     const values = new Set<util.Literal>(def.values);
     inst._zod.values = values;
-    inst._zod.pattern = new RegExp(
-      `^(${def.values
 
-        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)))
-        .join("|")})$`
-    );
+    util.defineLazyInternal(inst, "pattern", (zod) => {
+      const vals = zod.def.values;
+      // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
+      return new RegExp(
+        vals.length
+          ? `^(${vals
+              .map((o: util.Literal) =>
+                typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)
+              )
+              .join("|")})$`
+          : "^[^\\s\\S]$"
+      );
+    });
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
@@ -3423,6 +3836,8 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optin = "optional";
+    core.globalConfig.memoizer?.guard(inst);
+
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
@@ -3433,7 +3848,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
-          payload.fallback = true;
           return payload;
         });
       }
@@ -3443,7 +3857,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
-      payload.fallback = true;
       return payload;
     };
   }
@@ -3464,7 +3877,7 @@ export interface $ZodOptionalDef<T extends SomeType = $ZodType> extends $ZodType
 export interface $ZodOptionalInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
   def: $ZodOptionalDef<T>;
-  optin: "optional";
+  optin: "optional" | "defaulted";
   optout: "optional";
   isst: never;
   values: T["_zod"]["values"];
@@ -3475,37 +3888,39 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodOptionalInternals<T>;
 }
 
-function handleOptionalResult(result: ParsePayload, input: unknown) {
-  if (input === undefined && (result.issues.length || result.fallback)) {
-    return { issues: [], value: undefined };
-  }
-  return result;
+function handleOptionalResult(payload: ParsePayload, result: ParsePayload) {
+  // A substituting schema that still failed has no usable answer; yield undefined. Its issues are simply dropped: it ran on a payload of its own, so there is no shared array to truncate and nothing of the caller's to lose with it.
+  payload.value = result.issues.length ? undefined : result.value;
+  return payload;
 }
 
 export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.$constructor(
   "$ZodOptional",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.optin = "optional";
+    // .optional() propagates absence rather than substituting for it, so a defaulted inner keeps its rung.
+    util.defineLazyInternal(inst, "optin", (zod) =>
+      zod.def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"
+    );
     inst._zod.optout = "optional";
 
-    util.defineLazy(inst._zod, "values", () => {
-      return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
+    util.defineLazyInternal(inst, "values", (zod) => {
+      const values = (zod.def as $ZodOptionalDef).innerType._zod.values;
+      return values ? new Set([...values, undefined]) : undefined;
     });
-    util.defineLazy(inst._zod, "pattern", () => {
-      const pattern = def.innerType._zod.pattern;
+    util.defineLazyInternal(inst, "pattern", (zod) => {
+      const pattern = (zod.def as $ZodOptionalDef).innerType._zod.pattern;
       return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)})?$`) : undefined;
     });
 
     inst._zod.parse = (payload, ctx) => {
-      if (def.innerType._zod.optin === "optional") {
-        const input = payload.value;
-        const result = def.innerType._zod.run(payload, ctx);
-        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, input));
-        return handleOptionalResult(result, input);
-      }
       if (payload.value === undefined) {
-        return payload;
+        // Only the top rung substitutes a value for absence; everything else leaves it intact, which is what .optional() means.
+        if (def.innerType._zod.optin !== "defaulted") return payload;
+        // Its own payload, for the same reason $ZodCatch gets one: a pipe forwards an unrecognized key through the caller's issues array, and this must not read that as the substituting schema failing and drop it.
+        const result = def.innerType._zod.run({ value: payload.value, issues: [] }, ctx);
+        if (result instanceof Promise) return result.then((result) => handleOptionalResult(payload, result));
+        return handleOptionalResult(payload, result);
       }
       return def.innerType._zod.run(payload, ctx);
     };
@@ -3541,8 +3956,8 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
     $ZodOptional.init(inst, def);
 
     // Override values/pattern to NOT add undefined
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
-    util.defineLazy(inst._zod, "pattern", () => def.innerType._zod.pattern);
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
+    util.defineLazyInternal(inst, "pattern", (zod) => zod.def.innerType._zod.pattern);
 
     // Override parse to just delegate (no undefined handling)
     inst._zod.parse = (payload, ctx) => {
@@ -3581,16 +3996,16 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
   "$ZodNullable",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
-    util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
+    util.defineLazyInternal(inst, "optin", (zod) => zod.def.innerType._zod.optin);
+    util.defineLazyInternal(inst, "optout", (zod) => zod.def.innerType._zod.optout);
 
-    util.defineLazy(inst._zod, "pattern", () => {
-      const pattern = def.innerType._zod.pattern;
+    util.defineLazyInternal(inst, "pattern", (zod) => {
+      const pattern = zod.def.innerType._zod.pattern;
       return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)}|null)$`) : undefined;
     });
 
-    util.defineLazy(inst._zod, "values", () => {
-      return def.innerType._zod.values ? new Set([...def.innerType._zod.values, null]) : undefined;
+    util.defineLazyInternal(inst, "values", (zod) => {
+      return zod.def.innerType._zod.values ? new Set([...zod.def.innerType._zod.values, null]) : undefined;
     });
 
     inst._zod.parse = (payload, ctx) => {
@@ -3619,7 +4034,7 @@ export interface $ZodDefaultDef<T extends SomeType = $ZodType> extends $ZodTypeD
 export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
-  optin: "optional";
+  optin: "defaulted";
   optout?: "optional" | undefined; // required
   isst: never;
   values: T["_zod"]["values"];
@@ -3635,8 +4050,8 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     // inst._zod.qin = "true";
-    inst._zod.optin = "optional";
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+    inst._zod.optin = "defaulted";
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -3684,9 +4099,9 @@ export interface $ZodPrefaultDef<T extends SomeType = $ZodType> extends $ZodType
 }
 
 export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
+  extends $ZodTypeInternals<core.output<T>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
-  optin: "optional";
+  optin: "defaulted";
   optout?: "optional" | undefined;
   isst: never;
   values: T["_zod"]["values"];
@@ -3701,8 +4116,8 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
 
-    inst._zod.optin = "optional";
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+    inst._zod.optin = "defaulted";
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -3748,8 +4163,8 @@ export const $ZodNonOptional: core.$constructor<$ZodNonOptional> = /*@__PURE__*/
   (inst, def) => {
     $ZodType.init(inst, def);
 
-    util.defineLazy(inst._zod, "values", () => {
-      const v = def.innerType._zod.values;
+    util.defineLazyInternal(inst, "values", (zod) => {
+      const v = zod.def.innerType._zod.values;
       return v ? new Set([...v].filter((x) => x !== undefined)) : undefined;
     });
 
@@ -3893,11 +4308,33 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodCatchInternals<T>;
 }
 
+function handleCatchResult(payload: ParsePayload, result: ParsePayload, def: $ZodCatchDef, ctx: ParseContextInternal) {
+  if (!result.issues.length) {
+    payload.value = result.value;
+    // The value carries up, so the flag describing it has to carry with it: a back-edge into a node still being parsed must not be frozen by an enclosing readonly, and its checks belong to the node itself. Guarded so the ordinary case adds no own property.
+    if (result.memo) payload.memo = true;
+    return payload;
+  }
+
+  // Spread the inner's own payload, not ours: `value` has to stay the input the catch was handed, and the inner ran on a payload of its own so its issues are already private to this call.
+  payload.value = def.catchValue({
+    ...result,
+    value: payload.value,
+    error: {
+      issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+    },
+    input: payload.value,
+  });
+  return payload;
+}
+
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.optin = "optional";
-  util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
-  util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  util.defineLazyInternal(inst, "optin", (zod) =>
+    zod.def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"
+  );
+  util.defineLazyInternal(inst, "optout", (zod) => zod.def.innerType._zod.optout);
+  util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
@@ -3905,41 +4342,12 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     }
 
     // Forward direction (decode): apply catch logic
-    const result = def.innerType._zod.run(payload, ctx);
+    const result = def.innerType._zod.run({ value: payload.value, issues: [] }, ctx);
     if (result instanceof Promise) {
-      return result.then((result) => {
-        payload.value = result.value;
-        if (result.issues.length) {
-          payload.value = def.catchValue({
-            ...payload,
-            error: {
-              issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-            },
-            input: payload.value,
-          });
-          payload.issues = [];
-          payload.fallback = true;
-        }
-
-        return payload;
-      });
+      return result.then((result) => handleCatchResult(payload, result, def, ctx));
     }
 
-    payload.value = result.value;
-    if (result.issues.length) {
-      payload.value = def.catchValue({
-        ...payload,
-        error: {
-          issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-        },
-        input: payload.value,
-      });
-
-      payload.issues = [];
-      payload.fallback = true;
-    }
-
-    return payload;
+    return handleCatchResult(payload, result, def, ctx);
   };
 });
 
@@ -4013,10 +4421,10 @@ export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $Z
 
 export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constructor("$ZodPipe", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
-  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
-  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
-  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+  util.defineLazyInternal(inst, "values", (zod) => zod.def.in._zod.values);
+  util.defineLazyInternal(inst, "optin", (zod) => zod.def.in._zod.optin);
+  util.defineLazyInternal(inst, "optout", (zod) => zod.def.out._zod.optout);
+  util.defineLazyInternal(inst, "propValues", (zod) => zod.def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
@@ -4036,12 +4444,13 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+  // Any issue stops the pipe, so a failing refinement never feeds its transform. An unrecognized key is the exception: it describes the input's extra properties, not the value being piped, and an enclosing intersection may yet reconcile it.
+  if (left.issues.some((iss) => iss.code !== "unrecognized_keys")) {
     // prevent further checks
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
 }
 
 ////////////////////////////////////////////
@@ -4072,10 +4481,10 @@ export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $
 
 export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$constructor("$ZodCodec", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
-  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
-  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
-  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+  util.defineLazyInternal(inst, "values", (zod) => zod.def.in._zod.values);
+  util.defineLazyInternal(inst, "optin", (zod) => zod.def.in._zod.optin);
+  util.defineLazyInternal(inst, "optout", (zod) => zod.def.out._zod.optout);
+  util.defineLazyInternal(inst, "propValues", (zod) => zod.def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
     const direction = ctx.direction || "forward";
@@ -4136,19 +4545,22 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
-  in: $ZodTransform;
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeDef<$ZodTransform<unknown, I>, B> {
+  in: $ZodTransform<unknown, I>;
   out: B;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
-  def: $ZodPreprocessDef<B>;
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeInternals<$ZodTransform<unknown, I>, B> {
+  def: $ZodPreprocessDef<B, I>;
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
-  _zod: $ZodPreprocessInternals<B>;
+export interface $ZodPreprocess<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipe<$ZodTransform<unknown, I>, B> {
+  _zod: $ZodPreprocessInternals<B, I>;
 }
 
 export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
@@ -4189,10 +4601,10 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   "$ZodReadonly",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
-    util.defineLazy(inst._zod, "optin", () => def.innerType?._zod?.optin);
-    util.defineLazy(inst._zod, "optout", () => def.innerType?._zod?.optout);
+    util.defineLazyInternal(inst, "propValues", (zod) => zod.def.innerType._zod.propValues);
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
+    util.defineLazyInternal(inst, "optin", (zod) => zod.def.innerType?._zod?.optin);
+    util.defineLazyInternal(inst, "optout", (zod) => zod.def.innerType?._zod?.optout);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -4208,7 +4620,8 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
 );
 
 function handleReadonlyResult(payload: ParsePayload): ParsePayload {
-  payload.value = Object.freeze(payload.value);
+  // A repeat visit hands back a node that is still being built; freezing it here would make the rest of its keys fail to assign.
+  if (!payload.memo) payload.value = Object.freeze(payload.value);
   return payload;
 }
 
@@ -4285,6 +4698,51 @@ export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [
       : never
     : never;
 
+// a leaf's pattern source with its own checks folded in: the last pattern-carrying check wins, else length bounds narrow the catch-all, else an integer format narrows the number form. the fold lives here instead of on `_zod.pattern` so a bundle without template literals never pays for it
+function leafPattern(schema: $ZodType): string | undefined {
+  const def = schema._zod.def as { pattern?: RegExp; format?: string; checks?: checks.$ZodCheck[] };
+  let pattern = def.pattern;
+  let isInt = !!def.format?.includes("int");
+  let minimum: number | undefined;
+  let maximum: number | undefined;
+  for (const ch of def.checks ?? []) {
+    const d = ch._zod.def as { pattern?: RegExp; format?: string; minimum?: number; maximum?: number; length?: number };
+    if (d.pattern) pattern = d.pattern;
+    isInt ||= !!d.format?.includes("int");
+    const lo = d.minimum ?? d.length;
+    const hi = d.maximum ?? d.length;
+    if (lo !== undefined && (minimum === undefined || lo > minimum)) minimum = lo;
+    if (hi !== undefined && (maximum === undefined || hi < maximum)) maximum = hi;
+  }
+  if (pattern) return pattern.source;
+  // an empty range matches nothing at runtime, and `{8,5}` is not a legal quantifier
+  if (minimum !== undefined && maximum !== undefined && minimum > maximum) return "(?!)";
+  if (minimum !== undefined || maximum !== undefined) return regexes.string({ minimum, maximum }).source;
+  const own = schema._zod.pattern;
+  return (isInt && own === regexes.number ? regexes.integer : own)?.source;
+}
+
+// a part's pattern source. a wrapper's pattern embeds its inner pattern's source verbatim, so the folded form is substituted in place without knowing the wrapper's own composition; a union's options are joined the way the union builds its own pattern
+function partPattern(schema: $ZodType): string | undefined {
+  const def = schema._zod.def as { innerType?: $ZodType; options?: $ZodType[] };
+  const own = schema._zod.pattern?.source;
+  // lazy resolves its inner on the internals, not the def
+  const inner = def.innerType ?? (schema._zod as { innerType?: $ZodType }).innerType;
+  if (inner) {
+    const before = inner._zod.pattern?.source;
+    const after = partPattern(inner);
+    if (own && before && after && after !== before) {
+      return own.replace(util.cleanRegex(before), () => util.cleanRegex(after));
+    }
+    return own;
+  }
+  if (def.options) {
+    const sources = def.options.map(partPattern);
+    if (sources.every(Boolean)) return `^(${sources.map((s) => util.cleanRegex(s!)).join("|")})$`;
+  }
+  return leafPattern(schema);
+}
+
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
   "$ZodTemplateLiteral",
   (inst, def) => {
@@ -4293,18 +4751,11 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
     for (const part of def.parts) {
       if (typeof part === "object" && part !== null) {
         // is Zod schema
-        if (!part._zod.pattern) {
-          // if (!source)
+        const source = partPattern(part);
+        if (!source) {
           throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
         }
-
-        const source = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
-
-        if (!source) throw new Error(`Invalid template literal part: ${part._zod.traits}`);
-
-        const start = source.startsWith("^") ? 1 : 0;
-        const end = source.endsWith("$") ? source.length - 1 : source.length;
-        regexParts.push(source.slice(start, end));
+        regexParts.push(util.cleanRegex(source));
       } else if (part === null || util.primitiveTypes.has(typeof part)) {
         regexParts.push(util.escapeRegex(`${part}`));
       } else {
@@ -4424,35 +4875,45 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._def = def;
+    // Defined, not assigned: the classic prototype exposes `_def` as a getter with no setter.
+    Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
     inst.implement = (func) => {
       if (typeof func !== "function") {
         throw new Error("implement() must be called with a function");
       }
-      return function (this: any, ...args: never[]) {
-        const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
-        const result = Reflect.apply(func, this, parsedArgs as never[]);
-        if (inst._def.output) {
-          return parse(inst._def.output, result);
-        }
-        return result as any;
-      };
+      // Defined inline so the closure stays anonymous: binding it to a `const` first names it, which costs 256 bytes per implemented function.
+      return Object.defineProperty(
+        function (this: any, ...args: never[]) {
+          const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
+          const result = Reflect.apply(func, this, parsedArgs as never[]);
+          if (inst._def.output) {
+            return parse(inst._def.output, result);
+          }
+          return result as any;
+        },
+        "_zod",
+        { value: inst._zod, enumerable: false }
+      ) as any;
     };
 
     inst.implementAsync = (func) => {
       if (typeof func !== "function") {
         throw new Error("implementAsync() must be called with a function");
       }
-      return async function (this: any, ...args: never[]) {
-        const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
-        const result = await Reflect.apply(func, this, parsedArgs as never[]);
-        if (inst._def.output) {
-          return await parseAsync(inst._def.output, result);
-        }
-        return result;
-      } as any;
+      return Object.defineProperty(
+        async function (this: any, ...args: never[]) {
+          const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
+          const result = await Reflect.apply(func, this, parsedArgs as never[]);
+          if (inst._def.output) {
+            return await parseAsync(inst._def.output, result);
+          }
+          return result;
+        },
+        "_zod",
+        { value: inst._zod, enumerable: false }
+      ) as any;
     };
 
     inst._zod.parse = (payload, _ctx) => {
@@ -4576,18 +5037,16 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
-  // Cache the resolved inner type on the shared `def` so all clones of this
-  // lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance,
-  // preserving identity for cycle detection on recursive schemas.
+  // Cache the resolved inner type on the shared `def` so all clones of this lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance, preserving identity for cycle detection on recursive schemas.
   util.defineLazy(inst._zod, "innerType", () => {
     const d = def as $ZodLazyDef & { _cachedInner?: $ZodType };
     if (!d._cachedInner) d._cachedInner = def.getter() as $ZodType;
     return d._cachedInner;
   });
-  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
-  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod?.optout ?? undefined);
+  util.defineLazyInternal(inst, "pattern", (zod) => zod.innerType?._zod?.pattern);
+  util.defineLazyInternal(inst, "propValues", (zod) => zod.innerType?._zod?.propValues);
+  util.defineLazyInternal(inst, "optin", (zod) => zod.innerType?._zod?.optin ?? undefined);
+  util.defineLazyInternal(inst, "optout", (zod) => zod.innerType?._zod?.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);
@@ -4724,6 +5183,8 @@ export type $ZodStringFormatTypes =
   | $ZodBase64
   | $ZodBase64URL
   | $ZodE164
+  | $ZodCreditCard
+  | $ZodIBAN
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
