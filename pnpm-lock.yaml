@@ -240,19 +240,19 @@ importers:
     devDependencies:
       '@ai-sdk/openai':
         specifier: ^3.0.2
-        version: 3.0.2(zod@4.6.3)
+        version: 3.0.2(zod@4.6.4)
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
       ai:
         specifier: ^6.0.5
-        version: 6.0.5(zod@4.6.3)
+        version: 6.0.5(zod@4.6.4)
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@opentelemetry/api@1.9.0)
       drizzle-zod:
         specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@0.45.2(@opentelemetry/api@1.9.0))(zod@4.6.3)
+        version: 0.8.3(drizzle-orm@0.45.2(@opentelemetry/api@1.9.0))(zod@4.6.4)
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
@@ -6371,25 +6371,25 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/gateway@3.0.4(zod@4.6.3)':
+  '@ai-sdk/gateway@3.0.4(zod@4.6.4)':
     dependencies:
       '@ai-sdk/provider': 3.0.1
-      '@ai-sdk/provider-utils': 4.0.2(zod@4.6.3)
+      '@ai-sdk/provider-utils': 4.0.2(zod@4.6.4)
       '@vercel/oidc': 3.0.5
-      zod: 4.6.3
+      zod: 4.6.4
 
-  '@ai-sdk/openai@3.0.2(zod@4.6.3)':
+  '@ai-sdk/openai@3.0.2(zod@4.6.4)':
     dependencies:
       '@ai-sdk/provider': 3.0.1
-      '@ai-sdk/provider-utils': 4.0.2(zod@4.6.3)
-      zod: 4.6.3
+      '@ai-sdk/provider-utils': 4.0.2(zod@4.6.4)
+      zod: 4.6.4
 
-  '@ai-sdk/provider-utils@4.0.2(zod@4.6.3)':
+  '@ai-sdk/provider-utils@4.0.2(zod@4.6.4)':
     dependencies:
       '@ai-sdk/provider': 3.0.1
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.0.6
-      zod: 4.6.3
+      zod: 4.6.4
 
   '@ai-sdk/provider@3.0.1':
     dependencies:
@@ -8667,13 +8667,13 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@6.0.5(zod@4.6.3):
+  ai@6.0.5(zod@4.6.4):
     dependencies:
-      '@ai-sdk/gateway': 3.0.4(zod@4.6.3)
+      '@ai-sdk/gateway': 3.0.4(zod@4.6.4)
       '@ai-sdk/provider': 3.0.1
-      '@ai-sdk/provider-utils': 4.0.2(zod@4.6.3)
+      '@ai-sdk/provider-utils': 4.0.2(zod@4.6.4)
       '@opentelemetry/api': 1.9.0
-      zod: 4.6.3
+      zod: 4.6.4
 
   ajv-draft-04@1.0.0(ajv@8.20.0):
     optionalDependencies:
@@ -9189,10 +9189,10 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@opentelemetry/api@1.9.0))(zod@4.6.3):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@opentelemetry/api@1.9.0))(zod@4.6.4):
     dependencies:
       drizzle-orm: 0.45.2(@opentelemetry/api@1.9.0)
-      zod: 4.6.3
+      zod: 4.6.4
 
   dts-resolver@2.1.3: {}
 
