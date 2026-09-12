@@ -2,6 +2,7 @@ import type { $ZodBigIntFormats } from "../core/checks.js";
 import * as core from "../core/index.js";
 import { util, type $ZodNumberFormats } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
+import * as regexes from "../core/regexes.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
 import en from "../locales/en.js";
@@ -770,8 +771,8 @@ export function url(params?: string | core.$ZodURLParams): ZodURL {
 
 export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodURL {
   return core._url(ZodURL, {
-    protocol: core.regexes.httpProtocol,
-    hostname: core.regexes.domain,
+    protocol: regexes.httpProtocol,
+    hostname: regexes.domain,
     ...util.normalizeParams(params),
   });
 }
@@ -1081,11 +1082,15 @@ export function stringFormat<Format extends string>(
 }
 
 export function hostname(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"hostname"> {
-  return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+  return core._stringFormat(ZodCustomStringFormat, "hostname", regexes.hostname, _params) as any;
 }
 
 export function hex(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"hex"> {
-  return core._stringFormat(ZodCustomStringFormat, "hex", core.regexes.hex, _params) as any;
+  return core._stringFormat(ZodCustomStringFormat, "hex", regexes.hex, _params) as any;
+}
+
+export function currencyCode(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"currency_code"> {
+  return core._stringFormat(ZodCustomStringFormat, "currency_code", regexes.currencyCode, _params) as any;
 }
 
 export function hash<Alg extends util.HashAlgorithm, Enc extends util.HashEncoding = "hex">(

@@ -4722,3 +4722,12 @@ describe("intersection folding declines", () => {
     expect(allOf(schema)).toHaveLength(3);
   });
 });
+
+test("currency code", () => {
+  expect(z.toJSONSchema(z.currencyCode())).toEqual({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "string",
+    format: "currency_code",
+    pattern: z.regexes.currencyCode.source,
+  });
+});

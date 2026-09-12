@@ -91,6 +91,7 @@
     "check:semver": "nub scripts/check-versions.ts",
     "check:circular": "nub exec --node madge --circular --extensions ts --exclude '(v4/core|v3)' packages/zod/src",
     "check:comments": "nub scripts/check-comments.ts",
-    "check:lockstep": "nub scripts/check-lockstep.ts"
+    "check:lockstep": "nub scripts/check-lockstep.ts",
+    "update:iso4217": "nub scripts/update-iso-4217.ts"
   }
 }
