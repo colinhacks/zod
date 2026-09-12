@@ -2,7 +2,7 @@
 title: Zod 4.6
 author: Colin McDonnell
 date: 2026-09-09
-description: Zod 4.6 is now available, with .validate() for boolean validation, z.properties() as a real schema, and six more JSON Schema keywords.
+description: Zod 4.6 is now available, with .validate() for boolean validation, .properties() on z.instanceof(), and six more JSON Schema keywords.
 ---
 
 import { ThemedImage } from "@/components/themed-image";
@@ -76,16 +76,7 @@ Both charts measure the failure path. The key feature of `.validate()` is that i
 
 ## `z.properties()`
 
-A new API for validating specific properties of an object. Unlike `z.object()` it validates *in-place*, so it plays nice with class instances. ([#6536](https://github.com/colinhacks/zod/pull/6536))
-
-```ts
-const responseLike = z.properties({ status: z.number().min(200).max(299) });
-
-responseLike.parse(new Response("ok", { status: 200 }));  // ✅ a real Response
-responseLike.parse({ status: 204 });                      // ✅ a plain object
-```
-
-A corresponding `.properties()` method has been added to `ZodInstanceOf`.
+A new `.properties()` method on `z.instanceof()` validates specific properties of an instance. Unlike `z.object()` it validates *in-place*, so it plays nice with class instances. ([#6536](https://github.com/colinhacks/zod/pull/6536))
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">

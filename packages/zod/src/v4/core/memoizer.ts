@@ -28,9 +28,9 @@ type WithState = { [STATE]?: State };
 
 const NO_ISSUES: errors.$ZodRawIssue[] = [];
 
-// a value a cycle can close through; callables count, since z.properties asserts on one
+// a value a cycle can close through
 function isRef(value: unknown): value is object {
-  return value !== null && (typeof value === "object" || typeof value === "function");
+  return value !== null && typeof value === "object";
 }
 
 // Receivers prefix paths in place, so the cache and every hand-out need their own copies.
@@ -90,9 +90,6 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
       check(def.catchall);
       break;
     }
-    case "properties":
-      merge(shape(def.shape, false));
-      break;
     case "array":
       check(def.element);
       break;

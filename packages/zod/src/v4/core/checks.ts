@@ -1000,7 +1000,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
 function handleCheckPropertyResult(
   result: schemas.ParsePayload<unknown>,
   payload: schemas.ParsePayload<unknown>,
-  property: string
+  property: string | symbol
 ) {
   if (result.issues.length) {
     payload.issues.push(...util.prefixIssues(property, result.issues));
@@ -1041,6 +1041,66 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = /*@__PURE
 
       handleCheckPropertyResult(result, payload, def.property);
       return;
+    };
+  }
+);
+
+/////////////////////////////////////
+/////    $ZodCheckProperties    /////
+/////////////////////////////////////
+export interface $ZodCheckPropertiesDef<Shape extends schemas.$ZodShape = schemas.$ZodShape> extends $ZodCheckDef {
+  check: "properties";
+  shape: Shape;
+}
+
+// typed over the input side, since each child's result is discarded; a literal widens to its primitive so spreading over a `string` property still type-checks (#6520)
+export type $ZodCheckPropertiesInput<Shape extends schemas.$ZodShape = schemas.$ZodShape> = {
+  -readonly [k in keyof Shape]: util.Widen<core.input<Shape[k]>>;
+};
+
+export interface $ZodCheckPropertiesInternals<Shape extends schemas.$ZodShape = schemas.$ZodShape>
+  extends $ZodCheckInternals<$ZodCheckPropertiesInput<Shape>> {
+  def: $ZodCheckPropertiesDef<Shape>;
+  issc: errors.$ZodIssue;
+}
+
+export interface $ZodCheckProperties<Shape extends schemas.$ZodShape = schemas.$ZodShape>
+  extends $ZodCheck<$ZodCheckPropertiesInput<Shape>> {
+  _zod: $ZodCheckPropertiesInternals<Shape>;
+  // yields the check itself, so `.check(...z.properties(shape))` spread call sites keep working
+  [Symbol.iterator](): Iterator<this>;
+}
+
+export const $ZodCheckProperties: core.$constructor<$ZodCheckProperties> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckProperties",
+  (inst, def) => {
+    $ZodCheck.init(inst, def);
+    util.hide(inst, Symbol.iterator, function* () {
+      yield inst;
+    });
+
+    // key and schema snapshotted together: reading one live and the other cached lets a later mutation of the caller's shape object pair a stale key with a missing schema
+    let entries!: [string | symbol, schemas.$ZodType][];
+    inst._zod.check = (payload) => {
+      // the base schema already typed the value, so only a nullish one is rejected here: the properties read on a primitive too, matching z.property() on a string's length
+      if (payload.value == null) {
+        payload.issues.push({ expected: "object", code: "invalid_type", input: payload.value, inst });
+        return undefined;
+      }
+      entries ??= Reflect.ownKeys(def.shape).map((key) => [key, (def.shape as any)[key] as schemas.$ZodType]);
+      const input = payload.value as any;
+      let proms: Promise<any>[] | undefined;
+      for (const [key, schema] of entries) {
+        const result = schema._zod.run({ value: input[key], issues: [] }, {});
+        if (result instanceof Promise) {
+          proms ??= [];
+          proms.push(result.then((result) => handleCheckPropertyResult(result, payload, key)));
+        } else {
+          handleCheckPropertyResult(result, payload, key);
+        }
+      }
+      if (proms) return Promise.all(proms).then(() => undefined);
+      return undefined;
     };
   }
 );
