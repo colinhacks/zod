@@ -50,7 +50,9 @@ const CEILINGS: Record<string, number> = {
   // Also carries the symbol-key loop in `util.members`, which is what installs `$ZodProperties`'s `Symbol.iterator` on its prototype, and the memoizer's shared reference predicate. Measured 3036 / 3516 / 4611 locally plus 18 headroom.
   // Lowered by the measured −105 when checks stopped writing metadata into the bag at attach time: the string length/format closures and the per-instance bounded regex left every string bundle, and the template literal now derives its own part patterns.
   // Lowered by the measured −17 / −16 / −16 from making z.properties() a check again: the symbol-key loop in `util.members` and the memoizer's callable arm left with the schema role. Measured 3044 / 3418 / 4629 locally plus 18 headroom; the object ceiling had been overtaken to zero headroom on main, so its number moves up by two while the bundle moves down.
-  "zod-mini-string": 3436,
+
+  // factory check snapshots on the check-only properties base measure 3438 gzip bytes plus 28 headroom
+  "zod-mini-string": 3466,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
   // Also carries the memoizer seam from #6482: each container init reads `globalConfig.memoizer` and calls `attach`, which is what lets `zod/mini` opt into cycle support. Measured 4512 locally but 4533 on CI — the gzip stream differs across zlib builds — so the headroom rides on the CI number.
@@ -59,8 +61,9 @@ const CEILINGS: Record<string, number> = {
   // Also carries the symbol-key loop in `util.members`, which is what installs `$ZodProperties`'s `Symbol.iterator` on its prototype, and the memoizer's shared reference predicate. Measured 3036 / 3516 / 4611 locally plus 18 headroom.
   // Also carries the guards `validate` parses under: an `aborted` check in each container loop, and two early exits in the generated object parser. Only a bundle containing a container pays — boolean is byte-identical to main and string measures three bytes smaller — so this ceiling rises by the measured +76 and the other two do not move. Measured 4696 locally plus 18 headroom.
   // Lowered by the measured −69 for the same bag strip: the string and number inits no longer carry pattern derivation or attach-time metadata writes.
-  // Lowered by the measured −17 / −16 / −16 from making z.properties() a check again: the symbol-key loop in `util.members` and the memoizer's callable arm left with the schema role. Measured 3044 / 3418 / 4629 locally plus 18 headroom; the object ceiling had been overtaken to zero headroom on main, so its number moves up by two while the bundle moves down.
-  "zod-mini-object": 4647,
+
+  // factory check snapshots on the check-only properties base measure 4654 gzip bytes plus 28 headroom
+  "zod-mini-object": 4682,
 };
 
 /**
