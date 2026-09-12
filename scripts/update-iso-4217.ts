@@ -32,6 +32,6 @@ console.log(
 if (process.env.GITHUB_OUTPUT) {
   appendFileSync(
     process.env.GITHUB_OUTPUT,
-    `published=${published}\nadded=${added.join(", ")}\nremoved=${removed.join(", ")}\n`
+    `published=${published}\ncodes=${codes.join("|")}\nadded=${added.join(", ")}\nremoved=${removed.join(", ")}\n`
   );
 }

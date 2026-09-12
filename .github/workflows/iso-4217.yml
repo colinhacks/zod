@@ -28,18 +28,18 @@ jobs:
       - run: nub install --frozen-lockfile
       - id: list
         run: nub run update:iso4217
-      # nothing to do when main already carries the list, or when the open generated PR does: its head is left alone until it merges
+      # nothing to do when main already carries the list, or when the open generated PR does: only the list is compared, so an unrelated edit to the file on main does not replace a reviewed head
       - id: diff
         env:
           GH_TOKEN: ${{ github.token }}
+          CODES: ${{ steps.list.outputs.codes }}
         run: |
           changed=true
           if git diff --quiet -- packages/zod/src/v4/core/regexes.ts; then
             changed=false
-          elif [ -n "$(gh pr list --head iso-4217 --state open --json number --jq '.[0].number')" ] \
-            && git fetch -q origin iso-4217 \
-            && git diff --quiet FETCH_HEAD -- packages/zod/src/v4/core/regexes.ts; then
-            changed=false
+          elif [ -n "$(gh pr list --head iso-4217 --state open --json number --jq '.[0].number')" ] && git fetch -q origin iso-4217; then
+            head_codes=$(git show FETCH_HEAD:packages/zod/src/v4/core/regexes.ts | node -e 'process.stdout.write(require("fs").readFileSync(0, "utf8").match(/currencyCode: RegExp =\s+\/\^\(\?:([A-Z|]+)\)\$\//)?.[1] ?? "")')
+            [ "$head_codes" = "$CODES" ] && changed=false
           fi
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
       # a PR opened with the workflow token never triggers the test workflow, so the tests that read the list run here
