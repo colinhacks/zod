@@ -3,22 +3,22 @@ title: Zod JSON
 description: "Zod JSON - a Zod whose schemas are JSON Schema documents"
 ---
 
-Zod JSON is a variant of Zod whose schemas are JSON Schema. A schema's enumerable properties are its JSON Schema keywords, and the API is the API of [Zod Mini](/packages/mini).
+Zod JSON is a variant of Zod whose schemas are JSON Schema. A schema's enumerable properties are its JSON Schema keywords, the API has the shape of [Zod Mini](/packages/mini), and every keyword in JSON Schema 2020-12 is supported.
 
 ```sh
 npm install zod @zod/json
 ```
 
 ```ts
-import * as z from "@zod/json";
+import * as zj from "@zod/json";
 
-const User = z.object({
-  name: z.string().check(z.minLength(1)),
-  age: z.optional(z.integer().check(z.minimum(0))),
-  email: z.optional(z.email()),
+const User = zj.object({
+  name: zj.string().check(zj.minLength(1)),
+  age: zj.optional(zj.integer().check(zj.minimum(0))),
+  email: zj.optional(zj.string().check(zj.format("email"))),
 });
 
-type User = z.infer<typeof User>;
+type User = zj.infer<typeof User>;
 // => { name: string; age?: number; email?: string }
 
 User.parse({ name: "Ada", age: 36 }); // ✅
@@ -50,84 +50,85 @@ JSON.stringify(User, null, 2);
 Three rules shape the package:
 
 - **The schema is the document.** Parsing methods and Zod internals are non-enumerable, so `JSON.stringify()`, spread, and `Object.keys()` see a plain JSON Schema. Nested schemas are nested documents.
-- **Zod Mini's API.** Functions instead of methods, wrappers such as `z.optional()`, and constraints through `.check()`. Each check writes one keyword onto the schema.
-- **Nothing is unrepresentable.** Every builder and check has a JSON Schema keyword. There are no dates, bigints, maps, transforms, or refinements.
+- **Zod Mini's shape.** Functions instead of methods, wrappers such as `zj.optional()`, and constraints through `.check()`. Names come from JSON Schema, not from Zod.
+- **Every keyword.** Each keyword in JSON Schema 2020-12 is a builder, a check, or a metadata key, and each one is enforced the way the spec describes. Nothing is unrepresentable.
 
 ## Checks
 
 Constraints go through `.check()`, as in Zod Mini. A check is named after the keyword it writes.
 
 ```ts
-z.string().check(z.minLength(5), z.maxLength(10));
+zj.string().check(zj.minLength(5), zj.maxLength(10));
 // => { type: "string", minLength: 5, maxLength: 10 }
 ```
 
-Every check is type-safe, so TypeScript rejects `z.minItems()` on a string. The full list, by the type it applies to:
+Every check is type-safe, so TypeScript rejects `zj.minItems()` on a string. The full list, by the type it applies to:
 
 ```ts
 // strings
-z.minLength(n);
-z.maxLength(n);
-z.pattern(regex); // a RegExp or a string; a RegExp writes its source
-z.format(name); // any format; the ten formats below are validated, the rest are annotations
+zj.minLength(n); // counts Unicode code points, as the spec requires
+zj.maxLength(n);
+zj.pattern(regex); // a RegExp or a string; a RegExp writes its source
+zj.format(name); // every format the spec defines is asserted; any other name is an annotation
 
 // numbers and integers
-z.minimum(n);
-z.maximum(n);
-z.exclusiveMinimum(n);
-z.exclusiveMaximum(n);
-z.multipleOf(n);
+zj.minimum(n);
+zj.maximum(n);
+zj.exclusiveMinimum(n);
+zj.exclusiveMaximum(n);
+zj.multipleOf(n);
 
 // arrays
-z.minItems(n);
-z.maxItems(n);
-z.uniqueItems();
-z.contains(schema);
-z.minContains(n);
-z.maxContains(n);
+zj.minItems(n);
+zj.maxItems(n);
+zj.uniqueItems();
+zj.contains(schema);
+zj.minContains(n);
+zj.maxContains(n);
+zj.unevaluatedItems(schema); // or false
 
 // objects
-z.minProperties(n);
-z.maxProperties(n);
-z.propertyNames(schema);
-z.patternProperties({ [pattern]: schema });
-z.dependentRequired({ [key]: [...keys] });
-z.dependentSchemas({ [key]: schema });
+zj.minProperties(n);
+zj.maxProperties(n);
+zj.propertyNames(schema);
+zj.patternProperties({ [pattern]: schema });
+zj.dependentRequired({ [key]: [...keys] });
+zj.dependentSchemas({ [key]: schema });
+zj.unevaluatedProperties(schema); // or false
 
 // metadata, on any schema
-z.meta({ title, description, examples, deprecated, readOnly, writeOnly, $comment, $id, ...anything });
-z.describe(text);
+zj.meta({ title, description, examples, deprecated, readOnly, writeOnly, $comment, $id, ...anything });
+zj.describe(text);
 ```
 
 ## Strings
 
 ```ts
-z.string(); // { type: "string" }
-z.string().check(z.minLength(1), z.maxLength(255));
-z.string().check(z.pattern(/^[a-z]+$/)); // { type: "string", pattern: "^[a-z]+$" }
+zj.string(); // { type: "string" }
+zj.string().check(zj.minLength(1), zj.maxLength(255));
+zj.string().check(zj.pattern(/^[a-z]+$/)); // { type: "string", pattern: "^[a-z]+$" }
 ```
 
-Formats that Zod already validates are builders, and each one writes `format`.
+The `format` keyword is asserted for every format the spec defines. The spec makes assertion optional; Zod JSON turns it on.
 
 ```ts
-z.email(); // { type: "string", format: "email" }
-z.uuid(); // format: "uuid"
-z.url(); // format: "uri"
-z.hostname(); // format: "hostname"
-z.ipv4(); // format: "ipv4"
-z.ipv6(); // format: "ipv6"
-z.iso.datetime(); // format: "date-time"
-z.iso.date(); // format: "date"
-z.iso.time(); // format: "time"
-z.iso.duration(); // format: "duration"
+zj.string().check(zj.format("email")); // { type: "string", format: "email" }
 
-z.base64(); // { type: "string", contentEncoding: "base64" }
+// asserted formats
+"date-time", "date", "time", "duration";
+"email", "idn-email";
+"hostname", "idn-hostname";
+"ipv4", "ipv6";
+"uri", "uri-reference", "iri", "iri-reference", "uri-template";
+"uuid";
+"json-pointer", "relative-json-pointer";
+"regex";
 ```
 
-Any other format is an annotation. It is written to the document and not checked, as the spec allows.
+Any other format name is written to the document and not checked.
 
 ```ts
-z.string().check(z.format("iri-reference")); // { type: "string", format: "iri-reference" }
+zj.string().check(zj.format("credit-card")); // { type: "string", format: "credit-card" }
 ```
 
 ## Numbers
@@ -135,19 +136,19 @@ z.string().check(z.format("iri-reference")); // { type: "string", format: "iri-r
 Both builders infer `number`. Infinity and `NaN` are rejected, since they are not JSON numbers.
 
 ```ts
-z.number(); // { type: "number" }
-z.integer(); // { type: "integer" }, accepts 1 and 1.0, rejects 1.5
+zj.number(); // { type: "number" }
+zj.integer(); // { type: "integer" }, accepts 1 and 1.0, rejects 1.5
 
-z.number().check(z.minimum(0), z.maximum(1));
-z.number().check(z.exclusiveMinimum(0), z.exclusiveMaximum(1));
-z.integer().check(z.multipleOf(5));
+zj.number().check(zj.minimum(0), zj.maximum(1));
+zj.number().check(zj.exclusiveMinimum(0), zj.exclusiveMaximum(1));
+zj.integer().check(zj.multipleOf(5));
 ```
 
 ## Booleans and null
 
 ```ts
-z.boolean(); // { type: "boolean" }
-z.null(); // { type: "null" }
+zj.boolean(); // { type: "boolean" }
+zj.null(); // { type: "null" }
 ```
 
 ## Literals and enums
@@ -155,11 +156,11 @@ z.null(); // { type: "null" }
 Both accept any JSON value and compare structurally. The `type` keyword is written when every value has the same JSON type.
 
 ```ts
-z.const("admin"); // { type: "string", const: "admin" }
-z.const({ version: 1 }); // { type: "object", const: { version: 1 } }
+zj.const("admin"); // { type: "string", const: "admin" }
+zj.const({ version: 1 }); // { type: "object", const: { version: 1 } }
 
-z.enum(["draft", "published"]); // { type: "string", enum: ["draft", "published"] }
-z.enum([0, 1, null]); // { enum: [0, 1, null] }
+zj.enum(["draft", "published"]); // { type: "string", enum: ["draft", "published"] }
+zj.enum([0, 1, null]); // { enum: [0, 1, null] }
 ```
 
 ## Objects
@@ -167,11 +168,11 @@ z.enum([0, 1, null]); // { enum: [0, 1, null] }
 A key is listed in `required` unless it is optional or has a default. The document describes the input.
 
 ```ts
-const User = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  nickname: z.optional(z.string()),
-  role: z._default(z.string(), "user"),
+const User = zj.object({
+  id: zj.string().check(zj.format("uuid")),
+  name: zj.string(),
+  nickname: zj.optional(zj.string()),
+  role: zj._default(zj.string(), "user"),
 });
 // => {
 //   type: "object",
@@ -184,60 +185,137 @@ const User = z.object({
 //   required: ["id", "name"],
 // }
 
-type User = z.infer<typeof User>;
+type User = zj.infer<typeof User>;
 // => { id: string; name: string; nickname?: string; role: string }
 ```
 
 Unknown keys pass through, as in JSON Schema. The strict and catchall forms write `additionalProperties`.
 
 ```ts
-z.object({ name: z.string() }); // unknown keys are allowed and kept
-z.strictObject({ name: z.string() }); // additionalProperties: false
-z.catchall(z.object({ name: z.string() }), z.number()); // additionalProperties: { type: "number" }
+zj.object({ name: zj.string() }); // unknown keys are allowed and kept
+zj.strictObject({ name: zj.string() }); // additionalProperties: false
+zj.catchall(zj.object({ name: zj.string() }), zj.number()); // additionalProperties: { type: "number" }
 ```
 
 Records write `additionalProperties` and, for a constrained key, `propertyNames`.
 
 ```ts
-z.record(z.string(), z.number());
+zj.record(zj.string(), zj.number());
 // => { type: "object", additionalProperties: { type: "number" } }
 
-z.record(z.string().check(z.pattern(/^x-/)), z.string());
+zj.record(zj.string().check(zj.pattern(/^x-/)), zj.string());
 // => { type: "object", propertyNames: { type: "string", pattern: "^x-" }, additionalProperties: { type: "string" } }
 ```
 
 The object checks constrain keys and key counts. None of them change the inferred type.
 
 ```ts
-z.object({ card: z.optional(z.string()), cvv: z.optional(z.string()) }).check(
-  z.minProperties(1),
-  z.maxProperties(10),
-  z.propertyNames(z.string().check(z.pattern(/^[a-z]+$/))),
-  z.dependentRequired({ card: ["cvv"] }), // cvv is required whenever card is present
-  z.dependentSchemas({ card: z.object({ cvv: z.string().check(z.pattern(/^\d{3}$/)) }) }),
+zj.object({ card: zj.optional(zj.string()), cvv: zj.optional(zj.string()) }).check(
+  zj.minProperties(1),
+  zj.maxProperties(10),
+  zj.propertyNames(zj.string().check(zj.pattern(/^[a-z]+$/))),
+  zj.patternProperties({ "^x-": zj.string() }),
+  zj.dependentRequired({ card: ["cvv"] }), // cvv is required whenever card is present
+  zj.dependentSchemas({ card: zj.object({ cvv: zj.string().check(zj.pattern(/^\d{3}$/)) }) }),
 );
 ```
 
-The object helpers from Zod Mini return new documents.
+The object helpers return new documents.
 
 ```ts
-z.extend(User, { admin: z.boolean() });
-z.pick(User, { id: true });
-z.omit(User, { role: true });
-z.partial(User); // every key optional; required is dropped
+zj.extend(User, { admin: zj.boolean() });
+zj.pick(User, { id: true });
+zj.omit(User, { role: true });
+zj.partial(User); // every key optional; required is dropped
 ```
 
-Recursive objects use a getter. The document has a cycle, so `z.toJSONSchema()` is what turns it into a `$ref`.
+## Arrays and tuples
 
 ```ts
-const Category = z.object({
-  name: z.string(),
+zj.array(zj.string()); // { type: "array", items: { type: "string" } }
+zj.array(zj.string()).check(zj.minItems(1), zj.maxItems(10));
+zj.array(zj.integer()).check(zj.uniqueItems()); // structural equality
+zj.array(zj.integer()).check(zj.contains(zj.const(0)), zj.minContains(1), zj.maxContains(3));
+```
+
+Tuples write `prefixItems`. The `items` keyword is `false` unless a rest schema is given.
+
+```ts
+zj.tuple([zj.string(), zj.integer()]);
+// => { type: "array", prefixItems: [{ type: "string" }, { type: "integer" }], items: false }
+
+zj.tuple([zj.string()], zj.integer());
+// => { type: "array", prefixItems: [{ type: "string" }], items: { type: "integer" } }
+```
+
+## Composition
+
+The applicator keywords are functions.
+
+```ts
+zj.anyOf([zj.string(), zj.integer()]); // { anyOf: [...] }, string | number
+zj.oneOf([zj.string(), zj.integer()]); // { oneOf: [...] }, exactly one must match
+zj.allOf([User, Timestamps]); // { allOf: [...] }, User & Timestamps
+zj.not(zj.const(null)); // { not: { const: null } }, unknown
+```
+
+Nullability writes a `type` array when the inner schema is a bare type, and an `anyOf` otherwise.
+
+```ts
+zj.nullable(zj.string()); // { type: ["string", "null"] }
+zj.nullable(zj.string().check(zj.minLength(1))); // { anyOf: [{ type: "string", minLength: 1 }, { type: "null" }] }
+```
+
+Conditionals take the `if` schema and its `then` and `else` branches. The output type is the union of the two branches, so a conditional usually sits inside an `allOf` next to the object it constrains.
+
+```ts
+const Shape = zj.allOf([
+  zj.object({
+    kind: zj.enum(["circle", "rect"]),
+    radius: zj.optional(zj.number()),
+    width: zj.optional(zj.number()),
+    height: zj.optional(zj.number()),
+  }),
+  zj.if(zj.object({ kind: zj.const("circle") }), {
+    then: zj.object({ radius: zj.number() }),
+    else: zj.object({ width: zj.number(), height: zj.number() }),
+  }),
+]);
+```
+
+The unevaluated keywords apply to whatever the applicators around them did not cover. They are checks on the composite, and they see every key or item that `properties`, `patternProperties`, `additionalProperties`, `prefixItems`, `items`, `contains`, `allOf`, `anyOf`, `oneOf`, `if`, `then`, `else`, `dependentSchemas`, and `$ref` evaluated.
+
+```ts
+zj.allOf([User, Timestamps]).check(zj.unevaluatedProperties(false));
+// => { allOf: [...], unevaluatedProperties: false }
+// a key that neither User nor Timestamps declares is rejected
+
+zj.allOf([zj.tuple([zj.string()]), zj.array(zj.unknown()).check(zj.contains(zj.integer()))]).check(
+  zj.unevaluatedItems(zj.boolean()),
+);
+```
+
+The boolean schemas `true` and `false` are the empty schema and its negation.
+
+```ts
+zj.any(); // {}
+zj.unknown(); // {}
+zj.never(); // { not: {} }
+```
+
+## References
+
+A recursive schema is a getter, and `zj.toJSONSchema()` writes the cycle as a `$ref`.
+
+```ts
+const Category = zj.object({
+  name: zj.string(),
   get children() {
-    return z.array(Category);
+    return zj.array(Category);
   },
 });
 
-z.toJSONSchema(Category);
+zj.toJSONSchema(Category);
 // => {
 //   type: "object",
 //   properties: {
@@ -248,77 +326,54 @@ z.toJSONSchema(Category);
 // }
 ```
 
-## Arrays and tuples
+A reference is also a schema of its own. It resolves at parse time against the document it sits in: `#` is the resource root, `#/$defs/name` is a definition, and `#name` is an `$anchor`. Its inferred type is `unknown`.
 
 ```ts
-z.array(z.string()); // { type: "array", items: { type: "string" } }
-z.array(z.string()).check(z.minItems(1), z.maxItems(10));
-z.array(z.integer()).check(z.uniqueItems()); // structural equality
-z.array(z.integer()).check(z.contains(z.const(0)), z.minContains(1), z.maxContains(3));
+const Tree = zj
+  .object({
+    value: zj.number(),
+    children: zj.array(zj.ref("#/$defs/node")),
+  })
+  .check(
+    zj.meta({
+      $defs: {
+        node: zj.object({ value: zj.number(), children: zj.array(zj.ref("#/$defs/node")) }),
+      },
+    }),
+  );
+
+const Address = zj.object({ city: zj.string() }).check(zj.meta({ $anchor: "address" }));
+zj.ref("#address");
 ```
 
-Tuples write `prefixItems`. The `items` keyword is `false` unless a rest schema is given.
+An `$id` starts a new resource, so references inside it resolve against it. A `$ref` to another `$id` is looked up in the schemas passed to `zj.fromJSONSchema()` or registered with `zj.registry`.
 
 ```ts
-z.tuple([z.string(), z.integer()]);
-// => { type: "array", prefixItems: [{ type: "string" }, { type: "integer" }], items: false }
+const Address = zj.object({ city: zj.string() }).check(zj.meta({ $id: "https://example.com/address" }));
 
-z.tuple([z.string()], z.integer());
-// => { type: "array", prefixItems: [{ type: "string" }], items: { type: "integer" } }
+zj.object({ home: zj.ref("https://example.com/address") });
 ```
 
-## Composition
-
-The applicator keywords are functions.
+Dynamic references resolve against the outermost `$dynamicAnchor` of the same name in the dynamic scope, which is how a generic container is specialized by the schema that includes it.
 
 ```ts
-z.anyOf([z.string(), z.integer()]); // { anyOf: [...] }, string | number
-z.oneOf([z.string(), z.integer()]); // { oneOf: [...] }, exactly one must match
-z.allOf([User, Timestamps]); // { allOf: [...] }, User & Timestamps
-z.not(z.const(null)); // { not: { const: null } }, unknown
-```
+const List = zj
+  .object({ items: zj.array(zj.dynamicRef("#item")) })
+  .check(zj.meta({ $id: "https://example.com/list", $defs: { item: zj.any().check(zj.meta({ $dynamicAnchor: "item" })) } }));
 
-Nullability writes a `type` array when the inner schema is a bare type, and an `anyOf` otherwise.
-
-```ts
-z.nullable(z.string()); // { type: ["string", "null"] }
-z.nullable(z.email()); // { anyOf: [{ type: "string", format: "email" }, { type: "null" }] }
-z.nullish(z.string()); // nullable and optional
-```
-
-Conditionals take the `if` schema and its `then` and `else` branches. The output type is the union of the two branches, so a conditional usually sits inside an `allOf` next to the object it constrains.
-
-```ts
-const Shape = z.allOf([
-  z.object({
-    kind: z.enum(["circle", "rect"]),
-    radius: z.optional(z.number()),
-    width: z.optional(z.number()),
-    height: z.optional(z.number()),
-  }),
-  z.if(z.object({ kind: z.const("circle") }), {
-    then: z.object({ radius: z.number() }),
-    else: z.object({ width: z.number(), height: z.number() }),
-  }),
-]);
-```
-
-The boolean schemas `true` and `false` are the empty schema and its negation.
-
-```ts
-z.any(); // {}
-z.unknown(); // {}
-z.never(); // { not: {} }
+const NumberList = zj
+  .allOf([zj.ref("https://example.com/list")])
+  .check(zj.meta({ $defs: { item: zj.number().check(zj.meta({ $dynamicAnchor: "item" })) } }));
 ```
 
 ## Metadata
 
-Annotation keywords are written by `z.meta()` and `z.describe()`. In Zod Mini these register the schema in `z.globalRegistry`; in Zod JSON they write onto the document.
+Annotation keywords are written by `zj.meta()` and `zj.describe()`. In Zod Mini these register the schema in `z.globalRegistry`; in Zod JSON they write onto the document.
 
 ```ts
-z.string().check(
-  z.meta({ title: "Display name", examples: ["ada"], deprecated: true }),
-  z.describe("Shown on the profile page"),
+zj.string().check(
+  zj.meta({ title: "Display name", examples: ["ada"], deprecated: true }),
+  zj.describe("Shown on the profile page"),
 );
 // => {
 //   type: "string",
@@ -329,10 +384,22 @@ z.string().check(
 // }
 ```
 
+The content keywords are annotations, as the spec's default vocabulary defines them.
+
+```ts
+zj.string().check(zj.meta({ contentMediaType: "application/json", contentEncoding: "base64", contentSchema: User }));
+```
+
+The core keywords `$schema`, `$vocabulary`, and `$comment` are annotations on the root.
+
+```ts
+zj.object({}).check(zj.meta({ $schema: "https://json-schema.org/draft/2020-12/schema", $comment: "generated" }));
+```
+
 Keys that Zod JSON does not know are written verbatim, which is how OpenAPI extensions travel.
 
 ```ts
-z.string().check(z.meta({ "x-internal": true, example: "ada" }));
+zj.string().check(zj.meta({ "x-internal": true, example: "ada" }));
 // => { type: "string", "x-internal": true, example: "ada" }
 ```
 
@@ -341,29 +408,29 @@ z.string().check(z.meta({ "x-internal": true, example: "ada" }));
 The `error` parameter customizes the message, as in Zod Mini. It is not a keyword and does not appear in the document.
 
 ```ts
-z.string({ error: "Expected a string" }).check(z.minLength(8, { error: "At least 8 characters" }));
+zj.string({ error: "Expected a string" }).check(zj.minLength(8, { error: "At least 8 characters" }));
 ```
 
 Issues are the `$ZodIssue` objects every Zod package produces, so [error formatting](/error-formatting) and [locales](/error-customization#internationalization) work unchanged. Like Zod Mini, Zod JSON loads no locale by default.
 
 ```ts
-import * as z from "@zod/json";
+import * as zj from "@zod/json";
 
-z.config(z.locales.en());
+zj.config(zj.locales.en());
 ```
 
-## `z.toJSONSchema()`
+## `zj.toJSONSchema()`
 
 For a schema without cycles, `JSON.stringify()` is the conversion. The function exists for cycles, shared subschemas, and older drafts.
 
 ```ts
-z.toJSONSchema(User); // the same document JSON.stringify() produces
-z.toJSONSchema(Category); // the cycle becomes { $ref: "#" }
-z.toJSONSchema(User, { reused: "ref" }); // a schema used twice becomes a $def
-z.toJSONSchema(User, { cycles: "throw" });
-z.toJSONSchema(User, { target: "draft-07" }); // exclusiveMinimum as a boolean, prefixItems as an items array, $defs as definitions
-z.toJSONSchema(User, { target: "draft-04" });
-z.toJSONSchema(User, { target: "openapi-3.0" }); // nullable instead of type: "null", no const or prefixItems
+zj.toJSONSchema(User); // the same document JSON.stringify() produces
+zj.toJSONSchema(Category); // the cycle becomes { $ref: "#" }
+zj.toJSONSchema(User, { reused: "ref" }); // a schema used twice becomes a $def
+zj.toJSONSchema(User, { cycles: "throw" });
+zj.toJSONSchema(User, { target: "draft-07" }); // exclusiveMinimum as a boolean, prefixItems as an items array, $defs as definitions
+zj.toJSONSchema(User, { target: "draft-04" });
+zj.toJSONSchema(User, { target: "openapi-3.0" }); // nullable instead of type: "null", no const or prefixItems
 ```
 
 There is no `unrepresentable`, `io`, `override`, or `metadata` option. Nothing is unrepresentable, the document already describes the input, and metadata is on the schema.
@@ -371,9 +438,9 @@ There is no `unrepresentable`, `io`, `override`, or `metadata` option. Nothing i
 An `$id` names the schema in `$defs` and in the `$ref` that points at it.
 
 ```ts
-const Address = z.object({ city: z.string() }).check(z.meta({ $id: "Address" }));
+const Address = zj.object({ city: zj.string() }).check(zj.meta({ $id: "Address" }));
 
-z.toJSONSchema(z.object({ home: Address, work: Address }), { reused: "ref" });
+zj.toJSONSchema(zj.object({ home: Address, work: Address }), { reused: "ref" });
 // => {
 //   type: "object",
 //   properties: { home: { $ref: "#/$defs/Address" }, work: { $ref: "#/$defs/Address" } },
@@ -388,37 +455,41 @@ The Standard Schema interface exposes the document too.
 User["~standard"].jsonSchema.input; // the schema itself
 ```
 
-## `z.fromJSONSchema()`
+## `zj.fromJSONSchema()`
 
 A JSON Schema document becomes a Zod JSON schema. Pass it `as const` and the TypeScript type is inferred from the document.
 
 ```ts
-const Point = z.fromJSONSchema({
+const Point = zj.fromJSONSchema({
   type: "object",
   properties: { x: { type: "number" }, y: { type: "number" } },
   required: ["x", "y"],
 } as const);
 
-type Point = z.infer<typeof Point>; // { x: number; y: number }
+type Point = zj.infer<typeof Point>; // { x: number; y: number }
 Point.parse({ x: 1, y: 2 });
 ```
 
 Without `as const` the schema still parses, and the inferred type is `unknown`.
 
-The reader resolves local references (`#` and `#/$defs/...`), reads `$schema` to normalize draft-04 and draft-07 spellings, and keeps unknown keywords. The result round-trips: `z.toJSONSchema(z.fromJSONSchema(doc))` deep-equals `doc` for any document Zod JSON can express. Documents using `unevaluatedProperties`, `unevaluatedItems`, `$dynamicRef`, or an external `$ref` throw.
+The reader accepts any 2020-12 document, and draft-04, draft-07, and OpenAPI 3.0 documents by their `$schema`. It resolves `$ref`, `$anchor`, `$dynamicRef`, and `$dynamicAnchor` within the document, and external `$ref` targets from the `schemas` option. A `type` array becomes an `anyOf` of its members, each carrying the keywords that apply to it. Unknown keywords are kept. The result round-trips: `zj.toJSONSchema(zj.fromJSONSchema(doc))` deep-equals `doc`.
+
+```ts
+const Order = zj.fromJSONSchema(orderDoc, { schemas: [addressDoc, customerDoc] });
+```
 
 ## Interop with `zod`
 
 A Zod JSON schema is a core schema, so it nests inside `zod` and `zod/mini` containers. Refinements and transforms belong to the outer schema, since JSON Schema cannot express them.
 
 ```ts
-import * as z from "@zod/json";
-import * as zod from "zod";
+import * as zj from "@zod/json";
+import * as z from "zod";
 
-const Signup = zod
+const Signup = z
   .object({
     user: User, // a Zod JSON schema
-    password: zod.string().min(8),
+    password: z.string().min(8),
   })
   .refine((v) => v.password !== v.user.name, { error: "Password cannot be your name" });
 ```
@@ -427,17 +498,19 @@ The two packages differ where JSON Schema and Zod disagree on a default, and whe
 
 | | `zod/mini` | `@zod/json` |
 | --- | --- | --- |
-| Unknown object keys | stripped | passed through; `z.strictObject()` rejects them |
+| Unknown object keys | stripped | passed through; `zj.strictObject()` rejects them |
 | Defaulted key in the document | required | not required; the document describes the input |
+| String length | UTF-16 code units | Unicode code points |
 | Default locale | `en` | none |
 | Dates, bigints, maps, sets, `undefined` | schemas | not JSON, not available |
 | Coercion, transforms, refinements | built in | in the enclosing `zod` schema |
 | Metadata | `z.globalRegistry` | keywords on the schema |
-| Literals | `z.literal()` | `z.const()` |
-| Unions | `z.union()`, `z.xor()`, `z.intersection()` | `z.anyOf()`, `z.oneOf()`, `z.allOf()` |
-| Integers | `z.int()` | `z.integer()` |
-| Regex | `z.regex()` | `z.pattern()` |
-| Number bounds | `z.gte()`, `z.gt()`, `z.lte()`, `z.lt()` | `z.minimum()`, `z.exclusiveMinimum()`, `z.maximum()`, `z.exclusiveMaximum()` |
+| String formats | `z.email()`, `z.iso.datetime()`, `z.url()`, ... | `zj.format("email")`, `zj.format("date-time")`, `zj.format("uri")`, ... |
+| Literals | `z.literal()` | `zj.const()` |
+| Unions | `z.union()`, `z.xor()`, `z.intersection()` | `zj.anyOf()`, `zj.oneOf()`, `zj.allOf()` |
+| Integers | `z.int()` | `zj.integer()` |
+| Regex | `z.regex()` | `zj.pattern()` |
+| Number bounds | `z.gte()`, `z.gt()`, `z.lte()`, `z.lt()` | `zj.minimum()`, `zj.exclusiveMinimum()`, `zj.maximum()`, `zj.exclusiveMaximum()` |
 
 ## Keyword reference
 
@@ -445,37 +518,59 @@ Every keyword in JSON Schema 2020-12 and what writes it.
 
 | Keyword | Written by | Runtime |
 | --- | --- | --- |
-| `type` | every builder | validated |
-| `properties`, `required` | `z.object()`, `z.optional()`, `z._default()` | validated |
-| `additionalProperties` | `z.strictObject()`, `z.catchall()`, `z.record()` | validated |
-| `patternProperties`, `propertyNames`, `minProperties`, `maxProperties`, `dependentRequired`, `dependentSchemas` | the check of the same name | validated |
-| `items`, `prefixItems` | `z.array()`, `z.tuple()` | validated |
-| `minItems`, `maxItems`, `uniqueItems`, `contains`, `minContains`, `maxContains` | the check of the same name | validated |
+| `type` | every builder, `zj.nullable()` | validated |
+| `properties`, `required` | `zj.object()`, `zj.optional()`, `zj._default()` | validated |
+| `additionalProperties` | `zj.strictObject()`, `zj.catchall()`, `zj.record()` | validated |
+| `patternProperties`, `propertyNames`, `minProperties`, `maxProperties`, `dependentRequired`, `dependentSchemas`, `unevaluatedProperties` | the check of the same name | validated |
+| `items`, `prefixItems` | `zj.array()`, `zj.tuple()` | validated |
+| `minItems`, `maxItems`, `uniqueItems`, `contains`, `minContains`, `maxContains`, `unevaluatedItems` | the check of the same name | validated |
 | `minLength`, `maxLength`, `pattern` | the check of the same name | validated |
-| `format` | the format builders, `z.format()` | validated for the ten formats above, otherwise an annotation |
-| `contentEncoding` | `z.base64()` | validated |
-| `contentMediaType`, `contentSchema` | `z.meta()` | annotation |
+| `format` | `zj.format()` | asserted for the nineteen spec formats, otherwise an annotation |
 | `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf` | the check of the same name | validated |
-| `const`, `enum` | `z.const()`, `z.enum()` | validated, structural equality |
-| `anyOf`, `oneOf`, `allOf`, `not` | `z.anyOf()`, `z.oneOf()`, `z.allOf()`, `z.not()`, `z.nullable()` | validated |
-| `if`, `then`, `else` | `z.if()` | validated |
-| `default` | `z._default()` | applied when the value is `undefined` |
-| `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly`, `$comment`, `$anchor` | `z.meta()`, `z.describe()` | annotation |
-| `$id` | `z.meta()` | annotation; names the `$def` |
-| `$ref`, `$defs`, `$schema` | `z.toJSONSchema()` | local references only |
-| `unevaluatedProperties`, `unevaluatedItems`, `$dynamicRef`, `$dynamicAnchor`, `$vocabulary` | nothing | `z.fromJSONSchema()` throws |
-| anything else | `z.meta()` | written verbatim |
+| `const`, `enum` | `zj.const()`, `zj.enum()` | validated, structural equality |
+| `anyOf`, `oneOf`, `allOf`, `not` | `zj.anyOf()`, `zj.oneOf()`, `zj.allOf()`, `zj.not()`, `zj.nullable()` | validated |
+| `if`, `then`, `else` | `zj.if()` | validated |
+| `$ref`, `$dynamicRef` | `zj.ref()`, `zj.dynamicRef()`, getters | resolved at parse time |
+| `$id`, `$anchor`, `$dynamicAnchor`, `$defs` | `zj.meta()`, `zj.toJSONSchema()` | reference targets |
+| `default` | `zj._default()` | applied when the value is `undefined` |
+| `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly` | `zj.meta()`, `zj.describe()` | annotation |
+| `contentEncoding`, `contentMediaType`, `contentSchema` | `zj.meta()` | annotation |
+| `$schema`, `$vocabulary`, `$comment` | `zj.meta()`, `zj.toJSONSchema()` | annotation |
+| anything else | `zj.meta()` | written verbatim |
+
+## Zod Core additions
+
+This section is the workpiece and is deleted before the page ships. Zod JSON is built from `zod/v4/core` primitives, and these are the ones the core does not have yet. Each row is one core change; the Zod JSON layer on top of it is the naming and the enumerable-keyword instance.
+
+| Keyword | Core today | Core addition |
+| --- | --- | --- |
+| `not` | nothing | `$ZodNot`, a schema that succeeds when its inner schema fails |
+| `if`, `then`, `else` | nothing | `$ZodConditional`, evaluates `then` or `else` by the result of `if` |
+| `$ref`, `$dynamicRef` | `$ZodLazy` with a getter | `$ZodRef`, resolved at parse time; the parse context gains a resource stack (`$id` boundaries) and a dynamic scope (`$dynamicAnchor` targets) |
+| `unevaluatedProperties`, `unevaluatedItems` | nothing | an evaluated-keys and evaluated-items annotation on the parse payload, written by `$ZodObject`, `$ZodArray`, `$ZodTuple`, `$ZodUnion`, `$ZodXor`, `$ZodIntersection`, `$ZodConditional`, `$ZodRef`, and the `dependentSchemas` check; two checks that read it |
+| `const`, `enum` with objects or arrays | `$ZodLiteral` and `$ZodEnum` compare primitives with `===` | structural equality for object and array members |
+| `uniqueItems`, `contains`, `minContains`, `maxContains` | enforced inside `z.fromJSONSchema()` only ([#6535](https://github.com/colinhacks/zod/pull/6535)) | four core checks |
+| `minProperties`, `maxProperties` | on the `min-max-properties` branch ([#6493](https://github.com/colinhacks/zod/pull/6493), closed) | land the two checks |
+| `propertyNames` | enforced inside `z.fromJSONSchema()` only ([#6411](https://github.com/colinhacks/zod/pull/6411)) | one core check |
+| `patternProperties`, `dependentRequired`, `dependentSchemas` | nothing | three core checks |
+| `minLength`, `maxLength` | `$ZodCheckMinLength` and `$ZodCheckMaxLength` count UTF-16 code units | a code-point mode, since the spec counts characters |
+| `format` | `email`, `hostname`, `ipv4`, `ipv6`, `uuid`, `date-time`, `date`, `duration`, `uri` (as `url`) | `idn-email`, `idn-hostname`, `uri-reference`, `iri`, `iri-reference`, `uri-template`, `json-pointer`, `relative-json-pointer`, `regex`; and `time` with the mandatory RFC 3339 offset, which `$ZodISOTime` does not require |
+| `allOf` | `$ZodIntersection` is binary | an n-ary form, or nesting in the Zod JSON layer |
+| `type` arrays | nothing | a multi-type schema whose keywords apply by the instance's type, if byte-identical round-trips matter (see open questions) |
+| `$id`, `$anchor`, `$dynamicAnchor`, `$defs` | `z.globalRegistry` metadata | the resolver that `$ZodRef` calls; lives in Zod JSON |
+| `~standard.jsonSchema` | classic builds it from `toJSONSchema()`; mini has none | the Zod JSON instance returns itself |
 
 ## Open questions
 
 This section is the workpiece and is deleted before the page ships. Each item names the choice the page makes and the alternative.
 
-1. **Keyword names or Zod Mini names.** The page names builders and checks after the keyword they write: `z.const()`, `z.anyOf()`, `z.oneOf()`, `z.allOf()`, `z.integer()`, `z.pattern()`, `z.minimum()`. Zod Mini spells the same things `z.literal()`, `z.union()`, `z.xor()`, `z.intersection()`, `z.int()`, `z.regex()`, `z.gte()`. Keyword names make the document readable from the code; Mini names make the package a drop-in. Aliases are the third option.
-2. **Unknown object keys.** The page passes them through, which is what JSON Schema validation does. Zod strips them, and a stripped output still conforms to the document.
-3. **What `required` describes.** The page lists a defaulted key as not required, so the document describes the input. Zod's `z.toJSONSchema()` describes the output by default and lists it as required.
-4. **Nullable shape.** A `type` array for a bare inner type and `anyOf` otherwise, matching Zod's emitter. Always writing `anyOf` is simpler and one line longer.
-5. **Formats.** The page ships builders for the ten formats Zod validates plus `z.base64()`, and `z.format()` for annotation-only formats. Zod's other string formats (`cuid`, `ulid`, `nanoid`, `emoji`, `e164`, ...) have no JSON Schema format and are written as `pattern` by the classic emitter. They can ship as `pattern` builders or be left to `z.string().check(z.pattern(z.regexes.cuid))`.
-6. **Discriminated unions.** No keyword exists. `z.anyOf()` and `z.oneOf()` cover the semantics and lose the discriminator fast path and the targeted error. A `z.discriminatedUnion()` that writes `anyOf` plus OpenAPI's `discriminator` is the middle ground.
-7. **Unknown keywords through `z.meta()`.** Written verbatim, which OpenAPI's `x-` extensions need, and a misspelled keyword is accepted silently.
-8. **Package shape.** A standalone `@zod/json` with a peer dependency on `zod`, like `@zod/mini`. Not decided: whether it is also a `zod/json` subpath, and whether the source lives in `packages/json` or `packages/zod/src/v4/json`.
-9. **Out of scope for the first release.** Multi-document output from a registry, `z.compile()` support for the new schema types, and moving the classic `z.toJSONSchema()` emitter out of `zod`.
+1. **Unknown object keys.** The page passes them through, which is what JSON Schema validation does. Zod strips them, and a stripped output still conforms to the document.
+2. **What `required` describes.** The page lists a defaulted key as not required, so the document describes the input. Zod's `z.toJSONSchema()` describes the output by default and lists it as required.
+3. **Format sugar.** The page has one spelling, `zj.string().check(zj.format("email"))`. Builders such as `zj.email()` would shorten the common case at the cost of nineteen more exports.
+4. **Content assertions.** The page treats `contentEncoding`, `contentMediaType`, and `contentSchema` as annotations, which is the spec's default. The spec also allows asserting them: decode the encoding, then validate the decoded content against `contentSchema` when the media type is JSON.
+5. **Type arrays.** A `type: ["string", "number"]` with `minLength` and `minimum` beside it reads back as an `anyOf` with the keywords distributed. That round-trips semantically, not byte for byte. A multi-type core schema would make it exact.
+6. **Nullable shape.** A `type` array for a bare inner type and `anyOf` otherwise, matching Zod's emitter. Always writing `anyOf` is simpler and one line longer.
+7. **Discriminated unions.** No keyword exists. `zj.anyOf()` and `zj.oneOf()` cover the semantics and lose the discriminator fast path and the targeted error. A `zj.discriminatedUnion()` that writes `anyOf` plus OpenAPI's `discriminator` is the middle ground.
+8. **Unknown keywords through `zj.meta()`.** Written verbatim, which OpenAPI's `x-` extensions need, and a misspelled keyword is accepted silently.
+9. **Package shape.** A standalone `@zod/json` with a peer dependency on `zod`, like `@zod/mini`. Not decided: whether it is also a `zod/json` subpath, and whether the source lives in `packages/json` or `packages/zod/src/v4/json`.
+10. **Out of scope for the first release.** Multi-document output from a registry, `zj.compile()` support for the new schema types, and moving the classic `z.toJSONSchema()` emitter out of `zod`.
