@@ -1289,6 +1289,18 @@ test("hostname", () => {
   expect(() => hostname.parse("example..com")).toThrow();
 });
 
+test("currency code", () => {
+  const currency = z.currencyCode();
+  for (const code of ["USD", "EUR", "XXX", "XCG", "XAD"]) expect(currency.parse(code)).toBe(code);
+  for (const input of ["", "usd", "US", "USDX", " USD", "ANG", "BGN"])
+    expect(currency.safeParse(input).success).toBe(false);
+  expect(currency.safeParse("usd").error!.issues[0]).toMatchObject({
+    code: "invalid_format",
+    format: "currency_code",
+    message: "Invalid currency code",
+  });
+});
+
 test("hash validation", () => {
   // MD5 tests
   const md5hex = z.hash("md5");
