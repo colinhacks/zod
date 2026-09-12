@@ -305,16 +305,27 @@ zj.never(); // { not: {} }
 
 ## References
 
-A recursive schema is a getter, and `zj.toJSONSchema()` writes the cycle as a `$ref`.
+A reference is the referenced schema. In memory a schema points at another schema directly, through a variable or a getter, and there is no `$ref` keyword to resolve. The keyword is written by `zj.toJSONSchema()` and read by `zj.fromJSONSchema()`.
 
 ```ts
+const Address = zj.object({ city: zj.string() });
+
+const Order = zj.object({
+  billing: Address, // the same schema, twice
+  shipping: Address,
+});
+
 const Category = zj.object({
   name: zj.string(),
   get children() {
-    return zj.array(Category);
+    return zj.array(Category); // a cycle
   },
 });
+```
 
+Serializing writes a `$ref` wherever a schema is reached again. The name comes from the schema's `$id` or `$anchor` when it has one, and is generated otherwise.
+
+```ts
 zj.toJSONSchema(Category);
 // => {
 //   type: "object",
@@ -324,47 +335,24 @@ zj.toJSONSchema(Category);
 //   },
 //   required: ["name", "children"],
 // }
+
+zj.toJSONSchema(Order, { reused: "ref" });
+// => {
+//   type: "object",
+//   properties: { billing: { $ref: "#/$defs/__schema0" }, shipping: { $ref: "#/$defs/__schema0" } },
+//   required: ["billing", "shipping"],
+//   $defs: { __schema0: { type: "object", properties: { city: { type: "string" } }, required: ["city"] } },
+// }
 ```
 
-A reference is also a schema of its own. It resolves at parse time against the document it sits in: `#` is the resource root, `#/$defs/name` is a definition, and `#name` is an `$anchor`. Its inferred type is `unknown`.
+Reading turns every `$ref` back into a pointer to the schema it names, across `$defs`, `$anchor`, and `$id` resources within the document, and across the documents passed as `schemas` for external targets.
 
 ```ts
-const Tree = zj
-  .object({
-    value: zj.number(),
-    children: zj.array(zj.ref("#/$defs/node")),
-  })
-  .check(
-    zj.meta({
-      $defs: {
-        node: zj.object({ value: zj.number(), children: zj.array(zj.ref("#/$defs/node")) }),
-      },
-    }),
-  );
-
-const Address = zj.object({ city: zj.string() }).check(zj.meta({ $anchor: "address" }));
-zj.ref("#address");
+const Order = zj.fromJSONSchema(orderDoc, { schemas: [addressDoc] });
+Order.properties.billing === Order.properties.shipping; // true, one schema
 ```
 
-An `$id` starts a new resource, so references inside it resolve against it. A `$ref` to another `$id` is looked up in the schemas passed to `zj.fromJSONSchema()` or registered with `zj.registry`.
-
-```ts
-const Address = zj.object({ city: zj.string() }).check(zj.meta({ $id: "https://example.com/address" }));
-
-zj.object({ home: zj.ref("https://example.com/address") });
-```
-
-Dynamic references resolve against the outermost `$dynamicAnchor` of the same name in the dynamic scope, which is how a generic container is specialized by the schema that includes it.
-
-```ts
-const List = zj
-  .object({ items: zj.array(zj.dynamicRef("#item")) })
-  .check(zj.meta({ $id: "https://example.com/list", $defs: { item: zj.any().check(zj.meta({ $dynamicAnchor: "item" })) } }));
-
-const NumberList = zj
-  .allOf([zj.ref("https://example.com/list")])
-  .check(zj.meta({ $defs: { item: zj.number().check(zj.meta({ $dynamicAnchor: "item" })) } }));
-```
+A dynamic reference is bound when the document is read. The reader follows `$dynamicRef` to the outermost `$dynamicAnchor` in the dynamic scope of that read, so a generic container is specialized once per document that includes it and the result is a plain graph of schemas.
 
 ## Metadata
 
@@ -530,8 +518,8 @@ Every keyword in JSON Schema 2020-12 and what writes it.
 | `const`, `enum` | `zj.const()`, `zj.enum()` | validated, structural equality |
 | `anyOf`, `oneOf`, `allOf`, `not` | `zj.anyOf()`, `zj.oneOf()`, `zj.allOf()`, `zj.not()`, `zj.nullable()` | validated |
 | `if`, `then`, `else` | `zj.if()` | validated |
-| `$ref`, `$dynamicRef` | `zj.ref()`, `zj.dynamicRef()`, getters | resolved at parse time |
-| `$id`, `$anchor`, `$dynamicAnchor`, `$defs` | `zj.meta()`, `zj.toJSONSchema()` | reference targets |
+| `$ref`, `$dynamicRef` | `zj.toJSONSchema()` for a shared or recursive schema | the referenced schema; bound when a document is read |
+| `$id`, `$anchor`, `$dynamicAnchor`, `$defs` | `zj.meta()`, `zj.toJSONSchema()` | names for `$ref` targets |
 | `default` | `zj._default()` | applied when the value is `undefined` |
 | `title`, `description`, `examples`, `deprecated`, `readOnly`, `writeOnly` | `zj.meta()`, `zj.describe()` | annotation |
 | `contentEncoding`, `contentMediaType`, `contentSchema` | `zj.meta()` | annotation |
@@ -546,8 +534,8 @@ This section is the workpiece and is deleted before the page ships. Zod JSON is 
 | --- | --- | --- |
 | `not` | nothing | `$ZodNot`, a schema that succeeds when its inner schema fails |
 | `if`, `then`, `else` | nothing | `$ZodConditional`, evaluates `then` or `else` by the result of `if` |
-| `$ref`, `$dynamicRef` | `$ZodLazy` with a getter | `$ZodRef`, resolved at parse time; the parse context gains a resource stack (`$id` boundaries) and a dynamic scope (`$dynamicAnchor` targets) |
-| `unevaluatedProperties`, `unevaluatedItems` | nothing | an evaluated-keys and evaluated-items annotation on the parse payload, written by `$ZodObject`, `$ZodArray`, `$ZodTuple`, `$ZodUnion`, `$ZodXor`, `$ZodIntersection`, `$ZodConditional`, `$ZodRef`, and the `dependentSchemas` check; two checks that read it |
+| `$ref`, `$dynamicRef` | `$ZodLazy` with a getter, and the emitter's `cycles` and `reused` handling | nothing; a reference is the schema in memory, and dynamic references are bound by the reader |
+| `unevaluatedProperties`, `unevaluatedItems` | nothing | an evaluated-keys and evaluated-items annotation on the parse payload, written by `$ZodObject`, `$ZodArray`, `$ZodTuple`, `$ZodUnion`, `$ZodXor`, `$ZodIntersection`, `$ZodConditional`, and the `dependentSchemas` check; two checks that read it |
 | `const`, `enum` with objects or arrays | `$ZodLiteral` and `$ZodEnum` compare primitives with `===` | structural equality for object and array members |
 | `uniqueItems`, `contains`, `minContains`, `maxContains` | enforced inside `z.fromJSONSchema()` only ([#6535](https://github.com/colinhacks/zod/pull/6535)) | four core checks |
 | `minProperties`, `maxProperties` | on the `min-max-properties` branch ([#6493](https://github.com/colinhacks/zod/pull/6493), closed) | land the two checks |
@@ -557,7 +545,7 @@ This section is the workpiece and is deleted before the page ships. Zod JSON is 
 | `format` | `email`, `hostname`, `ipv4`, `ipv6`, `uuid`, `date-time`, `date`, `duration`, `uri` (as `url`) | `idn-email`, `idn-hostname`, `uri-reference`, `iri`, `iri-reference`, `uri-template`, `json-pointer`, `relative-json-pointer`, `regex`; and `time` with the mandatory RFC 3339 offset, which `$ZodISOTime` does not require |
 | `allOf` | `$ZodIntersection` is binary | an n-ary form, or nesting in the Zod JSON layer |
 | `type` arrays | nothing | a multi-type schema whose keywords apply by the instance's type, if byte-identical round-trips matter (see open questions) |
-| `$id`, `$anchor`, `$dynamicAnchor`, `$defs` | `z.globalRegistry` metadata | the resolver that `$ZodRef` calls; lives in Zod JSON |
+| `$id`, `$anchor`, `$dynamicAnchor`, `$defs` | `z.globalRegistry` metadata | nothing in core; the emitter names `$ref` targets from them and the reader resolves them, both in Zod JSON |
 | `~standard.jsonSchema` | classic builds it from `toJSONSchema()`; mini has none | the Zod JSON instance returns itself |
 
 ## Open questions
@@ -569,8 +557,9 @@ This section is the workpiece and is deleted before the page ships. Each item na
 3. **Format sugar.** The page has one spelling, `zj.string().check(zj.format("email"))`. Builders such as `zj.email()` would shorten the common case at the cost of nineteen more exports.
 4. **Content assertions.** The page treats `contentEncoding`, `contentMediaType`, and `contentSchema` as annotations, which is the spec's default. The spec also allows asserting them: decode the encoding, then validate the decoded content against `contentSchema` when the media type is JSON.
 5. **Type arrays.** A `type: ["string", "number"]` with `minLength` and `minimum` beside it reads back as an `anyOf` with the keywords distributed. That round-trips semantically, not byte for byte. A multi-type core schema would make it exact.
-6. **Nullable shape.** A `type` array for a bare inner type and `anyOf` otherwise, matching Zod's emitter. Always writing `anyOf` is simpler and one line longer.
-7. **Discriminated unions.** No keyword exists. `zj.anyOf()` and `zj.oneOf()` cover the semantics and lose the discriminator fast path and the targeted error. A `zj.discriminatedUnion()` that writes `anyOf` plus OpenAPI's `discriminator` is the middle ground.
-8. **Unknown keywords through `zj.meta()`.** Written verbatim, which OpenAPI's `x-` extensions need, and a misspelled keyword is accepted silently.
-9. **Package shape.** A standalone `@zod/json` with a peer dependency on `zod`, like `@zod/mini`. Not decided: whether it is also a `zod/json` subpath, and whether the source lives in `packages/json` or `packages/zod/src/v4/json`.
-10. **Out of scope for the first release.** Multi-document output from a registry, `zj.compile()` support for the new schema types, and moving the classic `z.toJSONSchema()` emitter out of `zod`.
+6. **Dynamic references on the way out.** The reader binds `$dynamicRef` to a plain schema pointer, so a document that used one is written back with static `$ref`s. Semantically equal, not byte for byte. Keeping the `$dynamicAnchor` annotation and re-emitting `$dynamicRef` where the pointer crosses a resource boundary would make it exact.
+7. **Nullable shape.** A `type` array for a bare inner type and `anyOf` otherwise, matching Zod's emitter. Always writing `anyOf` is simpler and one line longer.
+8. **Discriminated unions.** No keyword exists. `zj.anyOf()` and `zj.oneOf()` cover the semantics and lose the discriminator fast path and the targeted error. A `zj.discriminatedUnion()` that writes `anyOf` plus OpenAPI's `discriminator` is the middle ground.
+9. **Unknown keywords through `zj.meta()`.** Written verbatim, which OpenAPI's `x-` extensions need, and a misspelled keyword is accepted silently.
+10. **Package shape.** A standalone `@zod/json` with a peer dependency on `zod`, like `@zod/mini`. Not decided: whether it is also a `zod/json` subpath, and whether the source lives in `packages/json` or `packages/zod/src/v4/json`.
+11. **Out of scope for the first release.** Multi-document output from a registry, `zj.compile()` support for the new schema types, and moving the classic `z.toJSONSchema()` emitter out of `zod`.
