@@ -10,6 +10,11 @@ permissions:
   contents: write
   pull-requests: write
 
+# one run at a time, so a manual dispatch and the schedule cannot push the branch out of order
+concurrency:
+  group: iso-4217
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -23,13 +28,20 @@ jobs:
       - run: nub install --frozen-lockfile
       - id: list
         run: nub run update:iso4217
+      # nothing to do when main already carries the list, or when the open generated PR does: its head is left alone until it merges
       - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          changed=true
           if git diff --quiet -- packages/zod/src/v4/core/regexes.ts; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            changed=false
+          elif [ -n "$(gh pr list --head iso-4217 --state open --json number --jq '.[0].number')" ] \
+            && git fetch -q origin iso-4217 \
+            && git diff --quiet FETCH_HEAD -- packages/zod/src/v4/core/regexes.ts; then
+            changed=false
           fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
       # a PR opened with the workflow token never triggers the test workflow, so the tests that read the list run here
       - if: steps.diff.outputs.changed == 'true'
         run: nub exec --node vitest run packages/zod/src/v4/classic/tests/string.test.ts packages/zod/src/v4/mini/tests/string.test.ts packages/zod/src/v4/classic/tests/to-json-schema.test.ts

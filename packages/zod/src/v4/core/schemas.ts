@@ -5165,4 +5165,5 @@ export type $ZodStringFormatTypes =
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
-  | $ZodCustomStringFormat<"hostname">;
+  | $ZodCustomStringFormat<"hostname">
+  | $ZodCustomStringFormat<"currency_code">;
