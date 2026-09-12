@@ -1,6 +1,68 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("recursive pipes accept unconstrained input targets", () => {
+  const Schema = z.object({
+    get child() {
+      return Schema.pipe(z.unknown()).optional();
+    },
+  });
+  expectTypeOf<z.output<typeof Schema>>().toEqualTypeOf<{ child?: unknown }>();
+  expect(Schema.parse({ child: {} })).toEqual({ child: {} });
+  const mapped = z.string().pipe(z.transform((value) => value.length));
+  expectTypeOf<z.output<typeof mapped>>().toEqualTypeOf<number>();
+  expect(mapped.parse("leaf")).toBe(4);
+  const branded = z
+    .string()
+    .brand<"text">()
+    .pipe(
+      z.transform((value) => {
+        expectTypeOf<typeof value>().toEqualTypeOf<string & z.core.$brand<"text">>();
+        return value.length;
+      })
+    );
+  expect(branded.parse("leaf")).toBe(4);
+  function invalid() {
+    // @ts-expect-error the target does not accept the source output
+    z.number().pipe(z.string());
+    // @ts-expect-error the target does not accept the source output
+    z.pipe(z.number(), z.string());
+  }
+  void invalid;
+});
+
+test("generic arrays preserve symbolic values in both directions", () => {
+  function parse<T extends z.ZodType>(schema: T, value: unknown): z.output<T>[] {
+    return z.array(schema).parse(value);
+  }
+  function encode<T extends z.ZodType>(schema: T, value: z.output<T>[]): z.input<T>[] {
+    return z.array(schema).encode(value);
+  }
+  function decode<T extends z.ZodType>(schema: T, value: z.input<T>[]): z.output<T>[] {
+    return z.array(schema).decode(value);
+  }
+  function readonly<T extends z.ZodType>(schema: T, value: unknown): ReadonlyArray<z.output<T>> {
+    return z.array(schema).readonly().parse(value);
+  }
+  function fabricated<T extends z.ZodType>(): z.output<T>[] {
+    // @ts-expect-error numeric values cannot satisfy every schema output
+    return [123];
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  expect(parse(codec, ["12"])).toEqual([12]);
+  expect(decode(codec, ["12"])).toEqual([12]);
+  expect(encode(codec, [12])).toEqual(["12"]);
+  expect(Object.isFrozen(readonly(codec, ["12"]))).toBe(true);
+  expect(() => parse(codec, [12])).toThrow();
+  type Field = z.ZodString | z.ZodArray<Field>;
+  type Value = string | Value[];
+  const field: z.ZodArray<Field> = z.array(z.string());
+  expectTypeOf(parse(field, [])).toEqualTypeOf<Value[][]>();
+  expectTypeOf(encode(field, [])).toEqualTypeOf<Value[][]>();
+  expectTypeOf(decode(field, [])).toEqualTypeOf<Value[][]>();
+  void fabricated;
+});
+
 test("generic wrapper values retain symbolic input and output", () => {
   function optional<T extends z.ZodType>(schema: T, value: unknown): z.output<T> | undefined {
     return schema.optional().parse(value);
@@ -467,7 +529,7 @@ test("recursive pipe projections terminate at opaque leaves", () => {
     | z.core.$ZodNaN
     | z.core.$ZodTemplateLiteral
     | z.core.$ZodCustom;
-  expectTypeOf<Exclude<Leaf, { _zod: { atomic?: true } }>>().toBeNever();
+  expectTypeOf<z.output<Leaf>>().toBeAny();
 });
 
 test("pipe output opacity preserves recursive inputs", () => {
@@ -508,9 +570,8 @@ test("output opacity composes through pipes and codecs", () => {
   expect(nested.safeParse(4).success).toBe(false);
 });
 
-test("replacement pipe internals declare output opacity", () => {
+test("replacement pipe internals retain declared values", () => {
   interface Internals extends z.core.$ZodTypeInternals {
-    atomic?: { output: true };
     def: z.core.$ZodPipeDef<Field, z.core.$ZodTransform>;
     isst: never;
     values: undefined;
@@ -526,6 +587,22 @@ test("replacement pipe internals declare output opacity", () => {
     return field;
   }
   expectTypeOf<z.output<Field>>().toBeUnknown();
+  interface NarrowInternals extends z.core.$ZodTypeInternals<"closed", string> {
+    def: z.core.$ZodPipeDef<z.core.$ZodString, z.core.$ZodTransform>;
+    isst: never;
+    values: undefined;
+    propValues: undefined;
+    optin: z.core._$ZodTypeInternals["optin"];
+    optout: z.core._$ZodTypeInternals["optout"];
+  }
+  interface Narrow extends z.core.$ZodPipe<z.core.$ZodString, z.core.$ZodTransform> {
+    _zod: NarrowInternals;
+  }
+  expectTypeOf<z.output<z.core.$ZodReadonly<Narrow>>>().toEqualTypeOf<"closed">();
+  expectTypeOf<z.input<z.core.$ZodReadonly<Narrow>>>().toEqualTypeOf<string>();
+  type DeclaredArray = z.ZodArray<z.ZodString> & z.ZodType<["closed"], string[]>;
+  expectTypeOf<z.output<DeclaredArray>>().toEqualTypeOf<string[] & ["closed"]>();
+  expectTypeOf<z.input<DeclaredArray>>().toEqualTypeOf<string[]>();
   void schema;
 });
 

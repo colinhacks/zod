@@ -132,6 +132,9 @@ export interface ZodType<
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
+  pipe<T extends core.$ZodType<any, unknown extends core.input<T> ? unknown : core.output<this>>>(
+    target: T | core.$ZodType<any, unknown extends core.input<T> ? never : core.output<this>>
+  ): ZodPipe<this, T>;
   pipe<T extends core.$ZodType<any, core.output<this>>>(
     target: T | core.$ZodType<any, core.output<this>>
   ): ZodPipe<this, T>;

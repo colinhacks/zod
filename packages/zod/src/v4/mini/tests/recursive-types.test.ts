@@ -1,6 +1,31 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/mini";
 
+test("pipe bounds reject incompatible targets", () => {
+  function invalid() {
+    // @ts-expect-error the target does not accept the source output
+    z.pipe(z.number(), z.string());
+  }
+  void invalid;
+});
+
+test("generic arrays preserve input and output contracts", () => {
+  function parse<T extends z.ZodMiniType>(schema: T, value: unknown): z.output<T>[] {
+    return z.array(schema).parse(value);
+  }
+  function encode<T extends z.ZodMiniType>(schema: T, value: z.output<T>[]): z.input<T>[] {
+    return z.encode(z.array(schema), value);
+  }
+  function decode<T extends z.ZodMiniType>(schema: T, value: z.input<T>[]): z.output<T>[] {
+    return z.decode(z.array(schema), value);
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  expect(parse(codec, ["12"])).toEqual([12]);
+  expect(encode(codec, [12])).toEqual(["12"]);
+  expect(decode(codec, ["12"])).toEqual([12]);
+  expect(() => parse(codec, [12])).toThrow();
+});
+
 test("demand-driven metadata preserves factories and generic builders", () => {
   function template<const T extends z.core.$ZodTemplateLiteralPart[]>(parts: T) {
     return z.templateLiteral(parts);

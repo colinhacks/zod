@@ -183,13 +183,8 @@ export class $ZodEncodeError extends Error {
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
-// retain distributivity while indexing the selected schema
-export type input<T> = T extends unknown
-  ? (T extends { _zod: { input: any } } ? T : { _zod: { input: unknown } })["_zod"]["input"]
-  : never;
-export type output<T> = T extends unknown
-  ? (T extends { _zod: { output: any } } ? T : { _zod: { output: unknown } })["_zod"]["output"]
-  : never;
+export type input<T> = schemas.$InferInput<T>;
+export type output<T> = schemas.$InferOutput<T>;
 
 export type { output as infer };
 
