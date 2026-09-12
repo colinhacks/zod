@@ -1,6 +1,6 @@
 {
   "name": "@zod/mini",
-  "version": "4.6.3",
+  "version": "4.6.4",
   "exports": {
     "./package.json": "./package.json",
     ".": "./src/index.ts"
