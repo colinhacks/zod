@@ -1125,10 +1125,6 @@ export function members(proto: object, table: object): void {
     // a method materializes bound on first read, which is what keeps a detached member working: `const opt = schema.optional; opt()`
     else defineBound(proto, key, desc.value);
   }
-  // for..in sees no symbol keys, so well-known members like Symbol.iterator install here
-  for (const sym of Object.getOwnPropertySymbols(table)) {
-    defineBound(proto, sym, (table as any)[sym]);
-  }
 }
 
 /** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */

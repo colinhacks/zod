@@ -90,7 +90,7 @@ test("z.properties", () => {
     expect(obj.safeParse(input).error!.issues.map((i) => [i.code, i.path])).toEqual([["invalid_type", []]]);
   }
 
-  // Known looseness versus the longhand, pinned so it stays deliberate: the schema-as-check is typed over the whole shape, and `$ZodCheckInternals.check()` is a method, so TypeScript compares it bivariantly and accepts a check type that is a subtype of the target. Naming a key the target lacks therefore compiles here and fails at parse time, where the equivalent chain of `z.property()` calls rejects it outright.
+  // Known looseness versus the longhand, pinned so it stays deliberate: the check is typed over the whole shape, and `$ZodCheckInternals.check()` is a method, so TypeScript compares it bivariantly and accepts a check type that is a subtype of the target. Naming a key the target lacks therefore compiles here and fails at parse time, where the equivalent chain of `z.property()` calls rejects it outright.
   z.object({ a: z.string() }).check(...z.properties({ a: z.literal("x"), b: z.literal("y") }));
   expect(
     z
