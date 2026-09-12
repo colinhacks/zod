@@ -40,6 +40,27 @@ test("recursive native containers preserve brands", () => {
   expect(nested.parse([["leaf"]])).toEqual([["leaf"]]);
 });
 
+test("generic optional values and wrapped capabilities", () => {
+  function optional<T extends z.ZodMiniType>(schema: T, value: unknown): z.output<T> | undefined {
+    return z.optional(schema).parse(value);
+  }
+  function pattern<T extends z.ZodMiniString<string>>(schema: T) {
+    return z.templateLiteral(["prefix", z.optional(schema)]);
+  }
+  function discriminated<T extends z.core.$ZodTypeDiscriminable>(schema: T) {
+    return z.discriminatedUnion("kind", [z.readonly(z.lazy(() => schema))]);
+  }
+  const template = pattern(z.string());
+  const union = discriminated(z.object({ kind: z.literal("a") }));
+  expectTypeOf<z.output<typeof template>>().toEqualTypeOf<`prefix${string}`>();
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<Readonly<{ kind: "a" }>>();
+  expect(optional(z.string(), undefined)).toBeUndefined();
+  expect(optional(z.string(), "leaf")).toBe("leaf");
+  expect(template.parse("prefixleaf")).toBe("prefixleaf");
+  expect(union.parse({ kind: "a" })).toEqual({ kind: "a" });
+  expect(() => union.parse({ kind: "b" })).toThrow();
+});
+
 test("recursive array and tuple schema views", () => {
   type ArrayField = z.ZodMiniString<string> | z.ZodMiniArray<ArrayField>;
   type ArrayValue = string | ArrayValue[];

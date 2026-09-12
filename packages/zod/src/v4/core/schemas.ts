@@ -2760,25 +2760,23 @@ export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$construct
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-type HasPropertyValues<T, Seen = never> = util.IsAny<T> extends true
-  ? true
-  : T extends $ZodTypeRef
-    ? [T["_zod"]["propValues"]] extends [util.PropValues]
-      ? true
-      : [_$ZodTypeInternals["propValues"]] extends [T["_zod"]["propValues"]]
+type DiscriminatedOptionConstraint<T, Seen = never> =
+  | { _zod: { propValues: util.PropValues } }
+  | (T extends $ZodTypeRef
+      ? [_$ZodTypeInternals["propValues"]] extends [T["_zod"]["propValues"]]
         ? T["_zod"]["def"] extends Seen
-          ? false
+          ? never
           : T["_zod"]["def"] extends { type: "pipe"; in: infer I }
-            ? HasPropertyValues<I, Seen | T["_zod"]["def"]>
+            ? { _zod: { def: { in: DiscriminatedOptionConstraint<I, Seen | T["_zod"]["def"]> } } }
             : T["_zod"]["def"] extends { type: "readonly"; innerType: infer I }
-              ? HasPropertyValues<I, Seen | T["_zod"]["def"]>
+              ? { _zod: { def: { innerType: DiscriminatedOptionConstraint<I, Seen | T["_zod"]["def"]> } } }
               : T["_zod"]["def"] extends { type: "lazy"; getter: () => infer I }
-                ? HasPropertyValues<I, Seen | T["_zod"]["def"]>
-                : false
-        : false
-    : false;
+                ? { _zod: { def: { getter: () => DiscriminatedOptionConstraint<I, Seen | T["_zod"]["def"]> } } }
+                : never
+        : never
+      : never);
 export type $ValidateDiscriminatedOptions<T extends readonly SomeType[]> = {
-  [K in keyof T]: HasPropertyValues<T[K]> extends true ? T[K] : never;
+  [K in keyof T]: T[K] & DiscriminatedOptionConstraint<T[K]>;
 };
 
 export interface $ZodDiscriminatedUnionDef<
@@ -4855,27 +4853,27 @@ export type $ZodTemplateLiteralCandidate = LiteralPart | SchemaPart;
 
 export type $ZodTemplateLiteralPart = LiteralPart | (SchemaPart & { _zod: { pattern: RegExp } });
 
-type HasPattern<T, Seen = never> = util.IsAny<T> extends true
-  ? true
-  : T extends $ZodTypeRef
-    ? [T["_zod"]["pattern"]] extends [RegExp]
-      ? true
-      : [RegExp | undefined] extends [T["_zod"]["pattern"]]
+type TemplatePartConstraint<T, Seen = never> =
+  | { _zod: { pattern: RegExp } }
+  | (T extends $ZodTypeRef
+      ? [RegExp | undefined] extends [T["_zod"]["pattern"]]
         ? T["_zod"]["def"] extends Seen
-          ? false
+          ? never
           : T["_zod"]["def"] extends { type: "optional" | "nullable"; innerType: infer I }
-            ? HasPattern<I, Seen | T["_zod"]["def"]>
+            ? { _zod: { def: { innerType: TemplatePartConstraint<I, Seen | T["_zod"]["def"]> } } }
             : T["_zod"]["def"] extends { type: "lazy"; getter: () => infer I }
-              ? HasPattern<I, Seen | T["_zod"]["def"]>
-              : T["_zod"]["def"] extends { type: "union"; options: readonly (infer I)[] }
-                ? false extends HasPattern<I, Seen | T["_zod"]["def"]>
-                  ? false
-                  : true
-                : false
-        : false
-    : false;
+              ? { _zod: { def: { getter: () => TemplatePartConstraint<I, Seen | T["_zod"]["def"]> } } }
+              : T["_zod"]["def"] extends { type: "union"; options: infer I extends readonly $ZodTypeRef[] }
+                ? {
+                    _zod: {
+                      def: { options: { [K in keyof I]: TemplatePartConstraint<I[K], Seen | T["_zod"]["def"]> } };
+                    };
+                  }
+                : never
+        : never
+      : never);
 export type $ValidateTemplateParts<T extends readonly $ZodTemplateLiteralCandidate[]> = {
-  [K in keyof T]: T[K] extends LiteralPart ? T[K] : HasPattern<T[K]> extends true ? T[K] : never;
+  [K in keyof T]: T[K] & (LiteralPart | TemplatePartConstraint<T[K]>);
 };
 
 type UndefinedToEmptyString<T> = T extends undefined ? "" : T;

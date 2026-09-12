@@ -1,6 +1,118 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
+test("generic wrapper values retain symbolic input and output", () => {
+  function optional<T extends z.ZodType>(schema: T, value: unknown): z.output<T> | undefined {
+    return schema.optional().parse(value);
+  }
+  function readonly<T extends z.ZodType>(schema: T, value: unknown): z.core.util.MakeReadonly<z.output<T>> {
+    return schema.readonly().parse(value);
+  }
+  function pipe<A extends z.ZodType, B extends z.ZodType<unknown, z.output<A>>>(
+    a: A,
+    b: B,
+    value: unknown
+  ): z.output<B> {
+    return a.pipe(b).parse(value);
+  }
+  function envelope<T extends z.ZodType>(
+    schema: T
+  ): z.ZodType<{ value?: z.output<T> | undefined }, { value?: z.input<T> | undefined }> {
+    return z.object({ value: schema.optional() });
+  }
+  function roundtrip<T extends z.ZodType>(schema: T, value: z.input<T>): z.input<T> {
+    return schema.encode(schema.decode(value));
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  const object = envelope(codec);
+  expectTypeOf<z.input<typeof object>>().toEqualTypeOf<{ value?: string | undefined }>();
+  expectTypeOf<z.output<typeof object>>().toEqualTypeOf<{ value?: number | undefined }>();
+  expect(object.parse({ value: "12" })).toEqual({ value: 12 });
+  expect(object.parse({})).toEqual({});
+  expect(optional(codec, "12")).toBe(12);
+  expect(optional(codec, undefined)).toBeUndefined();
+  expect(readonly(z.map(z.string(), z.number()), new Map([["a", 1]]))).toEqual(new Map([["a", 1]]));
+  expect(
+    pipe(
+      z.string(),
+      z.transform((value: string) => value.length),
+      "abc"
+    )
+  ).toBe(3);
+  expect(roundtrip(codec, "12")).toBe("12");
+  expect(() => object.parse({ value: 12 })).toThrow();
+});
+
+test("generic projections reject fabricated values", () => {
+  function output<T extends z.ZodType>(): z.output<T> {
+    // @ts-expect-error a number cannot satisfy every schema output
+    return 123;
+  }
+  function input<T extends z.ZodType>(): z.input<T> {
+    // @ts-expect-error a number cannot satisfy every schema input
+    return 123;
+  }
+  function transformed<T extends z.ZodType>(schema: T): z.output<T> {
+    // @ts-expect-error changing the output does not preserve T
+    return schema.transform(() => 123).parse(null);
+  }
+  function consume<T extends z.ZodType>(value: z.output<T>) {
+    // @ts-expect-error an arbitrary output need not be a string
+    const text: string = value;
+    return text;
+  }
+  void [output, input, transformed, consume];
+  expectTypeOf<z.output<z.ZodString | null>>().toEqualTypeOf<unknown>();
+  expectTypeOf<z.output<never>>().toEqualTypeOf<never>();
+  expectTypeOf<z.output<any>>().toEqualTypeOf<any>();
+  expectTypeOf<z.input<unknown>>().toEqualTypeOf<unknown>();
+});
+
+test("generic capabilities survive wrapper composition", () => {
+  function pattern<T extends z.ZodString>(schema: T) {
+    return z.templateLiteral(["prefix", z.lazy(() => schema.optional().nullable()), z.union([schema, z.number()])]);
+  }
+  function discriminated<T extends z.core.$ZodTypeDiscriminable>(schema: T) {
+    return z.discriminatedUnion("kind", [z.readonly(z.lazy(() => schema))]);
+  }
+  const template = pattern(z.string());
+  const union = discriminated(z.object({ kind: z.literal("a"), value: z.string() }));
+  expectTypeOf<z.output<typeof template>>().toEqualTypeOf<`prefix${string}${string | number}`>();
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<Readonly<{ kind: "a"; value: string }>>();
+  expect(template.parse("prefixabc1")).toBe("prefixabc1");
+  expect(() => template.parse("wrong")).toThrow();
+  expect(union.parse({ kind: "a", value: "leaf" })).toEqual({ kind: "a", value: "leaf" });
+  expect(() => union.parse({ kind: "b", value: "leaf" })).toThrow();
+  function invalid<T extends z.ZodType>(schema: T) {
+    // @ts-expect-error a generic schema need not have a pattern
+    z.templateLiteral([z.lazy(() => schema)]);
+    // @ts-expect-error a generic schema need not expose discriminator values
+    z.discriminatedUnion("kind", [z.readonly(schema)]);
+  }
+  void invalid;
+});
+
+test("generic consumers accept recursive schema aliases", () => {
+  type Field = z.ZodString | z.ZodArray<Field>;
+  type Value = string | Value[];
+  function list<T extends z.ZodType>(schema: T) {
+    return z.array(schema);
+  }
+  function envelope<T extends z.ZodType>(schema: T) {
+    return z.object({ value: schema.optional() });
+  }
+  const field: z.ZodArray<Field> = z.array(z.string());
+  const array = list(field);
+  const object = envelope(field);
+  expectTypeOf<z.output<typeof array>>().toEqualTypeOf<Value[][]>();
+  expectTypeOf<z.output<typeof object>>().toEqualTypeOf<{ value?: Value[] | undefined }>();
+  expect(array.parse([["leaf"]])).toEqual([["leaf"]]);
+  expect(object.parse({})).toEqual({});
+  // @ts-expect-error recursive leaves stay strings
+  const invalid: z.output<typeof array> = [[1]];
+  void invalid;
+});
+
 test("demand-driven metadata preserves generic builders", () => {
   function discriminated<T extends readonly [z.core.$ZodTypeDiscriminable, ...z.core.$ZodTypeDiscriminable[]]>(
     options: T
