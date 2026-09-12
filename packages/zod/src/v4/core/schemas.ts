@@ -235,58 +235,63 @@ type ClosedOutput<T extends $ZodTypeRef> = util.IsAny<T["_zod"]["def"]["type"]> 
           : T["_zod"]["output"]
     : never;
 
-// bind the terminal projection before testing it to preserve covariance
-export type $InferInput<T, All = T> = ClosedInput<Extract<All, $ZodTypeRef>> extends infer A extends ClosedInput<
-  Extract<All, $ZodTypeRef>
->
-  ? unknown extends A
-    ? A
-    : T extends $ZodTypeRef
-      ? T extends { _zod: { atomic?: true } }
-        ? T["_zod"]["input"]
-        : T["_zod"]["def"]["type"] extends "array"
-          ? $InferInput<T["_zod"]["def"]["element"]>[]
-          : T["_zod"]["def"]["type"] extends "tuple"
-            ? T["_zod"]["def"]["items"] extends readonly [infer E]
-              ? util.IsAny<E> extends true
-                ? T["_zod"]["input"]
-                : false extends IsOptionalIn<E>
-                  ? T["_zod"]["def"]["rest"] extends infer R
-                    ? R extends $ZodTypeRef
-                      ? [$InferInput<E>, ...$InferInput<R>[]]
-                      : [$InferInput<E>]
-                    : never
-                  : T["_zod"]["input"]
-              : T["_zod"]["input"]
-            : T["_zod"]["input"]
-      : unknown
+// expose declared generic values without resolving the recursive branch
+type DeclaredValue<T extends $ZodTypeRef, K extends "input" | "output"> = T extends { _zod: { atomic?: true } }
+  ? T["_zod"][K]
   : never;
 
-export type $InferOutput<T, All = T> = ClosedOutput<Extract<All, $ZodTypeRef>> extends infer A extends ClosedOutput<
-  Extract<All, $ZodTypeRef>
->
-  ? unknown extends A
-    ? A
-    : T extends $ZodTypeRef
-      ? T extends { _zod: { atomic?: true } }
-        ? T["_zod"]["output"]
-        : T["_zod"]["def"]["type"] extends "array"
-          ? $InferOutput<T["_zod"]["def"]["element"]>[]
-          : T["_zod"]["def"]["type"] extends "tuple"
-            ? T["_zod"]["def"]["items"] extends readonly [infer E]
-              ? util.IsAny<E> extends true
-                ? T["_zod"]["output"]
-                : false extends IsOptionalOut<E>
-                  ? T["_zod"]["def"]["rest"] extends infer R
-                    ? R extends $ZodTypeRef
-                      ? [$InferOutput<E>, ...$InferOutput<R>[]]
-                      : [$InferOutput<E>]
-                    : never
+// bind the terminal projection before testing it to preserve covariance
+export type $InferInput<T, All = T> =
+  | DeclaredValue<Extract<T, $ZodTypeRef>, "input">
+  | (ClosedInput<Extract<All, $ZodTypeRef>> extends infer A extends ClosedInput<Extract<All, $ZodTypeRef>>
+      ? unknown extends A
+        ? A
+        : T extends $ZodTypeRef
+          ? T extends { _zod: { atomic?: true } }
+            ? T["_zod"]["input"]
+            : T["_zod"]["def"]["type"] extends "array"
+              ? $InferInput<T["_zod"]["def"]["element"]>[]
+              : T["_zod"]["def"]["type"] extends "tuple"
+                ? T["_zod"]["def"]["items"] extends readonly [infer E]
+                  ? util.IsAny<E> extends true
+                    ? T["_zod"]["input"]
+                    : false extends IsOptionalIn<E>
+                      ? T["_zod"]["def"]["rest"] extends infer R
+                        ? R extends $ZodTypeRef
+                          ? [$InferInput<E>, ...$InferInput<R>[]]
+                          : [$InferInput<E>]
+                        : never
+                      : T["_zod"]["input"]
+                  : T["_zod"]["input"]
+                : T["_zod"]["input"]
+          : unknown
+      : never);
+
+export type $InferOutput<T, All = T> =
+  | DeclaredValue<Extract<T, $ZodTypeRef>, "output">
+  | (ClosedOutput<Extract<All, $ZodTypeRef>> extends infer A extends ClosedOutput<Extract<All, $ZodTypeRef>>
+      ? unknown extends A
+        ? A
+        : T extends $ZodTypeRef
+          ? T extends { _zod: { atomic?: true } }
+            ? T["_zod"]["output"]
+            : T["_zod"]["def"]["type"] extends "array"
+              ? $InferOutput<T["_zod"]["def"]["element"]>[]
+              : T["_zod"]["def"]["type"] extends "tuple"
+                ? T["_zod"]["def"]["items"] extends readonly [infer E]
+                  ? util.IsAny<E> extends true
+                    ? T["_zod"]["output"]
+                    : false extends IsOptionalOut<E>
+                      ? T["_zod"]["def"]["rest"] extends infer R
+                        ? R extends $ZodTypeRef
+                          ? [$InferOutput<E>, ...$InferOutput<R>[]]
+                          : [$InferOutput<E>]
+                        : never
+                      : T["_zod"]["output"]
                   : T["_zod"]["output"]
-              : T["_zod"]["output"]
-            : T["_zod"]["output"]
-      : unknown
-  : never;
+                : T["_zod"]["output"]
+          : unknown
+      : never);
 
 export interface $ZodType<
   O = unknown,

@@ -9,6 +9,26 @@ test("pipe bounds reject incompatible targets", () => {
   void invalid;
 });
 
+test("declared generic values remain bidirectional", () => {
+  function decode<O, I>(schema: z.ZodMiniType<O, I>, value: I): O {
+    return z.decode(schema, value);
+  }
+  function encode<O, I>(schema: z.ZodMiniType<O, I>, value: O): I {
+    return z.encode(schema, value);
+  }
+  function decodeArray<O, I>(schema: z.ZodMiniType<O, I>, value: I[]): O[] {
+    return z.decode(z.array(schema), value);
+  }
+  function encodeArray<O, I>(schema: z.ZodMiniType<O, I>, value: O[]): I[] {
+    return z.encode(z.array(schema), value);
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  expectTypeOf(decode(codec, "12")).toEqualTypeOf<number>();
+  expectTypeOf(encode(codec, 12)).toEqualTypeOf<string>();
+  expect(decodeArray(codec, ["12"])).toEqual([12]);
+  expect(encodeArray(codec, [12])).toEqual(["12"]);
+});
+
 test("generic arrays preserve input and output contracts", () => {
   function parse<T extends z.ZodMiniType>(schema: T, value: unknown): z.output<T>[] {
     return z.array(schema).parse(value);

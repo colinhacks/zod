@@ -31,6 +31,43 @@ test("recursive pipes accept unconstrained input targets", () => {
   void invalid;
 });
 
+test("declared generic values remain bidirectional", () => {
+  function decode<O, I>(schema: z.ZodType<O, I>, value: I): O {
+    return schema.decode(value);
+  }
+  function encode<O, I>(schema: z.ZodType<O, I>, value: O): I {
+    return schema.encode(value);
+  }
+  function decodeArray<O, I>(schema: z.ZodType<O, I>, value: I[]): O[] {
+    return z.array(schema).decode(value);
+  }
+  function encodeArray<O, I>(schema: z.ZodType<O, I>, value: O[]): I[] {
+    return z.array(schema).encode(value);
+  }
+  function coreDecode<O, I>(schema: z.core.$ZodType<O, I>, value: I): O {
+    return z.core.decode(schema, value);
+  }
+  function coreEncode<O, I>(schema: z.core.$ZodType<O, I>, value: O): I {
+    return z.core.encode(schema, value);
+  }
+  function fabricated<O, I>(schema: z.ZodType<O, I>): O {
+    // @ts-expect-error numeric input cannot satisfy arbitrary I
+    schema.decode(123);
+    // @ts-expect-error numeric output cannot satisfy arbitrary O
+    schema.encode(123);
+    // @ts-expect-error numeric values cannot satisfy arbitrary O
+    return 123;
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  expectTypeOf(decode(codec, "12")).toEqualTypeOf<number>();
+  expectTypeOf(encode(codec, 12)).toEqualTypeOf<string>();
+  expect(coreDecode(codec, "12")).toBe(12);
+  expect(coreEncode(codec, 12)).toBe("12");
+  expect(decodeArray(codec, ["12"])).toEqual([12]);
+  expect(encodeArray(codec, [12])).toEqual(["12"]);
+  void fabricated;
+});
+
 test("generic arrays preserve symbolic values in both directions", () => {
   function parse<T extends z.ZodType>(schema: T, value: unknown): z.output<T>[] {
     return z.array(schema).parse(value);
