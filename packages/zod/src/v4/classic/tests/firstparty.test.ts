@@ -80,8 +80,6 @@ test("first party switch", () => {
       break;
     case "file":
       break;
-    case "properties":
-      break;
     case "lazy":
       break;
     case "function":
@@ -171,8 +169,6 @@ test("$ZodSchemaTypes", () => {
     case "file":
       break;
     case "lazy":
-      break;
-    case "properties":
       break;
     case "function":
       break;
