@@ -189,11 +189,12 @@ type User = zj.infer<typeof User>;
 // => { id: string; name: string; nickname?: string; role: string }
 ```
 
-Unknown keys pass through, as in JSON Schema. The strict and catchall forms write `additionalProperties`.
+Unknown keys are stripped, as in Zod. The spec has no output, so stripping is not a deviation from it. The loose, strict, and catchall forms write `additionalProperties`, which is how a document opts in to keeping unknown keys.
 
 ```ts
-zj.object({ name: zj.string() }); // unknown keys are allowed and kept
-zj.strictObject({ name: zj.string() }); // additionalProperties: false
+zj.object({ name: zj.string() }); // unknown keys are stripped; no additionalProperties keyword
+zj.looseObject({ name: zj.string() }); // additionalProperties: true, unknown keys are kept
+zj.strictObject({ name: zj.string() }); // additionalProperties: false, unknown keys are rejected
 zj.catchall(zj.object({ name: zj.string() }), zj.number()); // additionalProperties: { type: "number" }
 ```
 
@@ -460,7 +461,7 @@ Point.parse({ x: 1, y: 2 });
 
 Without `as const` the schema still parses, and the inferred type is `unknown`.
 
-The reader accepts any 2020-12 document, and draft-04, draft-07, and OpenAPI 3.0 documents by their `$schema`. It resolves `$ref`, `$anchor`, `$dynamicRef`, and `$dynamicAnchor` within the document, and external `$ref` targets from the `schemas` option. A `type` array becomes an `anyOf` of its members, each carrying the keywords that apply to it. Unknown keywords are kept. The result round-trips: `zj.toJSONSchema(zj.fromJSONSchema(doc))` deep-equals `doc`.
+The reader accepts any 2020-12 document, and draft-04, draft-07, and OpenAPI 3.0 documents by their `$schema`. It resolves `$ref`, `$anchor`, `$dynamicRef`, and `$dynamicAnchor` within the document, and external `$ref` targets from the `schemas` option. An object with no `additionalProperties` reads as `zj.object()`, and `true`, `false`, and a schema read as the loose, strict, and catchall forms. A `type` array becomes an `anyOf` of its members, each carrying the keywords that apply to it. Unknown keywords are kept. The result round-trips: `zj.toJSONSchema(zj.fromJSONSchema(doc))` deep-equals `doc`.
 
 ```ts
 const Order = zj.fromJSONSchema(orderDoc, { schemas: [addressDoc, customerDoc] });
@@ -486,7 +487,6 @@ The two packages differ where JSON Schema and Zod disagree on a default, and whe
 
 | | `zod/mini` | `@zod/json` |
 | --- | --- | --- |
-| Unknown object keys | stripped | passed through; `zj.strictObject()` rejects them |
 | Defaulted key in the document | required | not required; the document describes the input |
 | String length | UTF-16 code units | Unicode code points |
 | Default locale | `en` | none |
@@ -508,7 +508,7 @@ Every keyword in JSON Schema 2020-12 and what writes it.
 | --- | --- | --- |
 | `type` | every builder, `zj.nullable()` | validated |
 | `properties`, `required` | `zj.object()`, `zj.optional()`, `zj._default()` | validated |
-| `additionalProperties` | `zj.strictObject()`, `zj.catchall()`, `zj.record()` | validated |
+| `additionalProperties` | `zj.looseObject()`, `zj.strictObject()`, `zj.catchall()`, `zj.record()` | validated |
 | `patternProperties`, `propertyNames`, `minProperties`, `maxProperties`, `dependentRequired`, `dependentSchemas`, `unevaluatedProperties` | the check of the same name | validated |
 | `items`, `prefixItems` | `zj.array()`, `zj.tuple()` | validated |
 | `minItems`, `maxItems`, `uniqueItems`, `contains`, `minContains`, `maxContains`, `unevaluatedItems` | the check of the same name | validated |
@@ -552,14 +552,13 @@ This section is the workpiece and is deleted before the page ships. Zod JSON is 
 
 This section is the workpiece and is deleted before the page ships. Each item names the choice the page makes and the alternative.
 
-1. **Unknown object keys.** The page passes them through, which is what JSON Schema validation does. Zod strips them, and a stripped output still conforms to the document.
-2. **What `required` describes.** The page lists a defaulted key as not required, so the document describes the input. Zod's `z.toJSONSchema()` describes the output by default and lists it as required.
-3. **Format sugar.** The page has one spelling, `zj.string().check(zj.format("email"))`. Builders such as `zj.email()` would shorten the common case at the cost of nineteen more exports.
-4. **Content assertions.** The page treats `contentEncoding`, `contentMediaType`, and `contentSchema` as annotations, which is the spec's default. The spec also allows asserting them: decode the encoding, then validate the decoded content against `contentSchema` when the media type is JSON.
-5. **Type arrays.** A `type: ["string", "number"]` with `minLength` and `minimum` beside it reads back as an `anyOf` with the keywords distributed. That round-trips semantically, not byte for byte. A multi-type core schema would make it exact.
-6. **Dynamic references on the way out.** The reader binds `$dynamicRef` to a plain schema pointer, so a document that used one is written back with static `$ref`s. Semantically equal, not byte for byte. Keeping the `$dynamicAnchor` annotation and re-emitting `$dynamicRef` where the pointer crosses a resource boundary would make it exact.
-7. **Nullable shape.** A `type` array for a bare inner type and `anyOf` otherwise, matching Zod's emitter. Always writing `anyOf` is simpler and one line longer.
-8. **Discriminated unions.** No keyword exists. `zj.anyOf()` and `zj.oneOf()` cover the semantics and lose the discriminator fast path and the targeted error. A `zj.discriminatedUnion()` that writes `anyOf` plus OpenAPI's `discriminator` is the middle ground.
-9. **Unknown keywords through `zj.meta()`.** Written verbatim, which OpenAPI's `x-` extensions need, and a misspelled keyword is accepted silently.
-10. **Package shape.** A standalone `@zod/json` with a peer dependency on `zod`, like `@zod/mini`. Not decided: whether it is also a `zod/json` subpath, and whether the source lives in `packages/json` or `packages/zod/src/v4/json`.
-11. **Out of scope for the first release.** Multi-document output from a registry, `zj.compile()` support for the new schema types, and moving the classic `z.toJSONSchema()` emitter out of `zod`.
+1. **What `required` describes.** The page lists a defaulted key as not required, so the document describes the input. Zod's `z.toJSONSchema()` describes the output by default and lists it as required.
+2. **Format sugar.** The page has one spelling, `zj.string().check(zj.format("email"))`. Builders such as `zj.email()` would shorten the common case at the cost of nineteen more exports.
+3. **Content assertions.** The page treats `contentEncoding`, `contentMediaType`, and `contentSchema` as annotations, which is the spec's default. The spec also allows asserting them: decode the encoding, then validate the decoded content against `contentSchema` when the media type is JSON.
+4. **Type arrays.** A `type: ["string", "number"]` with `minLength` and `minimum` beside it reads back as an `anyOf` with the keywords distributed. That round-trips semantically, not byte for byte. A multi-type core schema would make it exact.
+5. **Dynamic references on the way out.** The reader binds `$dynamicRef` to a plain schema pointer, so a document that used one is written back with static `$ref`s. Semantically equal, not byte for byte. Keeping the `$dynamicAnchor` annotation and re-emitting `$dynamicRef` where the pointer crosses a resource boundary would make it exact.
+6. **Nullable shape.** A `type` array for a bare inner type and `anyOf` otherwise, matching Zod's emitter. Always writing `anyOf` is simpler and one line longer.
+7. **Discriminated unions.** No keyword exists. `zj.anyOf()` and `zj.oneOf()` cover the semantics and lose the discriminator fast path and the targeted error. A `zj.discriminatedUnion()` that writes `anyOf` plus OpenAPI's `discriminator` is the middle ground.
+8. **Unknown keywords through `zj.meta()`.** Written verbatim, which OpenAPI's `x-` extensions need, and a misspelled keyword is accepted silently.
+9. **Package shape.** A standalone `@zod/json` with a peer dependency on `zod`, like `@zod/mini`. Not decided: whether it is also a `zod/json` subpath, and whether the source lives in `packages/json` or `packages/zod/src/v4/json`.
+10. **Out of scope for the first release.** Multi-document output from a registry, `zj.compile()` support for the new schema types, and moving the classic `z.toJSONSchema()` emitter out of `zod`.
