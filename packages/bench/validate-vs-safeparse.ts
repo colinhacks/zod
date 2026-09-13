@@ -39,6 +39,21 @@ add(
   { ...wide20, k9: 9 }
 );
 
+const wide50 = Object.fromEntries(Array.from({ length: 50 }, (_, i) => [`k${i}`, `v${i}`]));
+add(
+  "z.object(), 50 keys",
+  z.object(Object.fromEntries(Array.from({ length: 50 }, (_, i) => [`k${i}`, z.string()]))) as z.ZodType,
+  wide50,
+  { ...wide50, k24: 24 }
+);
+
+add(
+  "z.array(z.string()), 50",
+  z.array(z.string()),
+  Array.from({ length: 50 }, (_, i) => `s${i}`),
+  Array.from({ length: 50 }, (_, i) => (i === 25 ? 25 : `s${i}`))
+);
+
 const moltarValid = {
   number: 1,
   negNumber: -1,
