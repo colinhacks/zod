@@ -2324,6 +2324,14 @@ z.instanceof(URL);
 z.instanceof(Error);
 ```
 
+Parsing returns the exact object that was passed in. Unlike `z.object()`, nothing is cloned, so the prototype, the unlisted properties, and the object identity all survive.
+
+```ts
+const url = new URL("https://example.com");
+
+z.instanceof(URL).parse(url) === url; // true
+```
+
 ### `z.property()` [#property]
 
 To validate a particular property of a class instance against a Zod schema:
@@ -2348,9 +2356,42 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-### `.properties()`
+### `z.properties()` [#properties]
 
-Use `.properties()` to check several properties at once. Each call narrows the inferred type.
+To check several properties at once:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const okResponse = z.instanceof(Response).check(
+  ...z.properties({
+    status: z.number().min(200).max(299),
+    redirected: z.literal(false),
+  })
+);
+
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const okResponse = z.instanceof(Response).check(
+  ...z.properties({
+    status: z.number().check(z.minimum(200), z.maximum(299)),
+    redirected: z.literal(false),
+  })
+);
+
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+```
+</Tab>
+</Tabs>
+
+Each property is asserted in place. The schemas in the shape are validated but their results are discarded, so a transform or a default never changes the parsed value.
+
+In Zod, `z.instanceof()` also has a `.properties()` method. It spreads the same check and narrows the inferred type:
 
 ```ts
 const okResponse = z.instanceof(Response).properties({
@@ -2358,16 +2399,9 @@ const okResponse = z.instanceof(Response).properties({
   redirected: z.literal(false),
 });
 
-okResponse.parse(new Response("ok")); // ✅
-okResponse.parse(new Response("", { status: 404 })); // ❌ status
-
 type OkResponse = z.infer<typeof okResponse>;
 // => Response & { status: number; redirected: false }
 ```
-
-The check asserts each property in place. Unlike `z.object()`, it never builds a new object, so prototypes, unlisted keys, and object identity survive. Schemas inside the shape are validated but their results are discarded, so a transform or a default never changes the parsed value.
-
-The underlying `z.properties()` is a check, so it spreads into `.check()` too: `z.instanceof(Response).check(...z.properties({ ... }))`. It asserts on whatever the base schema produced, so `z.string().check(...z.properties({ length: z.number().min(3) }))` reads a string's length.
 
 ## Refinements
 
