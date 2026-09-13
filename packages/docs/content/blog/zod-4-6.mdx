@@ -21,8 +21,10 @@ At a glance:
 - [`z.instanceof().properties()`](#zproperties) — validates properties of an instance
 - [`fromJSONSchema()`](#fromjsonschema) — enforces six validation keywords it used to ignore
 - [`z.iban()`](#ziban) — electronic-format IBAN plus mod-97 checksum
+- [Tajik locale](#tajik-locale) — `z.locales.tg()`, in 4.6.1
 - [`z.withParser()`](#zwithparser) — installs a parser generated elsewhere, for environments without `new Function`
 - [Faster CommonJS](#faster-commonjs) — drops the getter on every export (~3x faster `z.validate()` under `require`)
+- [Faster `z.url()` rejection](#faster-zurl-rejection) — `URL.canParse()` instead of a throwing constructor (~50x faster on invalid input, in 4.6.4)
 - [Memory retention in recursive schemas](#memory-retention-in-recursive-schemas) — releases the parsed input, fixing a 4.5 out-of-memory regression
 - [`@zod/mini`](/packages/mini) — Zod Mini as a standalone package, versioned in lockstep with `zod` since 4.5
 
@@ -160,6 +162,14 @@ const Fast = z.withParser(Player, (input) =>
 
 The supplied parser owns the whole result, so it has to return what the schema would have returned. This one rebuilds the object rather than handing back its input, because `z.object()` strips unknown keys. Returning `z.INVALID` hands the input to the runtime, which stays the only source of `ZodError`s.
 
+## Tajik locale
+
+Tajik (`tg`) joined the locales in 4.6.1. ([#6581](https://github.com/colinhacks/zod/pull/6581) by [@ismoil77](https://github.com/ismoil77))
+
+```ts
+z.config(z.locales.tg());
+```
+
 ## Faster CommonJS
 
 TypeScript compiles a re-export to a getter, and 252 of the 255 exports on Zod 4.5's CommonJS entrypoint were getters. V8 could not see a constant callee behind one, so it could not inline the call. The 4.6 build emits plain properties and freezes the exports object. On a compiled schema, `z.validate()` under `require` is about 3x faster than it was in Zod 4.5. ([#6564](https://github.com/colinhacks/zod/pull/6564))
@@ -172,6 +182,14 @@ z.validate(CompiledPlayer, data); // ~3x faster than Zod 4.5
 ```
 
 Only calls through the namespace were affected. A method call like `Player.safeParse(data)` never reads the exports object, and the ESM build is unchanged.
+
+## Faster `z.url()` rejection
+
+Since 4.6.4, a bare `z.url()` validates with `URL.canParse()` instead of a constructor that throws, so rejecting an invalid URL costs about 90 ns instead of 4.6 µs. With `hostname`, `protocol`, or `normalize` it uses `URL.parse()`, which returns `null` rather than throwing; a valid normalized URL is about 5% slower. ([#6588](https://github.com/colinhacks/zod/pull/6588))
+
+```ts
+z.validate(z.url(), "invalid"); // 4.6 µs in 4.6.3, 86 ns in 4.6.4
+```
 
 ## Memory retention in recursive schemas
 
@@ -272,20 +290,6 @@ The values can move too, because the getters read the same fold the JSON Schema 
 ```ts
 z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
 ```
-
-## 4.6.x
-
-### 4.6.4: 50x faster rejection in `z.url()`
-
-A bare `z.url()` now validates with `URL.canParse()` instead of a constructor that throws, so rejecting an invalid URL costs about 90 ns instead of 4.6 µs. With `hostname`, `protocol`, or `normalize` it uses `URL.parse()`, which returns `null` rather than throwing; a valid normalized URL is about 5% slower. ([#6588](https://github.com/colinhacks/zod/pull/6588))
-
-```ts
-z.validate(z.url(), "invalid"); // 4.6 µs in 4.6.3, 86 ns in 4.6.4
-```
-
-### 4.6.1: Tajik locale
-
-Tajik (`tg`) joins the locales. ([#6581](https://github.com/colinhacks/zod/pull/6581) by [@ismoil77](https://github.com/ismoil77))
 
 ## Commits
 
