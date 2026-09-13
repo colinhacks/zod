@@ -108,3 +108,19 @@ test("a mini bundle carries nothing from features it never uses", async () => {
     expect(code, `${identifier} reached a bundle that only uses z.boolean()`).not.toContain(identifier);
   }
 });
+
+// the custom formats read `core/regexes.ts` through a direct namespace import; reaching it as `core.regexes.x` made esbuild materialize every regex in the module, 2 KB on a hostname bundle
+test("a hostname bundle carries no other format's regex", async () => {
+  const result = await build({
+    stdin: { contents: `import * as z from "zod/mini"; console.log(z.hostname().parse("a.com"));`, resolveDir: __dirname, loader: "ts" },
+    bundle: true,
+    minify: true,
+    format: "esm",
+    write: false,
+    logLevel: "silent",
+  });
+  const code = Buffer.from(result.outputFiles[0]!.contents).toString("utf8");
+  // the xid regex, which nothing on a hostname path can need
+  expect(code, "another format's regex reached a bundle that only uses z.hostname()").not.toContain("[0-9a-vA-V]{20}");
+});
+
