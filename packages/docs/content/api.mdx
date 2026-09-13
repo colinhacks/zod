@@ -274,7 +274,6 @@ z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.creditCard();    // credit card number (Luhn checksum)
-z.currencyCode();  // ISO 4217 currency code
 z.iban();          // IBAN (ISO 7064 mod-97 checksum)
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
@@ -586,18 +585,6 @@ card.parse("4111  1111 1111 1111"); // ❌ no repeated separators
 card.parse(" 4111111111111111");    // ❌ no surrounding whitespace
 card.parse("4111.1111.1111.1111");  // ❌ spaces and hyphens only
 card.parse("4111111111111112");     // ❌ failed checksum
-```
-
-### Currency codes
-
-The `z.currencyCode()` method validates three-letter ISO 4217 currency codes.
-
-```ts
-const currency = z.currencyCode();
-
-currency.parse("USD"); // ✅
-currency.parse("usd"); // ❌
-currency.parse("ANG"); // ❌ withdrawn from ISO 4217
 ```
 
 ### IBANs

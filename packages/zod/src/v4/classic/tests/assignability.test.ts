@@ -352,7 +352,6 @@ test("checks", () => {
   const _b: z.core.$ZodCheck = {} as any as z.core.$ZodStringFormatChecks;
   const _c: z.core.$ZodType = {} as any as z.core.$ZodTypes;
   const _d: z.core.$ZodType = {} as any as z.core.$ZodStringFormatTypes;
-  z.currencyCode() satisfies z.core.$ZodStringFormatTypes;
 });
 
 test("assignability to $ZodType", () => {

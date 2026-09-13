@@ -387,10 +387,3 @@ test("z.hash generic format", () => {
     z.ZodMiniCustomStringFormat<"sha384_base64url">
   >();
 });
-
-test("z.currencyCode", () => {
-  const a = z.currencyCode();
-  expectTypeOf(a).toEqualTypeOf<z.ZodMiniCustomStringFormat<"currency_code">>();
-  expect(z.parse(a, "EUR")).toBe("EUR");
-  expect(z.safeParse(a, "eur")).toMatchObject(FAIL);
-});

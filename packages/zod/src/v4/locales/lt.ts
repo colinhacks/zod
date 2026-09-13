@@ -146,7 +146,6 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON eilutė",
     e164: "E.164 numeris",
     credit_card: "kredito kortelės numeris",
-    currency_code: "valiutos kodas",
     iban: "IBAN",
     jwt: "JWT",
     template_literal: "įvestis",

@@ -46,7 +46,6 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON ველი",
     e164: "E.164 ნომერი",
     credit_card: "საკრედიტო ბარათის ნომერი",
-    currency_code: "ვალუტის კოდი",
     iban: "IBAN",
     jwt: "JWT",
     template_literal: "შეყვანა",
