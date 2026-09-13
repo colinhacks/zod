@@ -2368,7 +2368,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
-    let fastpassNovalue!: ReturnType<typeof generateFastpass>;
+    let fastpassNoValue!: ReturnType<typeof generateFastpass>;
 
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
@@ -2395,8 +2395,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
         if (ctx.noValue === true) {
-          if (!fastpassNovalue) fastpassNovalue = generateFastpass(def.shape, true);
-          payload = fastpassNovalue(payload, ctx);
+          if (!fastpassNoValue) fastpassNoValue = generateFastpass(def.shape, true);
+          payload = fastpassNoValue(payload, ctx);
         } else {
           if (!fastpass) fastpass = generateFastpass(def.shape);
           payload = fastpass(payload, ctx);
