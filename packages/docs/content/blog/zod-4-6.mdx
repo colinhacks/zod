@@ -273,6 +273,20 @@ The values can move too, because the getters read the same fold the JSON Schema 
 z.string().min(8).length(5).minLength; // 4.5: 5 — 4.6: 8
 ```
 
+## 4.6.x
+
+### 4.6.4: 50x faster rejection in `z.url()`
+
+A bare `z.url()` now validates with `URL.canParse()` instead of a constructor that throws, so rejecting an invalid URL costs about 90 ns instead of 4.6 µs. With `hostname`, `protocol`, or `normalize` it uses `URL.parse()`, which returns `null` rather than throwing; a valid normalized URL is about 5% slower. ([#6588](https://github.com/colinhacks/zod/pull/6588))
+
+```ts
+z.validate(z.url(), "invalid"); // 4.6 µs in 4.6.3, 86 ns in 4.6.4
+```
+
+### 4.6.1: Tajik locale
+
+Tajik (`tg`) joins the locales. ([#6581](https://github.com/colinhacks/zod/pull/6581) by [@ismoil77](https://github.com/ismoil77))
+
 ## Commits
 
 Zod 4.6 rolls up 72 commits.
