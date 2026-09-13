@@ -21,7 +21,9 @@ export type $Parse = <T extends schemas.$ZodType>(
 
 export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => {
   const fn: $Parse = (schema, value, _ctx, _params) => {
-    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+    const ctx: schemas.ParseContextInternal = _ctx
+      ? { ..._ctx, async: false, novalue: false }
+      : { async: false, novalue: false };
     const result = schema._zod.run({ value, issues: [] }, ctx);
     if (result instanceof Promise) {
       throw new core.$ZodAsyncError();
@@ -69,7 +71,9 @@ export type $SafeParse = <T extends schemas.$ZodType>(
 ) => util.SafeParseResult<core.output<T>>;
 
 export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? { ..._ctx, async: false, novalue: false }
+    : { async: false, novalue: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
@@ -154,8 +158,8 @@ function validateFallback(
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean {
   const ctx: schemas.ParseContextInternal = _ctx
-    ? { ..._ctx, async: false, abortEarly: true }
-    : { async: false, abortEarly: true };
+    ? { ..._ctx, async: false, abortEarly: true, novalue: true }
+    : { async: false, abortEarly: true, novalue: true };
   const fallbackRun = (schema._zod.bag as CompiledBag).fallbackRun;
   let result: unknown;
   if (fallbackRun) {

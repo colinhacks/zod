@@ -32,6 +32,8 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly skipChecks?: boolean;
   /** Set only by `validate`/`validateAsync`. A container may stop before its next child, never inside one, so a map entry and a tuple's fixed items parse whole. */
   readonly abortEarly?: boolean;
+  /** SPIKE: nothing reads the parsed value, so a container may skip building its output. */
+  readonly novalue?: boolean;
 }
 
 /** Gives a container cycle support: `attach` wraps its parse, and `alloc` registers the object it builds into before any child is parsed so a reference back to the same input resolves to it. */
@@ -1871,7 +1873,8 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
+    const novalue = ctx?.novalue === true;
+    if (!novalue) payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
     const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
@@ -1887,7 +1890,9 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleArrayResult(result, payload, i)));
       } else {
-        handleArrayResult(result, payload, i);
+        if (novalue) {
+          if (result.issues.length) payload.issues.push(...util.prefixIssues(i, result.issues));
+        } else handleArrayResult(result, payload, i);
         // the element's payload is authoritative here, since handleArrayResult forwards every issue; an object's is not, because it drops a failed absent optional
         if (abortEarly && result.issues.length !== 0 && util.aborted(result)) break;
       }
@@ -1976,7 +1981,8 @@ function handlePropertyResult(
   key: PropertyKey,
   input: any,
   optin: "optional" | "defaulted" | undefined,
-  optout: "optional" | undefined
+  optout: "optional" | undefined,
+  novalue?: boolean
 ) {
   const isPresent = key in input;
   const isOptionalOut = optout === "optional";
@@ -2003,6 +2009,8 @@ function handlePropertyResult(
     }
     return;
   }
+
+  if (novalue) return;
 
   if (result.value === undefined) {
     if (isPresent || (optin === "defaulted" && !isOptionalOut)) {
@@ -2206,7 +2214,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
+    const novalue = ctx?.novalue === true;
+    if (!novalue) payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -2225,9 +2234,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout, novalue)));
       } else {
-        handlePropertyResult(r, payload, key, input, optin, optout);
+        handlePropertyResult(r, payload, key, input, optin, optout, novalue);
       }
     }
 
@@ -2250,7 +2259,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const memo = core.globalConfig.memoizer;
 
-    const generateFastpass = (shape: any) => {
+    const generateFastpass = (shape: any, novalue?: boolean) => {
       const normalized = _normalized.value;
       const syms = normalized.symbolKeys;
       // a symbol has no source literal, so it is read as `syms[i]` off the closed-over scope
@@ -2268,7 +2277,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             if (iss.continue !== true) ${id}_ab = true;
           }
           if (${id}_ab && ctx && ctx.abortEarly) {
-            payload.value = newResult;
+            ${novalue ? "" : "payload.value = newResult;"}
             return payload;
           }`;
 
@@ -2281,7 +2290,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
+      if (!novalue) doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
       for (const key of normalized.allKeys) {
         if (key === "__proto__") continue;
         const id = ids[key];
@@ -2303,9 +2312,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           if (${id}.issues.length) {${prefixStr(id, k)}
           }
 
-          if (${assign}) {
-            newResult[${k}] = ${id}.value;
-          }
+          ${novalue ? "" : `if (${assign}) { newResult[${k}] = ${id}.value; }`}
         }
 
       `);
@@ -2322,14 +2329,12 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             path: [${k}]
           });
           if (ctx && ctx.abortEarly) {
-            payload.value = newResult;
+            ${novalue ? "" : "payload.value = newResult;"}
             return payload;
           }
         }
 
-        if (${id}_present) {
-          newResult[${k}] = ${id}.value;
-        }
+        ${novalue ? "" : `if (${id}_present) { newResult[${k}] = ${id}.value; }`}
 
       `);
         } else {
@@ -2337,7 +2342,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         if (${id}.issues.length) {${prefixStr(id, k)}
         }
       `);
-          if (optin === "defaulted") {
+          if (novalue) {
+            // nothing is stored, so the branch that decides what to store is not generated either
+          } else if (optin === "defaulted") {
             doc.write(`newResult[${k}] = ${id}.value;`);
           } else {
             doc.write(`
@@ -2349,13 +2356,14 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
       }
 
-      doc.write(`payload.value = newResult;`);
+      if (!novalue) doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       // closing `shape` in is what pays: turbofan specializes the parser against that one shape object, so every `shape[k]._zod.run` folds to a known callee. as a parameter it stays a generic load and measures 13% slower even with the forwarding frame gone
       return doc.compile() as (payload: any, ctx: any) => any;
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
+    let fastpassNovalue!: ReturnType<typeof generateFastpass>;
 
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
@@ -2381,8 +2389,13 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
-        if (!fastpass) fastpass = generateFastpass(def.shape);
-        payload = fastpass(payload, ctx);
+        if (ctx.novalue === true) {
+          if (!fastpassNovalue) fastpassNovalue = generateFastpass(def.shape, true);
+          payload = fastpassNovalue(payload, ctx);
+        } else {
+          if (!fastpass) fastpass = generateFastpass(def.shape);
+          payload = fastpass(payload, ctx);
+        }
 
         if (!catchall) return payload;
         return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true);
