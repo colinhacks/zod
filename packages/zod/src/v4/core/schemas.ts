@@ -236,14 +236,16 @@ type ClosedOutput<T extends $ZodTypeRef> = util.IsAny<T["_zod"]["def"]["type"]> 
     : never;
 
 // expose declared generic values without resolving the recursive branch
-type DeclaredValue<T extends $ZodTypeRef, K extends "input" | "output"> = T extends { _zod: { atomic?: true } }
-  ? T["_zod"][K]
+type DeclaredValue<T, K extends "input" | "output"> = T extends $ZodTypeRef
+  ? T extends { _zod: { atomic?: true } }
+    ? T["_zod"][K]
+    : never
   : never;
 
 // bind the terminal projection before testing it to preserve covariance
-export type $InferInput<T, All = T> =
-  | DeclaredValue<Extract<T, $ZodTypeRef>, "input">
-  | (ClosedInput<Extract<All, $ZodTypeRef>> extends infer A extends ClosedInput<Extract<All, $ZodTypeRef>>
+export type $InferInput<T> =
+  | DeclaredValue<T, "input">
+  | (ClosedInput<Extract<T, $ZodTypeRef>> extends infer A extends ClosedInput<Extract<T, $ZodTypeRef>>
       ? unknown extends A
         ? A
         : T extends $ZodTypeRef
@@ -267,9 +269,9 @@ export type $InferInput<T, All = T> =
           : unknown
       : never);
 
-export type $InferOutput<T, All = T> =
-  | DeclaredValue<Extract<T, $ZodTypeRef>, "output">
-  | (ClosedOutput<Extract<All, $ZodTypeRef>> extends infer A extends ClosedOutput<Extract<All, $ZodTypeRef>>
+export type $InferOutput<T> =
+  | DeclaredValue<T, "output">
+  | (ClosedOutput<Extract<T, $ZodTypeRef>> extends infer A extends ClosedOutput<Extract<T, $ZodTypeRef>>
       ? unknown extends A
         ? A
         : T extends $ZodTypeRef

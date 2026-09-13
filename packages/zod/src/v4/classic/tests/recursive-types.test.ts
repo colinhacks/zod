@@ -31,6 +31,26 @@ test("recursive pipes accept unconstrained input targets", () => {
   void invalid;
 });
 
+test("unmarked custom terminals absorb recursive alternatives", () => {
+  interface Internals<V> extends z.core._$ZodTypeInternals {
+    def: { type: "custom" };
+    input: V;
+    output: V;
+  }
+  interface Custom<V> extends z.core.$ZodType<V, V> {
+    _zod: Internals<V>;
+  }
+  type Unknown = Custom<unknown> | z.core.$ZodReadonly<Unknown> | z.core.$ZodArray<Unknown>;
+  type Any = Custom<any> | z.core.$ZodReadonly<Any> | z.core.$ZodArray<Any>;
+  expectTypeOf<z.input<Unknown>>().toBeUnknown();
+  expectTypeOf<z.output<Unknown>>().toBeUnknown();
+  expectTypeOf<z.input<Any>>().toBeAny();
+  expectTypeOf<z.output<Any>>().toBeAny();
+  const custom: Custom<unknown> = z.custom();
+  const array: z.core.$ZodArray<Unknown> = z.array(custom);
+  expect(z.core.parse(array, ["leaf", [1]])).toEqual(["leaf", [1]]);
+});
+
 test("declared generic values remain bidirectional", () => {
   function decode<O, I>(schema: z.ZodType<O, I>, value: I): O {
     return schema.decode(value);
