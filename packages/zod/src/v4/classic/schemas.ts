@@ -2841,7 +2841,8 @@ type ZodInstanceOfParams = core.Params<
 
 // ZodInstanceOf
 export interface ZodInstanceOf<T = unknown> extends ZodCustom<T, T> {
-  properties<Shape extends core.$ZodShape>(
+  // the shape is keyed off the instance type, so keys autocomplete and a schema that can't accept the property's type is an error. Methods are excluded: every object literal inherits Object.prototype.toString, which would otherwise collide with the constraint's own toString entry and reject every shape.
+  properties<Shape extends { [k in keyof T as T[k] extends Function ? never : k]?: core.$ZodType<unknown, T[k]> }>(
     shape: Shape,
     params?: string | core.$ZodCheckPropertiesParams
   ): ZodInstanceOf<T & core.$InferObjectInput<Shape, {}>>;
