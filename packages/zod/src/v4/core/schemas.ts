@@ -32,7 +32,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly skipChecks?: boolean;
   /** Set only by `validate`/`validateAsync`. A container may stop before its next child, never inside one, so a map entry and a tuple's fixed items parse whole. */
   readonly abortEarly?: boolean;
-  /** SPIKE: nothing reads the parsed value, so a container may skip building its output. */
+  /** Set by `validate`: nothing reads the parsed value here, so a container may skip building its output. A node that reads what it built — its own checks, a pipe's input side, an intersection operand — clears it for the subtree below. */
   readonly novalue?: boolean;
 }
 
@@ -297,6 +297,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       };
 
       inst._zod.run = (payload, ctx) => {
+        // a check reads the value this node produced, so nothing below may skip building it
+        if (ctx.novalue === true) ctx = { ...ctx, novalue: false };
         if (ctx.skipChecks) {
           return inst._zod.parse(payload, ctx);
         }
@@ -1873,8 +1875,10 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
+    // the placeholder is what a back-edge resolves to, so it is allocated either way; under novalue it stays empty and nothing is stored into it
     const novalue = ctx?.novalue === true;
-    if (!novalue) payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
+    const empty: unknown[] = novalue ? [] : Array(input.length);
+    payload.value = memo ? memo.alloc(inst, payload, empty, ctx) : empty;
     const proms: Promise<any>[] = [];
     const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
@@ -2105,7 +2109,8 @@ function handleCatchall(
   ctx: ParseContextInternal,
   def: ReturnType<typeof normalizeDef>,
   inst: $ZodObject,
-  abortEarly: boolean
+  abortEarly: boolean,
+  novalue?: boolean
 ) {
   const unrecognized: string[] = [];
   const keySet = def.keySet;
@@ -2134,9 +2139,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout, novalue)));
     } else {
-      handlePropertyResult(r, payload, key, input, optin, optout);
+      handlePropertyResult(r, payload, key, input, optin, optout, novalue);
     }
   }
 
@@ -2215,7 +2220,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     }
 
     const novalue = ctx?.novalue === true;
-    if (!novalue) payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
+    payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -2244,7 +2249,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
 
-    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst, abortEarly === true);
+    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst, abortEarly === true, novalue);
   };
 });
 
@@ -2277,7 +2282,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             if (iss.continue !== true) ${id}_ab = true;
           }
           if (${id}_ab && ctx && ctx.abortEarly) {
-            ${novalue ? "" : "payload.value = newResult;"}
+            payload.value = newResult;
             return payload;
           }`;
 
@@ -2290,7 +2295,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      if (!novalue) doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
       for (const key of normalized.allKeys) {
         if (key === "__proto__") continue;
         const id = ids[key];
@@ -2329,7 +2334,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             path: [${k}]
           });
           if (ctx && ctx.abortEarly) {
-            ${novalue ? "" : "payload.value = newResult;"}
+            payload.value = newResult;
             return payload;
           }
         }
@@ -2356,7 +2361,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
       }
 
-      if (!novalue) doc.write(`payload.value = newResult;`);
+      doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       // closing `shape` in is what pays: turbofan specializes the parser against that one shape object, so every `shape[k]._zod.run` folds to a known callee. as a parameter it stays a generic load and measures 13% slower even with the forwarding frame gone
       return doc.compile() as (payload: any, ctx: any) => any;
@@ -2398,7 +2403,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
 
         if (!catchall) return payload;
-        return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true);
+        return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true, ctx.novalue === true);
       }
 
       return superParse(payload, ctx);
@@ -2821,6 +2826,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
+      if (ctx.novalue === true) ctx = { ...ctx, novalue: false };
       const left = def.left._zod.run({ value: input, issues: [] }, ctx);
       const right = def.right._zod.run({ value: input, issues: [] }, ctx);
       const async = left instanceof Promise || right instanceof Promise;
@@ -4441,14 +4447,14 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
-      const right = def.out._zod.run(payload, ctx);
+      const right = def.out._zod.run(payload, ctx.novalue === true ? { ...ctx, novalue: false } : ctx);
       if (right instanceof Promise) {
         return right.then((right) => handlePipeResult(right, def.in, ctx));
       }
       return handlePipeResult(right, def.in, ctx);
     }
 
-    const left = def.in._zod.run(payload, ctx);
+    const left = def.in._zod.run(payload, ctx.novalue === true ? { ...ctx, novalue: false } : ctx);
     if (left instanceof Promise) {
       return left.then((left) => handlePipeResult(left, def.out, ctx));
     }

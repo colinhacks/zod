@@ -443,3 +443,48 @@ function checkSeed(seed: number): void {
     expect(() => compileFn(g.schema), `${g.desc}: compile refused`).not.toThrow();
   }
 }
+
+// The same generator, pointed at `z.validate`: it skips building the output that nothing reads, so a node whose value something DOES read — its own checks, a pipe's input side, an intersection operand, a readonly freeze — has to opt its subtree back in. A disagreement here is that propagation being wrong; a mutated input is a container writing into what it never copied.
+test("random schemas agree between z.validate and safeParse, and validate leaves the input alone", () => {
+  const failures: string[] = [];
+  for (let seed = 1; seed <= SEEDS; seed++) {
+    try {
+      checkValidateSeed(seed);
+    } catch (err) {
+      failures.push((err as Error).message.split("\n")[0]!);
+    }
+  }
+  expect(failures).toEqual([]);
+});
+
+function checkValidateSeed(seed: number): void {
+  const c: Ctx = { rand: mulberry32(seed), calls: new Map(), nextCallback: 0 };
+  const g = gen(c, 3);
+  // a check at the root reads what the root built, which is what forces the whole subtree to build; `seen` is that value, so the two calls can be compared on it and not just on the verdict
+  let seen: string[] = [];
+  const schema = g.schema.refine((v: unknown) => {
+    seen.push(describe(v));
+    return true;
+  });
+  const inputs = [g.valid(), g.corrupt(g.valid()), g.corrupt(g.corrupt(g.valid())), pick(c, JUNK)];
+  for (const input of inputs) {
+    const label = `seed ${seed} ${g.desc} input ${describe(input)}`;
+    seen = [];
+    const a = attempt(() => schema.safeParse(input).success);
+    const seenBySafeParse = seen;
+    seen = [];
+    // taken after safeParse, so a generator that hands out a shared value is not read as validate's doing
+    const untouched = describe(input);
+    const frozen = typeof input === "object" && input !== null ? Object.isFrozen(input) : null;
+    const b = attempt(() => z.validate(schema, input));
+    expect(b.threw, `${label}: throw`).toBe(a.threw);
+    if (a.threw) continue;
+    expect(b.value, `${label}: verdict`).toBe(a.value);
+    // only on a pass: a failing parse aborts early, so the check need not have run at all
+    if (a.value === true) expect(seen, `${label}: value seen by the check`).toEqual(seenBySafeParse);
+    expect(describe(input), `${label}: input mutated`).toBe(untouched);
+    expect(typeof input === "object" && input !== null ? Object.isFrozen(input) : null, `${label}: input frozen`).toBe(
+      frozen
+    );
+  }
+}
