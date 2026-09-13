@@ -154,8 +154,8 @@ function validateFallback(
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean {
   const ctx: schemas.ParseContextInternal = _ctx
-    ? { ..._ctx, async: false, abortEarly: true, novalue: true }
-    : { async: false, abortEarly: true, novalue: true };
+    ? { ..._ctx, async: false, abortEarly: true, noValue: true }
+    : { async: false, abortEarly: true, noValue: true };
   const fallbackRun = (schema._zod.bag as CompiledBag).fallbackRun;
   let result: unknown;
   if (fallbackRun) {

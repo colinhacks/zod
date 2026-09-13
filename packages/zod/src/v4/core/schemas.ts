@@ -33,7 +33,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   /** Set only by `validate`/`validateAsync`. A container may stop before its next child, never inside one, so a map entry and a tuple's fixed items parse whole. */
   readonly abortEarly?: boolean;
   /** Set by `validate`: nothing reads the parsed value here, so a container may skip building its output. A node that reads what it built — its own checks, a pipe's input side, an intersection operand — clears it for the subtree below. */
-  readonly novalue?: boolean;
+  readonly noValue?: boolean;
 }
 
 /** Gives a container cycle support: `attach` wraps its parse, and `alloc` registers the object it builds into before any child is parsed so a reference back to the same input resolves to it. */
@@ -298,7 +298,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       inst._zod.run = (payload, ctx) => {
         // a check reads the value this node produced, so nothing below may skip building it
-        if (ctx.novalue === true) ctx = { ...ctx, novalue: false };
+        if (ctx.noValue === true) ctx = { ...ctx, noValue: false };
         if (ctx.skipChecks) {
           return inst._zod.parse(payload, ctx);
         }
@@ -1875,9 +1875,9 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    // the placeholder is what a back-edge resolves to, so it is allocated either way; under novalue it stays empty and nothing is stored into it
-    const novalue = ctx?.novalue === true;
-    const empty: unknown[] = novalue ? [] : Array(input.length);
+    // the placeholder is what a back-edge resolves to, so it is allocated either way; under noValue it stays empty and nothing is stored into it
+    const noValue = ctx?.noValue === true;
+    const empty: unknown[] = noValue ? [] : Array(input.length);
     payload.value = memo ? memo.alloc(inst, payload, empty, ctx) : empty;
     const proms: Promise<any>[] = [];
     const abortEarly = ctx?.abortEarly;
@@ -1894,7 +1894,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleArrayResult(result, payload, i)));
       } else {
-        if (novalue) {
+        if (noValue) {
           if (result.issues.length) payload.issues.push(...util.prefixIssues(i, result.issues));
         } else handleArrayResult(result, payload, i);
         // the element's payload is authoritative here, since handleArrayResult forwards every issue; an object's is not, because it drops a failed absent optional
@@ -1986,7 +1986,7 @@ function handlePropertyResult(
   input: any,
   optin: "optional" | "defaulted" | undefined,
   optout: "optional" | undefined,
-  novalue?: boolean
+  noValue?: boolean
 ) {
   const isPresent = key in input;
   const isOptionalOut = optout === "optional";
@@ -2014,7 +2014,7 @@ function handlePropertyResult(
     return;
   }
 
-  if (novalue) return;
+  if (noValue) return;
 
   if (result.value === undefined) {
     if (isPresent || (optin === "defaulted" && !isOptionalOut)) {
@@ -2110,7 +2110,7 @@ function handleCatchall(
   def: ReturnType<typeof normalizeDef>,
   inst: $ZodObject,
   abortEarly: boolean,
-  novalue?: boolean
+  noValue?: boolean
 ) {
   const unrecognized: string[] = [];
   const keySet = def.keySet;
@@ -2139,9 +2139,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout, novalue)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout, noValue)));
     } else {
-      handlePropertyResult(r, payload, key, input, optin, optout, novalue);
+      handlePropertyResult(r, payload, key, input, optin, optout, noValue);
     }
   }
 
@@ -2219,7 +2219,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    const novalue = ctx?.novalue === true;
+    const noValue = ctx?.noValue === true;
     payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
 
     const proms: Promise<any>[] = [];
@@ -2239,9 +2239,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout, novalue)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout, noValue)));
       } else {
-        handlePropertyResult(r, payload, key, input, optin, optout, novalue);
+        handlePropertyResult(r, payload, key, input, optin, optout, noValue);
       }
     }
 
@@ -2249,7 +2249,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
 
-    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst, abortEarly === true, novalue);
+    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst, abortEarly === true, noValue);
   };
 });
 
@@ -2264,7 +2264,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const memo = core.globalConfig.memoizer;
 
-    const generateFastpass = (shape: any, novalue?: boolean) => {
+    const generateFastpass = (shape: any, noValue?: boolean) => {
       const normalized = _normalized.value;
       const syms = normalized.symbolKeys;
       // a symbol has no source literal, so it is read as `syms[i]` off the closed-over scope
@@ -2317,7 +2317,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           if (${id}.issues.length) {${prefixStr(id, k)}
           }
 
-          ${novalue ? "" : `if (${assign}) { newResult[${k}] = ${id}.value; }`}
+          ${noValue ? "" : `if (${assign}) { newResult[${k}] = ${id}.value; }`}
         }
 
       `);
@@ -2339,7 +2339,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           }
         }
 
-        ${novalue ? "" : `if (${id}_present) { newResult[${k}] = ${id}.value; }`}
+        ${noValue ? "" : `if (${id}_present) { newResult[${k}] = ${id}.value; }`}
 
       `);
         } else {
@@ -2347,7 +2347,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         if (${id}.issues.length) {${prefixStr(id, k)}
         }
       `);
-          if (novalue) {
+          if (noValue) {
             // nothing is stored, so the branch that decides what to store is not generated either
           } else if (optin === "defaulted") {
             doc.write(`newResult[${k}] = ${id}.value;`);
@@ -2394,7 +2394,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
-        if (ctx.novalue === true) {
+        if (ctx.noValue === true) {
           if (!fastpassNovalue) fastpassNovalue = generateFastpass(def.shape, true);
           payload = fastpassNovalue(payload, ctx);
         } else {
@@ -2403,7 +2403,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
 
         if (!catchall) return payload;
-        return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true, ctx.novalue === true);
+        return handleCatchall([], input, payload, ctx, value, inst, ctx?.abortEarly === true, ctx.noValue === true);
       }
 
       return superParse(payload, ctx);
@@ -2826,7 +2826,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      if (ctx.novalue === true) ctx = { ...ctx, novalue: false };
+      if (ctx.noValue === true) ctx = { ...ctx, noValue: false };
       const left = def.left._zod.run({ value: input, issues: [] }, ctx);
       const right = def.right._zod.run({ value: input, issues: [] }, ctx);
       const async = left instanceof Promise || right instanceof Promise;
@@ -4447,14 +4447,14 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
-      const right = def.out._zod.run(payload, ctx.novalue === true ? { ...ctx, novalue: false } : ctx);
+      const right = def.out._zod.run(payload, ctx.noValue === true ? { ...ctx, noValue: false } : ctx);
       if (right instanceof Promise) {
         return right.then((right) => handlePipeResult(right, def.in, ctx));
       }
       return handlePipeResult(right, def.in, ctx);
     }
 
-    const left = def.in._zod.run(payload, ctx.novalue === true ? { ...ctx, novalue: false } : ctx);
+    const left = def.in._zod.run(payload, ctx.noValue === true ? { ...ctx, noValue: false } : ctx);
     if (left instanceof Promise) {
       return left.then((left) => handlePipeResult(left, def.out, ctx));
     }
