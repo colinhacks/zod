@@ -1,0 +1,45 @@
+# .github/workflows/publish-datasets.yml
+
+name: Publish the code-list packages
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/currency-codes/package.json"
+      - "packages/country-codes/package.json"
+      - "packages/language-codes/package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # the reviewed environment the zod release publishes through; npm's trusted publishers for these packages are bound to it
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - run: printf 'latest\n' > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+          node-version: "latest"
+      - run: nub install --frozen-lockfile
+      - run: nub run build
+      - run: nub exec --node vitest run packages/currency-codes packages/country-codes packages/language-codes
+      # every version already on the registry is skipped, so a re-run after a partial failure publishes only what is missing
+      - name: Publish each version that is not on npm yet
+        run: |
+          for dir in currency-codes country-codes language-codes; do
+            version=$(jq -r .version "packages/$dir/package.json")
+            if curl -sf "https://registry.npmjs.org/@zod%2F$dir/$version" > /dev/null; then
+              echo "@zod/$dir@$version is already on npm"
+              continue
+            fi
+            (cd "packages/$dir" && nub publish --provenance --no-git-checks)
+          done

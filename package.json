@@ -73,7 +73,7 @@
     "lint": "nub exec --node biome lint --write .",
     "lint:check": "nub exec --node biome lint .",
     "clean": "nub run -r clean",
-    "build": "nub run -r --filter zod --filter @zod/mini build",
+    "build": "nub run -r --filter zod --filter @zod/mini --filter @zod/currency-codes --filter @zod/country-codes --filter @zod/language-codes build",
     "test:watch": "nub exec --node vitest",
     "test": "nub exec --node vitest run",
     "test:compile": "nub exec --node vitest run --config vitest.compile.config.ts",
@@ -92,6 +92,6 @@
     "check:circular": "nub exec --node madge --circular --extensions ts --exclude '(v4/core|v3)' packages/zod/src",
     "check:comments": "nub scripts/check-comments.ts",
     "check:lockstep": "nub scripts/check-lockstep.ts",
-    "update:iso4217": "nub scripts/update-iso-4217.ts"
+    "update:datasets": "nub packages/datasets/src/update.ts"
   }
 }
