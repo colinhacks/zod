@@ -1,0 +1,62 @@
+# .github/workflows/datasets.yml
+
+name: Refresh the code-list packages
+on:
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# one run at a time, so a manual dispatch and the schedule cannot push the branch out of order
+concurrency:
+  group: datasets
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: printf 'latest\n' > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+          node-version: "latest"
+      - run: nub install --frozen-lockfile
+      - id: update
+        env:
+          DATASETS_SUMMARY: /tmp/summary.md
+        run: nub run update:datasets
+      # nothing to do when main already carries the data, or when the open generated PR does: only the generated modules are compared, so an unrelated edit elsewhere does not replace a reviewed head
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          changed=true
+          if git diff --quiet -- 'packages/*-codes/src/index.ts'; then
+            changed=false
+          elif [ -n "$(gh pr list --head datasets-refresh --state open --json number --jq '.[0].number')" ] && git fetch -q origin datasets-refresh && git diff --quiet FETCH_HEAD -- 'packages/*-codes/src/index.ts'; then
+            changed=false
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+      - if: steps.diff.outputs.changed == 'true'
+        run: nub run build
+      # a PR opened with the workflow token never triggers the test workflow, so the suites that read the data run here
+      - if: steps.diff.outputs.changed == 'true'
+        run: nub exec --node vitest run packages/currency-codes packages/country-codes packages/language-codes packages/zod/src/v4/classic/tests/string.test.ts packages/zod/src/v4/mini/tests/string.test.ts packages/zod/src/v4/classic/tests/to-json-schema.test.ts
+      - if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HUSKY: "0"
+          TITLE: ${{ steps.update.outputs.title }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B datasets-refresh
+          git add packages/*-codes/src/index.ts packages/*-codes/package.json packages/zod/src/v4/core/regexes.ts
+          git commit -m "$TITLE"
+          git push --force origin datasets-refresh
+          gh pr create --base main --head datasets-refresh --title "$TITLE" --body-file /tmp/summary.md || gh pr edit datasets-refresh --title "$TITLE" --body-file /tmp/summary.md

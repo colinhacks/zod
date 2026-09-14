@@ -1,0 +1,61 @@
+{
+  "name": "@zod/currency-codes",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "description": "ISO 4217 currency codes, regenerated from the SIX Group lists by CI",
+  "homepage": "https://github.com/colinhacks/zod/tree/main/packages/currency-codes",
+  "funding": "https://github.com/sponsors/colinhacks",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "index.d.cts"
+  ],
+  "keywords": [
+    "iso",
+    "4217",
+    "currency",
+    "currencies",
+    "codes"
+  ],
+  "main": "./index.cjs",
+  "types": "./index.d.cts",
+  "module": "./index.js",
+  "zshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    },
+    "conditions": {
+      "@zod/source": "src"
+    },
+    "sealCjsExports": true
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@zod/source": "./src/index.ts",
+      "types": "./index.d.cts",
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git",
+    "directory": "packages/currency-codes"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "scripts": {
+    "clean": "git clean -xdf . -e node_modules",
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub exec --node biome check --write .",
+    "test": "nub exec --node vitest run"
+  }
+}

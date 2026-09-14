@@ -1,0 +1,61 @@
+{
+  "name": "@zod/language-codes",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "description": "ISO 639-1 language codes, regenerated from the IANA registry by CI",
+  "homepage": "https://github.com/colinhacks/zod/tree/main/packages/language-codes",
+  "funding": "https://github.com/sponsors/colinhacks",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "index.d.cts"
+  ],
+  "keywords": [
+    "iso",
+    "639",
+    "language",
+    "languages",
+    "codes"
+  ],
+  "main": "./index.cjs",
+  "types": "./index.d.cts",
+  "module": "./index.js",
+  "zshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    },
+    "conditions": {
+      "@zod/source": "src"
+    },
+    "sealCjsExports": true
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@zod/source": "./src/index.ts",
+      "types": "./index.d.cts",
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git",
+    "directory": "packages/language-codes"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "scripts": {
+    "clean": "git clean -xdf . -e node_modules",
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub exec --node biome check --write .",
+    "test": "nub exec --node vitest run"
+  }
+}
