@@ -10,7 +10,7 @@ export default function Scroller() {
   // const firstRender = useRef(true);
 
   // run after every route or query-string change
-  // biome-ignore lint:
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname and searchParams only retrigger the effect
   useEffect(() => {
     // skip the very first render if you only care about later navigations
     handleScroll();
@@ -21,7 +21,6 @@ export default function Scroller() {
   useEffect(handleScroll, []);
 
   function handleScroll() {
-    console.dir("handling scroll...", { depth: null });
     // accept either ?id=foo or #foo
     const id = searchParams?.get("id") ?? window.location.hash.slice(1);
     const el = id ? document.getElementById(id) : null;

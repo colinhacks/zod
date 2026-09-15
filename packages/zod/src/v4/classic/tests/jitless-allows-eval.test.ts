@@ -10,23 +10,16 @@ const { allowsEval } = core.util;
 // `securitypolicyviolation` report on strict-CSP pages (no 'unsafe-eval')
 // that Chrome DevTools surfaces as an Issue.
 //
-// The fix: when `globalConfig.jitless` is true, `allowsEval.value`
-// returns `false` without triggering the probe. This test lives in its
-// own file because vitest isolates ESM graphs per file, so the cached
-// `allowsEval.value` is fresh and is never accessed before the config
-// mutation below.
+// The fix: when `globalConfig.jitless` is true, `allowsEval.value` returns `false` without triggering the probe. This test lives in its own file because vitest isolates ESM graphs per file, so the cached `allowsEval.value` is fresh and is never accessed before the config mutation below.
 
 test("globalConfig.jitless=true short-circuits the allowsEval probe", () => {
-  // Set BEFORE first access to allowsEval.value — the getter is memoised
-  // via `cached()`, so the contract is "configure at app entry".
+  // Set BEFORE first access to allowsEval.value — the getter is memoised via `cached()`, so the contract is "configure at app entry".
   z.config({ jitless: true });
 
   // Sanity: config is wired
   expect(core.globalConfig.jitless).toBe(true);
 
-  // Spy: if the probe were still attempted, `new Function("")` would be
-  // called. Swap the global `Function` constructor with a throwing stub
-  // and verify the stub is NEVER invoked.
+  // Spy: if the probe were still attempted, `new Function("")` would be called. Swap the global `Function` constructor with a throwing stub and verify the stub is NEVER invoked.
   const origFunction = globalThis.Function;
   let probeAttempted = false;
   // @ts-expect-error assigning a stub to the Function global for the test

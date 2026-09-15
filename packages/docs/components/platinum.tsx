@@ -9,12 +9,13 @@ export const Platinum = () => {
     //   href: "https://www.mobb.ai/?utm_source=zod",
     // },
     {
-      name: "CodeRabbit",
-      description: "Cut code review time & bugs in half",
-      logoDark: "https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d",
-      logoLight: "https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74",
-      url: "coderabbit.ai",
-      href: "https://www.coderabbit.ai/",
+      name: "Trigger.dev",
+      description: "Build and deploy fully-managed AI agents and workflows",
+      // trigger.dev names these by ink colour, so their --light lockup is the bright one that goes on dark
+      logoDark: "https://trigger.dev/assets/triggerdev-lockup--light.svg",
+      logoLight: "https://trigger.dev/assets/triggerdev-lockup--dark.svg",
+      url: "trigger.dev",
+      href: "https://trigger.dev/?utm_source=zod",
     },
   ];
 

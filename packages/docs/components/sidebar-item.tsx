@@ -1,5 +1,6 @@
 "use client";
 
+import { InlineCodeTitle } from "@/components/inline-code-title";
 import type { PageTree } from "fumadocs-core/server";
 import {
   SidebarItem as InternalSidebarItem,
@@ -14,13 +15,11 @@ export const SidebarItem = ({
 }: {
   item: PageTree.Item;
 }) => {
-  const name = `${item.name}`;
-
   const tag = Tags[item.url]; //?.toUpperCase();
   return (
     <InternalSidebarItem key={item.url} href={item.url} external={item.external} icon={item.icon}>
       <div className="w-full flex flex-row justify-between">
-        <p className="flex-grow">{name}</p>
+        <p className="flex-grow">{typeof item.name === "string" ? <InlineCodeTitle text={item.name} /> : item.name}</p>
         <p>
           {tag && (
             <span className="ml-0 mb-[-1px] text-xs px-1.5 py-0.5 bg-[#00000010] dark:bg-[#ffffff10] rounded-md">

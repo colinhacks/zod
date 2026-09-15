@@ -46,8 +46,7 @@ test("hash() API — types and runtime across all alg/enc combinations", async (
     expect(() => hash(alg, { enc: "base64" }).parse(hex)).toThrow();
     expect(() => hash(alg, { enc: "base64url" }).parse(base64)).toThrow();
 
-    // Encoding-specific failures
-    // hex: uppercase allowed, wrong length should fail
+    // Encoding-specific failures hex: uppercase allowed, wrong length should fail
     hash(alg, { enc: "hex" }).parse(hex.toUpperCase());
     expect(() => hash(alg, { enc: "hex" }).parse(hex.slice(0, -1))).toThrow();
 

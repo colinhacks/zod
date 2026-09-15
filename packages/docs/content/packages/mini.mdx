@@ -22,6 +22,16 @@ To import it:
 import * as z from "zod/mini";
 ```
 
+The same API is published as a standalone package, `@zod/mini`, that re-exports `zod/mini` from a peer dependency on `zod`. Its version tracks `zod`.
+
+```sh
+npm install zod @zod/mini
+```
+
+```ts
+import * as z from "@zod/mini";
+```
+
 Zod Mini implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
 
 ```ts

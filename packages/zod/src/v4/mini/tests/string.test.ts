@@ -177,6 +177,13 @@ test("z.nanoid", () => {
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
+test("z.nanoid custom length", () => {
+  const a = z.nanoid({ length: 64 });
+  const id = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  expect(z.parse(a, id)).toEqual(id);
+  expect(() => z.parse(a, "8FHZpIxleEK3axQRBNNjN")).toThrow();
+});
+
 test("z.cuid", () => {
   const a = z.cuid();
   expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
@@ -317,6 +324,36 @@ test("z.e164", () => {
   expect(() => z.parse(a, 123)).toThrow();
 });
 
+test("z.creditCard", () => {
+  const a = z.creditCard();
+  // valid credit card
+  expect(z.parse(a, "4111111111111111")).toEqual("4111111111111111");
+  expect(z.parse(a, "4111 1111 1111 1111")).toEqual("4111 1111 1111 1111");
+  // failed Luhn checksum
+  expect(() => z.parse(a, "4111111111111112")).toThrow();
+  // outside the 12-19 digit range
+  expect(() => z.parse(a, "40000000006")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+  // wrong type
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+test("z.iban", () => {
+  const a = z.iban();
+  // valid iban
+  expect(z.parse(a, "DE89370400440532013000")).toEqual("DE89370400440532013000");
+  expect(z.parse(a, "NO9386011117947")).toEqual("NO9386011117947");
+  // failed mod 97 checksum
+  expect(() => z.parse(a, "DE89370400440532013001")).toThrow();
+  // formatting violations
+  expect(() => z.parse(a, "de89370400440532013000")).toThrow();
+  expect(() => z.parse(a, "DE89 3704 0044 0532 0130 00")).toThrow();
+  expect(() => z.parse(a, "NO938601111794")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+  // wrong type
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
 test("z.jwt", () => {
   const a = z.jwt();
   // valid jwt
@@ -349,4 +386,11 @@ test("z.hash generic format", () => {
   expectTypeOf(z.hash("sha384", { enc: "base64url" as const })).toEqualTypeOf<
     z.ZodMiniCustomStringFormat<"sha384_base64url">
   >();
+});
+
+test("z.currencyCode", () => {
+  const a = z.currencyCode();
+  expectTypeOf(a).toEqualTypeOf<z.ZodMiniCustomStringFormat<"currency_code">>();
+  expect(z.parse(a, "EUR")).toBe("EUR");
+  expect(z.safeParse(a, "eur")).toMatchObject(FAIL);
 });

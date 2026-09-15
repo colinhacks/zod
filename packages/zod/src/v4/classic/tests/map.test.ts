@@ -99,6 +99,18 @@ test("failing when map is bigger than max() ", () => {
   expect(result.error!.issues[0].code).toEqual("too_big");
 });
 
+test("failing when map does not match size() ", () => {
+  expect(justTwo.safeParse(new Map([["a", "b"]])).error!.issues[0].message).toEqual(
+    "Too small: expected map to have exactly 2 entries"
+  );
+  const tooBig = new Map([
+    ["a", "b"],
+    ["c", "d"],
+    ["e", "f"],
+  ]);
+  expect(justTwo.safeParse(tooBig).error!.issues[0].message).toEqual("Too big: expected map to have exactly 2 entries");
+});
+
 test("valid parse async", async () => {
   const asyncMap = z.map(
     z.string().refine(async () => false, "bad key"),

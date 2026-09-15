@@ -3,14 +3,12 @@
 import * as core from "../core/index.js";
 import type { ZodType } from "./schemas.js";
 
-export type {
-  /** @deprecated Use `z.output<T>` instead. */
-  output as TypeOf,
-  /** @deprecated Use `z.output<T>` instead. */
-  output as Infer,
-  /** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
-  $ZodTypes as ZodFirstPartySchemaTypes,
-} from "../core/index.js";
+/** @deprecated Use `z.output<T>` instead. */
+export type TypeOf<T> = core.output<T>;
+/** @deprecated Use `z.output<T>` instead. */
+export type Infer<T> = core.output<T>;
+/** @deprecated Use `z.core.$ZodTypes` instead */
+export type ZodFirstPartySchemaTypes = core.$ZodTypes;
 
 /** @deprecated Use the raw string literal codes instead, e.g. "invalid_type". */
 export const ZodIssueCode = {
@@ -27,10 +25,10 @@ export const ZodIssueCode = {
   custom: "custom",
 } as const;
 
-/** @deprecated Use `z.$ZodFlattenedError` */
+/** @deprecated Use `z.core.$ZodFlattenedError<z.output<T>>` instead; it takes an inferred type, not a schema. */
 export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.output<T>, U>;
 
-/** @deprecated Use `z.$ZodFormattedError` */
+/** @deprecated Use `z.core.$ZodFormattedError<z.output<T>>` instead; it takes an inferred type, not a schema. */
 export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> = core.$ZodFormattedError<
   core.output<T>,
   U
@@ -54,14 +52,24 @@ export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
   return core.config().customError;
 }
 
-export type {
-  /** @deprecated Use z.ZodType (without generics) instead. */
-  ZodType as ZodTypeAny,
-  /** @deprecated Use `z.ZodType` */
-  ZodType as ZodSchema,
-  /** @deprecated Use `z.ZodType` */
-  ZodType as Schema,
-};
+/** @deprecated Use z.ZodType (without generics) instead. */
+export type ZodTypeAny<
+  Output = unknown,
+  Input = unknown,
+  Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
+> = ZodType<Output, Input, Internals>;
+/** @deprecated Use `z.ZodType` */
+export type ZodSchema<
+  Output = unknown,
+  Input = unknown,
+  Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
+> = ZodType<Output, Input, Internals>;
+/** @deprecated Use `z.ZodType` */
+export type Schema<
+  Output = unknown,
+  Input = unknown,
+  Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
+> = ZodType<Output, Input, Internals>;
 
 /** Included for Zod 3 compatibility */
 export type ZodRawShape = core.$ZodShape;

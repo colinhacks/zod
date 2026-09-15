@@ -1,11 +1,13 @@
+type Company = {
+  name: string;
+  logoSrc: string;
+  url: string;
+  href: string;
+  logoClassName?: string;
+};
+
 export const Silver = () => {
-  const companies = [
-    {
-      name: "Sanity",
-      logoSrc: "https://avatars.githubusercontent.com/u/17177659?s=200&v=4",
-      url: "sanity.io",
-      href: "https://www.sanity.io/",
-    },
+  const companies: Company[] = [
     {
       name: "Subtotal",
       logoSrc: "https://avatars.githubusercontent.com/u/176449348?s=200&v=4",
@@ -13,22 +15,10 @@ export const Silver = () => {
       href: "https://www.subtotal.com/?utm_source=zod",
     },
     {
-      name: "Nitric",
-      logoSrc: "https://avatars.githubusercontent.com/u/72055470?s=200&v=4",
-      url: "nitric.io",
-      href: "https://nitric.io/",
-    },
-    {
       name: "PropelAuth",
       logoSrc: "https://avatars.githubusercontent.com/u/89474619?s=200&v=4",
       url: "propelauth.com",
       href: "https://www.propelauth.com/",
-    },
-    {
-      name: "Cerbos",
-      logoSrc: "https://avatars.githubusercontent.com/u/80861386?s=200&v=4",
-      url: "cerbos.dev",
-      href: "https://cerbos.dev/",
     },
     {
       name: "Scalar",
@@ -47,18 +37,6 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/91036480?s=200&v=4",
       url: "whop.com",
       href: "https://whop.com/",
-    },
-    {
-      name: "CryptoJobsList",
-      logoSrc: "https://avatars.githubusercontent.com/u/36402888?s=200&v=4",
-      url: "cryptojobslist.com",
-      href: "https://cryptojobslist.com/",
-    },
-    {
-      name: "Plain",
-      logoSrc: "https://avatars.githubusercontent.com/u/70170949?s=200&v=4",
-      url: "plain.com",
-      href: "https://plain.com/",
     },
     {
       name: "Inngest",
@@ -87,14 +65,16 @@ export const Silver = () => {
     {
       name: "9thCO",
       logoSrc: "https://avatars.githubusercontent.com/u/117220588?s=200&v=4",
+      // white-on-transparent mark, invisible on the light theme without this
+      logoClassName: "brightness-0 dark:brightness-100",
       url: "9thco.com",
       href: "https://www.9thco.com/?utm_source=zod",
     },
     {
-      name: "Ferry Health",
-      logoSrc: "https://avatars.githubusercontent.com/u/158637456?s=200&v=4",
-      url: "ferry.health",
-      href: "https://ferry.health/?utm_source=zod",
+      name: "StackBlitz",
+      logoSrc: "https://avatars.githubusercontent.com/u/28635252?s=200&v=4",
+      url: "stackblitz.com",
+      href: "https://stackblitz.com/?utm_source=zod",
     },
   ];
 
@@ -111,7 +91,7 @@ export const Silver = () => {
                 <img
                   src={company.logoSrc}
                   alt={`${company.name} logo`}
-                  className="h-12 w-12 object-contain mb-2 mt-0"
+                  className={`h-12 w-12 object-contain mb-2 mt-0 ${company.logoClassName ?? ""}`}
                 />
                 <span className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                   {company.url}

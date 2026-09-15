@@ -52,19 +52,19 @@ You can run these benchmarks yourself in the Zod repo:
 $ git clone git@github.com:colinhacks/zod.git
 $ cd zod
 $ git switch v4
-$ pnpm install
+$ nub install
 ```
 
 Then to run a particular benchmark:
 
 ```sh
-$ pnpm bench <name>
+$ nub run bench <name>
 ```
 
 ### 14x faster string parsing
 
 ```sh
-$ pnpm bench string
+$ nub run bench string
 runtime: node v22.13.0 (arm64-darwin)
 
 benchmark      time (avg)             (min … max)       p75       p99      p999
@@ -82,7 +82,7 @@ summary for z.string().parse
 ### 7x faster array parsing
 
 ```sh
-$ pnpm bench array
+$ nub run bench array
 runtime: node v22.13.0 (arm64-darwin)
 
 benchmark      time (avg)             (min … max)       p75       p99      p999
@@ -102,7 +102,7 @@ summary for z.array() parsing
 This runs the [Moltar validation library benchmark](https://moltar.github.io/typescript-runtime-type-benchmarks/). 
 
 ```sh
-$ pnpm bench object-moltar
+$ nub run bench object-moltar
 benchmark      time (avg)             (min … max)       p75       p99      p999
 ------------------------------------------------- -----------------------------
 • z.object() safeParse
@@ -145,7 +145,7 @@ The Zod repo contains a `tsc` benchmarking playground. Try this for yourself usi
 
 ```sh
 $ cd packages/tsc
-$ pnpm bench object-with-extend
+$ nub run bench object-with-extend
 ```
 </Callout>
 
@@ -652,8 +652,8 @@ All "string formats" (email, etc.) have been promoted to top-level functions on 
 ```ts
 z.email();
 z.uuidv4();
+z.uuidv6();
 z.uuidv7();
-z.uuidv8();
 z.ipv4();
 z.ipv6();
 z.cidrv4();

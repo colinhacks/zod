@@ -1,61 +1,29 @@
 "use client";
 
-import { Primitive, Tab, type TabsProps } from "fumadocs-ui/components/tabs";
+import { Tab as FumaTab, Tabs as FumaTabs, type TabProps, type TabsProps } from "fumadocs-ui/components/tabs";
 import React from "react";
 
-interface ChildProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-const Tabs = ({ children, ...rest }: TabsProps) => {
-  const validChildren = React.Children.toArray(children)
-    .filter(React.isValidElement)
-    .filter((child: any) => child.props.title);
-
-  if (validChildren.length === 0) {
-    console.warn("Tabs expects at least one valid Tab child, but none were found.");
-    return null;
-  }
-
-  const tabs = validChildren.map((child) => {
-    const { title } = child.props as ChildProps;
-    return title;
-  });
+// the stock tabs need `items` up front; here each tab carries its own `title`, so a post writes `<Tab title="Zod">` with no list to keep in sync
+const Tabs = ({ children, items, ...rest }: TabsProps) => {
+  const titles =
+    items ??
+    React.Children.toArray(children)
+      .filter(React.isValidElement)
+      .map(
+        (child) =>
+          (child.props as { title?: string; value?: string }).title ?? (child.props as { value?: string }).value
+      )
+      .filter((title): title is string => Boolean(title));
 
   return (
-    <Primitive.Tabs items={tabs} className="border-none rounded-none px-0" defaultValue={tabs[0]} {...rest}>
-      <Primitive.TabsList className="px-0 bg-transparent border-b gap-6">
-        {validChildren.map((child) => {
-          const { title } = child.props as ChildProps;
-          return (
-            <Primitive.TabsTrigger
-              key={title}
-              value={title}
-              className="font-medium data-[state=active]:shadow-[inset_0_-1px_0_0_currentColor,_0_1px_0_0_currentColor]"
-            >
-              {title}
-            </Primitive.TabsTrigger>
-          );
-        })}
-      </Primitive.TabsList>
-      {validChildren.map((child) => {
-        const { title, children: childContent, ...props } = child.props as ChildProps;
-
-        return (
-          <Primitive.TabsContent
-            forceMount
-            key={title}
-            value={title}
-            className="px-0 data-[state=inactive]:hidden"
-            {...props}
-          >
-            {childContent}
-          </Primitive.TabsContent>
-        );
-      })}
-    </Primitive.Tabs>
+    <FumaTabs items={titles} {...rest}>
+      {children}
+    </FumaTabs>
   );
 };
+
+const Tab = ({ title, value, ...props }: TabProps & { title?: string }) => (
+  <FumaTab value={value ?? title} {...props} />
+);
 
 export { Tabs, Tab };

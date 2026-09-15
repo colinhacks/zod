@@ -1,6 +1,6 @@
 import * as z4 from "zod/v4";
 import * as z3 from "zod3";
-import * as z4lib from "zod4/v4";
+import { zod4 as z4lib } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 const z3Schema = z3.strictObject({

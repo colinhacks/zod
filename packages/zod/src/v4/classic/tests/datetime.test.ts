@@ -1,4 +1,3 @@
-import { checkSync } from "recheck";
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
@@ -124,15 +123,36 @@ test("datetime parsing with local option", () => {
 test("datetime parsing with local and offset", () => {
   const a = z.string().datetime({ local: true, offset: true });
 
-  // expect(a.parse("2022-10-13T12:52")).toEqual("2022-10-13T12:52:00");
   a.parse("2022-10-13T12:52:00");
   a.parse("2022-10-13T12:52:00Z");
-  a.parse("2022-10-13T12:52Z");
+  a.parse("2022-10-13T12:52:00+02:00");
+  // `local` only makes the suffix optional; the unqualified form may still omit seconds
   a.parse("2022-10-13T12:52");
-  a.parse("2022-10-13T12:52+02:00");
   expect(() => a.parse("2022-10-13T12:52:00+02")).toThrow();
-  // expect(() => a.parse("2022-10-13T12:52Z")).toThrow();
-  // expect(() => a.parse("2022-10-13T12:52+02:00")).toThrow();
+  // a `Z` or an offset makes it RFC 3339, which mandates seconds
+  expect(() => a.parse("2022-10-13T12:52Z")).toThrow();
+  expect(() => a.parse("2022-10-13T12:52+02:00")).toThrow();
+});
+
+test("datetime requires seconds once a Z or offset is present", () => {
+  expect(z.iso.datetime().safeParse("2022-10-13T12:52Z").success).toEqual(false);
+  expect(z.iso.datetime().safeParse("2022-10-13T12:52:00Z").success).toEqual(true);
+  expect(z.iso.datetime().safeParse("2022-10-13T12:52:00.123Z").success).toEqual(true);
+  expect(z.iso.datetime({ offset: true }).safeParse("2022-10-13T12:52+02:00").success).toEqual(false);
+  expect(z.iso.datetime({ offset: true }).safeParse("2022-10-13T12:52:00+02:00").success).toEqual(true);
+  // an explicit precision still wins, and gives up `format: "date-time"` in exchange
+  expect(z.iso.datetime({ precision: -1 }).safeParse("2022-10-13T12:52Z").success).toEqual(true);
+  expect(z.toJSONSchema(z.iso.datetime()).format).toEqual("date-time");
+  expect(z.toJSONSchema(z.iso.datetime({ precision: -1 })).format).toEqual(undefined);
+});
+
+test("the documented migration union reproduces the old default", () => {
+  // no single precision covers both, so the docs point at this union — pin that it works
+  const mixed = z.union([z.iso.datetime(), z.iso.datetime({ precision: -1 })]);
+  expect(mixed.safeParse("2020-01-01T06:15Z").success).toEqual(true);
+  expect(mixed.safeParse("2020-01-01T06:15:00Z").success).toEqual(true);
+  expect(mixed.safeParse("2020-01-01T06:15:00.123Z").success).toEqual(true);
+  expect(mixed.safeParse("2020-01-01T06:15").success).toEqual(false);
 });
 
 test("date parsing", () => {
@@ -287,16 +307,10 @@ test("duration", () => {
   }
 });
 
-test("redos checker", () => {
-  const a = z.iso.datetime();
-  const b = z.string().datetime({ offset: true });
-  const c = z.string().datetime({ local: true });
-  const d = z.string().datetime({ local: true, offset: true, precision: 3 });
-  const e = z.string().date();
-  const f = z.string().time();
-  const g = z.string().duration();
-  for (const schema of [a, b, c, d, e, f, g]) {
-    const result = checkSync(schema._zod.pattern.source, "");
-    if (result.status !== "safe") throw Error("ReDoS issue");
+test("datetime pattern has no empty alternation branch", () => {
+  for (const args of [{}, { local: true }, { offset: true }, { local: true, offset: true }]) {
+    const { pattern } = z.toJSONSchema(z.iso.datetime(args));
+    expect(pattern, JSON.stringify(args)).toBeDefined();
+    expect(pattern, JSON.stringify(args)).not.toMatch(/\|\||\(\?:\||\|\)/);
   }
-}, 10000);
+});

@@ -40,7 +40,7 @@ test("continuability", () => {
         "message": "Invalid email address",
         "origin": "string",
         "path": [],
-        "pattern": "/^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$/",
+        "pattern": "/^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$/",
       },
       {
         "code": "custom",
@@ -230,7 +230,7 @@ test("continuability", () => {
         "message": "Invalid emoji",
         "origin": "string",
         "path": [],
-        "pattern": "/^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$/u",
+        "pattern": "/^(?=[\\s\\S]*[\\p{Extended_Pictographic}\\p{Regional_Indicator}\\u20E3])[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$/u",
       },
       {
         "code": "custom",
@@ -318,7 +318,7 @@ test("continuability", () => {
         "message": "Invalid ULID",
         "origin": "string",
         "path": [],
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "pattern": "/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/",
       },
       {
         "code": "custom",

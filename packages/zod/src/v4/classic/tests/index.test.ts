@@ -653,8 +653,7 @@ test("z.custom check", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
-  // the function should return base.$ZodResult
+  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic the function should return base.$ZodResult
   const a = z.any().check(
     z.check<string>((ctx) => {
       if (typeof ctx.value === "string") return;
@@ -734,6 +733,26 @@ test("z.refine", () => {
   expect(() => z.parse(a, 2)).toThrow();
   expect(() => z.parse(a, 11)).toThrow();
   expect(() => z.parse(a, "hi")).toThrow();
+});
+
+test("z.superRefine preserves explicit nullish issue input", () => {
+  const schema = z.string().check(
+    z.superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "default" });
+      ctx.addIssue({ code: "custom", message: "null", input: null });
+      ctx.addIssue({ code: "custom", message: "undefined", input: undefined });
+    })
+  );
+
+  const result = z.safeParse(schema, "sensitive", { reportInput: true });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toHaveLength(3);
+    expect(result.error.issues[0].input).toEqual("sensitive");
+    expect(result.error.issues[1].input).toEqual(null);
+    expect(result.error.issues[2]).toHaveProperty("input");
+    expect(result.error.issues[2].input).toEqual(undefined);
+  }
 });
 
 // test("z.superRefine", () => {

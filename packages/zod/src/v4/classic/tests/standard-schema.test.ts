@@ -132,3 +132,22 @@ test("z.toJSONSchema() returns StandardJSONSchemaV1", async () => {
 		}
 	`);
 });
+
+test("a failing validate reports the same issues as safeParse, without a ZodError", async () => {
+  const schema = z.object({ name: z.string().min(3), age: z.number().refine(async (n) => n > 0) });
+  const input = { name: "ab", age: -1 };
+  const result = (await schema["~standard"].validate(input)) as { issues: unknown[] };
+  expect(result.issues).toEqual((await schema.safeParseAsync(input)).error!.issues);
+  expect(result).not.toHaveProperty("error");
+  const sync = z.string().min(3)["~standard"].validate("ab") as { issues: unknown[] };
+  expect(sync.issues).toEqual(z.string().min(3).safeParse("ab").error!.issues);
+});
+
+test("a synchronously throwing check rejects through ~standard instead of throwing", async () => {
+  const schema = z.string().refine(() => {
+    throw new Error("boom");
+  });
+  const result = schema["~standard"].validate("abc");
+  expect(result).toBeInstanceOf(Promise);
+  await expect(result as Promise<unknown>).rejects.toThrow("boom");
+});

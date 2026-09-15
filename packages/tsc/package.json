@@ -21,12 +21,12 @@
   ],
   "typings": "./lib/index.d.ts",
   "scripts": {
-    "generate": "tsx generate.ts",
-    "build": "tsc",
-    "build:bench": "tsc -p tsconfig.bench.json",
-    "lint": "tslint -c tslint.json src/**/*.ts",
-    "prepublish": "npm run build",
-    "bench": "tsx ./bench/index.ts",
-    "bisect": "tsx bisect.ts"
+    "generate": "nub generate.ts",
+    "build": "nub exec --node tsc",
+    "build:bench": "nub exec --node tsc -p tsconfig.bench.json",
+    "lint": "nub exec --node tslint -c tslint.json src/**/*.ts",
+    "prepublish": "nub run build",
+    "bench": "nub ./bench/index.ts",
+    "bisect": "nub bisect.ts"
   }
 }

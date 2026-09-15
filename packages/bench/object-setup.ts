@@ -9,9 +9,7 @@ export const { zod3, zod4 } = makeSchema((z) =>
   })
 );
 
-// biome-ignore lint/style/noVar: <explanation>
-// biome-ignore lint/correctness/noInnerDeclarations: <explanation>
-export var DATA: any[] = makeData(1000, () => {
+export const DATA: any[] = makeData(1000, () => {
   return Object.freeze({
     number: Math.random(),
     string: `${Math.random()}`,

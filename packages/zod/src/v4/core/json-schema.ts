@@ -43,6 +43,7 @@ export type Schema =
 // }
 
 export type _JSONSchema = boolean | JSONSchema;
+export type SchemaType = "object" | "array" | "string" | "number" | "boolean" | "null" | "integer";
 export type JSONSchema = {
   [k: string]: unknown;
   $schema?:
@@ -57,7 +58,7 @@ export type JSONSchema = {
   $vocabulary?: Record<string, boolean>;
   $comment?: string;
   $defs?: Record<string, JSONSchema>;
-  type?: "object" | "array" | "string" | "number" | "boolean" | "null" | "integer";
+  type?: SchemaType | SchemaType[];
   additionalItems?: _JSONSchema;
   unevaluatedItems?: _JSONSchema;
   prefixItems?: _JSONSchema[];

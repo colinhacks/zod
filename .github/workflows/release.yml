@@ -2,35 +2,37 @@
 
 name: Release on npm
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "packages/zod/package.json"
-      - "packages/zod/src/**"
-      - ".github/workflows/release.yml"
+  # a version bump on main publishes nothing by itself; a maintainer runs `gh workflow run release.yml` and approves the npm environment
+  workflow_dispatch:
 
 jobs:
   test-node:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
-        typescript: ["5.5", "latest"]
+        # Deliberately narrower than test.yml, which also runs a "latest" leg. This
+        # matrix gates publishing, so a regression in a bleeding-edge compiler must
+        # not be able to block a release. test.yml carries the TypeScript 7 signal.
+        typescript: ["5.5", "6"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
+          nub-version: "0.8.3"
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
-      - run: pnpm build
-      - run: pnpm test
-      - run: pnpm run --filter @zod/resolution test:all
-      - run: pnpm run --filter @zod/integration test:all
+      - run: nub install --frozen-lockfile
+      # Build with the repo-pinned TypeScript, which is what actually ships. zshy
+      # uses the classic compiler API, which TypeScript 7 no longer provides.
+      - run: nub run build
+      - run: nub add typescript@${{ matrix.typescript }} -Dw
+      - run: nub run test
+      - run: nub run --filter @zod/resolution test:all
+      - run: nub run --filter @zod/integration test:all
 
   lint:
     runs-on: ubuntu-latest
@@ -39,128 +41,176 @@ jobs:
         node: ["latest"]
     name: Lint on Node ${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
+          nub-version: "0.8.3"
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm format:check
-      - run: pnpm lint:check
+      - run: nub install --frozen-lockfile
+      - run: nub run format:check
+      - run: nub run lint:check
 
   check-circular:
     runs-on: ubuntu-latest
     name: Check for circular dependencies
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - run: printf 'latest\n' > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
+          nub-version: "0.8.3"
           node-version: "latest"
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm check:circular
+      - run: nub install --frozen-lockfile
+      - run: nub run check:circular
 
   build_and_publish:
     needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
+    # a required reviewer approves every publish, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can publish
+    environment: npm
+    # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing: zod gets 240 minutes because it is the one that waits on review, and @zod/mini gets 90 because it publishes after that review has already drained (it cleared in under a minute on 4.6.0). A stall that outlives the pair needs the wait moved to its own job rather than a larger number here, and that costs a second environment approval.
+    timeout-minutes: 360
     permissions:
       contents: write
       pull-requests: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up Nub
+        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
-          node-version: 24
+          nub-version: "0.8.3"
           registry-url: https://registry.npmjs.org/
-
-      - name: Upgrade npm to latest (required for trusted publishing >=11.5.1)
-        run: npm install -g npm@latest
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        
-      - run: pnpm install
-      - run: pnpm build
-      - run: pnpm test
-      - run: pnpm run --filter @zod/resolution test:all
-      - run: pnpm run prepublishOnly
+      - run: nub install --frozen-lockfile
+      - run: nub run build
+      - run: nub run test
+      - run: nub run --filter @zod/resolution test:all
+      - run: nub run prepublishOnly
         working-directory: ./packages/zod
+      - run: nub run prepublishOnly
+        working-directory: ./packages/mini
+
+      # read versions even when publishing skips an existing release
+      - name: Resolve the versions
+        id: version
+        run: |
+          echo "zod=$(nub --node -p "require('./packages/zod/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "mini=$(nub --node -p "require('./packages/mini/package.json').version")" >> "$GITHUB_OUTPUT"
 
       - id: publish
         name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          # dry-run: true
-          provenance: true
-          package: ./packages/zod
-      
-      - run: pnpm jsr publish --allow-slow-types # --dry-run
-        if: ${{ steps.publish.outputs.type }}
+        # npm may stage a version before reporting a conflict; registry liveness is the final gate
+        continue-on-error: true
         working-directory: ./packages/zod
-
-      - name: Post-publish
-        if: ${{ steps.publish.outputs.type }}
+        env:
+          VERSION: ${{ steps.version.outputs.zod }}
         run: |
-          echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
+          if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then exit 0; fi
+          nub publish --provenance --no-git-checks
 
-      - name: Set canary version
-        if: ${{ !steps.publish.outputs.type }}
-        working-directory: ./packages/zod
+      # npm holds a publish in automated review before serving it, and the version is unavailable until that finishes: 4.5.0 sat 16 minutes, 4.5.3 sat 25, and 4.6.0 sat 116. None of those is an upper bound. The version does arrive, and the release and the JSR publish are worthless without it, so wait rather than fail. A publish that failed for some other reason waits the whole window and then fails with the publish step's log to read.
+      - name: Wait for the version to be live on npm
+        env:
+          VERSION: ${{ steps.version.outputs.zod }}
         run: |
-          npm --no-git-tag-version version minor
-          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
+          for i in $(seq 1 240); do
+            if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
+              echo "zod@$VERSION is live"
+              exit 0
+            fi
+            if [ $((i % 15)) -eq 0 ]; then echo "zod@$VERSION is not on the registry yet ($i minutes)"; fi
+            sleep 60
+          done
+          echo "zod@$VERSION never reached the registry; see the publish step for why"
+          exit 1
 
-      - name: Publish canary
-        if: ${{ !steps.publish.outputs.type }}
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          dry-run: false
-          provenance: true
-          tag: canary
-          package: ./packages/zod
-      
-      - name: Done with canary
-        if: ${{ !steps.publish.outputs.type }}
-        run: |
-          echo "Canary published."
-          exit 0
-     
       - name: Configure changelog
-        if: ${{ steps.publish.outputs.type }}
         run: |
-          echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
+          printf '%s\n' '{"categories": [], "template": "## Commits:\n\n#{{UNCATEGORIZED}}", "pr_template": "- #{{MERGE_SHA}} #{{TITLE}}"}' > changelog_config.json
           cat changelog_config.json
-          echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-          echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "last_tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
 
       - name: Generate changelog
-        if: ${{ steps.publish.outputs.type }}
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        uses: mikepenz/release-changelog-builder-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           fromTag: "${{ env.last_tag }}"
           toTag: ${{ github.ref }}
-          commitMode: true
+          mode: COMMIT
           configuration: changelog_config.json
 
+      # notes go through env and a file so a commit subject can't break out of the command
       - name: Create release
-        if: ${{ steps.publish.outputs.type }}
-        id: create_release
-        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.publish.outputs.version }}
-          release_name: v${{ steps.publish.outputs.version }}
-          commitish: ${{ github.ref }}
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.zod }}
+          CHANGELOG: ${{ steps.github_release.outputs.changelog }}
+        run: |
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "v$VERSION is already released"
+            exit 0
+          fi
+          printf '%s' "$CHANGELOG" > "$RUNNER_TEMP/release_notes.md"
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/release_notes.md"
 
+      # last so a jsr outage can't cost the tag — and it aborts on a dirty tree, so nothing above it may leave the workspace dirty
+      - name: Publish to JSR
+        env:
+          VERSION: ${{ steps.version.outputs.zod }}
+        working-directory: ./packages/zod
+        run: |
+          if curl -sf "https://jsr.io/@zod/zod/${VERSION}_meta.json" > /dev/null; then
+            echo "@zod/zod@$VERSION is already on JSR"
+            exit 0
+          fi
+          nub exec --node jsr publish --allow-slow-types # --dry-run
+
+      # @zod/mini ships in lockstep with zod and is a no-op when its version is already on the registry, so it runs unconditionally (the first release of the scoped package rides on a merge that does not bump zod itself) and last, so a failed mini publish cannot cost zod its tag, GitHub release or JSR publish
+      - id: publish_mini
+        name: Publish @zod/mini to NPM
+        continue-on-error: true
+        working-directory: ./packages/mini
+        env:
+          VERSION: ${{ steps.version.outputs.mini }}
+        run: |
+          if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then exit 0; fi
+          nub publish --provenance --no-git-checks --access public
+
+      - name: Wait for @zod/mini to be live on npm
+        env:
+          VERSION: ${{ steps.version.outputs.mini }}
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
+              echo "@zod/mini@$VERSION is live"
+              exit 0
+            fi
+            if [ $((i % 15)) -eq 0 ]; then echo "@zod/mini@$VERSION is not on the registry yet ($i minutes)"; fi
+            sleep 60
+          done
+          echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
+          exit 1
+
+      # JSR refuses a version that already exists, so the step checks first; this also lets the first JSR publish of a version already on npm ride on a merge that publishes nothing to npm
+      - name: Publish @zod/mini to JSR
+        working-directory: ./packages/mini
+        run: |
+          VERSION=$(nub --node -p 'require("./jsr.json").version')
+          if curl -sfL "https://jsr.io/@zod/mini/${VERSION}_meta.json" > /dev/null; then
+            echo "@zod/mini@$VERSION is already on JSR"
+          else
+            nub exec --node jsr publish --allow-slow-types
+          fi
+
+      # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two publishes above ran
+      - run: nub run check:lockstep --wait

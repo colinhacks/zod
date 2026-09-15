@@ -6,6 +6,8 @@ description: "Basic usage guide covering schema definition, parsing data, error 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
 
+{/* This page is a carefully curated introduction: the one workflow every new user walks through (define a schema, parse, infer, handle errors), shown once, in its simplest form. Edge cases, carve-outs, exceptions, and behavior notes for specific input shapes do NOT belong here, however true or recently fixed — they go on the relevant API reference page. If an addition explains when something *doesn't* work, it doesn't go on this page. */}
+
 This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
 
 ## Defining a schema
@@ -69,13 +71,13 @@ try {
         expected: 'string',
         code: 'invalid_type',
         path: [ 'username' ],
-        message: 'Invalid input: expected string'
+        message: 'Invalid input: expected string, received number'
       },
       {
         expected: 'number',
         code: 'invalid_type',
         path: [ 'xp' ],
-        message: 'Invalid input: expected number'
+        message: 'Invalid input: expected number, received string'
       }
     ] */
   }
@@ -94,13 +96,13 @@ try {
         expected: 'string',
         code: 'invalid_type',
         path: [ 'username' ],
-        message: 'Invalid input: expected string'
+        message: 'Invalid input'
       },
       {
         expected: 'number',
         code: 'invalid_type',
         path: [ 'xp' ],
-        message: 'Invalid input: expected number'
+        message: 'Invalid input'
       }
     ] */
   }
@@ -127,6 +129,15 @@ if (!result.success) {
 await schema.safeParseAsync("hello");
 ```
 </Callout>
+
+When you only need to know whether an input is acceptable, use `.validate()` — or the top-level `z.validate(schema, data)`, which is the form `zod/mini` uses. It returns a boolean, never builds an error, and acts as a type guard on the schema's input type. On invalid input it is up to 16x faster than `.safeParse().success`.
+
+```ts
+Player.validate({ username: "billie", xp: 100 }); // true
+Player.validate({ username: 42, xp: "100" });     // false
+```
+
+Use `.validateAsync()` for schemas with async refinements or transforms. On a [compiled schema](/compile), `.validate()` answers directly from the compiled fast path.
 
 ## Inferring types
 

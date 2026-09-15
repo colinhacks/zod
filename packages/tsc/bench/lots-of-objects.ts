@@ -17,7 +17,7 @@ await gen.generate({
   ...SHARED,
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;
 
 console.log("╔════════════════╗");
 console.log("║     Zod v4     ║");
@@ -28,7 +28,7 @@ await gen.generate({
   ...SHARED,
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;
 
 // console.log("╔═════════════════╗");
 // console.log("║     ArkType     ║");
@@ -38,4 +38,4 @@ await $`pnpm run build:bench`;
 //   ...SHARED
 // });
 
-// await $`pnpm run build:bench`;
+// await $`nub run build:bench`;

@@ -113,6 +113,33 @@ await schema.parseAsync("hello");
 // => "hello"
 ```
 
+### AOT compilation
+
+For hot validation paths, `z.compile(schema)` returns a schema clone with an ahead-of-time compiled fast path. Valid inputs take the compiled path; invalid inputs fall back to the regular parser so error reporting stays identical.
+
+Across a 55-schema benchmark the median speedup is **2.4x**, and it scales with how much work the schema does per parse: a large array of objects is ~9x, a 20-key object ~9x, a nested object ~4.5x, while a bare `z.string()` gains nothing — compilation removes per-node dispatch and allocation, and a single `typeof` has none to remove.
+
+```ts
+const CompiledPlayer = z.compile(Player);
+
+CompiledPlayer.parse({ username: "billie", xp: 100 });
+```
+
+To enable compilation globally for schemas constructed after import:
+
+```ts
+import "zod/compile"; // place before modules that define schemas
+```
+
+Things to know:
+
+- Compilation uses `new Function`. Global mode is automatically disabled when `z.config({ jitless: true })` is set (e.g. CSP environments); calling `z.compile()` directly is an explicit opt-in.
+- Schemas with async refinements or transforms can't be compiled, and neither can a few other constructs. That is not an error: `z.compile()` hands the schema back unchanged and it keeps using the regular parser, exactly as global mode leaves it. Pass `{ strict: true }` to throw `ZodCompileAsyncError` / `ZodCompileUnsupportedError` instead.
+- On invalid input, refinements and transforms may run twice (fast path, then fallback).
+- Deriving a new schema from a compiled one (`.refine()`, `.extend()`, etc.) returns an uncompiled schema — compile the final schema.
+
+See [`compile` docs](https://zod.dev/compile) for details.
+
 ### Handling errors
 
 When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
@@ -128,13 +155,13 @@ try {
         expected: 'string',
         code: 'invalid_type',
         path: [ 'username' ],
-        message: 'Invalid input: expected string'
+        message: 'Invalid input: expected string, received number'
       },
       {
         expected: 'number',
         code: 'invalid_type',
         path: [ 'xp' ],
-        message: 'Invalid input: expected number'
+        message: 'Invalid input: expected number, received string'
       }
     ] */
   }

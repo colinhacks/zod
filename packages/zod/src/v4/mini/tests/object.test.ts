@@ -116,6 +116,27 @@ test("z.extend", () => {
   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 });
 
+test("z.merge", () => {
+  const mergedSchema = z.merge(userSchema, z.object({ isAdmin: z.boolean() }));
+  type MergedUser = z.infer<typeof mergedSchema>;
+  expectTypeOf<MergedUser>().toEqualTypeOf<{
+    name: string;
+    age: number;
+    email?: string | undefined;
+    isAdmin: boolean;
+  }>();
+  expect(z.safeParse(mergedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
+
+  // the second schema's catchall wins, matching classic
+  const strict = z.merge(userSchema, z.strictObject({ isAdmin: z.boolean() }));
+  expect(z.safeParse(strict, { name: "John", age: 30, isAdmin: true, extra: 1 }).success).toBe(false);
+
+  expect(() =>
+    // @ts-expect-error second argument is a schema, not a shape
+    z.merge(userSchema, { isAdmin: z.boolean() })
+  ).toThrow("Invalid input to merge");
+});
+
 test("z.safeExtend", () => {
   const extended = z.safeExtend(userSchema, { name: z.string() });
   expect(z.safeParse(extended, { name: "John", age: 30 }).success).toBe(true);
@@ -166,6 +187,50 @@ test("z.partial with mask", () => {
   }>();
   expect(z.safeParse(partialSchemaWithMask, { age: 30 }).success).toBe(true);
   expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(false);
+});
+
+test("z.exactPartial", () => {
+  const partialSchema = z.exactPartial(userSchema);
+  type PartialUser = z.infer<typeof partialSchema>;
+  expectTypeOf<PartialUser>().toEqualTypeOf<{
+    name?: string;
+    age?: number;
+    email?: string | undefined;
+  }>();
+  expect(z.safeParse(partialSchema, { name: "John" }).success).toBe(true);
+  expect(z.safeParse(partialSchema, {}).success).toBe(true);
+  expect(z.safeParse(partialSchema, { name: undefined }).success).toBe(false);
+  expect(z.safeParse(partialSchema, { email: undefined }).success).toBe(true);
+});
+
+test("z.exactPartial with mask", () => {
+  const partialSchemaWithMask = z.exactPartial(userSchema, { name: true });
+  type PartialUserWithMask = z.infer<typeof partialSchemaWithMask>;
+  expectTypeOf<PartialUserWithMask>().toEqualTypeOf<{
+    name?: string;
+    age: number;
+    email?: string | undefined;
+  }>();
+  expect(z.safeParse(partialSchemaWithMask, { age: 30 }).success).toBe(true);
+  expect(z.safeParse(partialSchemaWithMask, { age: 30, name: undefined }).success).toBe(false);
+});
+
+test("z.required", () => {
+  const requiredSchema = z.required(userSchema);
+  type RequiredUser = z.infer<typeof requiredSchema>;
+  expectTypeOf<RequiredUser>().toEqualTypeOf<{ name: string; age: number; email: string }>();
+  expect(requiredSchema.shape.email).toBeInstanceOf(z.ZodMiniNonOptional);
+  expect(z.safeParse(requiredSchema, { name: "John", age: 30 }).success).toBe(false);
+  expect(z.safeParse(requiredSchema, { name: "John", age: 30, email: "john@example.com" }).success).toBe(true);
+});
+
+test("z.required with mask", () => {
+  const schema = z.object({ name: z.optional(z.string()), age: z.optional(z.number()) });
+  const requiredSchemaWithMask = z.required(schema, { name: true });
+  type RequiredWithMask = z.infer<typeof requiredSchemaWithMask>;
+  expectTypeOf<RequiredWithMask>().toEqualTypeOf<{ name: string; age?: number | undefined }>();
+  expect(requiredSchemaWithMask.shape.name).toBeInstanceOf(z.ZodMiniNonOptional);
+  expect(requiredSchemaWithMask.shape.age).toBeInstanceOf(z.ZodMiniOptional);
 });
 
 test("z.pick/omit/partial/required - do not allow unknown keys", () => {

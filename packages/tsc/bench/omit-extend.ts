@@ -13,7 +13,7 @@ await gen.generateExtendChain({
   imports: ["import * as z from 'zod3-24-2'"],
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;
 
 console.log("╔═════════════════════╗");
 console.log("║     Zod v3.24.3     ║");
@@ -25,7 +25,7 @@ await gen.generateExtendChain({
   imports: ["import * as z from 'zod3-24-3'"],
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;
 
 console.log("╔══════════════════════╗");
 console.log("║     Zod v4 (pre)     ║");
@@ -37,7 +37,7 @@ await gen.generateExtendChain({
   imports: ["import * as z from 'zod4'"],
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;
 
 console.log("╔═══════════════════════╗");
 console.log("║     Zod v4 (curr)     ║");
@@ -49,4 +49,4 @@ await gen.generateExtendChain({
   imports: ["import * as z from 'zod'"],
 });
 
-await $`pnpm run build:bench`;
+await $`nub run build:bench`;

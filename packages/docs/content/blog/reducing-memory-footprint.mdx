@@ -1,0 +1,115 @@
+---
+title: Reducing Zod's memory footprint by an order of magnitude with method memoization
+author: Colin McDonnell
+date: 2026-08-26
+description: A bare z.string() retained 7.5kb of heap in Zod 4.4. In Zod 4.5 it retains 784 bytes. One change to where a schema's methods live accounts for nearly all of it.
+---
+
+import { ThemedImage } from "@/components/themed-image";
+import { Tweet } from "react-tweet";
+
+Zod 4.5 implements a "method memoization" pattern that allows it to defer allocating memory for bound methods until they are used (if ever). This post discusses that pattern.
+
+In Zod 4.4 a bare `z.string()` retained 7.5kb of heap. In Zod 4.5 it retains 784 bytes. 
+
+<ThemedImage
+  lightSrc="/blog/memory-light.svg"
+  darkSrc="/blog/memory-dark.svg"
+  alt="Heap retained by one schema instance on a shared kilobyte axis, zod 4.4.3 as a gray bar with the 4.5 size as a blue bar inside it: a 10-key object 82.0kb to 11.0kb (7.4x), a union 17.5kb to 2.13kb (8.3x), z.string().min(1) 16.7kb to 3.37kb (5.0x), a record 16.4kb to 2.64kb (6.2x), z.string().optional() 12.6kb to 1.50kb (8.4x), an array of strings 11.2kb to 1.93kb (5.8x), z.string() 7.53kb to 784b (9.8x), z.number() 4.44kb to 706b (6.4x); up to 9.8x less memory than 4.4.3"
+  caption={<>Retained heap per schema instance, Zod 4.4.3 vs 4.5 (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts">benchmark</a>)</>}
+/>
+
+## The problem
+
+By default all methods on Zod schemas are *auto-bound*, meaning they do not rely on implicit `this` semantics to work properly. That enables patterns like this, which otherwise may break or behave in unexpected ways when reliant on unbound prototype methods.
+
+```ts
+const { parse } = z.string();
+
+parse("some data");
+```
+
+This is often useful for preventing unexpected behavior in certain uncommon circumstances. There's a [package on npm](https://www.npmjs.com/package/auto-bind) that specifically implements some auto-bind utilities. But there's a downside, which is that every method is now a bound closure that takes up space in memory. It's no longer possible for multiple instances of one class to share a method via regular prototype chain inheritance.
+
+## The fix
+
+This is now conclusively fixed in Zod 4.5 via a pattern I've been calling "method memoization".
+
+Zod classes define their methods as *getters* on a standard `prototype`. The first time an instance's method is accessed, it falls through to the prototype via standard prototype inheritance. The getter returns a method implementation that's bound to the accessing instance and *assigns it as an [own property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty)* to the instance, effectively memoizing it forever. Successive accesses on that same method thus avoid getter-invocation overheads and resolve directly from the own property.
+
+It's a more sophisticated variant of the self-overwriting getter I've described before.
+
+<Tweet id="1865002498332795032" />
+
+An instance method that's never used (and most aren't!) is never materialized, nor is it ever stored as an own property on the instance. 
+
+## The results
+
+
+| schema | 4.4.3 | 4.5 | smaller |
+| --- | --- | --- | --- |
+| `z.string()` | 7.5kb | 784b | **9.8x** |
+| `z.number()` | 4.4kb | 706b | **6.4x** |
+| `z.boolean()` | 3.6kb | 594b | **6.3x** |
+| `z.literal("a")` | 5.1kb | 1.7kb | **3.0x** |
+| `z.enum([...])` | 5.3kb | 1.5kb | **3.5x** |
+| `z.email()` | 5.8kb | 2.2kb | **2.7x** |
+| `z.uuid()` | 5.9kb | 2.2kb | **2.6x** |
+| `z.iso.datetime()` | 6.1kb | 2.5kb | **2.4x** |
+| `z.string().min(1)` | 16.7kb | 3.4kb | **5.0x** |
+| `z.string().min(1).max(5)` | 25.8kb | 6.0kb | **4.3x** |
+| `z.string().optional()` | 12.6kb | 1.5kb | **8.4x** |
+| `z.string().nullable()` | 13.1kb | 1.5kb | **8.8x** |
+| `z.string().default("")` | 13.1kb | 1.9kb | **7.1x** |
+| `z.string().brand()` | 7.6kb | 872b | **8.9x** |
+| `z.string().refine(...)` | 20.5kb | 4.4kb | **4.7x** |
+| `z.string().transform(...)` | 17.5kb | 2.0kb | **8.5x** |
+| `z.string().pipe(...)` | 21.4kb | 2.2kb | **9.6x** |
+| `z.array(z.string())` | 11.2kb | 1.9kb | **5.8x** |
+| `z.tuple([...])`, 3 items | 15.7kb | 2.8kb | **5.7x** |
+| `z.record(...)` | 16.4kb | 2.6kb | **6.2x** |
+| `z.object({})` | 6.6kb | 3.3kb | **2.0x** |
+| `z.object({...})`, 3 keys | 22.2kb | 5.3kb | **4.2x** |
+| `z.object({...})`, 10 keys | 82.0kb | 11.0kb | **7.5x** |
+| `z.union([...])`, 2 options | 17.5kb | 2.1kb | **8.3x** |
+| `z.discriminatedUnion(...)`, 2 options | 42.0kb | 12.7kb | **3.3x** |
+| `z.lazy(...)` | 5.9kb | 1.3kb | **4.5x** |
+| `zod/mini` `z.string()` | 2.5kb | 577b | **4.4x** |
+| `zod/mini` `z.object({...})`, 3 keys | 11.8kb | 3.2kb | **3.7x** |
+
+
+## Own properties and V8
+
+The problem with the old approach is exacerbated by a detail of V8's memory allocation around an object's own properties.
+
+- With fewer than 13 own properties, V8 tracks them in a compact 128-byte backing store
+- With 13 or more, V8 bumps the store up to 848 bytes
+- With 21 or more, it steps again to 1616 bytes
+
+A regular string schema in `zod@4.4.3` carried 49 own properties (40 methods and 9 properties) so every instance got the 1616-byte backing store.
+
+```ts
+// zod@4.4.3
+const s = z.string();
+Object.getOwnPropertyNames(s).length; // 49
+Object.getOwnPropertyNames(s).filter((k) => typeof s[k] === "function").length; // 40
+```
+
+Under the new system there are only six eagerly bound properties: `_zod`, `def`, `type`, `format`, `minLength`, and `maxLength`. Everything else lives on the memoizing prototype.
+
+```ts
+// zod@4.5.0
+const s = z.string();
+Object.getOwnPropertyNames(s).length; // 6
+Object.getOwnPropertyNames(Object.getPrototypeOf(s)).length; // 86
+```
+
+## Measuring this
+
+Retained bytes can be tricky to measure. The numbers above come from [`packages/bench/memory/schema-footprint.ts`](https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts) in the repo.
+
+Upgrade to Zod 4.5 for these enhancements.
+
+```sh
+npm upgrade zod@latest
+```

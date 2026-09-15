@@ -22,58 +22,73 @@ export interface ZodError<T = unknown> extends $ZodError<T> {
   isEmpty: boolean;
 }
 
+/* Prototypes that already carry the lazy helper methods. Seeded with the
+ * intrinsics so that `init` on a foreign object — it accepts any object —
+ * can never install an accessor onto a prototype we do not own. */
+const _installedErrorProtos = /* @__PURE__ */ new WeakSet<object>([Object.prototype, Error.prototype]);
+
+/* Helper methods live as non-enumerable lazy getters on the shared
+ * prototype instead of own properties on every instance. On first
+ * access the getter allocates the per-instance closure and caches it
+ * as a non-enumerable own property, so detached usage still works and
+ * the allocation only happens for methods actually touched. */
+function _lazyMethod(proto: object, key: string, make: (self: ZodError) => unknown): void {
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    enumerable: false,
+    get(this: ZodError) {
+      const value = make(this);
+      Object.defineProperty(this, key, { value, configurable: true, writable: true });
+      return value;
+    },
+    set(this: ZodError, value: unknown) {
+      Object.defineProperty(this, key, { value, configurable: true, writable: true });
+    },
+  });
+}
+
 const initializer = (inst: ZodError, issues: core.$ZodIssue[]) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
-  Object.defineProperties(inst, {
-    format: {
-      value: (mapper: any) => core.formatError(inst, mapper),
-      // enumerable: false,
-    },
-    flatten: {
-      value: (mapper: any) => core.flattenError(inst, mapper),
-      // enumerable: false,
-    },
-    addIssue: {
-      value: (issue: any) => {
-        inst.issues.push(issue);
-        inst.message = JSON.stringify(inst.issues, util.jsonStringifyReplacer, 2);
-      },
-      // enumerable: false,
-    },
-    addIssues: {
-      value: (issues: any) => {
-        inst.issues.push(...issues);
-        inst.message = JSON.stringify(inst.issues, util.jsonStringifyReplacer, 2);
-      },
-      // enumerable: false,
-    },
-    isEmpty: {
-      get() {
-        return inst.issues.length === 0;
-      },
-      // enumerable: false,
+
+  const proto = Object.getPrototypeOf(inst);
+  if (_installedErrorProtos.has(proto)) return;
+  _installedErrorProtos.add(proto);
+
+  _lazyMethod(proto, "format", (self) => (mapper: any) => core.formatError(self, mapper));
+  _lazyMethod(proto, "flatten", (self) => (mapper: any) => core.flattenError(self, mapper));
+  _lazyMethod(proto, "addIssue", (self) => (issue: any) => {
+    self.issues.push(issue);
+    self.message = JSON.stringify(self.issues, util.jsonStringifyReplacer, 2);
+  });
+  _lazyMethod(proto, "addIssues", (self) => (issues: any) => {
+    self.issues.push(...issues);
+    self.message = JSON.stringify(self.issues, util.jsonStringifyReplacer, 2);
+  });
+  Object.defineProperty(proto, "isEmpty", {
+    configurable: true,
+    enumerable: false,
+    get(this: ZodError) {
+      return this.issues.length === 0;
     },
   });
-  // Object.defineProperty(inst, "isEmpty", {
-  //   get() {
-  //     return inst.issues.length === 0;
-  //   },
-  // });
 };
 export const ZodError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor("ZodError", initializer);
-export const ZodRealError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor("ZodError", initializer, {
-  Parent: Error,
-});
+export const ZodRealError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor(
+  "ZodError",
+  initializer,
+  undefined,
+  {
+    Parent: Error,
+  }
+);
 
-export type {
-  /** @deprecated Use `z.core.$ZodFlattenedError` instead. */
-  $ZodFlattenedError as ZodFlattenedError,
-  /** @deprecated Use `z.core.$ZodFormattedError` instead. */
-  $ZodFormattedError as ZodFormattedError,
-  /** @deprecated Use `z.core.$ZodErrorMap` instead. */
-  $ZodErrorMap as ZodErrorMap,
-} from "../core/index.js";
+/** @deprecated Use `z.core.$ZodFlattenedError` instead. */
+export type ZodFlattenedError<T, U = string> = core.$ZodFlattenedError<T, U>;
+/** @deprecated Use `z.core.$ZodFormattedError` instead. */
+export type ZodFormattedError<T, U = string> = core.$ZodFormattedError<T, U>;
+/** @deprecated Use `z.core.$ZodErrorMap` instead. */
+export type ZodErrorMap<T extends core.$ZodIssueBase = core.$ZodIssue> = core.$ZodErrorMap<T>;
 
 /** @deprecated Use `z.core.$ZodRawIssue` instead. */
 export type IssueData = core.$ZodRawIssue;

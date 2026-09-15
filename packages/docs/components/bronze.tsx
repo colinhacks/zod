@@ -7,12 +7,6 @@ export const Bronze = () => {
       href: "https://github.com/jasonLaster",
     },
     {
-      name: "Clipboard",
-      logoSrc: "https://avatars.githubusercontent.com/u/28880063?s=200&v=4",
-      url: "clipboardhealth.com/engineering",
-      href: "https://www.clipboardhealth.com/engineering",
-    },
-    {
       name: "Convex",
       logoSrc: "https://avatars.githubusercontent.com/u/81530787?s=200&v=4",
       url: "convex.dev",
@@ -23,6 +17,12 @@ export const Bronze = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/104988782?s=200&v=4",
       url: "n8n.io",
       href: "https://n8n.io/?utm_source=zod",
+    },
+    {
+      name: "Route4Me",
+      logoSrc: "https://avatars.githubusercontent.com/u/7936820?s=200&v=4",
+      url: "route4me.com",
+      href: "https://www.route4me.com/?utm_source=zod",
     },
   ];
 

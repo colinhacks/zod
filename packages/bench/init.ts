@@ -1,6 +1,6 @@
 import * as z4 from "zod";
 import * as z3 from "zod3";
-import * as z4lib from "zod4";
+import { zod4 as z4lib } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 const DATA = Array.from({ length: 1000 }, () =>

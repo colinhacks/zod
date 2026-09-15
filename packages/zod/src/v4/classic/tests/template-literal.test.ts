@@ -64,6 +64,9 @@ const measurement = z.templateLiteral([
   z.number().finite(),
   z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
 ]);
+const decimalEnum = z.templateLiteral(["", z.enum({ A: 1.2 })]);
+// String(1e21) is "1e+21" — the `+` needs escaping too, or the pattern rejects its own enum value
+const exponentEnum = z.templateLiteral(["", z.enum({ A: 1e21 })]);
 
 const connectionString = z.templateLiteral([
   "mongodb://",
@@ -559,10 +562,10 @@ test("regexes", () => {
   expect(cuidZZZ._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][0-9a-z]{6,}ZZZ$"`);
   expect(cuid2._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9a-z]+$"`);
   expect(datetime._zod.pattern.source).toMatchInlineSnapshot(
-    `"^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"`
+    `"^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"`
   );
   expect(email._zod.pattern.source).toMatchInlineSnapshot(
-    `"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`
+    `"^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`
   );
   // expect(ip._zod.pattern.source).toMatchInlineSnapshot(
   //   `"^(^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$)|(^(([a-fA-F0-9]{1,4}:){7}|::([a-fA-F0-9]{1,4}:){0,6}|([a-fA-F0-9]{1,4}:){1}:([a-fA-F0-9]{1,4}:){0,5}|([a-fA-F0-9]{1,4}:){2}:([a-fA-F0-9]{1,4}:){0,4}|([a-fA-F0-9]{1,4}:){3}:([a-fA-F0-9]{1,4}:){0,3}|([a-fA-F0-9]{1,4}:){4}:([a-fA-F0-9]{1,4}:){0,2}|([a-fA-F0-9]{1,4}:){5}:([a-fA-F0-9]{1,4}:){0,1})([a-fA-F0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$)$"`
@@ -576,7 +579,7 @@ test("regexes", () => {
   expect(mac._zod.pattern.source).toMatchInlineSnapshot(
     `"^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$"`
   );
-  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$"`);
+  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"`);
   expect(uuid._zod.pattern.source).toMatchInlineSnapshot(
     `"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"`
   );
@@ -590,6 +593,8 @@ test("regexes", () => {
   expect(brandedString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{1,}$"`);
   expect(url._zod.pattern.source).toMatchInlineSnapshot(`"^https:\\/\\/\\w+\\.(com|net)$"`);
   expect(measurement._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?((px|em|rem|vh|vw|vmin|vmax))?$"`);
+  expect(decimalEnum._zod.pattern.source).toMatchInlineSnapshot(`"^(1\\.2)$"`);
+  expect(exponentEnum._zod.pattern.source).toMatchInlineSnapshot(`"^(1e\\+21)$"`);
   expect(connectionString._zod.pattern.source).toMatchInlineSnapshot(
     `"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:-?\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`
   );
@@ -598,6 +603,8 @@ test("regexes", () => {
 test("template literal parsing - success - complex cases", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
+
+  exponentEnum.parse("1e+21");
 
   // measurement.parse(1);
   // measurement.parse(1.1);
@@ -675,6 +682,8 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => measurement.parse("-Infinity")).toThrow();
   expect(() => measurement.parse("NaN")).toThrow();
   expect(() => measurement.parse("1%")).toThrow();
+  expect(() => decimalEnum.parse("1x2")).toThrow();
+  expect(() => exponentEnum.parse("1e21")).toThrow();
 
   expect(() => connectionString.parse("mongod://host:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://:1234")).toThrow();
@@ -768,4 +777,36 @@ test("template literal parsing - failure - issue format", () => {
       "success": false,
     }
   `);
+});
+
+test("part patterns fold checks through wrappers and unions", () => {
+  // a constrained string keeps its bounds under a wrapper and inside a union
+  const wrapped = z.templateLiteral(["a-", z.string().min(2).max(3).optional()]);
+  expect(wrapped.safeParse("a-").success).toBe(true);
+  expect(wrapped.safeParse("a-xy").success).toBe(true);
+  expect(wrapped.safeParse("a-x").success).toBe(false);
+  expect(wrapped.safeParse("a-wxyz").success).toBe(false);
+
+  const union = z.templateLiteral(["", z.union([z.string().regex(/^[a-c]+$/), z.number().int()])]);
+  expect(union.safeParse("abc").success).toBe(true);
+  expect(union.safeParse("12").success).toBe(true);
+  expect(union.safeParse("xyz").success).toBe(false);
+  expect(union.safeParse("1.5").success).toBe(false);
+
+  // an empty length range matches nothing rather than building an invalid quantifier
+  const empty = z.templateLiteral(["", z.string().min(8).length(5)]);
+  expect(empty.safeParse("abcde").success).toBe(false);
+
+  // lazy resolves its inner schema on the internals, not the def
+  const lazy = z.templateLiteral(["", z.lazy(() => z.string().min(2)).optional()]);
+  expect(lazy.safeParse("x").success).toBe(false);
+  expect(lazy.safeParse("xy").success).toBe(true);
+});
+
+test("an embedded email does not constrain the other parts", () => {
+  const schema = z.templateLiteral([z.email(), "|", z.string()]);
+  expect(schema.safeParse("a@b.cc|a..b").success).toBe(true);
+  expect(schema.safeParse("a@b.cc|xy").success).toBe(true);
+  expect(schema.safeParse("a..b@b.cc|xy").success).toBe(false);
+  expect(schema.safeParse(".a@b.cc|xy").success).toBe(false);
 });
