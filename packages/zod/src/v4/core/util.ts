@@ -1108,6 +1108,13 @@ export abstract class Class {
   constructor(..._args: any[]) {}
 }
 
+export interface TemporalClass<Like, Instance> {
+  from(like: Like): Instance;
+  compare(one: Like, two: Like): number;
+  name: string;
+  new (...args: any[]): Instance;
+}
+
 //////////    PROTOTYPE INSTALLERS     //////////
 //
 // Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.

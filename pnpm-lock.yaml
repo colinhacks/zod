@@ -88,13 +88,13 @@ importers:
         version: 28.0.0
       tsdown:
         specifier: ^0.21.10
-        version: 0.21.10(synckit@0.11.12)(typescript@5.5.4)
+        version: 0.21.10(synckit@0.11.12)(typescript@6.0.3)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: ~5.5.4
-        version: 5.5.4
+        specifier: ^6.0.3
+        version: 6.0.3
       vite:
         specifier: ^7.3.6
         version: 7.3.6(@types/node@22.13.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.39.0)(tsx@4.19.3)(yaml@2.8.3)
@@ -109,7 +109,7 @@ importers:
         version: zod@3.24.3
       zshy:
         specifier: ^0.8.0
-        version: 0.8.0(typescript@5.5.4)
+        version: 0.8.0(typescript@6.0.3)
 
   packages/bench:
     devDependencies:
@@ -11613,7 +11613,7 @@ snapshots:
       glob: 11.0.2
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.23.2(rolldown@1.0.0-rc.17)(typescript@5.5.4):
+  rolldown-plugin-dts@0.23.2(rolldown@1.0.0-rc.17)(typescript@6.0.3):
     dependencies:
       '@babel/generator': 8.0.0-rc.3
       '@babel/helper-validator-identifier': 8.0.0-rc.3
@@ -11627,7 +11627,7 @@ snapshots:
       picomatch: 4.0.4
       rolldown: 1.0.0-rc.17
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 6.0.3
     transitivePeerDependencies:
       - oxc-resolver
 
@@ -12183,7 +12183,7 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tsdown@0.21.10(synckit@0.11.12)(typescript@5.5.4):
+  tsdown@0.21.10(synckit@0.11.12)(typescript@6.0.3):
     dependencies:
       ansis: 4.2.0
       cac: 7.0.0
@@ -12194,7 +12194,7 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.4
       rolldown: 1.0.0-rc.17
-      rolldown-plugin-dts: 0.23.2(rolldown@1.0.0-rc.17)(typescript@5.5.4)
+      rolldown-plugin-dts: 0.23.2(rolldown@1.0.0-rc.17)(typescript@6.0.3)
       semver: 7.7.4
       tinyexec: 1.1.2
       tinyglobby: 0.2.16
@@ -12202,7 +12202,7 @@ snapshots:
       unconfig-core: 7.5.0
       unrun: 0.2.37(synckit@0.11.12)
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 6.0.3
     transitivePeerDependencies:
       - '@ts-macro/tsc'
       - '@typescript/native-preview'
@@ -12246,7 +12246,8 @@ snapshots:
 
   type-fest@2.19.0: {}
 
-  typescript@5.5.4: {}
+  typescript@5.5.4:
+    optional: true
 
   typescript@5.6.1-rc: {}
 
@@ -12598,11 +12599,11 @@ snapshots:
 
   zod@4.0.8: {}
 
-  zshy@0.8.0(typescript@5.5.4):
+  zshy@0.8.0(typescript@6.0.3):
     dependencies:
       arg: 5.0.2
       fast-glob: 3.3.3
       table: 6.9.0
-      typescript: 5.5.4
+      typescript: 6.0.3
 
   zwitch@2.0.4: {}
