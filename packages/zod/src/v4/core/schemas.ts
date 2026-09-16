@@ -10,6 +10,9 @@ import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
 import * as util from "./util.js";
+
+// erased at compile time; the emitted code still reads the runtime global
+declare const Temporal: util.TemporalNamespace;
 import { version } from "./versions.js";
 
 /////////////////////////////   PARSE   //////////////////////////////
@@ -1874,8 +1877,8 @@ export const $ZodTemporal: core.$constructor<$ZodTemporal> = /*@__PURE__*/ core.
 );
 
 //////////////////////////////   ZodInstant   //////////////////////////////
-export interface $ZodInstantDef extends $ZodTemporalDef<Temporal.InstantLike, Temporal.Instant> {}
-export interface $ZodInstantInternals extends $ZodTemporalInternals<Temporal.InstantLike, Temporal.Instant> {}
+export interface $ZodInstantDef extends $ZodTemporalDef<util.temporal.InstantLike, util.temporal.Instant> {}
+export interface $ZodInstantInternals extends $ZodTemporalInternals<util.temporal.InstantLike, util.temporal.Instant> {}
 
 export interface $ZodInstant extends $ZodType {
   _zod: $ZodInstantInternals;
@@ -1890,8 +1893,9 @@ export const $ZodInstant: core.$constructor<$ZodInstant> = /*@__PURE__*/ core.$c
 );
 
 //////////////////////////////   ZodPlainDate   //////////////////////////////
-export interface $ZodPlainDateDef extends $ZodTemporalDef<Temporal.PlainDateLike, Temporal.PlainDate> {}
-export interface $ZodPlainDateInternals extends $ZodTemporalInternals<Temporal.PlainDateLike, Temporal.PlainDate> {}
+export interface $ZodPlainDateDef extends $ZodTemporalDef<util.temporal.PlainDateLike, util.temporal.PlainDate> {}
+export interface $ZodPlainDateInternals
+  extends $ZodTemporalInternals<util.temporal.PlainDateLike, util.temporal.PlainDate> {}
 
 export interface $ZodPlainDate extends $ZodType {
   _zod: $ZodPlainDateInternals;
@@ -1906,9 +1910,10 @@ export const $ZodPlainDate: core.$constructor<$ZodPlainDate> = /*@__PURE__*/ cor
 );
 
 //////////////////////////////   ZodPlainDateTime   //////////////////////////////
-export interface $ZodPlainDateTimeDef extends $ZodTemporalDef<Temporal.PlainDateTimeLike, Temporal.PlainDateTime> {}
+export interface $ZodPlainDateTimeDef
+  extends $ZodTemporalDef<util.temporal.PlainDateTimeLike, util.temporal.PlainDateTime> {}
 export interface $ZodPlainDateTimeInternals
-  extends $ZodTemporalInternals<Temporal.PlainDateTimeLike, Temporal.PlainDateTime> {}
+  extends $ZodTemporalInternals<util.temporal.PlainDateTimeLike, util.temporal.PlainDateTime> {}
 
 export interface $ZodPlainDateTime extends $ZodType {
   _zod: $ZodPlainDateTimeInternals;
@@ -1923,8 +1928,9 @@ export const $ZodPlainDateTime: core.$constructor<$ZodPlainDateTime> = /*@__PURE
 );
 
 //////////////////////////////   ZodPlainTime   //////////////////////////////
-export interface $ZodPlainTimeDef extends $ZodTemporalDef<Temporal.PlainTimeLike, Temporal.PlainTime> {}
-export interface $ZodPlainTimeInternals extends $ZodTemporalInternals<Temporal.PlainTimeLike, Temporal.PlainTime> {}
+export interface $ZodPlainTimeDef extends $ZodTemporalDef<util.temporal.PlainTimeLike, util.temporal.PlainTime> {}
+export interface $ZodPlainTimeInternals
+  extends $ZodTemporalInternals<util.temporal.PlainTimeLike, util.temporal.PlainTime> {}
 
 export interface $ZodPlainTime extends $ZodType {
   _zod: $ZodPlainTimeInternals;
@@ -1939,9 +1945,10 @@ export const $ZodPlainTime: core.$constructor<$ZodPlainTime> = /*@__PURE__*/ cor
 );
 
 //////////////////////////////   ZodPlainYearMonth   //////////////////////////////
-export interface $ZodPlainYearMonthDef extends $ZodTemporalDef<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth> {}
+export interface $ZodPlainYearMonthDef
+  extends $ZodTemporalDef<util.temporal.PlainYearMonthLike, util.temporal.PlainYearMonth> {}
 export interface $ZodPlainYearMonthInternals
-  extends $ZodTemporalInternals<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth> {}
+  extends $ZodTemporalInternals<util.temporal.PlainYearMonthLike, util.temporal.PlainYearMonth> {}
 
 export interface $ZodPlainYearMonth extends $ZodType {
   _zod: $ZodPlainYearMonthInternals;
@@ -1956,9 +1963,10 @@ export const $ZodPlainYearMonth: core.$constructor<$ZodPlainYearMonth> = /*@__PU
 );
 
 //////////////////////////////   ZodZonedDateTime  //////////////////////////////
-export interface $ZodZonedDateTimeDef extends $ZodTemporalDef<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime> {}
+export interface $ZodZonedDateTimeDef
+  extends $ZodTemporalDef<util.temporal.ZonedDateTimeLike, util.temporal.ZonedDateTime> {}
 export interface $ZodZonedDateTimeInternals
-  extends $ZodTemporalInternals<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime> {}
+  extends $ZodTemporalInternals<util.temporal.ZonedDateTimeLike, util.temporal.ZonedDateTime> {}
 
 export interface $ZodZonedDateTime extends $ZodType {
   _zod: $ZodZonedDateTimeInternals;

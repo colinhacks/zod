@@ -871,7 +871,7 @@ export function date(params?: string | core.$ZodDateParams): ZodMiniDate<Date> {
 }
 
 export interface ZodMiniInstant
-  extends _ZodMiniType<core.$ZodTemporalInternals<Temporal.InstantLike, Temporal.Instant>> {}
+  extends _ZodMiniType<core.$ZodTemporalInternals<core.util.temporal.InstantLike, core.util.temporal.Instant>> {}
 
 export const ZodMiniInstant: core.$constructor<ZodMiniInstant> = /*@__PURE__*/ core.$constructor(
   "ZodMiniInstant",
@@ -887,7 +887,7 @@ export function instant(params?: string | core.$ZodInstantParams): ZodMiniInstan
 }
 
 export interface ZodMiniPlainDate
-  extends _ZodMiniType<core.$ZodTemporalInternals<Temporal.PlainDateLike, Temporal.PlainDate>> {}
+  extends _ZodMiniType<core.$ZodTemporalInternals<core.util.temporal.PlainDateLike, core.util.temporal.PlainDate>> {}
 
 export const ZodMiniPlainDate: core.$constructor<ZodMiniPlainDate> = /*@__PURE__*/ core.$constructor(
   "ZodMiniPlainDate",
@@ -903,7 +903,9 @@ export function plainDate(params?: string | core.$ZodPlainDateParams): ZodMiniPl
 }
 
 export interface ZodMiniPlainDateTime
-  extends _ZodMiniType<core.$ZodTemporalInternals<Temporal.PlainDateTimeLike, Temporal.PlainDateTime>> {}
+  extends _ZodMiniType<
+    core.$ZodTemporalInternals<core.util.temporal.PlainDateTimeLike, core.util.temporal.PlainDateTime>
+  > {}
 
 export const ZodMiniPlainDateTime: core.$constructor<ZodMiniPlainDateTime> = /*@__PURE__*/ core.$constructor(
   "ZodMiniPlainDateTime",
@@ -919,7 +921,7 @@ export function plainDateTime(params?: string | core.$ZodPlainDateTimeParams): Z
 }
 
 export interface ZodMiniPlainTime
-  extends _ZodMiniType<core.$ZodTemporalInternals<Temporal.PlainTimeLike, Temporal.PlainTime>> {}
+  extends _ZodMiniType<core.$ZodTemporalInternals<core.util.temporal.PlainTimeLike, core.util.temporal.PlainTime>> {}
 
 export const ZodMiniPlainTime: core.$constructor<ZodMiniPlainTime> = /*@__PURE__*/ core.$constructor(
   "ZodMiniPlainTime",
@@ -935,7 +937,9 @@ export function plainTime(params?: string | core.$ZodPlainTimeParams): ZodMiniPl
 }
 
 export interface ZodMiniPlainYearMonth
-  extends _ZodMiniType<core.$ZodTemporalInternals<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth>> {}
+  extends _ZodMiniType<
+    core.$ZodTemporalInternals<core.util.temporal.PlainYearMonthLike, core.util.temporal.PlainYearMonth>
+  > {}
 
 export const ZodMiniPlainYearMonth: core.$constructor<ZodMiniPlainYearMonth> = /*@__PURE__*/ core.$constructor(
   "ZodMiniPlainYearMonth",
@@ -951,7 +955,9 @@ export function plainYearMonth(params?: string | core.$ZodPlainYearMonthParams):
 }
 
 export interface ZodMiniZonedDateTime
-  extends _ZodMiniType<core.$ZodTemporalInternals<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime>> {}
+  extends _ZodMiniType<
+    core.$ZodTemporalInternals<core.util.temporal.ZonedDateTimeLike, core.util.temporal.ZonedDateTime>
+  > {}
 
 export const ZodMiniZonedDateTime: core.$constructor<ZodMiniZonedDateTime> = /*@__PURE__*/ core.$constructor(
   "ZodMiniZonedDateTime",

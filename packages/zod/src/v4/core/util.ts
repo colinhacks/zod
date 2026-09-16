@@ -1115,6 +1115,31 @@ export interface TemporalClass<Like, Instance> {
   new (...args: any[]): Instance;
 }
 
+// reached through `globalThis` rather than named directly, so a consumer whose `lib` predates `esnext.temporal` degrades to `any` instead of failing on an unresolved namespace
+export type TemporalNamespace = typeof globalThis extends { Temporal: infer T } ? T : any;
+
+type Ctor<K extends PropertyKey> = TemporalNamespace extends Record<K, infer C> ? C : any;
+
+// `Temporal.XLike` is type-only, so it is unreachable through `globalThis` and has to be recovered from what `from()` accepts
+type Instance<K extends PropertyKey> = Ctor<K> extends { from(item: any, ...rest: any[]): infer I } ? I : any;
+type Like<K extends PropertyKey> = Ctor<K> extends { from(item: infer L, ...rest: any[]): any } ? L : any;
+
+/** Mirrors the global `Temporal` types, resolving to `any` where the runtime's `lib` does not declare them. */
+export declare namespace temporal {
+  type Instant = Instance<"Instant">;
+  type InstantLike = Like<"Instant">;
+  type PlainDate = Instance<"PlainDate">;
+  type PlainDateLike = Like<"PlainDate">;
+  type PlainDateTime = Instance<"PlainDateTime">;
+  type PlainDateTimeLike = Like<"PlainDateTime">;
+  type PlainTime = Instance<"PlainTime">;
+  type PlainTimeLike = Like<"PlainTime">;
+  type PlainYearMonth = Instance<"PlainYearMonth">;
+  type PlainYearMonthLike = Like<"PlainYearMonth">;
+  type ZonedDateTime = Instance<"ZonedDateTime">;
+  type ZonedDateTimeLike = Like<"ZonedDateTime">;
+}
+
 //////////    PROTOTYPE INSTALLERS     //////////
 //
 // Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.

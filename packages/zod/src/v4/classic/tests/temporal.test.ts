@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
+// erased at compile time; keeps the file checkable under a `lib` that predates `esnext.temporal`
+declare const Temporal: z.core.util.TemporalNamespace;
+
 // Test data
 const beforeStr = "1970-01-01T00:00:00Z";
 const benchStr = "1970-01-02T00:00:00Z";

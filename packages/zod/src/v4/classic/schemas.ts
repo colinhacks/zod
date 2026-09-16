@@ -1551,7 +1551,8 @@ export const ZodTemporal: core.$constructor<ZodTemporal> = /*@__PURE__*/ core.$c
 );
 
 // ZodInstant
-export interface ZodInstant extends _ZodTemporal<Temporal.InstantLike, Temporal.Instant, core.$ZodInstantInternals> {}
+export interface ZodInstant
+  extends _ZodTemporal<core.util.temporal.InstantLike, core.util.temporal.Instant, core.$ZodInstantInternals> {}
 export const ZodInstant: core.$constructor<ZodInstant> = /*@__PURE__*/ core.$constructor("ZodInstant", (inst, def) => {
   core.$ZodInstant.init(inst, def);
   ZodTemporal.init(inst, def);
@@ -1563,7 +1564,7 @@ export function instant(params?: string | core.$ZodInstantParams): ZodInstant {
 
 // ZodPlainDate
 export interface ZodPlainDate
-  extends _ZodTemporal<Temporal.PlainDateLike, Temporal.PlainDate, core.$ZodPlainDateInternals> {}
+  extends _ZodTemporal<core.util.temporal.PlainDateLike, core.util.temporal.PlainDate, core.$ZodPlainDateInternals> {}
 export const ZodPlainDate: core.$constructor<ZodPlainDate> = /*@__PURE__*/ core.$constructor(
   "ZodPlainDate",
   (inst, def) => {
@@ -1578,7 +1579,11 @@ export function plainDate(params?: string | core.$ZodPlainDateParams): ZodPlainD
 
 // ZodPlainDateTime
 export interface ZodPlainDateTime
-  extends _ZodTemporal<Temporal.PlainDateTimeLike, Temporal.PlainDateTime, core.$ZodPlainDateTimeInternals> {}
+  extends _ZodTemporal<
+    core.util.temporal.PlainDateTimeLike,
+    core.util.temporal.PlainDateTime,
+    core.$ZodPlainDateTimeInternals
+  > {}
 export const ZodPlainDateTime: core.$constructor<ZodPlainDateTime> = /*@__PURE__*/ core.$constructor(
   "ZodPlainDateTime",
   (inst, def) => {
@@ -1593,7 +1598,7 @@ export function plainDateTime(params?: string | core.$ZodPlainDateTimeParams): Z
 
 // ZodPlainTime
 export interface ZodPlainTime
-  extends _ZodTemporal<Temporal.PlainTimeLike, Temporal.PlainTime, core.$ZodPlainTimeInternals> {}
+  extends _ZodTemporal<core.util.temporal.PlainTimeLike, core.util.temporal.PlainTime, core.$ZodPlainTimeInternals> {}
 export const ZodPlainTime: core.$constructor<ZodPlainTime> = /*@__PURE__*/ core.$constructor(
   "ZodPlainTime",
   (inst, def) => {
@@ -1608,7 +1613,11 @@ export function plainTime(params?: string | core.$ZodPlainTimeParams): ZodPlainT
 
 // ZodPlainYearMonth
 export interface ZodPlainYearMonth
-  extends _ZodTemporal<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth, core.$ZodPlainYearMonthInternals> {}
+  extends _ZodTemporal<
+    core.util.temporal.PlainYearMonthLike,
+    core.util.temporal.PlainYearMonth,
+    core.$ZodPlainYearMonthInternals
+  > {}
 export const ZodPlainYearMonth: core.$constructor<ZodPlainYearMonth> = /*@__PURE__*/ core.$constructor(
   "ZodPlainYearMonth",
   (inst, def) => {
@@ -1623,7 +1632,11 @@ export function plainYearMonth(params?: string | core.$ZodPlainYearMonthParams):
 
 // ZodZonedDateTime
 export interface ZodZonedDateTime
-  extends _ZodTemporal<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime, core.$ZodZonedDateTimeInternals> {}
+  extends _ZodTemporal<
+    core.util.temporal.ZonedDateTimeLike,
+    core.util.temporal.ZonedDateTime,
+    core.$ZodZonedDateTimeInternals
+  > {}
 export const ZodZonedDateTime: core.$constructor<ZodZonedDateTime> = /*@__PURE__*/ core.$constructor(
   "ZodZonedDateTime",
   (inst, def) => {

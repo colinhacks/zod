@@ -5,6 +5,9 @@ import * as registries from "./registries.js";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
+// erased at compile time; the emitted code still reads the runtime global
+declare const Temporal: util.TemporalNamespace;
+
 export type Params<
   T extends schemas.$ZodType | checks.$ZodCheck,
   IssueTypes extends errors.$ZodIssueBase,
