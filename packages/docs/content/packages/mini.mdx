@@ -246,8 +246,9 @@ This means, by default the `message` property of all issues will simply read `"I
 
 ```ts
 import * as z from "zod/mini"
+import { en } from "zod/locales";
 
-z.config(z.locales.en());
+z.config(en());
 ```
 
 Refer to the [Locales](/error-customization#internationalization) docs for more on localization.

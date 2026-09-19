@@ -351,8 +351,10 @@ z.config(z.locales.en());
 <Tab value="Zod Mini">
 ```ts
 import * as z from "zod/mini"
+import { en } from "zod/locales";
 
-z.config(z.locales.en());
+// z.locales bundles every locale under esbuild and Turbopack
+z.config(en());
 ```
 </Tab>
 </Tabs>
