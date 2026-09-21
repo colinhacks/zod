@@ -10,7 +10,7 @@
   "sideEffects": false,
   "files": [
     "src",
-    "meta.mjs",
+    "meta.test.mjs",
     "index.js",
     "index.cjs",
     "index.d.ts",
@@ -25,7 +25,7 @@
     "zod",
     "tree-shaking"
   ],
-  "preinstall": "node meta.mjs",
+  "preinstall": "node meta.test.mjs",
   "main": "./index.cjs",
   "types": "./index.d.cts",
   "module": "./index.js",

@@ -17,7 +17,7 @@
   ],
   "files": [
     "src",
-    "meta.mjs",
+    "meta.test.mjs",
     "**/*.js",
     "**/*.js",
     "**/*.mjs",
@@ -34,7 +34,7 @@
     "type",
     "inference"
   ],
-  "preinstall": "node meta.mjs",
+  "preinstall": "node meta.test.mjs",
   "main": "./index.cjs",
   "types": "./index.d.cts",
   "module": "./index.js",
