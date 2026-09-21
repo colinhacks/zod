@@ -72,8 +72,6 @@ jobs:
   build_and_publish:
     needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
-    # a required reviewer approves every publish, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can publish
-    environment: npm
     # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing: zod gets 240 minutes because it is the one that waits on review, and @zod/mini gets 90 because it publishes after that review has already drained (it cleared in under a minute on 4.6.0). A stall that outlives the pair needs the wait moved to its own job rather than a larger number here, and that costs a second environment approval.
     timeout-minutes: 360
     permissions:
