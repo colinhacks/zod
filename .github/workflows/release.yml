@@ -2,12 +2,7 @@
 
 name: Release on npm
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - packages/zod/package.json
-      - packages/mini/package.json
+  # a version bump on main publishes nothing by itself; a maintainer runs `gh workflow run release.yml` and approves the npm environment
   workflow_dispatch:
 
 jobs:

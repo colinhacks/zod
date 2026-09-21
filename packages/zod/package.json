@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "4.6.6",
+  "version": "4.6.5",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
@@ -17,8 +17,6 @@
   ],
   "files": [
     "src",
-    "meta.test.mjs",
-    "**/*.js",
     "**/*.js",
     "**/*.mjs",
     "**/*.cjs",
@@ -34,7 +32,6 @@
     "type",
     "inference"
   ],
-  "preinstall": "node meta.test.mjs",
   "main": "./index.cjs",
   "types": "./index.d.cts",
   "module": "./index.js",
