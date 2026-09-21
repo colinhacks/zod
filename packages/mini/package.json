@@ -1,6 +1,6 @@
 {
   "name": "@zod/mini",
-  "version": "4.6.5",
+  "version": "4.6.6",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
@@ -10,6 +10,7 @@
   "sideEffects": false,
   "files": [
     "src",
+    "meta.test.mjs",
     "index.js",
     "index.cjs",
     "index.d.ts",
@@ -24,6 +25,7 @@
     "zod",
     "tree-shaking"
   ],
+  "preinstall": "node meta.test.mjs",
   "main": "./index.cjs",
   "types": "./index.d.cts",
   "module": "./index.js",
