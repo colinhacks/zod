@@ -1,0 +1,85 @@
+{
+  "name": "@zod/codes",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "description": "ISO 4217 currency, ISO 3166-1 country and ISO 639-1 language codes, regenerated weekly from the maintaining agencies",
+  "homepage": "https://github.com/colinhacks/zod/tree/main/packages/codes",
+  "funding": "https://github.com/sponsors/colinhacks",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "*.js",
+    "*.cjs",
+    "*.d.ts",
+    "*.d.cts"
+  ],
+  "keywords": [
+    "iso",
+    "4217",
+    "3166",
+    "639",
+    "currency",
+    "country",
+    "language",
+    "codes"
+  ],
+  "main": "./index.cjs",
+  "types": "./index.d.cts",
+  "module": "./index.js",
+  "zshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts",
+      "./currencies": "./src/currencies.ts",
+      "./countries": "./src/countries.ts",
+      "./languages": "./src/languages.ts"
+    },
+    "conditions": {
+      "@zod/source": "src"
+    },
+    "sealCjsExports": true
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@zod/source": "./src/index.ts",
+      "types": "./index.d.cts",
+      "import": "./index.js",
+      "require": "./index.cjs"
+    },
+    "./currencies": {
+      "@zod/source": "./src/currencies.ts",
+      "types": "./currencies.d.cts",
+      "import": "./currencies.js",
+      "require": "./currencies.cjs"
+    },
+    "./countries": {
+      "@zod/source": "./src/countries.ts",
+      "types": "./countries.d.cts",
+      "import": "./countries.js",
+      "require": "./countries.cjs"
+    },
+    "./languages": {
+      "@zod/source": "./src/languages.ts",
+      "types": "./languages.d.cts",
+      "import": "./languages.js",
+      "require": "./languages.cjs"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git",
+    "directory": "packages/codes"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "scripts": {
+    "clean": "git clean -xdf . -e node_modules",
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub exec --node biome check --write .",
+    "test": "nub exec --node vitest run"
+  }
+}

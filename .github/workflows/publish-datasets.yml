@@ -1,0 +1,41 @@
+# .github/workflows/publish-datasets.yml
+
+name: Publish @zod/codes
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/codes/package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # the reviewed environment the zod release publishes through; npm's trusted publisher for the package is bound to it
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - run: printf 'latest\n' > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+          node-version: "latest"
+      - run: nub install --frozen-lockfile
+      - run: nub run build
+      - run: nub exec --node vitest run packages/codes
+      # a version already on the registry is skipped, so a re-run publishes nothing twice
+      - name: Publish the version if it is not on npm yet
+        run: |
+          version=$(jq -r .version packages/codes/package.json)
+          if curl -sf "https://registry.npmjs.org/@zod%2Fcodes/$version" > /dev/null; then
+            echo "@zod/codes@$version is already on npm"
+          else
+            (cd packages/codes && nub publish --provenance --no-git-checks)
+          fi
