@@ -338,7 +338,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are also exported as `z.locales`, so `z.config(z.locales.de())` works without the extra import. Rollup and Webpack tree-shake that down to the locales you actually use. esbuild ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)) and Turbopack bundle every locale, whichever import form you use, so stick to `zod/locales` if you bundle with either.
+All locales are also exported as `z.locales`. Rollup and Webpack tree-shake that down to the ones you use; esbuild ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)) and Turbopack don't.
 
 With your own translation function, the `error` param is called during `.parse()`, not when the schema is constructed — a schema defined once picks up the current language on every parse. To translate at render time, translate the issue itself: `code` is the key, and the issue's other properties are the interpolation values.
 
