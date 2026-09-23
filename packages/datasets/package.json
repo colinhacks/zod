@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Generator for the @zod/*-codes data packages",
+  "description": "Generator for the @zod/codes data package",
   "scripts": {
     "update": "nub src/update.ts",
     "test": "nub exec --node vitest run"

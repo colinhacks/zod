@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import { type CountryCode, codes, countries, published, reserved } from "./index.js";
+import { type CountryCode, codes, countries, published, reserved } from "./countries.js";
 
 test("country codes", () => {
   expect(codes.length).toBeGreaterThan(240);
