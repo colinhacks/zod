@@ -1,14 +1,12 @@
 # .github/workflows/publish-datasets.yml
 
-name: Publish the code-list packages
+name: Publish @zod/codes
 on:
   push:
     branches:
       - main
     paths:
-      - "packages/currency-codes/package.json"
-      - "packages/country-codes/package.json"
-      - "packages/language-codes/package.json"
+      - "packages/codes/package.json"
   workflow_dispatch:
 
 permissions:
@@ -17,7 +15,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # the reviewed environment the zod release publishes through; npm's trusted publishers for these packages are bound to it
+    # the reviewed environment the zod release publishes through; npm's trusted publisher for the package is bound to it
     environment: npm
     permissions:
       contents: read
@@ -31,15 +29,13 @@ jobs:
           node-version: "latest"
       - run: nub install --frozen-lockfile
       - run: nub run build
-      - run: nub exec --node vitest run packages/currency-codes packages/country-codes packages/language-codes
-      # every version already on the registry is skipped, so a re-run after a partial failure publishes only what is missing
-      - name: Publish each version that is not on npm yet
+      - run: nub exec --node vitest run packages/codes
+      # a version already on the registry is skipped, so a re-run publishes nothing twice
+      - name: Publish the version if it is not on npm yet
         run: |
-          for dir in currency-codes country-codes language-codes; do
-            version=$(jq -r .version "packages/$dir/package.json")
-            if curl -sf "https://registry.npmjs.org/@zod%2F$dir/$version" > /dev/null; then
-              echo "@zod/$dir@$version is already on npm"
-              continue
-            fi
-            (cd "packages/$dir" && nub publish --provenance --no-git-checks)
-          done
+          version=$(jq -r .version packages/codes/package.json)
+          if curl -sf "https://registry.npmjs.org/@zod%2Fcodes/$version" > /dev/null; then
+            echo "@zod/codes@$version is already on npm"
+          else
+            (cd packages/codes && nub publish --provenance --no-git-checks)
+          fi

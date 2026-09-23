@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import { type CurrencyCode, codes, currencies, published, withdrawn } from "./index.js";
+import { type CurrencyCode, codes, currencies, published, withdrawn } from "./currencies.js";
 
 test("currency codes", () => {
   expect(codes.length).toBeGreaterThan(150);

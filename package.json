@@ -73,7 +73,7 @@
     "lint": "nub exec --node biome lint --write .",
     "lint:check": "nub exec --node biome lint .",
     "clean": "nub run -r clean",
-    "build": "nub run -r --filter zod --filter @zod/mini --filter @zod/currency-codes --filter @zod/country-codes --filter @zod/language-codes build",
+    "build": "nub run -r --filter zod --filter @zod/mini --filter @zod/codes build",
     "test:watch": "nub exec --node vitest",
     "test": "nub exec --node vitest run",
     "test:compile": "nub exec --node vitest run --config vitest.compile.config.ts",

@@ -1,8 +1,0 @@
-{
-  "extends": "../../.configs/tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": ".",
-    "customConditions": ["@zod/source"]
-  }
-}
