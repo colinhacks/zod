@@ -593,9 +593,10 @@ Zod 4 introduces a new `locales` API for globally translating error messages int
 
 ```ts
 import * as z from "zod";
+import { en } from "zod/locales";
 
 // configure English locale (default)
-z.config(z.locales.en());
+z.config(en());
 ```
 
 See the full list of supported locales in [Customizing errors](/error-customization#locales); this section is always updated with a list of supported languages as they become available.

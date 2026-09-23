@@ -338,26 +338,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `"zod"`. Rollup and Webpack tree-shake this down to the locales you actually use. esbuild can't ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)) — with `import { z } from "zod"` or `import z from "zod"` it bundles every locale, so prefer `import * as z from "zod"` there.
-
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
-```ts
-import * as z from "zod";
-
-z.config(z.locales.en());
-```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-import * as z from "zod/mini"
-import { en } from "zod/locales";
-
-// z.locales bundles every locale under esbuild and Turbopack
-z.config(en());
-```
-</Tab>
-</Tabs>
+For convenience, all locales are also exported as `z.locales`, so `z.config(z.locales.de())` works without the extra import. Rollup and Webpack tree-shake that down to the locales you actually use. esbuild ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)) and Turbopack bundle every locale, whichever import form you use, so stick to `zod/locales` if you bundle with either.
 
 With your own translation function, the `error` param is called during `.parse()`, not when the schema is constructed — a schema defined once picks up the current language on every parse. To translate at render time, translate the issue itself: `code` is the key, and the issue's other properties are the interpolation values.
 
@@ -469,4 +450,6 @@ Below is a quick reference for determining error precedence: if multiple error c
 5. **Locale error map** — A custom error map passed into `z.config()`.
 
   ```ts
-  z.config(z.locales.en());
+  import { en } from "zod/locales";
+
+  z.config(en());
