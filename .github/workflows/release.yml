@@ -2,7 +2,7 @@
 
 name: Release on npm
 on:
-  # a version bump on main publishes nothing by itself; a maintainer runs `gh workflow run release.yml` and approves the npm environment
+  # Dispatch only, and deliberately so. A `workflow_dispatch` needs a GitHub session or token carrying write access; a stolen git push credential carries neither, so it can no longer start a release by landing a commit or cutting a tag. That is the shape of the 2026-09-21 nubjs/nub compromise, where a stolen push credential cut a tag and 18 packages published unattended. A version bump on main is therefore inert: a maintainer runs `gh workflow run release.yml`, approves the npm environment, and then approves each staged version on npm with 2FA.
   workflow_dispatch:
 
 jobs:
@@ -19,6 +19,11 @@ jobs:
         typescript: ["5.5", "6"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
+      # A step, not a job-level `if:`: a skipped job is silent, and the run would go green having released nothing while looking like it had. This job gates the publish, so failing here stops the release.
+      - name: Refuse to release from any ref but main
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::release.yml runs from main only, got $GITHUB_REF"; exit 1; }
+
       - uses: actions/checkout@v7
       - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
@@ -67,9 +72,9 @@ jobs:
   build_and_publish:
     needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
-    # a required reviewer approves every publish, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can publish
+    # a required reviewer approves every run, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can even stage. The environment is the first of two gates — the second is the 2FA approval of each staged version, which this job cannot perform.
     environment: npm
-    # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing: zod gets 240 minutes because it is the one that waits on review, and @zod/mini gets 90 because it publishes after that review has already drained (it cleared in under a minute on 4.6.0). A stall that outlives the pair needs the wait moved to its own job rather than a larger number here, and that costs a second environment approval.
+    # 6h is GitHub's hard cap for a hosted runner, not a tunable. One wait now covers both packages: they are staged back to back, so a single approval session releases the pair and the maintainer is never asked to be present twice. The wait takes 350 of the 360 minutes. A stall that outlives it needs the wait moved to its own job rather than a larger number here, and that costs a second environment approval.
     timeout-minutes: 360
     permissions:
       contents: write
@@ -85,6 +90,19 @@ jobs:
         with:
           nub-version: "0.8.3"
           registry-url: https://registry.npmjs.org/
+
+      # `npm stage publish` landed in npm 11.15, later than the npm bundled with any Node the
+      # action provisions. setup-nub fronts that Node's bin dir on PATH, so the global install
+      # lands in the same prefix the `npm` below resolves from — the echo proves which one.
+      - name: Install an npm CLI that can stage
+        run: | # zizmor: ignore[adhoc-packages] the npm CLI itself, pinned to the major that carries `npm stage`
+          npm install -g npm@11
+          v="$(npm --version)"
+          # `sort -V | head -1` yields the smaller of the two; it has to be the floor.
+          [ "$(printf '%s\n11.15.0\n' "$v" | sort -V | head -1)" = "11.15.0" ] \
+            || { echo "::error::npm $v cannot stage (need >= 11.15)"; exit 1; }
+          echo "npm $v at $(command -v npm)"
+
       - run: nub install --frozen-lockfile
       - run: nub run build
       - run: nub run test
@@ -101,32 +119,51 @@ jobs:
           echo "zod=$(nub --node -p "require('./packages/zod/package.json').version")" >> "$GITHUB_OUTPUT"
           echo "mini=$(nub --node -p "require('./packages/mini/package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - id: publish
-        name: Publish to NPM
-        # npm may stage a version before reporting a conflict; registry liveness is the final gate
-        continue-on-error: true
-        working-directory: ./packages/zod
+      # This job cannot publish. Both trusted publishers are stage-only, so all it can do is put a version in npm's staged queue, where it is not installable and its number is reserved; a maintainer then approves it with 2FA. A credential that reaches this workflow can therefore fill a queue and nothing else.
+      - name: Stage zod on npm
         env:
           VERSION: ${{ steps.version.outputs.zod }}
-        run: |
-          if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then exit 0; fi
-          nub publish --provenance --no-git-checks
+        run: bash .github/scripts/npm-stage-publish.sh packages/zod --provenance
 
-      # npm holds a publish in automated review before serving it, and the version is unavailable until that finishes: 4.5.0 sat 16 minutes, 4.5.3 sat 25, and 4.6.0 sat 116. None of those is an upper bound. The version does arrive, and the release and the JSR publish are worthless without it, so wait rather than fail. A publish that failed for some other reason waits the whole window and then fails with the publish step's log to read.
-      - name: Wait for the version to be live on npm
+      # @zod/mini ships in lockstep with zod and is a no-op when its version is already on the registry, so it runs unconditionally (the first release of the scoped package rides on a merge that does not bump zod itself). It is staged here, next to zod and before the wait, so both versions are in the queue when the maintainer sits down: one approval session covers the pair, and `pnpm stage approve` takes them under a single one-time password. Under the old irreversible publish this step ran last, so that a failed @zod/mini publish could not cost zod its tag; staging removes that hazard, because a failure here leaves zod staged and unapproved rather than live and unmatched.
+      - name: Stage @zod/mini on npm
         env:
-          VERSION: ${{ steps.version.outputs.zod }}
+          VERSION: ${{ steps.version.outputs.mini }}
+        run: bash .github/scripts/npm-stage-publish.sh packages/mini --provenance --access public
+
+      # THE HUMAN GATE. Both versions sit in the staged queue until a maintainer approves them, and the registry serves them only after that, so everything below — the tag, the GitHub release, both JSR publishes — is downstream of the approval and nothing public ever describes a version npm did not ship. The loop also absorbs the automated review npm runs once a version is approved, which held 4.5.0 for 16 minutes, 4.5.3 for 25 and 4.6.0 for 116; none of those is an upper bound. A GitHub job gets six hours at most. If the approval comes later, re-run this job: a live version is skipped, a staged one is tolerated, and the wait then passes at once.
+      - name: Wait for the staged versions to be approved and live
+        env:
+          ZOD_VERSION: ${{ steps.version.outputs.zod }}
+          MINI_VERSION: ${{ steps.version.outputs.mini }}
         run: |
-          for i in $(seq 1 240); do
-            if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
-              echo "zod@$VERSION is live"
-              exit 0
-            fi
-            if [ $((i % 15)) -eq 0 ]; then echo "zod@$VERSION is not on the registry yet ($i minutes)"; fi
-            sleep 60
-          done
-          echo "zod@$VERSION never reached the registry; see the publish step for why"
-          exit 1
+          # shellcheck disable=SC2016  # the backticks below are markdown for the step summary, not command substitution
+          {
+            echo "## Staged on npm, waiting for approval"
+            echo
+            echo "- \`zod@$ZOD_VERSION\`"
+            echo "- \`@zod/mini@$MINI_VERSION\`"
+            echo
+            echo 'Neither version is installable until you approve it with 2FA. Read the stage ids with `npm stage list zod` and `npm stage list @zod/mini`, then approve each with `npm stage approve <id>`; `pnpm stage approve` takes both in one interactive picker under a single one-time password, as does the Staged Packages tab on npmjs.com.'
+            echo
+            echo 'This job waits 350 minutes. If it runs out, approve the versions and re-run it.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          deadline=$(( $(date +%s) + 350 * 60 ))
+          wait_for () {
+            local label="$1" url="$2" i=0
+            until curl -sf "$url" > /dev/null; do
+              if [ "$(date +%s)" -ge "$deadline" ]; then
+                echo "::error::$label is still not on the registry; approve the staged version with 2FA, then re-run this job"
+                exit 1
+              fi
+              i=$((i + 1))
+              if [ $((i % 15)) -eq 0 ]; then echo "$label is still staged, awaiting approval ($i minutes)"; fi
+              sleep 60
+            done
+            echo "$label is live"
+          }
+          wait_for "zod@$ZOD_VERSION" "https://registry.npmjs.org/zod/$ZOD_VERSION"
+          wait_for "@zod/mini@$MINI_VERSION" "https://registry.npmjs.org/@zod%2fmini/$MINI_VERSION"
 
       - name: Configure changelog
         run: |
@@ -175,32 +212,6 @@ jobs:
           fi
           nub exec --node jsr publish --allow-slow-types # --dry-run
 
-      # @zod/mini ships in lockstep with zod and is a no-op when its version is already on the registry, so it runs unconditionally (the first release of the scoped package rides on a merge that does not bump zod itself) and last, so a failed mini publish cannot cost zod its tag, GitHub release or JSR publish
-      - id: publish_mini
-        name: Publish @zod/mini to NPM
-        continue-on-error: true
-        working-directory: ./packages/mini
-        env:
-          VERSION: ${{ steps.version.outputs.mini }}
-        run: |
-          if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then exit 0; fi
-          nub publish --provenance --no-git-checks --access public
-
-      - name: Wait for @zod/mini to be live on npm
-        env:
-          VERSION: ${{ steps.version.outputs.mini }}
-        run: |
-          for i in $(seq 1 90); do
-            if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
-              echo "@zod/mini@$VERSION is live"
-              exit 0
-            fi
-            if [ $((i % 15)) -eq 0 ]; then echo "@zod/mini@$VERSION is not on the registry yet ($i minutes)"; fi
-            sleep 60
-          done
-          echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
-          exit 1
-
       # JSR refuses a version that already exists, so the step checks first; this also lets the first JSR publish of a version already on npm ride on a merge that publishes nothing to npm
       - name: Publish @zod/mini to JSR
         working-directory: ./packages/mini
@@ -212,5 +223,5 @@ jobs:
             nub exec --node jsr publish --allow-slow-types
           fi
 
-      # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two publishes above ran
+      # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two stagings above ran
       - run: nub run check:lockstep --wait
