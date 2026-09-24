@@ -2,7 +2,7 @@
 
 name: Release on npm
 on:
-  # a version bump on main publishes nothing by itself; a maintainer runs `gh workflow run release.yml`, approves the npm environment, and then approves each staged version on npm with 2FA
+  # Dispatch only, and deliberately so. A `workflow_dispatch` needs a GitHub session or token carrying write access; a stolen git push credential carries neither, so it can no longer start a release by landing a commit or cutting a tag. That is the shape of the 2026-09-21 nubjs/nub compromise, where a stolen push credential cut a tag and 18 packages published unattended. A version bump on main is therefore inert: a maintainer runs `gh workflow run release.yml`, approves the npm environment, and then approves each staged version on npm with 2FA.
   workflow_dispatch:
 
 jobs:
@@ -19,6 +19,11 @@ jobs:
         typescript: ["5.5", "6"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
+      # A step, not a job-level `if:`: a skipped job is silent, and the run would go green having released nothing while looking like it had. This job gates the publish, so failing here stops the release.
+      - name: Refuse to release from any ref but main
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::release.yml runs from main only, got $GITHUB_REF"; exit 1; }
+
       - uses: actions/checkout@v7
       - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
