@@ -129,6 +129,15 @@ test("catchall inference", () => {
   expectTypeOf<(typeof d1)["first"]>().toEqualTypeOf<string>();
 });
 
+test("catchall json inference", () => {
+  // typescript 7.1 reported this as infinitely circular
+  const schema = z.object({ n: z.number() }).catchall(z.json());
+  const data = schema.parse({ n: 1, extra: { nested: [1, "two", null] } });
+  expectTypeOf(data.n).toEqualTypeOf<number>();
+  expectTypeOf(data.extra).toEqualTypeOf<z.core.util.JSONType>();
+  expectTypeOf<z.input<typeof schema>["extra"]>().toEqualTypeOf<z.core.util.JSONType>();
+});
+
 test("catchall overrides strict", () => {
   const o1 = z.object({ first: z.string().optional() }).strict().catchall(z.number());
 
