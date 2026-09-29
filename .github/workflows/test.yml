@@ -1,72 +1,154 @@
-name: test
+name: Recursive type wall-clock benchmark
 
 on:
   push:
-    branches:
-      - "main"
-  pull_request:
-    branches:
-      - main
-      - v4
+    branches: [bench/recursive-type-wall-clock-20260929]
 
 permissions:
   contents: read
 
 jobs:
-  test-node:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        node: ["lts/*"]
-        typescript: ["5.5", "6", "latest"]
-    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
-    steps:
-      - uses: actions/checkout@v7
-      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
-      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
-        with:
-          nub-version: "0.8.3"
-          node-version: ${{ matrix.node }}
-      - run: nub install --frozen-lockfile
-      # Build with the repo-pinned TypeScript: zshy uses the classic compiler API,
-      # which TypeScript 7 no longer ships. The matrix version applies to the tests.
-      - run: nub run build
-      - run: nub add typescript@${{ matrix.typescript }} -Dw
-      - run: nub run test
-      # test-resolution.ts shells out to zshy, so it can't run under TypeScript 7.
-      - run: nub run --filter @zod/resolution test:all
-        if: matrix.typescript != 'latest'
-      - run: nub run --filter @zod/integration test:all
-
-  lint:
+  measure:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: ["latest"]
-    name: Lint on Node ${{ matrix.node }}
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
-      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
-      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
-          nub-version: "0.8.3"
-          node-version: ${{ matrix.node }}
+          fetch-depth: 0
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d
+        with:
+          nub-version: '0.8.3'
+          node-version: '24.21.0'
       - run: nub install --frozen-lockfile
-      - run: nub run format:check
-      - run: nub run lint:check
-      - run: nub run check:comments
+      - run: nub add -Dw tsc-six@npm:typescript@6.0.3 tsc-seven@npm:typescript@7.0.2
+      - name: Measure matched revisions
+        env:
+          WORKLOADS: consumer-one,consumer,suite
+        run: |
+          cat > "$RUNNER_TEMP/wall-clock.ts" <<'BENCHMARK'
+          import { execFileSync, spawnSync } from 'node:child_process';
+          import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
+          import { loadavg, cpus, totalmem } from 'node:os';
+          import path from 'node:path';
+          import { performance } from 'node:perf_hooks';
 
-  check-circular:
-    runs-on: ubuntu-latest
-    name: Check for circular dependencies
-    steps:
-      - uses: actions/checkout@v7
-      - run: printf 'latest\n' > .nvmrc
-      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+          const worktree = process.env.GITHUB_WORKSPACE!;
+          const home = process.env.RUNNER_TEMP!;
+          const dest = path.join(home, 'wall-clock-data');
+          const base = '12e6272746eb79c9713f4818e85a15231bd368b6';
+          const head = '8e7d13132d07fc7d64612b0bba1bb66252fff1ee';
+          const nativePath = (await import(path.join(worktree, 'node_modules/tsc-seven/lib/getExePath.js'))).default();
+          const compilers = {
+            ts55: [process.execPath, path.join(worktree, 'node_modules/typescript/bin/tsc')],
+            ts60: [process.execPath, path.join(worktree, 'node_modules/tsc-six/bin/tsc')],
+            ts70: [nativePath],
+          };
+          const env = { ...process.env, NODE_OPTIONS: '', NODE_PATH: '' };
+          const run = (args: string[], cwd: string) => execFileSync(args[0], args.slice(1), { cwd, env, encoding: 'utf8', maxBuffer: 32e6 });
+          const json = (file: string, value: unknown) => writeFileSync(file, JSON.stringify(value, null, 2));
+          const files = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]);
+          mkdirSync(dest, { recursive: true });
+
+          if (process.argv[2] === 'prepare') {
+            const metadata: any = { base, head, node: process.version, nodePath: process.execPath, cpus: cpus().map(x => x.model), totalmem: totalmem(), compilers: {}, exclusions: [] };
+            for (const [name, args] of Object.entries(compilers)) metadata.compilers[name] = { args, version: run([...args, '--version'], worktree).trim() };
+            for (const side of ['main', 'pr']) {
+              const dir = path.join(dest, side);
+              if (existsSync(dir)) throw new Error(`Refusing to overwrite ${dir}`);
+              mkdirSync(dir);
+              const archive = execFileSync('git', ['-C', worktree, 'archive', base, '.configs', 'package.json', 'vitest.config.ts', 'packages/zod/package.json', 'packages/zod/tsconfig.json', 'packages/zod/tsconfig.test.json', 'packages/zod/vitest.config.ts', 'packages/zod/src'], { maxBuffer: 64e6 });
+              execFileSync('tar', ['-xf', '-', '-C', dir], { input: archive });
+              symlinkSync(path.join(worktree, 'node_modules'), path.join(dir, 'node_modules'));
+              symlinkSync(path.join(worktree, 'packages/zod/node_modules'), path.join(dir, 'packages/zod/node_modules'));
+              for (const file of files(path.join(dir, 'packages/zod/src/v4')).filter(f => f.includes('/tests/'))) {
+                const text = readFileSync(file, 'utf8');
+                const removed = text.match(/^.*expectTypeOf.*(?:optin|optout).*\n/gm) ?? [];
+                if (side === 'main' && removed.length) metadata.exclusions.push({ file: path.relative(dir, file), lines: removed });
+                writeFileSync(file, text.replace(/^.*expectTypeOf.*(?:optin|optout).*\n/gm, ''));
+              }
+              if (side === 'pr') {
+                for (const file of ['core/core.ts', 'core/api.ts', 'core/schemas.ts', 'classic/schemas.ts', 'mini/schemas.ts']) {
+                  const relative = `packages/zod/src/v4/${file}`;
+                  writeFileSync(path.join(dir, relative), run(['git', '-C', worktree, 'show', `${head}:${relative}`], worktree));
+                }
+              }
+              json(path.join(dir, 'emit.json'), { extends: './packages/zod/tsconfig.test.json', compilerOptions: { noEmit: false, declaration: true, emitDeclarationOnly: true, rootDir: './packages/zod/src', outDir: './types', types: [] }, include: ['packages/zod/src/v4/**/*.ts'], exclude: ['packages/zod/src/**/tests/**'] });
+              writeFileSync(path.join(dest, `${side}-emit.log`), run([...compilers.ts55, '-p', 'emit.json', '--pretty', 'false'], dir));
+              let consumer = `import * as z from './types/v4/classic/index.js';\n`;
+              for (let i = 0; i < 100; i++) {
+                consumer += `
+          export const Item${i} = z.object({ id: z.string().uuid().brand<'Id${i}'>(), category: z.literal(${i}), label: z.string().optional(), count: z.number().int(), tags: z.array(z.string()), status: z.enum(['open', 'closed']), settings: z.record(z.string(), z.union([z.string(), z.number()])) });
+          export const Patch${i} = Item${i}.partial().omit({ id: true });
+          export const Event${i} = z.discriminatedUnion('kind', [z.object({kind:z.literal('create'), item:Item${i}}), z.object({kind:z.literal('patch'), patch:Patch${i}})]);
+          export const Page${i} = z.object({items:z.array(Item${i}), events:z.array(Event${i}), cursor:z.string().nullable()});
+          export type PageValue${i} = z.output<typeof Page${i}>;
+          export function parse${i}(data:unknown):PageValue${i} { return Page${i}.parse(data); }
+          export function encode${i}(data:PageValue${i}):z.input<typeof Page${i}> { return Page${i}.encode(data); }
+          export function summarize${i}(data:unknown) {
+            const page = parse${i}(data);
+            return { cursor: page.cursor?.toUpperCase(), items: page.items.map(item => ({ id:item.id, category:item.category, label:item.label?.trim(), count:item.count + 1, tags:item.tags.join(','), settings:Object.entries(item.settings).map(([key,value]) => key + String(value)), open:item.status === 'open' })), events:page.events.map(event => event.kind === 'create' ? event.item.label ?? event.item.id : event.patch.label ?? '') };
+          }
+          `;
+              }
+              writeFileSync(path.join(dir, 'consumer.ts'), consumer);
+              writeFileSync(path.join(dir, 'consumer-one.ts'), consumer.split('export const Item1 =')[0]);
+              json(path.join(dir, 'consumer.json'), { extends: './.configs/tsconfig.base.json', compilerOptions: { noEmit: true, types: [], incremental: false }, files: ['consumer.ts'], include: [] });
+              json(path.join(dir, 'consumer-one.json'), { extends: './.configs/tsconfig.base.json', compilerOptions: { noEmit: true, types: [], incremental: false }, files: ['consumer-one.ts'], include: [] });
+            }
+            json(path.join(dest, 'metadata.json'), metadata);
+            console.log(JSON.stringify(metadata));
+          } else {
+            const tag = process.env.TAG ?? 'validation';
+            const rounds = Number(process.env.ROUNDS ?? 1);
+            const workloads = (process.env.WORKLOADS ?? 'suite,consumer').split(',');
+            const selected = (process.env.COMPILERS ?? 'ts55,ts60,ts70').split(',');
+            const deadline = Date.now() + Number(process.env.MAX_WAIT_SECONDS ?? 1200) * 1000;
+            for (let round = 0; round < rounds; round++) {
+              for (const compiler of round % 2 ? [...selected].reverse() : selected) {
+                for (const workload of workloads) {
+                  while (process.env.QUIET && loadavg()[0] > 6.5) {
+                    if (Date.now() >= deadline) throw new Error('No quiet measurement window before the deadline');
+                    console.log(JSON.stringify({waitingForLoad:loadavg(), at:new Date().toISOString()}));
+                    await new Promise(resolve => setTimeout(resolve, 30000));
+                  }
+                  for (const side of round % 2 ? ['pr', 'main'] : ['main', 'pr']) {
+                    const dir = path.join(dest, side);
+                    const project = workload === 'suite' ? 'packages/zod/tsconfig.test.json' : `${workload}.json`;
+                    const args = [...compilers[compiler], '-p', project, '--noEmit', '--incremental', 'false', '--pretty', 'false', '--extendedDiagnostics'];
+                    const before = loadavg();
+                    const started = performance.now();
+                    const result = spawnSync('/usr/bin/time', ['-v', ...args], { cwd: dir, env, encoding: 'utf8', maxBuffer: 32e6 });
+                    const seconds = (performance.now() - started) / 1000;
+                    const after = loadavg();
+                    const log = `${result.stdout}\n${result.stderr}`;
+                    const logName = `${tag}-${round}-${compiler}-${workload}-${side}.log`;
+                    writeFileSync(path.join(dest, logName), log);
+                    const stat: any = { tag, round, compiler, workload, side, seconds, before, after, at:new Date().toISOString(), exit: result.status, signal: result.signal, log: logName };
+                    for (const key of ['Check time', 'Total time', 'Instantiations', 'Types', 'Files', 'Memory used']) stat[key] = log.match(new RegExp(`^${key}:\\s*(.*)$`, 'm'))?.[1];
+                    stat.cpu = log.match(/([\d.]+) real\s+([\d.]+) user\s+([\d.]+) sys/)?.slice(1);
+                    stat.peakRSS = Number(log.match(/Maximum resident set size \(kbytes\):\s*(\d+)/)?.[1]) * 1024;
+                    appendFileSync(path.join(dest, `${tag}.jsonl`), `${JSON.stringify(stat)}\n`);
+                    console.log(JSON.stringify(stat));
+                    if (result.status !== 0) throw new Error(`Failed ${logName}`);
+                  }
+                }
+              }
+            }
+          }
+          BENCHMARK
+          nub "$RUNNER_TEMP/wall-clock.ts" prepare
+          TAG=hosted-warmup ROUNDS=1 nub "$RUNNER_TEMP/wall-clock.ts" run
+          TAG=hosted-paired ROUNDS=8 nub "$RUNNER_TEMP/wall-clock.ts" run
+      - name: Archive inputs
+        if: always()
+        run: |
+          tar --exclude=node_modules -czf "$RUNNER_TEMP/wall-clock-data/inputs.tar.gz" -C "$RUNNER_TEMP/wall-clock-data" main pr
+      - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          nub-version: "0.8.3"
-          node-version: "latest"
-      - run: nub install --frozen-lockfile
-      - run: nub run check:circular
+          name: recursive-type-wall-clock
+          path: |
+            ${{ runner.temp }}/wall-clock-data/*.json*
+            ${{ runner.temp }}/wall-clock-data/*.log
+            ${{ runner.temp }}/wall-clock-data/inputs.tar.gz
+            ${{ runner.temp }}/wall-clock.ts
