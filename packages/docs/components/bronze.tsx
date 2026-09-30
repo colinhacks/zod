@@ -1,6 +1,12 @@
 export const Bronze = () => {
   const companies = [
     {
+      name: "Code for Japan",
+      logoSrc: "/sponsors/code-for-japan.png",
+      url: "code4japan.org",
+      href: "https://www.code4japan.org/?utm_source=zod",
+    },
+    {
       name: "Jason Laster",
       logoSrc: "https://avatars.githubusercontent.com/u/254562?s=200&v=4",
       url: "github.com/jasonLaster",
@@ -23,12 +29,6 @@ export const Bronze = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/7936820?s=200&v=4",
       url: "route4me.com",
       href: "https://www.route4me.com/?utm_source=zod",
-    },
-    {
-      name: "Code for Japan",
-      logoSrc: "https://avatars.githubusercontent.com/u/5137738?s=200&v=4",
-      url: "code4japan.org",
-      href: "https://www.code4japan.org/?utm_source=zod",
     },
   ];
 
