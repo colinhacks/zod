@@ -5,11 +5,12 @@
 # reaches the registry only once a maintainer approves it with 2FA — a proof of presence that no
 # token, and no stolen push credential, can supply.
 #
-# Idempotent, because the job it runs in is re-run after a late approval: a version the registry
-# already serves is skipped, and a version already sitting in the staged queue makes `npm stage
-# publish` refuse, which counts as success here — the approval wait downstream is what decides
-# whether the version arrived. That refusal's exact wording is matched loosely, since the first
-# stage-only release is where it gets observed; anything else is fatal.
+# Idempotent, because a release can be dispatched again for a version an earlier run staged: a
+# version the registry already serves is skipped, and a version already sitting in the staged queue
+# makes `npm stage publish` refuse, which counts as success here — the registry check in the
+# workflow's `finish` job is what decides whether the version arrived. That refusal's exact wording
+# is matched loosely, since the first stage-only release is where it gets observed; anything else
+# is fatal.
 set -euo pipefail
 
 dir="${1:?usage: npm-stage-publish.sh <package-dir> [npm stage publish flags...]}"
@@ -34,7 +35,7 @@ if (cd "$dir" && npm stage publish "$@") > "$out" 2>&1; then
 fi
 cat "$out"
 if grep -qiE 'already (been )?staged|staged version|E409|EPUBLISHCONFLICT|previously published' "$out"; then
-  echo "$name@$version is already staged; the approval wait decides the rest"
+  echo "$name@$version is already staged; the finish job's registry check decides the rest"
   exit 0
 fi
 echo "::error::staging $name@$version failed"
