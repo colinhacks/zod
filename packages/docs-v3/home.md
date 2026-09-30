@@ -324,6 +324,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/104988782?s=200&v=4" height="40px;" alt="n8n logo" />
       </a>
     </td>
+    <td align="center">
+      <a href="https://www.code4japan.org/?utm_source=zod">
+        <img src="https://avatars.githubusercontent.com/u/5137738?s=200&v=4" height="40px;" alt="Code for Japan logo" />
+      </a>
+    </td>
   </tr>
 </table>
 
