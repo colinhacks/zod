@@ -58,16 +58,20 @@ export type CheckTypeParams<
 > = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // String
-export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce">;
+export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce"> & {
+  checks?: readonly checks.$ZodCheck<string>[];
+};
+
+function snapshotChecks<T extends { checks?: readonly checks.$ZodCheck<never>[] }>(def: T) {
+  if (def.checks) def.checks = [...def.checks];
+  return def as T & { checks?: NonNullable<T["checks"]>[number][] };
+}
 // @__NO_SIDE_EFFECTS__
 export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    ...util.normalizeParams(params),
-  });
+  return new Class(snapshotChecks({ type: "string" as const, ...util.normalizeParams(params) }));
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -75,11 +79,7 @@ export function _coercedString<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    coerce: true,
-    ...util.normalizeParams(params),
-  });
+  return new Class(snapshotChecks({ type: "string" as const, coerce: true, ...util.normalizeParams(params) }));
 }
 
 export type $ZodStringFormatParams = CheckTypeParams<
@@ -608,7 +608,9 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 }
 
 // Number
-export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce">;
+export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce"> & {
+  checks?: readonly checks.$ZodCheck<number>[];
+};
 export type $ZodNumberFormatParams = CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
 export type $ZodCheckNumberFormatParams = CheckParams<checks.$ZodCheckNumberFormat, "format" | "when">;
 // @__NO_SIDE_EFFECTS__
@@ -616,11 +618,7 @@ export function _number<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
 ): T {
-  return new Class({
-    type: "number",
-    checks: [],
-    ...util.normalizeParams(params),
-  });
+  return new Class(snapshotChecks({ type: "number" as const, checks: [], ...util.normalizeParams(params) }));
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -628,12 +626,9 @@ export function _coercedNumber<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
 ): T {
-  return new Class({
-    type: "number",
-    coerce: true,
-    checks: [],
-    ...util.normalizeParams(params),
-  });
+  return new Class(
+    snapshotChecks({ type: "number" as const, coerce: true, checks: [], ...util.normalizeParams(params) })
+  );
 }
 
 // @__NO_SIDE_EFFECTS__

@@ -105,6 +105,28 @@ test("deferred initializers are released after construction", () => {
   expect(z.object({ a: z.string() })._zod.deferred).toEqual(undefined);
 });
 
+test("trait initializers run once per instance across repeated entry", () => {
+  const calls: string[] = [];
+  const Base: core.$constructor<any> = core.$constructor<any>("CountedBase", () => calls.push("base"));
+  const Child: core.$constructor<any> = core.$constructor<any>("CountedChild", (inst, def) => {
+    calls.push("child");
+    Base.init(inst, def);
+    Base.init(inst, def);
+  });
+  const constructed = new Child({});
+  Child.init(constructed, {});
+  const direct = Object.create({});
+  Child.init(direct, {});
+  Child.init(direct, {});
+  expect(calls).toEqual(["child", "base", "child", "base"]);
+  for (const inst of [constructed, direct]) {
+    expect([...inst._zod.traits]).toEqual(["CountedChild", "CountedBase"]);
+    expect(inst instanceof Base).toBe(true);
+    expect(inst instanceof Child).toBe(true);
+  }
+  expect(constructed._zod.traits).not.toBe(direct._zod.traits);
+});
+
 test("a trait initializer called directly still installs its members", () => {
   // a direct `init` installs onto the receiver's own prototype, since it is not below the constructor's
   z.string();
