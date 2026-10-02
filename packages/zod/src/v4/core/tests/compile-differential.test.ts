@@ -677,6 +677,41 @@ test("url options match the runtime across the whole option matrix", () => {
   for (const schema of schemas) differential(schema, inputs);
 });
 
+test("assert-only URL generation skips unused output without skipping chained transforms", () => {
+  const sanitized = "https://example.com";
+  const withNewline = "https://exa\nmple.com";
+  differential(z.url().length(sanitized.length), [sanitized, withNewline, "https://example.com/long"]);
+  differential(z.string().url().length(sanitized.length), [sanitized, withNewline, "https://example.com/long"]);
+
+  const URLStatic = URL as typeof URL & { parse: (input: string) => URL | null };
+  const descriptor = Object.getOwnPropertyDescriptor(URLStatic, "parse")!;
+  const marker = new Error("href read");
+  Object.defineProperty(URLStatic, "parse", {
+    configurable: true,
+    value: () =>
+      Object.create(URL.prototype, {
+        href: {
+          get() {
+            throw marker;
+          },
+        },
+      }) as URL,
+  });
+  try {
+    const schema = z.url({ normalize: true });
+    const parser = compileFn(schema);
+    const validator = compileFn(schema, { assertOnly: true });
+    expect(validator("https://example.com")).toBe(true);
+    expect(z.validate(compile(z.url({ normalize: true })), "https://example.com")).toBe(true);
+    expect(z.validate(compile(z.object({ url: z.url({ normalize: true }) })), { url: "https://example.com" })).toBe(
+      true
+    );
+    expect(() => parser("https://example.com")).toThrow(marker);
+  } finally {
+    Object.defineProperty(URLStatic, "parse", descriptor);
+  }
+});
+
 test("empty strict object compiles", () => {
   // With no keys the unknown-key condition is empty, and `if () return INVALID;` is a syntax error the single top-level `new Function` rejects — too late for compileChild to island, so the whole tree lost its fast path.
   differential(z.strictObject({}), [{}, { a: 1 }, Object.create({ inherited: 1 })]);

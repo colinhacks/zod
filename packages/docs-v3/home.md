@@ -305,6 +305,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
+      <a href="https://www.code4japan.org/?utm_source=zod">
+        <img src="https://zod.dev/sponsors/code-for-japan.png" height="40px;" alt="Code for Japan logo" />
+      </a>
+    </td>
+    <td align="center">
       <a href="https://www.route4me.com/">
         <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me logo" />
       </a>

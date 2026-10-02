@@ -79,9 +79,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
         // Cleared even on throw, so the shared descriptor never leaks one instance's internals into the next.
         _zodDesc.value = undefined;
       }
-    }
-
-    if (inst._zod.traits.has(name)) {
+    } else if (inst._zod.traits.has(name)) {
       return;
     }
 

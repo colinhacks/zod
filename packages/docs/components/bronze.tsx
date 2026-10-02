@@ -1,6 +1,12 @@
 export const Bronze = () => {
   const companies = [
     {
+      name: "Code for Japan",
+      logoSrc: "/sponsors/code-for-japan.png",
+      url: "code4japan.org",
+      href: "https://www.code4japan.org/?utm_source=zod",
+    },
+    {
       name: "Jason Laster",
       logoSrc: "https://avatars.githubusercontent.com/u/254562?s=200&v=4",
       url: "github.com/jasonLaster",
