@@ -35,8 +35,8 @@ jobs:
           const worktree = process.env.GITHUB_WORKSPACE!;
           const home = process.env.RUNNER_TEMP!;
           const dest = path.join(home, 'wall-clock-data');
-          const base = '12e6272746eb79c9713f4818e85a15231bd368b6';
-          const head = '8e7d13132d07fc7d64612b0bba1bb66252fff1ee';
+          const base = '0b216ef674e297ebe41d8bf902262e56f8755822';
+          const head = '270fabf23a72eb94d3f39fd4bbd980c009090b2e';
           const nativePath = (await import(path.join(worktree, 'node_modules/tsc-seven/lib/getExePath.js'))).default();
           const compilers = {
             ts55: [process.execPath, path.join(worktree, 'node_modules/typescript/bin/tsc')],
