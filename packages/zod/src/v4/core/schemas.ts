@@ -3218,8 +3218,11 @@ export type $InferZodRecordInput<
     : Record<core.input<Key> & PropertyKey, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
-  extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
+  extends $ZodTypeInternals {
   def: $ZodRecordDef<Key, Value>;
+  // members rather than base type arguments, which TypeScript 7.1 reports as circular for `z.json()`
+  output: $InferZodRecordOutput<Key, Value>;
+  input: $InferZodRecordInput<Key, Value>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
   optin?: "optional" | undefined;
   optout?: "optional" | undefined;
