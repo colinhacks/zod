@@ -275,6 +275,12 @@ export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, json, pa
   handleUnrepresentable(schema, ctx, json, params, "Date cannot be represented in JSON Schema");
 };
 
+export const temporalProcessor: Processor<schemas.$ZodTemporal> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Temporal values cannot be represented in JSON Schema");
+  }
+};
+
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
   const def = schema._zod.def as schemas.$ZodEnumDef;
   const values = getEnumValues(def.entries);

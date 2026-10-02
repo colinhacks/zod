@@ -146,6 +146,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Entrada inválida";
       case "invalid_element":
         return `Entrada inválida n${translateOriginWithArticle(issue.origin, "definite")}`;
+      case "invalid_temporal":
+        return `${issue.origin} inválido: valor esperado era ${issue.expected} mas foi ${issue.received}`;
       default:
         return `Entrada inválida`;
     }

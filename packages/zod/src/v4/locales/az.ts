@@ -103,6 +103,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Yanlış dəyər";
       case "invalid_element":
         return `${issue.origin} daxilində yanlış dəyər`;
+      case "invalid_temporal":
+        return `Yanlış ${issue.origin}: gözlənilən dəyər ${issue.expected} olmalıdır, lakin ${issue.received} idi`;
       default:
         return `Yanlış dəyər`;
     }
