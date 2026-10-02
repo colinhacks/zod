@@ -449,20 +449,16 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   }
 
   // required keys
-  const allKeys = new Set(Object.keys(shape));
-  const requiredKeys = new Set(
-    [...allKeys].filter((key) => {
-      const field = def.shape[key]!;
-      if (ctx.io === "input") {
-        return inputOptin(field) === undefined;
-      } else {
-        return field._zod.optout === undefined;
-      }
-    })
-  );
+  const requiredKeys: string[] = [];
+  for (const key of Object.keys(shape)) {
+    const field = def.shape[key]!;
+    if (ctx.io === "input" ? inputOptin(field) === undefined : field._zod.optout === undefined) {
+      requiredKeys.push(key);
+    }
+  }
 
-  if (requiredKeys.size > 0) {
-    json.required = Array.from(requiredKeys);
+  if (requiredKeys.length > 0) {
+    json.required = requiredKeys;
   }
 
   // catchall

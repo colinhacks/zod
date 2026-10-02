@@ -51,6 +51,25 @@ test("z.instanceof().properties()", () => {
   expectTypeOf<z.infer<typeof W>>().toEqualTypeOf<URL & { search: string }>();
 });
 
+test("z.instanceof().properties() constrains the shape to the instance type", () => {
+  const file = z.instanceof(File).properties({ name: z.string(), size: z.number().max(1024) });
+  expectTypeOf<z.infer<typeof file>>().toEqualTypeOf<File & { name: string; size: number }>();
+
+  // @ts-expect-error no such property on File
+  z.instanceof(File).properties({ nmae: z.string() });
+
+  // @ts-expect-error File["size"] is a number
+  z.instanceof(File).properties({ size: z.string() });
+
+  // methods are out of the shape, so an object literal's inherited toString can't collide with the constraint
+  // @ts-expect-error
+  z.instanceof(File).properties({ text: z.any() });
+
+  // a literal still narrows a wider property
+  const png = z.instanceof(File).properties({ type: z.literal("image/png") });
+  expectTypeOf<z.infer<typeof png>>().toEqualTypeOf<File & { type: "image/png" }>();
+});
+
 test("z.properties spreads into .check()", () => {
   // the 4.5 array call sites: the check yields itself from Symbol.iterator
   const p = z.properties({ a: z.literal("x") });

@@ -13,10 +13,10 @@ import {
   isValidIPv6,
   isValidJWT,
   mergeValues,
-  parseURLObject,
   stripTabAndNewline,
   urlHostnameOk,
   urlProtocolOk,
+  validateURL,
 } from "./schemas.js";
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
@@ -772,7 +772,21 @@ const PATTERN_IS_COMPLETE: Set<string> = new Set([
 ]);
 
 // Returns the accessor holding the (possibly normalized) value after the check — url/normalize formats produce a new value like overwrite does. Never assigns to the incoming accessor: it may be a `const` or a property expression on user input.
-function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string {
+function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string;
+function generateStringFormatCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: StringFormatDef,
+  accessor: string,
+  needsValue: boolean
+): string | null;
+function generateStringFormatCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: StringFormatDef,
+  accessor: string,
+  needsValue = true
+): string | null {
   // Some string formats do runtime validation beyond their advertised pattern. For cheap pure utility checks, hoist the runtime function and call it so the fast path stays correct without cloning the utility logic into codegen.
   const fmt = def.format;
   if (fmt === "base64") {
@@ -820,7 +834,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     formatDef.protocol !== undefined
   ) {
     // Same three predicates the runtime calls, in the same order, so there is no second URL implementation to drift. Which options exist is known now, so the calls the runtime makes conditionally are emitted conditionally instead.
-    const parseConst = addConstant(ctx, parseURLObject);
+    const parseConst = addConstant(ctx, validateURL);
     const defConst = addConstant(ctx, def);
     const trimVar = newVar(ctx);
     const urlVar = newVar(ctx);
@@ -835,6 +849,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       const protocolConst = addConstant(ctx, urlProtocolOk);
       doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
     }
+    if (!needsValue) return null;
     const outputVar = newVar(ctx);
     const outputExpr = formatDef.normalize ? `${urlVar}.href` : `${addConstant(ctx, stripTabAndNewline)}(${trimVar})`;
     doc.write(`const ${outputVar} = ${outputExpr};`);
@@ -961,7 +976,7 @@ function generateCheck(
 
   switch (type) {
     case "string":
-      typeAccessor = generateStringCheck(doc, ctx, schema, accessor);
+      typeAccessor = generateStringCheck(doc, ctx, schema, accessor, buildsValue);
       break;
     case "number":
       typeAccessor = generateNumberCheck(doc, schema, accessor);
@@ -1092,13 +1107,19 @@ function generateCheck(
   return generateChecks(doc, ctx, schema, typeAccessor);
 }
 
-function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateStringCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  needsValue = true
+): string | null {
   doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
 
   // z.email() carries its format on the def, z.string().email() in def.checks; both route here so the format table has no second copy to drift from.
   const def = schema._zod.def as unknown as StringFormatDef & { format?: string };
   if (def.format === undefined) return accessor;
-  return generateStringFormatCheck(doc, ctx, def, accessor);
+  return generateStringFormatCheck(doc, ctx, def, accessor, needsValue);
 }
 
 function generateNumberCheck(doc: Doc, schema: SomeType, accessor: string): string {

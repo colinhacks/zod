@@ -1,5 +1,6 @@
 import * as core from "../core/index.js";
 import type { $ZodBigIntFormats } from "../core/index.js";
+import * as regexes from "../core/regexes.js";
 import * as util from "../core/util.js";
 import * as parse from "./parse.js";
 
@@ -224,8 +225,8 @@ export function url(params?: string | core.$ZodURLParams): ZodMiniURL {
 // @__NO_SIDE_EFFECTS__
 export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodMiniURL {
   return core._url(ZodMiniURL, {
-    protocol: core.regexes.httpProtocol,
-    hostname: core.regexes.domain,
+    protocol: regexes.httpProtocol,
+    hostname: regexes.domain,
     ...util.normalizeParams(params),
   });
 }
@@ -563,12 +564,19 @@ export function stringFormat<Format extends string>(
 
 // @__NO_SIDE_EFFECTS__
 export function hostname(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hostname"> {
-  return core._stringFormat(ZodMiniCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+  return core._stringFormat(ZodMiniCustomStringFormat, "hostname", regexes.hostname, _params) as any;
 }
 
 // @__NO_SIDE_EFFECTS__
 export function hex(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hex"> {
-  return core._stringFormat(ZodMiniCustomStringFormat, "hex", core.regexes.hex, _params) as any;
+  return core._stringFormat(ZodMiniCustomStringFormat, "hex", regexes.hex, _params) as any;
+}
+
+// @__NO_SIDE_EFFECTS__
+export function currencyCode(
+  _params?: string | core.$ZodStringFormatParams
+): ZodMiniCustomStringFormat<"currency_code"> {
+  return core._stringFormat(ZodMiniCustomStringFormat, "currency_code", regexes.currencyCode, _params) as any;
 }
 
 // @__NO_SIDE_EFFECTS__

@@ -46,6 +46,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON 字串",
     e164: "E.164 數值",
     credit_card: "信用卡號",
+    currency_code: "貨幣代碼",
     iban: "IBAN",
     jwt: "JWT",
     template_literal: "輸入",

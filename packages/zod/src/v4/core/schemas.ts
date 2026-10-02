@@ -628,10 +628,30 @@ export interface $ZodURL extends $ZodType {
 
 /** The `://` guard rejected the input before the URL constructor saw it. */
 export const URL_BAD_FORMAT = 1;
-/** The URL constructor rejected the input. */
+/** The URL parser rejected the input. */
 export const URL_UNPARSEABLE = 2;
 
-/** Parses a URL for `$ZodURL`, applying the one guard the URL constructor cannot express. Returns the parsed URL, or a code naming the stage that rejected it — the runtime needs that distinction to pick an issue note, and compiled code only needs to know it is not a URL. */
+export function canParseURL(input: string): boolean {
+  try {
+    if (typeof URL !== "undefined" && typeof URL.canParse === "function") return URL.canParse(input);
+    new URL(input);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function validateURL(
+  trimmed: string,
+  def: Pick<$ZodURLDef, "protocol" | "hostname" | "normalize">
+): URL | true | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE {
+  if (!("normalize" in def) && !("hostname" in def) && !("protocol" in def)) {
+    return canParseURL(trimmed) || URL_UNPARSEABLE;
+  }
+  return parseURLObject(trimmed, def);
+}
+
+/** Parses a URL while preserving the non-normalizing HTTP guard. */
 export function parseURLObject(
   trimmed: string,
   def: Pick<$ZodURLDef, "protocol" | "normalize">
@@ -642,6 +662,10 @@ export function parseURLObject(
   }
 
   try {
+    if (typeof URL !== "undefined") {
+      const URLStatic = URL as typeof URL & { parse?: (input: string) => URL | null };
+      if (typeof URLStatic.parse === "function") return URLStatic.parse(trimmed) ?? URL_UNPARSEABLE;
+    }
     // @ts-ignore
     return new URL(trimmed);
   } catch {
@@ -672,7 +696,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
-      const url = parseURLObject(trimmed, def);
+      const url = validateURL(trimmed, def);
 
       if (url === URL_BAD_FORMAT) {
         payload.issues.push({
@@ -694,6 +718,11 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
           inst,
           continue: !def.abort,
         });
+        return;
+      }
+
+      if (url === true) {
+        payload.value = stripTabAndNewline(trimmed);
         return;
       }
 
@@ -991,13 +1020,7 @@ const ipv6Alphabet = /^[0-9a-fA-F:.]+$/;
 
 export function isValidIPv6(value: string): boolean {
   if (!ipv6Alphabet.test(value)) return false;
-  try {
-    // @ts-ignore
-    new URL(`http://[${value}]`);
-    return true;
-  } catch {
-    return false;
-  }
+  return canParseURL(`http://[${value}]`);
 }
 
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
@@ -3397,8 +3420,11 @@ export type $InferZodRecordInput<
     : Record<core.input<Key> & PropertyKey, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
+  extends $ZodTypeInternals {
   def: $ZodRecordDef<Key, Value>;
+  // members rather than base type arguments, which TypeScript 7.1 reports as circular for `z.json()`
+  output: $InferZodRecordOutput<Key, Value>;
+  input: $InferZodRecordInput<Key, Value>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
   optin?: "optional" | undefined;
   optout?: "optional" | undefined;
@@ -4054,9 +4080,10 @@ export interface $ZodOptionalDef<T extends $ZodTypeRef = $ZodType> extends $ZodT
   innerType: T;
 }
 
-export interface $ZodOptionalInternals<T extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<$InferOutput<T> | undefined, $InferInput<T> | undefined> {
+export interface $ZodOptionalInternals<T extends $ZodTypeRef = $ZodType> extends $ZodTypeInternals {
   def: $ZodOptionalDef<T>;
+  output: $InferOutput<T> | undefined;
+  input: $InferInput<T> | undefined;
   optin: "optional" | "defaulted";
   optout: "optional";
   isst: never;
@@ -4212,8 +4239,9 @@ export interface $ZodDefaultDef<T extends $ZodTypeRef = $ZodType> extends $ZodTy
   defaultValue: util.NoUndefined<core.output<T>>;
 }
 
-export interface $ZodDefaultInternals<T extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<$InferOutput<T>>, $InferInput<T> | undefined> {
+export interface $ZodDefaultInternals<T extends $ZodTypeRef = $ZodType> extends $ZodTypeInternals {
+  output: util.NoUndefined<$InferOutput<T>>;
+  input: $InferInput<T> | undefined;
   def: $ZodDefaultDef<T>;
   optin: "defaulted";
   optout?: "optional" | undefined; // required
@@ -4279,8 +4307,9 @@ export interface $ZodPrefaultDef<T extends $ZodTypeRef = $ZodType> extends $ZodT
   defaultValue: core.input<T>;
 }
 
-export interface $ZodPrefaultInternals<T extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<$InferOutput<T>, $InferInput<T> | undefined> {
+export interface $ZodPrefaultInternals<T extends $ZodTypeRef = $ZodType> extends $ZodTypeInternals {
+  output: $InferOutput<T>;
+  input: $InferInput<T> | undefined;
   def: $ZodPrefaultDef<T>;
   optin: "defaulted";
   optout?: "optional" | undefined;
@@ -4326,9 +4355,10 @@ export interface $ZodNonOptionalDef<T extends $ZodTypeRef = $ZodType> extends $Z
   innerType: T;
 }
 
-export interface $ZodNonOptionalInternals<T extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<$InferOutput<T>>, util.NoUndefined<$InferInput<T>>> {
+export interface $ZodNonOptionalInternals<T extends $ZodTypeRef = $ZodType> extends $ZodTypeInternals {
   def: $ZodNonOptionalDef<T>;
+  output: util.NoUndefined<$InferOutput<T>>;
+  input: util.NoUndefined<$InferInput<T>>;
   isst: errors.$ZodIssueInvalidType;
   values: _$ZodTypeInternals["values"];
   optin: "optional" | undefined;
@@ -4477,8 +4507,9 @@ export interface $ZodCatchDef<T extends $ZodTypeRef = $ZodType> extends $ZodType
   catchValue: (ctx: $ZodCatchCtx) => unknown;
 }
 
-export interface $ZodCatchInternals<T extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<$InferOutput<T>, $InferInput<T>> {
+export interface $ZodCatchInternals<T extends $ZodTypeRef = $ZodType> extends $ZodTypeInternals {
+  output: $InferOutput<T>;
+  input: $InferInput<T>;
   def: $ZodCatchDef<T>;
   optin: _$ZodTypeInternals["optin"];
   optout: _$ZodTypeInternals["optout"];
@@ -4655,7 +4686,9 @@ export interface $ZodCodecDef<A extends $ZodTypeRef = $ZodType, B extends $ZodTy
 }
 
 export interface $ZodCodecInternals<A extends $ZodTypeRef = $ZodType, B extends $ZodTypeRef = $ZodType>
-  extends $ZodTypeInternals<$InferOutput<B>, $InferInput<A>> {
+  extends $ZodTypeInternals {
+  output: $InferOutput<B>;
+  input: $InferInput<A>;
   def: $ZodCodecDef<A, B>;
   isst: never;
   values: _$ZodTypeInternals["values"];
@@ -5403,4 +5436,5 @@ export type $ZodStringFormatTypes =
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
-  | $ZodCustomStringFormat<"hostname">;
+  | $ZodCustomStringFormat<"hostname">
+  | $ZodCustomStringFormat<"currency_code">;
