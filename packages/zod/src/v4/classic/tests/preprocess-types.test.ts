@@ -11,8 +11,11 @@ test("ZodPreprocess<B> assignable to ZodPipe<$ZodTransform, B>", () => {
 
 test("ZodPreprocess optin/optout defer to B", () => {
   const optionalInside = z.preprocess((v) => v, z.string().optional());
-  expectTypeOf<(typeof optionalInside)["_zod"]["optin"]>().toEqualTypeOf<"optional" | "defaulted">();
-  expectTypeOf<(typeof optionalInside)["_zod"]["optout"]>().toEqualTypeOf<"optional">();
+  expectTypeOf<(typeof optionalInside)["_zod"]["optin"]>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
+  expectTypeOf<(typeof optionalInside)["_zod"]["optout"]>().toEqualTypeOf<"optional" | undefined>();
+  const object = z.object({ value: optionalInside });
+  expectTypeOf<z.input<typeof object>>().toEqualTypeOf<{ value?: unknown }>();
+  expectTypeOf<z.output<typeof object>>().toEqualTypeOf<{ value?: string | undefined }>();
 
   const required = z.preprocess((v) => v, z.string());
   expectTypeOf<(typeof required)["_zod"]["optin"]>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
