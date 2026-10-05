@@ -593,6 +593,43 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("includes, startsWith and endsWith emit only a pattern, not a format", () => {
+    expect(z.toJSONSchema(z.string().includes("x"))).toEqual({
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "string",
+      pattern: "x",
+    });
+    expect(z.toJSONSchema(z.string().startsWith("x"))).toEqual({
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "string",
+      pattern: "^x.*",
+    });
+    expect(z.toJSONSchema(z.string().endsWith("x"))).toEqual({
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "string",
+      pattern: ".*x$",
+    });
+
+    // a real format survives these checks in either chain order, on every target
+    for (const target of ["draft-2020-12", "draft-7", "openapi-3.0"] as const) {
+      for (const [format, base, sub] of [
+        ["uri", z.url(), z.string()],
+        ["email", z.email(), z.string()],
+      ] as const) {
+        for (const check of ["includes", "startsWith", "endsWith"] as const) {
+          expect(z.toJSONSchema(base[check]("x"), { target })).toMatchObject({ format });
+          expect(z.toJSONSchema(sub[check]("x")[format === "uri" ? "url" : "email"](), { target })).toMatchObject({
+            format,
+          });
+        }
+      }
+    }
+
+    // lowercase and uppercase still emit their own format
+    expect(z.toJSONSchema(z.string().lowercase())).toMatchObject({ format: "lowercase" });
+    expect(z.toJSONSchema(z.string().uppercase())).toMatchObject({ format: "uppercase" });
+  });
+
   test("includes with position emits a pattern matching runtime semantics", () => {
     // String.prototype.includes(sub, position) matches `sub` at `position` OR
     // LATER, so the JSON Schema pattern must allow >= position leading chars.
