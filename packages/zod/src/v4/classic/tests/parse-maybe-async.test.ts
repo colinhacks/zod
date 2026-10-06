@@ -53,3 +53,40 @@ test("safeParseMaybeAsync awaits async refinements (failure)", async () => {
   expect(settled.success).toBe(false);
   if (!settled.success) expect(settled.error.issues[0].message).toBe("too short");
 });
+
+test("async is remembered per instance, not inherited by clones", async () => {
+  const schema = z.string().refine(async () => true);
+  await schema.parseMaybeAsync("a");
+  expect(schema._zod.asyncSeen).toBe(true);
+  expect(schema.clone()._zod.asyncSeen).toBeUndefined();
+});
+
+test("a union stays async once one branch has gone async", async () => {
+  const schema = z.union([z.number(), z.string().refine(async () => true)]);
+  expect(schema.parseMaybeAsync(1)).toBe(1);
+  await schema.parseMaybeAsync("a");
+  expect(schema.parseMaybeAsync(1)).toBeInstanceOf(Promise);
+});
+
+test("sync steps run twice only on the first async parse", async () => {
+  let n = 0;
+  const schema = z
+    .string()
+    .transform((v) => {
+      n++;
+      return v;
+    })
+    .refine(async () => true);
+  await schema.parseMaybeAsync("a");
+  expect(n).toBe(2);
+  await schema.parseMaybeAsync("a");
+  expect(n).toBe(3);
+});
+
+test("a user throw propagates sync and does not mark the schema async", () => {
+  const schema = z.string().refine(() => {
+    throw new Error("boom");
+  });
+  expect(() => schema.parseMaybeAsync("a")).toThrow("boom");
+  expect(schema._zod.asyncSeen).toBeUndefined();
+});
