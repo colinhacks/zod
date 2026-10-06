@@ -71,7 +71,7 @@ export interface ZodType<
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
   safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
-  /** Sync when possible, a Promise once async. Sync steps before the first async one run twice on the first async parse. */
+  /** Sync when possible, a Promise once async; once a schema instance goes async, later calls return a Promise. Sync checks and transforms before the first async one run twice on that first async parse. */
   parseMaybeAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.util.MaybeAsync<core.output<this>>;
   /** Safe variant of `parseMaybeAsync`. */
   safeParseMaybeAsync(
