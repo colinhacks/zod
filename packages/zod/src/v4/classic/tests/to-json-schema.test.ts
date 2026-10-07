@@ -1788,16 +1788,57 @@ describe("toJSONSchema", () => {
     const schema = z.tuple([]);
 
     const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020).not.toHaveProperty("prefixItems");
     expect(draft2020.items).toBe(false);
     expect(draft2020.maxItems).toBe(0);
 
     const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
-    expect(draft7.additionalItems).toBe(false);
+    expect(draft7).not.toHaveProperty("items");
+    expect(draft7).not.toHaveProperty("additionalItems");
     expect(draft7.maxItems).toBe(0);
+
+    const draft4 = z.toJSONSchema(schema, { target: "draft-4" });
+    expect(draft4).not.toHaveProperty("items");
+    expect(draft4).not.toHaveProperty("additionalItems");
+    expect(draft4.maxItems).toBe(0);
 
     const openapi = z.toJSONSchema(schema, { target: "openapi-3.0" });
     validateOpenAPI30Schema(openapi);
+    expect(openapi.items).toEqual({});
     expect(openapi.maxItems).toBe(0);
+  });
+
+  test("empty tuple with rest applies its schema to every item", () => {
+    const schema = z.tuple([]).rest(z.boolean());
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020).not.toHaveProperty("prefixItems");
+    expect(draft2020.items).toEqual({ type: "boolean" });
+
+    for (const target of ["draft-7", "draft-4"] as const) {
+      const result = z.toJSONSchema(schema, { target });
+      expect(result.items).toEqual({ type: "boolean" });
+      expect(result).not.toHaveProperty("additionalItems");
+    }
+
+    const openapi = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(openapi);
+    expect(openapi.items).toEqual({ type: "boolean" });
+  });
+
+  test("empty tuple with rest uses the emitted items path", () => {
+    const schema = z.tuple([]).rest(z.string());
+
+    for (const target of ["draft-2020-12", "draft-7", "draft-4", "openapi-3.0"] as const) {
+      const paths: string[] = [];
+      z.toJSONSchema(schema, {
+        target,
+        override: (ctx) => paths.push(ctx.path.join("/")),
+      });
+      expect(paths).toContain("items");
+      expect(paths).not.toContain("additionalItems");
+      expect(paths).not.toContain("items/0");
+    }
   });
 
   test("closed tuple length respects io direction with defaults", () => {
