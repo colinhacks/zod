@@ -97,6 +97,13 @@ test("failing when map is bigger than max() ", () => {
   expect(result.success).toEqual(false);
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error!.issues[0].code).toEqual("too_big");
+  const bad = new Map([
+    [1, 1],
+    [2, 2],
+  ]);
+  const capped = z.map(z.string(), z.string()).max(1);
+  expect(capped.safeParse(bad).error!.issues).toMatchObject([{ code: "too_big" }]);
+  expect(capped.safeParse(new Set([1, 2])).error!.issues[0]).toMatchObject({ code: "invalid_type", expected: "map" });
 });
 
 test("failing when map does not match size() ", () => {
