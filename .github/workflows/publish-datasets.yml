@@ -1,41 +1,70 @@
 # .github/workflows/publish-datasets.yml
 
-name: Publish @zod/codes
+name: Stage @zod/codes on npm
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "packages/codes/package.json"
+  # dispatch only, like release.yml: a version bump on main is inert, so a stolen push credential cannot start a run by landing a commit
   workflow_dispatch:
+
+# one run at a time, so two dispatches cannot stage next to each other
+concurrency:
+  group: publish-datasets
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  publish:
+  stage:
     runs-on: ubuntu-latest
-    # the reviewed environment the zod release publishes through; npm's trusted publisher for the package is bound to it
+    # the environment only deploys main and the trusted publisher for @zod/codes is bound to it and stage-only, so this job can put a version in npm's staged queue and nothing else; a maintainer approves it with 2FA
     environment: npm
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
     steps:
+      # a step, not a job-level `if:`, so a dispatch from another ref fails loudly instead of going green having staged nothing
+      - name: Refuse to stage from any ref but main
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::publish-datasets.yml runs from main only, got $GITHUB_REF"; exit 1; }
       - uses: actions/checkout@v7
       - run: printf 'latest\n' > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
           nub-version: "0.8.3"
           node-version: "latest"
+          registry-url: https://registry.npmjs.org/
+      # `npm stage publish` landed in npm 11.15, later than the npm bundled with any Node the action provisions
+      - name: Install an npm CLI that can stage
+        run: | # zizmor: ignore[adhoc-packages] the npm CLI itself, pinned to the major that carries `npm stage`
+          npm install -g npm@11
+          v="$(npm --version)"
+          [ "$(printf '%s\n11.15.0\n' "$v" | sort -V | head -1)" = "11.15.0" ] \
+            || { echo "::error::npm $v cannot stage (need >= 11.15)"; exit 1; }
+          echo "npm $v at $(command -v npm)"
       - run: nub install --frozen-lockfile
       - run: nub run build
       - run: nub exec --node vitest run packages/codes
-      # a version already on the registry is skipped, so a re-run publishes nothing twice
-      - name: Publish the version if it is not on npm yet
+      - id: version
+        run: echo "version=$(jq -r .version packages/codes/package.json)" >> "$GITHUB_OUTPUT"
+      # a version the registry already serves is skipped, and one already in the staged queue counts as success
+      - name: Stage @zod/codes on npm
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: bash .github/scripts/npm-stage-publish.sh packages/codes --provenance --access public
+      - name: Say how to approve
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          version=$(jq -r .version packages/codes/package.json)
-          if curl -sf "https://registry.npmjs.org/@zod%2Fcodes/$version" > /dev/null; then
-            echo "@zod/codes@$version is already on npm"
-          else
-            (cd packages/codes && nub publish --provenance --no-git-checks)
-          fi
+          # shellcheck disable=SC2016  # the backticks are markdown for the step summary, not command substitution
+          {
+            echo "## Staged on npm, waiting for approval"
+            echo
+            echo "\`@zod/codes@$VERSION\` is not installable until a maintainer approves it with 2FA."
+            echo
+            echo '```'
+            echo "stager approve '@zod/codes@$VERSION'"
+            echo '```'
+            echo
+            echo "Without stager: \`npm stage list @zod/codes\`, then \`npm stage approve <id>\`, or the Staged Packages tab on npmjs.com."
+          } >> "$GITHUB_STEP_SUMMARY"
