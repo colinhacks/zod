@@ -1551,6 +1551,12 @@ function generateNullableCheck(
   return outputVar;
 }
 
+function generateSizeGate(doc: Doc, schema: SomeType, size: string): void {
+  for (const [max, check] of util.sizeCaps(schema._zod.def.checks)) {
+    doc.write(`if (${size} > ${numericOperand(max, check._zod.def.check)}) return INVALID;`);
+  }
+}
+
 function generateArrayCheck(
   doc: Doc,
   ctx: CompileContext,
@@ -1560,6 +1566,7 @@ function generateArrayCheck(
 ): string | null {
   const def = schema._zod.def as unknown as { element: SomeType };
   doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
+  generateSizeGate(doc, schema, `${accessor}.length`);
 
   // Build a new array with validated/transformed elements.
   const outputVar = buildsValue ? newVar(ctx) : null;
@@ -2094,6 +2101,7 @@ function generateMapCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acces
   const def = schema._zod.def as unknown as { keyType: SomeType; valueType: SomeType };
 
   doc.write(`if (!(${accessor} instanceof Map)) return INVALID;`);
+  generateSizeGate(doc, schema, `${accessor}.size`);
 
   const outputVar = newVar(ctx);
   const kVar = newVar(ctx);
@@ -2115,6 +2123,7 @@ function generateSetCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acces
   const def = schema._zod.def as unknown as { valueType: SomeType };
 
   doc.write(`if (!(${accessor} instanceof Set)) return INVALID;`);
+  generateSizeGate(doc, schema, `${accessor}.size`);
 
   const outputVar = newVar(ctx);
   const valVar = newVar(ctx);
