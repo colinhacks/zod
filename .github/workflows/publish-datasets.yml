@@ -4,32 +4,73 @@ name: Stage @zod/codes on npm
 on:
   # Dispatch only, like release.yml: a version bump on main is inert, so a stolen push credential cannot start a run by landing a commit.
   #
-  # The first version is not this workflow's to stage. npm binds a trusted publisher to a package that already exists, so a maintainer creates the package by hand: `npm stage publish --access public` from `packages/codes` under a logged-in session (this also publishes a public placeholder `0.0.0-stage`), approve it with 2FA, then `npm trust github @zod/codes --file publish-datasets.yml --repo colinhacks/zod --allow-stage-publish` bound to the `npm` environment and stage-only. An unvalidated publisher expires 48 hours after it is created, so dispatch and approve the next version inside that window.
+  # The first version is not this workflow's to stage. npm binds a trusted publisher to a package that already exists, so a maintainer creates the package by hand: `nub run build`, then `npm stage publish --access public` from `packages/codes` under a logged-in session (this also publishes a public placeholder `0.0.0-stage`), approve it with 2FA, then `npm trust github @zod/codes --file publish-datasets.yml --repo colinhacks/zod --env npm --allow-stage-publish`. An unvalidated publisher expires 48 hours after it is created, so bump the version, dispatch this workflow and approve the staged version inside that window.
   workflow_dispatch:
+
+permissions: {}
 
 # one run at a time, so two dispatches cannot stage next to each other
 concurrency:
   group: publish-datasets
   cancel-in-progress: false
 
-permissions:
-  contents: read
-
 jobs:
-  stage:
+  # install, build and the tests run third-party code, so this job holds no OIDC token and hands the built package over as an artifact
+  build:
     runs-on: ubuntu-latest
-    # the environment only deploys main, and the trusted publisher for @zod/codes must be bound to it, to this file, and stage-only, so this job can put a version in npm's staged queue and nothing else; a maintainer approves it with 2FA
-    environment: npm
-    timeout-minutes: 30
+    timeout-minutes: 20
     permissions:
       contents: read
-      id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      served: ${{ steps.version.outputs.served }}
     steps:
       # a step, not a job-level `if:`, so a dispatch from another ref fails loudly instead of going green having staged nothing
       - name: Refuse to stage from any ref but main
         run: |
           [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::publish-datasets.yml runs from main only, got $GITHUB_REF"; exit 1; }
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: printf 'latest\n' > .nvmrc
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+          node-version: "latest"
+      - run: nub install --frozen-lockfile
+      - run: nub run build
+      - run: nub exec --node vitest run packages/codes
+      - id: version
+        run: |
+          version=$(jq -r .version packages/codes/package.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if curl -sf "https://registry.npmjs.org/@zod%2fcodes/$version" > /dev/null; then
+            echo "served=true" >> "$GITHUB_OUTPUT"
+            echo "@zod/codes@$version is already on npm; nothing to stage"
+          else
+            echo "served=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.served != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: codes
+          path: packages/codes
+          retention-days: 1
+
+  # the only job with an OIDC token, and it installs nothing: the environment only deploys main, and the trusted publisher for @zod/codes must be bound to it, to this file, and stage-only, so this job can put a version in npm's staged queue and nothing else; a maintainer approves it with 2FA
+  stage:
+    needs: build
+    if: needs.build.outputs.served != 'true'
+    runs-on: ubuntu-latest
+    environment: npm
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - run: printf 'latest\n' > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
@@ -44,19 +85,17 @@ jobs:
           [ "$(printf '%s\n11.15.0\n' "$v" | sort -V | head -1)" = "11.15.0" ] \
             || { echo "::error::npm $v cannot stage (need >= 11.15)"; exit 1; }
           echo "npm $v at $(command -v npm)"
-      - run: nub install --frozen-lockfile
-      - run: nub run build
-      - run: nub exec --node vitest run packages/codes
-      - id: version
-        run: echo "version=$(jq -r .version packages/codes/package.json)" >> "$GITHUB_OUTPUT"
-      # a version the registry already serves is skipped, and one already in the staged queue counts as success
+      - uses: actions/download-artifact@v8
+        with:
+          name: codes
+          path: packages/codes
       - name: Stage @zod/codes on npm
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: bash .github/scripts/npm-stage-publish.sh packages/codes --provenance --access public
       - name: Say how to approve
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
           # shellcheck disable=SC2016  # the backticks are markdown for the step summary, not command substitution
           {

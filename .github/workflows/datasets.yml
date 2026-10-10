@@ -6,9 +6,7 @@ on:
     - cron: "23 6 * * 1"
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 # one run at a time, so a manual dispatch and the schedule cannot push the branch out of order
 concurrency:
@@ -20,11 +18,19 @@ env:
   TRACKED: packages/codes/src/currencies.ts packages/codes/src/countries.ts packages/codes/src/languages.ts packages/codes/package.json packages/zod/src/v4/core/regexes.ts
 
 jobs:
-  refresh:
+  # install, build and the tests run third-party code, so this job holds no write token and hands its result over as a patch
+  generate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+      title: ${{ steps.update.outputs.title }}
     steps:
-      # the token stays out of .git/config, so install, build and the tests run without it; only the push below holds it
+      - name: Refuse to run from any ref but main
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::datasets.yml runs from main only, got $GITHUB_REF"; exit 1; }
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
@@ -38,37 +44,90 @@ jobs:
         env:
           DATASETS_SUMMARY: /tmp/summary.md
         run: nub run update:datasets
-      # nothing to do when main already carries the data, or when the open generated PR does. That PR is left alone only while it is one commit over the tracked paths with this data; anything else on its branch is replaced by the force-push below
       - id: diff
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          changed=true
-          if git diff --quiet -- $TRACKED; then
-            changed=false
-          elif [ -n "$(gh pr list --head datasets-refresh --state open --json number --jq '.[0].number')" ]; then
-            allowed=$(jq -nc '$ARGS.positional' --args $TRACKED)
-            if [ "$(gh pr view datasets-refresh --json files,commits --jq "(([.files[].path] - $allowed) | length) == 0 and (.commits | length) == 1")" = "true" ] \
-              && git fetch -q origin datasets-refresh && git diff --quiet FETCH_HEAD -- $TRACKED; then
-              changed=false
-            fi
+          read -ra tracked <<< "$TRACKED"
+          if git diff --quiet -- "${tracked[@]}"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --binary -- "${tracked[@]}" > /tmp/refresh.patch
           fi
-          echo "changed=$changed" >> "$GITHUB_OUTPUT"
       - if: steps.diff.outputs.changed == 'true'
         run: nub run build
       # a PR opened with the workflow token never triggers the test workflow, so the suites that read the data run here
       - if: steps.diff.outputs.changed == 'true'
         run: nub exec --node vitest run packages/codes packages/datasets packages/zod/src/v4/classic/tests/string.test.ts packages/zod/src/v4/mini/tests/string.test.ts packages/zod/src/v4/classic/tests/to-json-schema.test.ts
       - if: steps.diff.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: refresh
+          path: |
+            /tmp/refresh.patch
+            /tmp/summary.md
+          retention-days: 1
+
+  # the only job with a write token, and it runs nothing from the repository: a fresh checkout, the patch from above, git and gh
+  propose:
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # the open generated PR, if any; a fork branch of the same name is not it
+      - id: open
+        run: echo "number=$(gh pr list --head datasets-refresh --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository | not))[0].number // empty')" >> "$GITHUB_OUTPUT"
+      # main already carries the data, so an open generated PR is stale
+      - if: needs.generate.outputs.changed != 'true' && steps.open.outputs.number != ''
         env:
-          GH_TOKEN: ${{ github.token }}
-          HUSKY: "0"
-          TITLE: ${{ steps.update.outputs.title }}
+          NUMBER: ${{ steps.open.outputs.number }}
+        run: |
+          gh pr close "$NUMBER" --comment "main already carries the current data."
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/datasets-refresh"
+      - if: needs.generate.outputs.changed == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: refresh
+          path: /tmp
+      - if: needs.generate.outputs.changed == 'true'
+        run: git apply --binary /tmp/refresh.patch
+      # the open PR is left alone while it is one commit over the tracked paths carrying this data; anything else on its branch is replaced
+      - id: gate
+        if: needs.generate.outputs.changed == 'true'
+        env:
+          NUMBER: ${{ steps.open.outputs.number }}
+        run: |
+          read -ra tracked <<< "$TRACKED"
+          replace=true
+          if [ -n "$NUMBER" ]; then
+            allowed=$(jq -nc '$ARGS.positional' --args "${tracked[@]}")
+            head=$(gh pr view "$NUMBER" --json files,commits,headRefOid --jq "if (([.files[].path] - $allowed) | length) == 0 and (.commits | length) == 1 then .headRefOid else empty end")
+            if [ -n "$head" ] && git fetch -q origin "$head" && git diff --quiet FETCH_HEAD -- "${tracked[@]}"; then
+              replace=false
+            fi
+          fi
+          echo "replace=$replace" >> "$GITHUB_OUTPUT"
+      - if: needs.generate.outputs.changed == 'true' && steps.gate.outputs.replace == 'true'
+        env:
+          NUMBER: ${{ steps.open.outputs.number }}
+          TITLE: ${{ needs.generate.outputs.title }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          read -ra tracked <<< "$TRACKED"
           git checkout -B datasets-refresh
-          git add $TRACKED
+          git add "${tracked[@]}"
           git commit -m "$TITLE"
           git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/datasets-refresh
-          gh pr create --base main --head datasets-refresh --title "$TITLE" --body-file /tmp/summary.md || gh pr edit datasets-refresh --title "$TITLE" --body-file /tmp/summary.md
+          if [ -n "$NUMBER" ]; then
+            gh pr edit "$NUMBER" --title "$TITLE" --body-file /tmp/summary.md
+          else
+            gh pr create --base main --head datasets-refresh --title "$TITLE" --body-file /tmp/summary.md
+          fi

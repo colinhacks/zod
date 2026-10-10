@@ -41,13 +41,16 @@ export function parseListOne(xml: string): { published: string; currencies: SixC
     // the codes feed a regex and a literal union, so a malformed one is a broken or poisoned list
     if (!CODE.test(code) || !NUMERIC.test(numeric)) throw new Error(`malformed currency entry: ${code} ${numeric}`);
     const minor = field(entry!, "CcyMnrUnts");
+    // list three already spells the flag in German, so any other spelling is a changed export rather than a non-fund
+    const fund = entry!.match(/<CcyNm IsFund="([^"]*)"/)?.[1];
+    if (fund !== undefined && !/^(?:true|WAHR)$/.test(fund))
+      throw new Error(`unknown IsFund value for ${code}: ${fund}`);
     const currency: SixCurrency = {
       code,
       numeric,
       name: field(entry!, "CcyNm") ?? "",
       minorUnits: minor && /^\d+$/.test(minor) ? Number(minor) : null,
-      // list three already spells the flag in German
-      fund: /<CcyNm IsFund="(?:true|WAHR)"/.test(entry!),
+      fund: fund !== undefined,
     };
     const previous = seen.get(code);
     if (previous && JSON.stringify(previous) !== JSON.stringify(currency))

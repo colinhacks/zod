@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { parseCodeMappings } from "./cldr.js";
+import { buildCurrencies } from "./currency.js";
 import { readCodes, tuple } from "./emit.js";
 import { parseRegistry } from "./iana.js";
 import { parseListOne, parseListThree } from "./six.js";
@@ -32,6 +33,9 @@ test("six lists", () => {
   expect(() => parseListOne(listOne("2").replace("<Ccy>XAU</Ccy>", "<Ccy>)|(</Ccy>"))).toThrow(
     "malformed currency entry"
   );
+  expect(() => parseListOne(listOne("2").replace('IsFund="WAHR"', 'IsFund="yes"'))).toThrow(
+    "unknown IsFund value for XAU"
+  );
   const historic = (date: string) =>
     `<HstrcCcyNtry><CtryNm>A</CtryNm><CcyNm>Afghani</CcyNm><Ccy>AFA</Ccy><CcyNbr>004</CcyNbr><WthdrwlDt>${date}</WthdrwlDt></HstrcCcyNtry>`;
   const listThree = `<ISO_4217 Pblshd="2026-01-01"><HstrcCcyTbl>${historic("2001-05")}${historic("2003-01")}${historic("1978 to 1981")}</HstrcCcyTbl></ISO_4217>`;
@@ -39,6 +43,12 @@ test("six lists", () => {
     { code: "AFA", numeric: "004", name: "Afghani", withdrawn: "2003-01" },
   ]);
   expect(parseListThree(listThree.replace("2003-01", "2001 to 2004")).withdrawn[0]?.withdrawn).toBe("2001 to 2004");
+  const built = buildCurrencies(
+    parseListOne(listOne("2")),
+    parseListThree(listThree.replace("2026-01-01", "2026-03-03"))
+  );
+  expect(built).toMatchObject({ published: "2026-03-03", codes: ["CLF", "EUR", "XAU"] });
+  expect(built.withdrawn.map((w) => w.code)).toEqual(["AFA"]);
 });
 
 test("cldr code mappings and the emitted tuple", () => {
