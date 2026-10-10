@@ -1001,7 +1001,7 @@ export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
 export function pick<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
   mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
-): ZodMiniObject<util.Flatten<Pick<T["shape"], keyof T["shape"] & keyof M>>, T["_zod"]["config"]> {
+): ZodMiniObject<util.PickShape<T["shape"], M>, T["_zod"]["config"]> {
   return util.pick(schema, mask as any);
 }
 
@@ -1011,7 +1011,7 @@ export function pick<T extends ZodMiniObject, M extends util.Mask<keyof T["shape
 export function omit<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
   mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
-): ZodMiniObject<util.Flatten<Omit<T["shape"], keyof M>>, T["_zod"]["config"]> {
+): ZodMiniObject<util.OmitShape<T["shape"], M>, T["_zod"]["config"]> {
   return util.omit(schema, mask);
 }
 
