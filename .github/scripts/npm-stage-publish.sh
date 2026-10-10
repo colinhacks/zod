@@ -29,7 +29,8 @@ fi
 echo "staging $name@$version"
 out="$(mktemp)"
 trap 'rm -f "$out"' EXIT
-if (cd "$dir" && npm stage publish "$@") > "$out" 2>&1; then
+# verbose, because npm reports a failed OIDC token exchange only at that level and otherwise falls through to a bare E401
+if (cd "$dir" && npm stage publish --loglevel verbose "$@") > "$out" 2>&1; then
   cat "$out"
   exit 0
 fi
