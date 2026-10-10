@@ -1612,11 +1612,11 @@ export interface ZodObject<
 
   pick<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
-  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
+  ): ZodObject<util.PickShape<Shape, M>, Config>;
 
   omit<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
-  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
+  ): ZodObject<util.OmitShape<Shape, M>, Config>;
 
   partial(): ZodObject<
     {

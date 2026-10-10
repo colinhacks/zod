@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import ts from "typescript";
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
@@ -209,3 +211,40 @@ test("omit - throws error on schema with refine", () => {
     ".omit() cannot be used on object schemas containing refinements"
   );
 });
+
+test("pick, omit, extend and merge keep the shape's key order", () => {
+  // checking zod's source first creates `type` and `message` as literal types, so a key union sorts them first
+  const file = fileURLToPath(new URL("./key-order.fixture.ts", import.meta.url));
+  const source = `import * as z from "../index.js";
+const A = z.object({ zeta: z.string(), alpha: z.string(), type: z.string(), message: z.string() });
+export const pick = A.pick({ zeta: true, alpha: true, type: true });
+export const omit = A.omit({ alpha: true });
+export const extend = A.extend({ alpha: z.number() });
+export const merge = A.merge(z.object({ alpha: z.number(), extra: z.boolean() }));`;
+  const options: ts.CompilerOptions = {
+    strict: true,
+    noEmit: true,
+    skipLibCheck: true,
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+  };
+  const host = ts.createCompilerHost(options);
+  const getSourceFile = host.getSourceFile;
+  host.getSourceFile = (name, ...rest) =>
+    name === file ? ts.createSourceFile(name, source, ts.ScriptTarget.ES2022) : getSourceFile(name, ...rest);
+  const program = ts.createProgram([file], options, host);
+  expect(program.getSemanticDiagnostics()).toEqual([]);
+  const checker = program.getTypeChecker();
+  const exports = checker.getExportsOfModule(checker.getSymbolAtLocation(program.getSourceFile(file)!)!);
+  const keys = (name: string) => {
+    const schema = checker.getTypeOfSymbol(exports.find((s) => s.name === name)!);
+    const shape = checker.getTypeOfSymbol(checker.getPropertyOfType(schema, "shape")!);
+    return checker.getPropertiesOfType(shape).map((p) => p.name);
+  };
+
+  expect(keys("pick")).toEqual(["zeta", "alpha", "type"]);
+  expect(keys("omit")).toEqual(["zeta", "type", "message"]);
+  expect(keys("extend")).toEqual(["zeta", "alpha", "type", "message"]);
+  expect(keys("merge")).toEqual(["zeta", "alpha", "type", "message", "extra"]);
+}, 60_000);

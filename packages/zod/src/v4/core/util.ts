@@ -206,11 +206,13 @@ export type Extend<A extends SomeObject, B extends SomeObject> = Flatten<
   keyof A & keyof B extends never
     ? A & B
     : {
-        [K in keyof A as K extends keyof B ? never : K]: A[K];
-      } & {
-        [K in keyof B]: B[K];
+        // an overridden key keeps its position in A
+        [K in keyof (A & B)]: K extends keyof B ? B[K] : A[K & keyof A];
       }
 >;
+// key remapping keeps the shape's key order, which Pick over a key union does not
+export type PickShape<T, M> = Flatten<{ [K in keyof T as K extends keyof M ? K : never]: T[K] }>;
+export type OmitShape<T, M> = Flatten<{ [K in keyof T as K extends keyof M ? never : K]: T[K] }>;
 
 export type TupleItems = ReadonlyArray<schemas.SomeType>;
 export type AnyFunc = (...args: any[]) => any;
