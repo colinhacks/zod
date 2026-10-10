@@ -2,7 +2,9 @@
 
 name: Stage @zod/codes on npm
 on:
-  # dispatch only, like release.yml: a version bump on main is inert, so a stolen push credential cannot start a run by landing a commit
+  # Dispatch only, like release.yml: a version bump on main is inert, so a stolen push credential cannot start a run by landing a commit.
+  #
+  # The first version is not this workflow's to stage. npm binds a trusted publisher to a package that already exists, so a maintainer creates the package by hand: `npm stage publish --access public` from `packages/codes` under a logged-in session (this also publishes a public placeholder `0.0.0-stage`), approve it with 2FA, then `npm trust github @zod/codes --file publish-datasets.yml --repo colinhacks/zod --allow-stage-publish` bound to the `npm` environment and stage-only. An unvalidated publisher expires 48 hours after it is created, so dispatch and approve the next version inside that window.
   workflow_dispatch:
 
 # one run at a time, so two dispatches cannot stage next to each other
@@ -16,7 +18,7 @@ permissions:
 jobs:
   stage:
     runs-on: ubuntu-latest
-    # the environment only deploys main and the trusted publisher for @zod/codes is bound to it and stage-only, so this job can put a version in npm's staged queue and nothing else; a maintainer approves it with 2FA
+    # the environment only deploys main, and the trusted publisher for @zod/codes must be bound to it, to this file, and stage-only, so this job can put a version in npm's staged queue and nothing else; a maintainer approves it with 2FA
     environment: npm
     timeout-minutes: 30
     permissions:

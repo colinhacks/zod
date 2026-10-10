@@ -13,6 +13,9 @@ export interface SixWithdrawn {
   withdrawn: string;
 }
 
+const CODE = /^[A-Z]{3}$/;
+const NUMERIC = /^\d{3}$/;
+
 // the name element carries an IsFund attribute on fund codes, so the tag match allows attributes
 const field = (entry: string, tag: string): string | undefined =>
   entry.match(new RegExp(`<${tag}(?: [^>]*)?>([^<]*)</${tag}>`))?.[1]?.trim();
@@ -25,19 +28,26 @@ function publishedOn(xml: string, root: string): string {
 
 const byCode = <T extends { code: string }>(a: T, b: T): number => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0);
 
+// withdrawal dates come as YYYY-MM or "YYYY to YYYY", so the latest is the one whose last year is greatest
+const withdrawnKey = (date: string): string => `${date.match(/\d{4}/g)?.at(-1) ?? ""} ${date}`;
+
 export function parseListOne(xml: string): { published: string; currencies: SixCurrency[] } {
   const seen = new Map<string, SixCurrency>();
   for (const [, entry] of xml.matchAll(/<CcyNtry>([\s\S]*?)<\/CcyNtry>/g)) {
     const code = field(entry!, "Ccy");
     // entries without a currency, like Antarctica
     if (!code) continue;
+    const numeric = field(entry!, "CcyNbr") ?? "";
+    // the codes feed a regex and a literal union, so a malformed one is a broken or poisoned list
+    if (!CODE.test(code) || !NUMERIC.test(numeric)) throw new Error(`malformed currency entry: ${code} ${numeric}`);
     const minor = field(entry!, "CcyMnrUnts");
     const currency: SixCurrency = {
       code,
-      numeric: field(entry!, "CcyNbr") ?? "",
+      numeric,
       name: field(entry!, "CcyNm") ?? "",
       minorUnits: minor && /^\d+$/.test(minor) ? Number(minor) : null,
-      fund: /<CcyNm IsFund="true"/.test(entry!),
+      // list three already spells the flag in German
+      fund: /<CcyNm IsFund="(?:true|WAHR)"/.test(entry!),
     };
     const previous = seen.get(code);
     if (previous && JSON.stringify(previous) !== JSON.stringify(currency))
@@ -54,9 +64,12 @@ export function parseListThree(xml: string): { published: string; withdrawn: Six
     const code = field(entry!, "Ccy");
     const withdrawn = field(entry!, "WthdrwlDt");
     if (!code || !withdrawn) continue;
+    const numeric = field(entry!, "CcyNbr") ?? null;
+    if (!CODE.test(code) || (numeric !== null && !NUMERIC.test(numeric)))
+      throw new Error(`malformed withdrawn entry: ${code} ${numeric}`);
     const previous = seen.get(code);
-    if (previous && previous.withdrawn >= withdrawn) continue;
-    seen.set(code, { code, numeric: field(entry!, "CcyNbr") ?? null, name: field(entry!, "CcyNm") ?? "", withdrawn });
+    if (previous && withdrawnKey(previous.withdrawn) >= withdrawnKey(withdrawn)) continue;
+    seen.set(code, { code, numeric, name: field(entry!, "CcyNm") ?? "", withdrawn });
   }
   return { published: publishedOn(xml, "ISO_4217"), withdrawn: [...seen.values()].sort(byCode) };
 }

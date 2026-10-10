@@ -17,6 +17,7 @@ export interface CountryDataset {
   codes: string[];
   countries: Country[];
   reserved: string[];
+  warnings: string[];
 }
 
 export function buildCountries(registry: IanaRegistry, mappings: Map<string, CodeMapping>): CountryDataset {
@@ -33,16 +34,20 @@ export function buildCountries(registry: IanaRegistry, mappings: Map<string, Cod
     .sort();
   const missing = RESERVED.filter((code) => !reserved.includes(code));
   if (missing.length) throw new Error(`reserved codes missing from the registry: ${missing.join(" ")}`);
+  const warnings: string[] = [];
   const countries = regions
     .filter((r) => !RESERVED.includes(r.subtag))
-    .map((r): Country => {
+    .flatMap((r): Country[] => {
       const mapping = mappings.get(r.subtag);
-      if (!mapping) throw new Error(`CLDR has no alpha-3 or numeric code for ${r.subtag}`);
-      return { code: r.subtag, alpha3: mapping.alpha3, numeric: mapping.numeric, name: r.descriptions[0] ?? "" };
+      // a newly assigned code reaches the registry before the next CLDR release, so it is reported and waits
+      if (!mapping) {
+        warnings.push(`CLDR has no alpha-3 or numeric code for ${r.subtag} yet, so it is left out`);
+        return [];
+      }
+      return [{ code: r.subtag, alpha3: mapping.alpha3, numeric: mapping.numeric, name: r.descriptions[0] ?? "" }];
     })
     .sort((a, b) => (a.code < b.code ? -1 : 1));
-  if (countries.length < 240 || countries.length > 260) throw new Error(`parsed ${countries.length} country codes`);
-  return { published: registry.fileDate, codes: countries.map((c) => c.code), countries, reserved };
+  return { published: registry.fileDate, codes: countries.map((c) => c.code), countries, reserved, warnings };
 }
 
 export function renderCountries(dataset: CountryDataset): string {

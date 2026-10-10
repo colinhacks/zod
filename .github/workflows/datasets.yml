@@ -16,13 +16,18 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GENERATED: packages/codes/src/currencies.ts packages/codes/src/countries.ts packages/codes/src/languages.ts
+  # everything a refresh may change; the generated PR carries these paths and nothing else
+  TRACKED: packages/codes/src/currencies.ts packages/codes/src/countries.ts packages/codes/src/languages.ts packages/codes/package.json packages/zod/src/v4/core/regexes.ts
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
+      # the token stays out of .git/config, so install, build and the tests run without it; only the push below holds it
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - run: printf 'latest\n' > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
@@ -33,23 +38,27 @@ jobs:
         env:
           DATASETS_SUMMARY: /tmp/summary.md
         run: nub run update:datasets
-      # nothing to do when main already carries the data, or when the open generated PR does: only the generated modules are compared, so an unrelated edit elsewhere does not replace a reviewed head
+      # nothing to do when main already carries the data, or when the open generated PR does. That PR is left alone only while it is one commit over the tracked paths with this data; anything else on its branch is replaced by the force-push below
       - id: diff
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           changed=true
-          if git diff --quiet -- $GENERATED; then
+          if git diff --quiet -- $TRACKED; then
             changed=false
-          elif [ -n "$(gh pr list --head datasets-refresh --state open --json number --jq '.[0].number')" ] && git fetch -q origin datasets-refresh && git diff --quiet FETCH_HEAD -- $GENERATED; then
-            changed=false
+          elif [ -n "$(gh pr list --head datasets-refresh --state open --json number --jq '.[0].number')" ]; then
+            allowed=$(jq -nc '$ARGS.positional' --args $TRACKED)
+            if [ "$(gh pr view datasets-refresh --json files,commits --jq "(([.files[].path] - $allowed) | length) == 0 and (.commits | length) == 1")" = "true" ] \
+              && git fetch -q origin datasets-refresh && git diff --quiet FETCH_HEAD -- $TRACKED; then
+              changed=false
+            fi
           fi
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
       - if: steps.diff.outputs.changed == 'true'
         run: nub run build
       # a PR opened with the workflow token never triggers the test workflow, so the suites that read the data run here
       - if: steps.diff.outputs.changed == 'true'
-        run: nub exec --node vitest run packages/codes packages/zod/src/v4/classic/tests/string.test.ts packages/zod/src/v4/mini/tests/string.test.ts packages/zod/src/v4/classic/tests/to-json-schema.test.ts
+        run: nub exec --node vitest run packages/codes packages/datasets packages/zod/src/v4/classic/tests/string.test.ts packages/zod/src/v4/mini/tests/string.test.ts packages/zod/src/v4/classic/tests/to-json-schema.test.ts
       - if: steps.diff.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -59,7 +68,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B datasets-refresh
-          git add $GENERATED packages/codes/package.json packages/zod/src/v4/core/regexes.ts
+          git add $TRACKED
           git commit -m "$TITLE"
-          git push --force origin datasets-refresh
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/datasets-refresh
           gh pr create --base main --head datasets-refresh --title "$TITLE" --body-file /tmp/summary.md || gh pr edit datasets-refresh --title "$TITLE" --body-file /tmp/summary.md

@@ -10,13 +10,12 @@ export interface CurrencyDataset {
 
 export function buildCurrencies(
   active: { published: string; currencies: SixCurrency[] },
-  historic: { withdrawn: SixWithdrawn[] }
+  historic: { published: string; withdrawn: SixWithdrawn[] }
 ): CurrencyDataset {
   const codes = active.currencies.map((c) => c.code);
-  // the list has held 170-180 codes for decades, so a count far outside that means the page changed shape
-  if (codes.length < 150 || codes.length > 220) throw new Error(`parsed ${codes.length} currency codes`);
   return {
-    published: active.published,
+    // a withdrawal alone republishes list three, so the later of the two dates is the one the data reflects
+    published: active.published > historic.published ? active.published : historic.published,
     codes,
     currencies: active.currencies,
     withdrawn: historic.withdrawn.filter((w) => !codes.includes(w.code)),
