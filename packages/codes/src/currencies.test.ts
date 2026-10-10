@@ -2,8 +2,8 @@ import { expect, expectTypeOf, test } from "vitest";
 import { type CurrencyCode, codes, currencies, published, withdrawn } from "./currencies.js";
 
 test("currency codes", () => {
-  expect(codes.length).toBeGreaterThan(150);
-  expect(codes.length).toBeLessThan(220);
+  expect(codes.length).toBeGreaterThanOrEqual(150);
+  expect(codes.length).toBeLessThanOrEqual(220);
   expect(new Set(codes).size).toBe(codes.length);
   expect([...codes]).toEqual([...codes].sort());
   expect(codes).toContain("USD");

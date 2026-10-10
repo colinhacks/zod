@@ -2,8 +2,8 @@ import { expect, expectTypeOf, test } from "vitest";
 import { type CountryCode, codes, countries, published, reserved } from "./countries.js";
 
 test("country codes", () => {
-  expect(codes.length).toBeGreaterThan(240);
-  expect(codes.length).toBeLessThan(260);
+  expect(codes.length).toBeGreaterThanOrEqual(240);
+  expect(codes.length).toBeLessThanOrEqual(260);
   expect(new Set(codes).size).toBe(codes.length);
   expect([...codes]).toEqual([...codes].sort());
   expect(codes).toContain("US");

@@ -3,23 +3,39 @@ import { expect, test } from "vitest";
 import { RESERVED, buildCountries } from "./country.js";
 import { readCodes } from "./emit.js";
 import { parseRegistry } from "./iana.js";
-import { assertBand, bump, bumpPart, crossCheck, rewriteRegex, withoutDate } from "./rules.js";
+import { assertBand, assertRetired, bump, bumpPart, crossCheck, planModule, rewriteRegex } from "./rules.js";
 
 test("release rules", () => {
-  expect(bump("1.2.3", "major")).toBe("2.0.0");
   expect(bump("1.2.3", "minor")).toBe("1.3.0");
   expect(bump("1.2.9", "patch")).toBe("1.2.10");
-  const delta = (added: string[], removed: string[], changed = true) => ({ changed, added, removed });
-  expect(bumpPart([delta([], [], false)])).toBeUndefined();
-  expect(bumpPart([delta([], [])])).toBe("patch");
-  expect(bumpPart([delta([], []), delta(["X"], [])])).toBe("minor");
-  expect(bumpPart([delta(["X"], []), delta([], ["Y"])])).toBe("major");
-  expect(withoutDate('export const published = "2026-01-01";\nX')).toBe(
-    withoutDate('export const published = "2026-02-02";\nX')
-  );
+  const plan = (added: string[], removed: string[], changed = true) => ({ changed, fresh: false, added, removed });
+  expect(bumpPart([plan([], [], false)])).toBeUndefined();
+  expect(bumpPart([plan([], [])])).toBe("patch");
+  expect(bumpPart([plan([], []), plan([], ["X"])])).toBe("minor");
   expect(crossCheck("x", ["a", "sh"], ["a"], ["sh"])).toBeUndefined();
   expect(crossCheck("x", ["a", "c"], ["a", "b"], [])).toBe("x disagrees with Debian iso-codes: missing b, extra c");
   expect(() => assertBand("codes", 5, 10, 20)).toThrow("parsed 5 codes");
+  expect(() => assertRetired("currency", ["ANG", "BGN"], ["ANG"])).toThrow("without a retirement record: BGN");
+  expect(() => assertRetired("currency", [], [])).not.toThrow();
+});
+
+test("a module plan sees data, not dates", () => {
+  const module = (date: string, codes: string[]) =>
+    `export const published = "${date}";\n\nexport const codes = ${JSON.stringify(codes)} as const;\n`;
+  expect(planModule(undefined, module("2026-01-01", ["AD"]), ["AD"])).toEqual({
+    changed: true,
+    fresh: true,
+    added: [],
+    removed: [],
+  });
+  expect(planModule(module("2026-01-01", ["AD"]), module("2026-02-02", ["AD"]), ["AD"]).changed).toBe(false);
+  expect(planModule(module("2026-01-01", ["AD", "AE"]), module("2026-02-02", ["AD", "AF"]), ["AD", "AF"])).toEqual({
+    changed: true,
+    fresh: false,
+    added: ["AF"],
+    removed: ["AE"],
+  });
+  expect(() => planModule("nothing", module("2026-01-01", []), [])).toThrow("no codes tuple");
 });
 
 test("the zod regex carries the package's currency codes", () => {
