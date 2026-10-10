@@ -9,6 +9,7 @@ import { readCodes } from "./emit.js";
 import { fetchText } from "./fetch.js";
 import { parseRegistry } from "./iana.js";
 import { IANA_ONLY, buildLanguages, renderLanguages } from "./language.js";
+import { assertBand, bump, bumpPart, crossCheck, rewriteRegex, withoutDate } from "./rules.js";
 import { parseListOne, parseListThree } from "./six.js";
 
 const root = fileURLToPath(new URL("../../..", import.meta.url));
@@ -26,29 +27,13 @@ const debianCodes = (json: string, table: string, field: string): string[] =>
     .map((row) => row[field])
     .filter((code): code is string => !!code);
 
-function crossCheck(
-  label: string,
-  ours: readonly string[],
-  theirs: readonly string[],
-  tolerated: readonly string[]
-): void {
-  const missing = theirs.filter((code) => !ours.includes(code));
-  const extra = ours.filter((code) => !theirs.includes(code) && !tolerated.includes(code));
-  if (missing.length || extra.length) {
-    throw new Error(
-      `${label} disagrees with Debian iso-codes: missing ${missing.join(" ") || "none"}, extra ${extra.join(" ") || "none"}`
-    );
-  }
-}
-
-function format(file: string): string {
-  execFileSync("nub", ["exec", "--node", "biome", "format", "--write", file], { cwd: root, stdio: "pipe" });
-  return readFileSync(file, "utf8");
-}
-
-function bump(version: string, part: "minor" | "patch"): string {
-  const [major, minor, patch] = version.split(".").map(Number) as [number, number, number];
-  return part === "minor" ? `${major}.${minor + 1}.0` : `${major}.${minor}.${patch + 1}`;
+// biome formats the module from stdin, so nothing lands on disk before the compare
+function format(file: string, source: string): string {
+  return execFileSync("nub", ["exec", "--node", "biome", "format", "--stdin-file-path", file], {
+    cwd: root,
+    input: source,
+    stdio: ["pipe", "pipe", "inherit"],
+  }).toString();
 }
 
 interface Outcome {
@@ -60,43 +45,37 @@ interface Outcome {
   removed: string[];
 }
 
-// the publication date alone is not a change, so a source republished with the same data leaves the module and the version alone
-const withoutDate = (source: string) => source.replace(/^export const published = .*\n/m, "");
-
+// a source republished with the same data leaves the module alone, so the date moves only with the data
 function write(name: string, published: string, source: string, codes: readonly string[]): Outcome {
   const target = join(pkg, "src", `${name}.ts`);
   const previous = existsSync(target) ? readFileSync(target, "utf8") : undefined;
-  const before = previous ? (readCodes(previous) ?? []) : codes;
+  const before = previous === undefined ? codes : readCodes(previous);
+  if (!before) throw new Error(`${target} has no codes tuple to compare against`);
   const added = codes.filter((code) => !before.includes(code));
   const removed = before.filter((code) => !codes.includes(code));
-  writeFileSync(target, source);
-  const formatted = format(target);
-  if (previous !== undefined && withoutDate(formatted) === withoutDate(previous)) {
-    writeFileSync(target, previous);
-    return { name, published, changed: false, fresh: false, added, removed };
-  }
-  return { name, published, changed: true, fresh: previous === undefined, added, removed };
+  const formatted = format(target, source);
+  const changed = previous === undefined || withoutDate(formatted) !== withoutDate(previous);
+  if (changed) writeFileSync(target, formatted);
+  return { name, published, changed, fresh: previous === undefined, added, removed };
 }
 
-// one bump for the package: minor when a code set moved, patch for any other change, nothing on the first generation
+// one bump for the package, nothing on the first generation
 function bumpManifest(outcomes: readonly Outcome[]): string | undefined {
   if (outcomes.some((o) => o.fresh)) return "new";
-  if (!outcomes.some((o) => o.changed)) return undefined;
+  const part = bumpPart(outcomes);
+  if (!part) return undefined;
   const manifestPath = join(pkg, "package.json");
   const manifest = readFileSync(manifestPath, "utf8");
   const current = (JSON.parse(manifest) as { version: string }).version;
-  const next = bump(current, outcomes.some((o) => o.added.length || o.removed.length) ? "minor" : "patch");
+  const next = bump(current, part);
   writeFileSync(manifestPath, manifest.replace(`"version": "${current}"`, `"version": "${next}"`));
   return `${current} → ${next}`;
 }
 
-// zod carries the active currency codes as a regex, so the list reaches z.currencyCode() in the same change
 function rewriteZodRegex(codes: readonly string[]): boolean {
   const target = join(root, "packages", "zod", "src", "v4", "core", "regexes.ts");
-  const line = /^export const currencyCode: RegExp =\s+\/\^\(\?:[A-Z|]+\)\$\/;$/m;
   const source = readFileSync(target, "utf8");
-  if (!line.test(source)) throw new Error(`no currencyCode regex in ${target}`);
-  const next = source.replace(line, `export const currencyCode: RegExp =\n  /^(?:${codes.join("|")})$/;`);
+  const next = rewriteRegex(source, codes);
   if (next === source) return false;
   writeFileSync(target, next);
   return true;
@@ -116,9 +95,16 @@ const registry = parseRegistry(registryText);
 const currency = buildCurrencies(parseListOne(listOne), parseListThree(listThree));
 const country = buildCountries(registry, parseCodeMappings(JSON.parse(mappingsJson)));
 const language = buildLanguages(registry);
-crossCheck("ISO 4217", currency.codes, debianCodes(debian4217, "4217", "alpha_3"), []);
-crossCheck("ISO 3166-1", country.codes, debianCodes(debian3166, "3166-1", "alpha_2"), []);
-crossCheck("ISO 639-1", language.codes, debianCodes(debian6392, "639-2", "alpha_2"), IANA_ONLY);
+// the lists have held these sizes for decades, so a count outside the band means a source changed shape
+assertBand("currency codes", currency.codes.length, 150, 220);
+assertBand("country codes", country.codes.length, 240, 260);
+assertBand("language codes", language.codes.length, 170, 200);
+const warnings = [
+  crossCheck("ISO 4217", currency.codes, debianCodes(debian4217, "4217", "alpha_3"), []),
+  crossCheck("ISO 3166-1", country.codes, debianCodes(debian3166, "3166-1", "alpha_2"), []),
+  crossCheck("ISO 639-1", language.codes, debianCodes(debian6392, "639-2", "alpha_2"), IANA_ONLY),
+  ...country.warnings,
+].filter((w): w is string => !!w);
 
 const outcomes = [
   write("currencies", currency.published, renderCurrencies(currency), currency.codes),
@@ -134,7 +120,8 @@ const lines = outcomes.map((o) => {
     ? `- \`${o.name}\` (source published ${o.published}): ${delta}`
     : `- \`${o.name}\`: unchanged (source published ${o.published})`;
 });
-const summary = `${version ? `\`@zod/codes\` ${version}\n\n` : ""}${lines.join("\n")}\n\nGenerated by \`nub run update:datasets\`. ${zodChanged ? "`z.currencyCode()` follows the currency list." : "The zod regex is unchanged."}\n`;
+const notes = warnings.length ? `\n${warnings.map((w) => `> ${w}`).join("\n")}\n` : "";
+const summary = `${version ? `\`@zod/codes\` ${version}\n\n` : ""}${lines.join("\n")}\n${notes}\nGenerated by \`nub run update:datasets\`. ${zodChanged ? "`z.currencyCode()` follows the currency list." : "The zod regex is unchanged."}\n`;
 console.log(summary);
 if (process.env.DATASETS_SUMMARY) writeFileSync(process.env.DATASETS_SUMMARY, summary);
 if (process.env.GITHUB_OUTPUT) {

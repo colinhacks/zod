@@ -19,22 +19,26 @@ test("six lists", () => {
   const entry = (country: string, name: string, code: string, minor: string) =>
     `<CcyNtry><CtryNm>${country}</CtryNm>${name}<Ccy>${code}</Ccy><CcyNbr>978</CcyNbr><CcyMnrUnts>${minor}</CcyMnrUnts></CcyNtry>`;
   const listOne = (belgium: string) =>
-    `<?xml version="1.0"?>\n<ISO_4217 Pblshd="2026-01-01"><CcyTbl><CcyNtry><CtryNm>ANTARCTICA</CtryNm><CcyNm>No universal currency</CcyNm></CcyNtry>${entry("CHILE", '<CcyNm IsFund="true">Unidad de Fomento</CcyNm>', "CLF", "4")}${entry("ZZ", "<CcyNm>Gold</CcyNm>", "XAU", "N.A.")}${entry("AUSTRIA", "<CcyNm>Euro</CcyNm>", "EUR", "2")}${entry("BELGIUM", "<CcyNm>Euro</CcyNm>", "EUR", belgium)}</CcyTbl></ISO_4217>`;
+    `<?xml version="1.0"?>\n<ISO_4217 Pblshd="2026-01-01"><CcyTbl><CcyNtry><CtryNm>ANTARCTICA</CtryNm><CcyNm>No universal currency</CcyNm></CcyNtry>${entry("CHILE", '<CcyNm IsFund="true">Unidad de Fomento</CcyNm>', "CLF", "4")}${entry("ZZ", '<CcyNm IsFund="WAHR">Gold</CcyNm>', "XAU", "N.A.")}${entry("AUSTRIA", "<CcyNm>Euro</CcyNm>", "EUR", "2")}${entry("BELGIUM", "<CcyNm>Euro</CcyNm>", "EUR", belgium)}</CcyTbl></ISO_4217>`;
   const { published, currencies } = parseListOne(listOne("2"));
   expect(published).toBe("2026-01-01");
   expect(currencies).toEqual([
     { code: "CLF", numeric: "978", name: "Unidad de Fomento", minorUnits: 4, fund: true },
     { code: "EUR", numeric: "978", name: "Euro", minorUnits: 2, fund: false },
-    { code: "XAU", numeric: "978", name: "Gold", minorUnits: null, fund: false },
+    { code: "XAU", numeric: "978", name: "Gold", minorUnits: null, fund: true },
   ]);
   expect(() => parseListOne(listOne("3"))).toThrow("EUR is listed with two different records");
   expect(() => parseListOne("<html>")).toThrow("publication date");
+  expect(() => parseListOne(listOne("2").replace("<Ccy>XAU</Ccy>", "<Ccy>)|(</Ccy>"))).toThrow(
+    "malformed currency entry"
+  );
   const historic = (date: string) =>
     `<HstrcCcyNtry><CtryNm>A</CtryNm><CcyNm>Afghani</CcyNm><Ccy>AFA</Ccy><CcyNbr>004</CcyNbr><WthdrwlDt>${date}</WthdrwlDt></HstrcCcyNtry>`;
-  const listThree = `<ISO_4217 Pblshd="2026-01-01"><HstrcCcyTbl>${historic("2001-05")}${historic("2003-01")}</HstrcCcyTbl></ISO_4217>`;
+  const listThree = `<ISO_4217 Pblshd="2026-01-01"><HstrcCcyTbl>${historic("2001-05")}${historic("2003-01")}${historic("1978 to 1981")}</HstrcCcyTbl></ISO_4217>`;
   expect(parseListThree(listThree).withdrawn).toEqual([
     { code: "AFA", numeric: "004", name: "Afghani", withdrawn: "2003-01" },
   ]);
+  expect(parseListThree(listThree.replace("2003-01", "2001 to 2004")).withdrawn[0]?.withdrawn).toBe("2001 to 2004");
 });
 
 test("cldr code mappings and the emitted tuple", () => {
@@ -43,6 +47,9 @@ test("cldr code mappings and the emitted tuple", () => {
   });
   expect([...mappings]).toEqual([["US", { alpha3: "USA", numeric: "840" }]]);
   expect(() => parseCodeMappings({})).toThrow("codeMappings");
+  expect(() =>
+    parseCodeMappings({ supplemental: { codeMappings: { US: { _numeric: "840", _alpha3: "US)" } } } })
+  ).toThrow("malformed CLDR mapping");
   expect(readCodes(tuple("codes", ["AD", "AE"]))).toEqual(["AD", "AE"]);
   expect(readCodes('export const codes = [\n  "AD",\n  "AE",\n] as const;')).toEqual(["AD", "AE"]);
   expect(readCodes("nothing here")).toBeUndefined();

@@ -20,7 +20,6 @@ export function buildLanguages(registry: IanaRegistry): LanguageDataset {
     .filter((r) => r.type === "language" && !r.deprecated && /^[a-z]{2}$/.test(r.subtag))
     .map((r): Language => ({ code: r.subtag, name: r.descriptions[0] ?? "" }))
     .sort((a, b) => (a.code < b.code ? -1 : 1));
-  if (languages.length < 170 || languages.length > 200) throw new Error(`parsed ${languages.length} language codes`);
   return { published: registry.fileDate, codes: languages.map((l) => l.code), languages };
 }
 

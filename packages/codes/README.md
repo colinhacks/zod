@@ -20,12 +20,14 @@ import { type LanguageCode, languages } from "@zod/codes/languages";
 
 codes; // ["AED", "AFN", ...] as const, every active ISO 4217 code
 currencies.find((c) => c.code === "JPY"); // { code: "JPY", numeric: "392", name: "Yen", minorUnits: 0, fund: false }
-withdrawn.find((c) => c.code === "ANG"); // { code: "ANG", numeric: "532", name: "Netherlands Antillean Guilder", withdrawn: "2025-..." }
+withdrawn.find((c) => c.code === "ANG"); // { code: "ANG", numeric: "532", name: "Netherlands Antillean Guilder", withdrawn: "2025-03" }
 countries.find((c) => c.code === "US"); // { code: "US", alpha3: "USA", numeric: "840", name: "United States" }
 reserved; // ["AC", "CP", "CQ", "DG", "EA", "EU", "EZ", "IC", "TA", "UN"], exceptionally reserved and assigned to no country
 languages.find((l) => l.code === "en"); // { code: "en", name: "English" }
 ```
 
-The root entry re-exports each list as a namespace: `import { currency } from "@zod/codes"` gives `currency.codes`, `currency.currencies` and `currency.withdrawn`.
+The root entry re-exports each list as a namespace: `import { currency } from "@zod/codes"` gives `currency.codes`, `currency.currencies` and `currency.withdrawn`. In bundled code import the subpath; esbuild keeps every list behind a root namespace. A `withdrawn` value is the month or the range of years as the SIX list prints it, such as `"2025-03"` or `"1989 to 1990"`.
 
-A minor release means a set of codes changed; a patch release means only names, numbers or minor units did. Each module exports `published`, the publication date of the source list its data comes from. Deprecated language subtags are left out, except `sh` (Serbo-Croatian), which the registry keeps as a macrolanguage although ISO 639-1 withdrew it. Every generation is cross-checked against Debian's `iso-codes` and fails when the two disagree.
+A major release means a code was removed, a minor release means a code was added, and a patch release means only names, numbers or minor units changed. Each module exports `published`, the date of the last source list that changed it. Deprecated language subtags are left out, except `sh` (Serbo-Croatian), which the registry keeps as a macrolanguage although ISO 639-1 withdrew it. Every generation is cross-checked against Debian's `iso-codes`, and the refresh pull request reports any disagreement.
+
+The alpha-3 and numeric country codes come from CLDR, copyright Unicode, Inc., under the [Unicode License v3](https://www.unicode.org/license.txt); the IANA registry is public domain.
