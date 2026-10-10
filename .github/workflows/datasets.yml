@@ -51,13 +51,17 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            git diff --binary -- "${tracked[@]}" > /tmp/refresh.patch
           fi
       - if: steps.diff.outputs.changed == 'true'
         run: nub run build
       # a PR opened with the workflow token never triggers the test workflow, so the suites that read the data run here
       - if: steps.diff.outputs.changed == 'true'
         run: nub exec --node vitest run packages/codes packages/datasets packages/zod/src/v4/classic/tests/string.test.ts packages/zod/src/v4/mini/tests/string.test.ts packages/zod/src/v4/classic/tests/to-json-schema.test.ts
+      # taken after the build, so the PR carries what the tests ran against
+      - if: steps.diff.outputs.changed == 'true'
+        run: |
+          read -ra tracked <<< "$TRACKED"
+          git diff --binary -- "${tracked[@]}" > /tmp/refresh.patch
       - if: steps.diff.outputs.changed == 'true'
         uses: actions/upload-artifact@v7
         with:
@@ -75,18 +79,19 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       # the open generated PR, if any; a fork branch of the same name is not it
       - id: open
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: echo "number=$(gh pr list --head datasets-refresh --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository | not))[0].number // empty')" >> "$GITHUB_OUTPUT"
       # main already carries the data, so an open generated PR is stale
       - if: needs.generate.outputs.changed != 'true' && steps.open.outputs.number != ''
         env:
+          GH_TOKEN: ${{ github.token }}
           NUMBER: ${{ steps.open.outputs.number }}
         run: |
           gh pr close "$NUMBER" --comment "main already carries the current data."
@@ -102,6 +107,7 @@ jobs:
       - id: gate
         if: needs.generate.outputs.changed == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           NUMBER: ${{ steps.open.outputs.number }}
         run: |
           read -ra tracked <<< "$TRACKED"
@@ -114,20 +120,22 @@ jobs:
             fi
           fi
           echo "replace=$replace" >> "$GITHUB_OUTPUT"
+      # a stale PR is closed and replaced rather than force-pushed, so the push only ever creates a branch holding one commit over the tracked paths
       - if: needs.generate.outputs.changed == 'true' && steps.gate.outputs.replace == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           NUMBER: ${{ steps.open.outputs.number }}
           TITLE: ${{ needs.generate.outputs.title }}
         run: |
+          if [ -n "$NUMBER" ]; then
+            gh pr close "$NUMBER" --comment "Replaced by a fresh refresh from the current main."
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/datasets-refresh"
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           read -ra tracked <<< "$TRACKED"
           git checkout -B datasets-refresh
           git add "${tracked[@]}"
           git commit -m "$TITLE"
-          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/datasets-refresh
-          if [ -n "$NUMBER" ]; then
-            gh pr edit "$NUMBER" --title "$TITLE" --body-file /tmp/summary.md
-          else
-            gh pr create --base main --head datasets-refresh --title "$TITLE" --body-file /tmp/summary.md
-          fi
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/datasets-refresh
+          gh pr create --base main --head datasets-refresh --title "$TITLE" --body-file /tmp/summary.md
