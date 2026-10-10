@@ -2,7 +2,7 @@ name: Recursive type wall-clock benchmark
 
 on:
   push:
-    branches: [bench/recursive-type-wall-clock-20260929]
+    branches: [bench/recursive-type-wall-clock-20261009]
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ permissions:
 jobs:
   measure:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v7
         with:
@@ -37,6 +37,7 @@ jobs:
           const dest = path.join(home, 'wall-clock-data');
           const base = '0b216ef674e297ebe41d8bf902262e56f8755822';
           const head = '270fabf23a72eb94d3f39fd4bbd980c009090b2e';
+          const fix = '5f171b75c81a83e8f4ed150155b98dae635b1432';
           const nativePath = (await import(path.join(worktree, 'node_modules/tsc-seven/lib/getExePath.js'))).default();
           const compilers = {
             ts55: [process.execPath, path.join(worktree, 'node_modules/typescript/bin/tsc')],
@@ -50,9 +51,9 @@ jobs:
           mkdirSync(dest, { recursive: true });
 
           if (process.argv[2] === 'prepare') {
-            const metadata: any = { base, head, node: process.version, nodePath: process.execPath, cpus: cpus().map(x => x.model), totalmem: totalmem(), compilers: {}, exclusions: [] };
+            const metadata: any = { base, head, fix, node: process.version, nodePath: process.execPath, cpus: cpus().map(x => x.model), totalmem: totalmem(), compilers: {}, exclusions: [] };
             for (const [name, args] of Object.entries(compilers)) metadata.compilers[name] = { args, version: run([...args, '--version'], worktree).trim() };
-            for (const side of ['main', 'pr']) {
+            for (const side of ['main', 'pr', 'fix']) {
               const dir = path.join(dest, side);
               if (existsSync(dir)) throw new Error(`Refusing to overwrite ${dir}`);
               mkdirSync(dir);
@@ -66,10 +67,10 @@ jobs:
                 if (side === 'main' && removed.length) metadata.exclusions.push({ file: path.relative(dir, file), lines: removed });
                 writeFileSync(file, text.replace(/^.*expectTypeOf.*(?:optin|optout).*\n/gm, ''));
               }
-              if (side === 'pr') {
+              if (side !== 'main') {
                 for (const file of ['core/core.ts', 'core/api.ts', 'core/schemas.ts', 'classic/schemas.ts', 'mini/schemas.ts']) {
                   const relative = `packages/zod/src/v4/${file}`;
-                  writeFileSync(path.join(dir, relative), run(['git', '-C', worktree, 'show', `${head}:${relative}`], worktree));
+                  writeFileSync(path.join(dir, relative), run(['git', '-C', worktree, 'show', `${side === 'pr' ? head : fix}:${relative}`], worktree));
                 }
               }
               json(path.join(dir, 'emit.json'), { extends: './packages/zod/tsconfig.test.json', compilerOptions: { noEmit: false, declaration: true, emitDeclarationOnly: true, rootDir: './packages/zod/src', outDir: './types', types: [] }, include: ['packages/zod/src/v4/**/*.ts'], exclude: ['packages/zod/src/**/tests/**'] });
@@ -111,7 +112,7 @@ jobs:
                     console.log(JSON.stringify({waitingForLoad:loadavg(), at:new Date().toISOString()}));
                     await new Promise(resolve => setTimeout(resolve, 30000));
                   }
-                  for (const side of round % 2 ? ['pr', 'main'] : ['main', 'pr']) {
+                  for (const side of [['main', 'pr', 'fix'], ['fix', 'main', 'pr'], ['pr', 'fix', 'main']][round % 3]) {
                     const dir = path.join(dest, side);
                     const project = workload === 'suite' ? 'packages/zod/tsconfig.test.json' : `${workload}.json`;
                     const args = [...compilers[compiler], '-p', project, '--noEmit', '--incremental', 'false', '--pretty', 'false', '--extendedDiagnostics'];
@@ -138,11 +139,11 @@ jobs:
           BENCHMARK
           nub "$RUNNER_TEMP/wall-clock.ts" prepare
           TAG=hosted-warmup ROUNDS=1 nub "$RUNNER_TEMP/wall-clock.ts" run
-          TAG=hosted-paired ROUNDS=8 nub "$RUNNER_TEMP/wall-clock.ts" run
+          TAG=hosted-paired ROUNDS=9 nub "$RUNNER_TEMP/wall-clock.ts" run
       - name: Archive inputs
         if: always()
         run: |
-          tar --exclude=node_modules -czf "$RUNNER_TEMP/wall-clock-data/inputs.tar.gz" -C "$RUNNER_TEMP/wall-clock-data" main pr
+          tar --exclude=node_modules -czf "$RUNNER_TEMP/wall-clock-data/inputs.tar.gz" -C "$RUNNER_TEMP/wall-clock-data" main pr fix
       - uses: actions/upload-artifact@v7
         if: always()
         with:
