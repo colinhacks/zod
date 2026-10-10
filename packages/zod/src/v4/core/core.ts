@@ -154,14 +154,13 @@ export type $ZodBranded<
   T extends schemas.SomeType,
   Brand extends string | number | symbol,
   Dir extends "in" | "out" | "inout" = "out",
-> = T &
-  (Dir extends "inout"
+> = T & { _zod: { atomic?: true } } & (Dir extends "inout"
     ? { _zod: { input: input<T> & $brand<Brand>; output: output<T> & $brand<Brand> } }
     : Dir extends "in"
       ? { _zod: { input: input<T> & $brand<Brand> } }
       : { _zod: { output: output<T> & $brand<Brand> } });
 
-export type $ZodNarrow<T extends schemas.SomeType, Out> = T & { _zod: { output: Out } };
+export type $ZodNarrow<T extends schemas.SomeType, Out> = T & { _zod: { output: Out; atomic?: true } };
 
 export class $ZodAsyncError extends Error {
   constructor() {
@@ -182,8 +181,8 @@ export class $ZodEncodeError extends Error {
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
-export type input<T> = T extends { _zod: { input: any } } ? T["_zod"]["input"] : unknown;
-export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"] : unknown;
+export type input<T> = schemas.$InferInput<T>;
+export type output<T> = schemas.$InferOutput<T>;
 
 export type { output as infer };
 
