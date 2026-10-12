@@ -835,6 +835,22 @@ test("a raw __proto__ input key stays skipped in loose mode", () => {
   expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
 });
 
+test("a raw __proto__ input key must satisfy the key schema but is never written", () => {
+  const data = JSON.parse('{"__proto__":{"a":1},"fr":"y"}');
+  const locale = z.string().refine((k) => ["fr", "de"].includes(k));
+
+  for (const schema of [z.record(locale, z.string()), z.record(z.string().regex(/^[a-z]{2}$/), z.string())]) {
+    expect(schema.safeParse(data).error?.issues).toMatchObject([{ code: "invalid_key", path: ["__proto__"] }]);
+  }
+  expect(z.partialRecord(z.enum(["fr", "de"]), z.string()).safeParse(data).error?.issues).toMatchObject([
+    { code: "unrecognized_keys", keys: ["__proto__"] },
+  ]);
+
+  const parsed: any = z.record(z.string().min(2), z.string()).parse(data);
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(parsed).toEqual({ fr: "y" });
+});
+
 test("partialRecord strips a declared __proto__ key", () => {
   const schema = z.partialRecord(z.enum(["__proto__", "b"]), z.string());
   const parsed: any = schema.parse(Object.fromEntries([["__proto__", "declared"]]));
