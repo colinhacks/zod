@@ -2466,10 +2466,14 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
     }
   }
 
-  const nonaborted = results.filter((r) => !util.aborted(r));
-  if (nonaborted.length === 1) {
-    final.value = nonaborted[0].value;
-    return nonaborted[0];
+  let matched = results.filter((r) => !util.aborted(r));
+  // failing that, an option only checks rejected still matched the input's type
+  if (!matched.length) {
+    matched = results.filter((r) => !r.aborted && r.issues.every((iss) => iss.continue !== undefined));
+  }
+  if (matched.length === 1) {
+    final.value = matched[0].value;
+    return matched[0];
   }
 
   final.issues.push({
