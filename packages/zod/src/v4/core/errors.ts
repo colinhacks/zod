@@ -29,6 +29,7 @@ export type $ZodInvalidTypeExpected =
   | "never"
   | "void"
   | "date"
+  | "temporal"
   | "array"
   | "object"
   | "tuple"
@@ -128,6 +129,21 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
   readonly input?: Input;
 }
 
+export interface $ZodIssueInvalidTemporal<Input = unknown> extends $ZodIssueBase {
+  readonly code: "invalid_temporal";
+  readonly expected: string;
+  readonly received: "before" | "equal" | "after";
+  readonly origin:
+    | "Instant"
+    | "PlainDate"
+    | "PlainDateTime"
+    | "PlainTime"
+    | "PlainYearMonth"
+    | "ZonedDateTime"
+    | (string & {});
+  readonly input?: Input;
+}
+
 export interface $ZodIssueCustom extends $ZodIssueBase {
   readonly code: "custom";
   readonly params?: Record<string, any> | undefined;
@@ -190,6 +206,7 @@ export type $ZodIssue =
   | $ZodIssueInvalidKey
   | $ZodIssueInvalidElement
   | $ZodIssueInvalidValue
+  | $ZodIssueInvalidTemporal
   | $ZodIssueCustom;
 
 export type $ZodIssueCode = $ZodIssue["code"];

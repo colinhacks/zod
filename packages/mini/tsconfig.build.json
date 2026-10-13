@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": ".",
+    "lib": ["es2020", "dom", "esnext.temporal"],
     "customConditions": ["@zod/source"]
   }
 }
