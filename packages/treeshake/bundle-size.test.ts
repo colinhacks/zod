@@ -120,7 +120,8 @@ test("a hostname bundle carries no other format's regex", async () => {
     logLevel: "silent",
   });
   const code = Buffer.from(result.outputFiles[0]!.contents).toString("utf8");
-  // the xid regex, which nothing on a hostname path can need
+  // the xid regex and the currency list, which nothing on a hostname path can need
   expect(code, "another format's regex reached a bundle that only uses z.hostname()").not.toContain("[0-9a-vA-V]{20}");
+  expect(code, "the currency list reached a bundle that only uses z.hostname()").not.toContain("AED|AFN");
 });
 

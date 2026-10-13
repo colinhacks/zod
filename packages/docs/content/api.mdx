@@ -600,6 +600,8 @@ currency.parse("usd"); // ❌
 currency.parse("ANG"); // ❌ withdrawn from ISO 4217
 ```
 
+The list itself is published as [`@zod/codes`](https://www.npmjs.com/package/@zod/codes), with names, numeric codes and minor units.
+
 ### IBANs
 
 Validate an International Bank Account Number (IBAN): 2-letter country code, 2 check digits, and 11 to 30 alphanumeric characters with a valid [ISO 7064 MOD 97-10](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Validating_the_IBAN) checksum. The country registry is not consulted, so any country code is accepted and no country's own account length is enforced. Electronic format only.
