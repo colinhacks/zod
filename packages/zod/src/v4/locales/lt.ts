@@ -95,6 +95,23 @@ const error: () => errors.$ZodErrorMap = () => {
         },
       },
     },
+    map: {
+      unit: {
+        one: "elementą",
+        few: "elementus",
+        many: "elementų",
+      },
+      verb: {
+        smaller: {
+          inclusive: "turi turėti ne daugiau kaip",
+          notInclusive: "turi turėti mažiau kaip",
+        },
+        bigger: {
+          inclusive: "turi turėti ne mažiau kaip",
+          notInclusive: "turi turėti daugiau kaip",
+        },
+      },
+    },
   };
 
   function getSizing(

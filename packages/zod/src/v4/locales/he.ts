@@ -31,6 +31,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "בייטים", shortLabel: "קטן", longLabel: "גדול" },
     array: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
     set: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
+    map: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
     number: { unit: "", shortLabel: "קטן", longLabel: "גדול" }, // no unit
   };
 
@@ -150,9 +151,9 @@ const error: () => errors.$ZodErrorMap = () => {
           return `גדול מדי: ${subject} צריך להיות ${comparison}`;
         }
 
-        if (issue.origin === "array" || issue.origin === "set") {
-          // Natural Hebrew for arrays and sets
-          const verb = issue.origin === "set" ? "צריכה" : "צריך";
+        if (issue.origin === "array" || issue.origin === "set" || issue.origin === "map") {
+          // Natural Hebrew for arrays, sets and maps
+          const verb = typeEntry(issue.origin)?.gender === "f" ? "צריכה" : "צריך";
           const comparison = issue.inclusive
             ? `${issue.maximum} ${sizing?.unit ?? ""} או פחות`
             : `פחות מ-${issue.maximum} ${sizing?.unit ?? ""}`;
@@ -182,9 +183,9 @@ const error: () => errors.$ZodErrorMap = () => {
           return `קטן מדי: ${subject} צריך להיות ${comparison}`;
         }
 
-        if (issue.origin === "array" || issue.origin === "set") {
-          // Natural Hebrew for arrays and sets
-          const verb = issue.origin === "set" ? "צריכה" : "צריך";
+        if (issue.origin === "array" || issue.origin === "set" || issue.origin === "map") {
+          // Natural Hebrew for arrays, sets and maps
+          const verb = typeEntry(issue.origin)?.gender === "f" ? "צריכה" : "צריך";
 
           // Special case for singular (minimum === 1)
           if (issue.minimum === 1 && issue.inclusive) {

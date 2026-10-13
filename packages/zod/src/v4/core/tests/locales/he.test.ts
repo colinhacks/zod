@@ -43,6 +43,12 @@ describe("Hebrew localization", () => {
         expect(result.error.issues[0].message).toBe("קטן מדי: הקבוצה (Set) צריכה להכיל 2 פריטים או יותר");
       }
     });
+
+    test("map type (feminine - צריכה)", () => {
+      const schema = z.map(z.string(), z.number()).min(2);
+      const result = schema.safeParse(new Map([["a", 1]]));
+      expect(result.error?.issues[0].message).toBe("קטן מדי: המפה (Map) צריכה להכיל 2 פריטים או יותר");
+    });
   });
 
   describe("too_big errors with definite article and gendered verbs", () => {
@@ -71,6 +77,12 @@ describe("Hebrew localization", () => {
       if (!result.success) {
         expect(result.error.issues[0].message).toBe("גדול מדי: המערך צריך להכיל 2 פריטים או פחות");
       }
+    });
+
+    test("map max", () => {
+      const schema = z.map(z.string(), z.number()).max(0);
+      const result = schema.safeParse(new Map([["a", 1]]));
+      expect(result.error?.issues[0].message).toBe("גדול מדי: המפה (Map) צריכה להכיל 0 פריטים או פחות");
     });
   });
 
