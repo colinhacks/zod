@@ -4,7 +4,9 @@ name: Release on npm
 on:
   # Dispatch only, and deliberately so. A `workflow_dispatch` needs a GitHub session or token carrying write access; a stolen git push credential carries neither, so it can no longer start a release by landing a commit or cutting a tag. That is the shape of the 2026-09-21 nubjs/nub compromise, where a stolen push credential cut a tag and 18 packages published unattended. A version bump on main is therefore inert: a maintainer runs `gh workflow run release.yml`, approves the npm environment, and then approves each staged version on npm with 2FA.
   #
-  # One run, three release jobs. `stage` puts both versions in npm's staged queue. `approval` is a job on the `release-approval` environment, whose required reviewer is the maintainer: GitHub holds the run there, with no runner, for up to 30 days. The npm approval is the gate; the environment approval only resumes the run, and `finish` checks the registry before it tags or releases anything. `stager approve` does both, approving on npm and then resuming the run.
+  # One run, two release jobs. `stage` puts both versions in npm's staged queue. `finish` is a job on the `release-approval` environment, whose required reviewer is the maintainer: GitHub holds the run there, with no runner, for up to 30 days. The npm approval is the gate; the environment approval only resumes the run, and `finish` checks the registry before it tags or releases anything. `stager approve` does both, approving on npm and then resuming the run.
+  #
+  # Only `finish` can create a tag. The "Release tags" ruleset refuses tag creation, moves and deletions to everyone, admins and workflow tokens included, except deploy keys; the one deploy key is the `RELEASE_TAG_KEY` secret on `release-approval`, so a tag exists only after the maintainer approved the run.
   workflow_dispatch:
 
 # one release at a time, held across the approval wait, so a second dispatch queues instead of staging next to a held run; never cancelled, since a run mid-`npm stage publish` must finish
@@ -81,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     # a required reviewer approves every run, and the environment only deploys main; npm's trusted publishers are bound to it so no other branch or workflow can even stage. The environment is the first of two gates — the second is the 2FA approval of each staged version, which this job cannot perform.
     environment: npm
-    # this job only builds and stages; the wait for the approval is the `approval` job, which holds no runner
+    # this job only builds and stages; the wait for the approval is `finish`, which holds no runner until it is approved
     timeout-minutes: 60
     permissions:
       contents: read
@@ -89,8 +91,6 @@ jobs:
     outputs:
       zod: ${{ steps.version.outputs.zod }}
       mini: ${{ steps.version.outputs.mini }}
-      # both versions are served already (a re-dispatch after the approval), so there is nothing to wait for and `approval` is skipped
-      served: ${{ steps.served.outputs.served }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -150,7 +150,7 @@ jobs:
         run: |
           if curl -sf "https://registry.npmjs.org/zod/$ZOD_VERSION" > /dev/null && curl -sf "https://registry.npmjs.org/@zod%2fmini/$MINI_VERSION" > /dev/null; then
             echo "served=true" >> "$GITHUB_OUTPUT"
-            echo "zod@$ZOD_VERSION and @zod/mini@$MINI_VERSION are both served; no approval to wait for"
+            echo "zod@$ZOD_VERSION and @zod/mini@$MINI_VERSION are both served; no npm approval to wait for"
           else
             echo "served=false" >> "$GITHUB_OUTPUT"
           fi
@@ -179,23 +179,10 @@ jobs:
             echo "Without stager: read the stage ids with \`npm stage list zod\` and \`npm stage list @zod/mini\`, then approve each with \`npm stage approve <id>\`; \`pnpm stage approve\` takes both in one interactive picker under a single one-time password, as does the Staged Packages tab on npmjs.com. Then approve the pending \`release-approval\` deployment on $RUN_URL."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  approval:
-    # held by the environment's required reviewer, not by a runner: GitHub keeps the run waiting for up to 30 days, with no six-hour cap, until the deployment is approved. It is a resume signal only; a version nobody approved on npm still stops `finish` at the registry check.
-    needs: stage
-    if: needs.stage.outputs.served != 'true'
-    runs-on: ubuntu-latest
-    environment: release-approval
-    permissions: {}
-    steps:
-      - env:
-          ZOD_VERSION: ${{ needs.stage.outputs.zod }}
-          MINI_VERSION: ${{ needs.stage.outputs.mini }}
-        run: echo "resuming; finish checks that npm serves zod@$ZOD_VERSION and @zod/mini@$MINI_VERSION"
-
   finish:
-    needs: [stage, approval]
-    # `approval` is skipped when npm already serves both versions, and `finish` still runs then to create whatever an earlier run did not; the explicit condition drops the implicit `success()`, so `stage` is checked by name
-    if: ${{ !cancelled() && needs.stage.result == 'success' && (needs.approval.result == 'success' || (needs.approval.result == 'skipped' && needs.stage.outputs.served == 'true')) }}
+    needs: stage
+    # held by the environment's required reviewer, not by a runner: GitHub keeps the run waiting for up to 30 days, with no six-hour cap, until the deployment is approved. It is a resume signal only; a version nobody approved on npm still stops this job at the registry check.
+    environment: release-approval
     runs-on: ubuntu-latest
     # 6h is GitHub's hard cap for a hosted runner; the wait takes 340 minutes of it and the steps after it need a few
     timeout-minutes: 360
@@ -256,6 +243,22 @@ jobs:
           mode: COMMIT
           configuration: changelog_config.json
 
+      # after the changelog, which takes the previous tag as its start; the job token cannot create a tag, so it is pushed with the deploy key the ruleset exempts
+      - name: Tag the release
+        env:
+          VERSION: ${{ needs.stage.outputs.zod }}
+          RELEASE_TAG_KEY: ${{ secrets.RELEASE_TAG_KEY }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+            echo "v$VERSION is already tagged"
+            exit 0
+          fi
+          printf '%s\n' "$RELEASE_TAG_KEY" > "$RUNNER_TEMP/release-tag-key"
+          chmod 600 "$RUNNER_TEMP/release-tag-key"
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "$RUNNER_TEMP/known_hosts"
+          git tag "v$VERSION" "$GITHUB_SHA"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/release-tag-key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts" git push "git@github.com:$GITHUB_REPOSITORY.git" "refs/tags/v$VERSION"
+
       # notes go through env and a file so a commit subject can't break out of the command
       - name: Create release
         env:
@@ -268,13 +271,11 @@ jobs:
             exit 0
           fi
           printf '%s' "$CHANGELOG" > "$RUNNER_TEMP/release_notes.md"
-          # the job token cannot write a ref once main has moved past this commit with a workflow change, which a run held for days makes likely
           gh release create "v$VERSION" \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
+            --verify-tag \
             --title "v$VERSION" \
-            --notes-file "$RUNNER_TEMP/release_notes.md" \
-            || { echo "::error::could not create v$VERSION at $GITHUB_SHA with the job token; create it with your own (gh release create v$VERSION -R $GITHUB_REPOSITORY --target $GITHUB_SHA --title v$VERSION --generate-notes), then re-run this job"; exit 1; }
+            --notes-file "$RUNNER_TEMP/release_notes.md"
 
       # last so a jsr outage can't cost the tag — and it aborts on a dirty tree, so nothing above it may leave the workspace dirty
       - name: Publish to JSR
