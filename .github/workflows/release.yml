@@ -6,7 +6,7 @@ on:
   #
   # Everything the release needs is given at dispatch: the commit is the one dispatched, the versions come from its `package.json` files, and the release notes are the required `notes` input. A run's inputs are fixed for its whole life, so the notes survive the approval wait and any re-run of a job.
   #
-  # One run, two release jobs. `stage` puts both versions in npm's staged queue. `finish` is a job on the `release-approval` environment, whose required reviewer is the maintainer: GitHub holds the run there, with no runner, for up to 30 days. The npm approval is the gate; the environment approval only resumes the run, and `finish` checks the registry before it tags or releases anything. `stager approve` does both, approving on npm and then resuming the run.
+  # One run, two release jobs. `stage` puts both versions in npm's staged queue. `finish` is a job on the `release-approval` environment, whose required reviewer is the maintainer: GitHub holds the run there, with no runner, for up to 30 days. The npm approval is the gate; the environment approval only resumes the run, and `finish` checks the registry before it tags or releases anything. `stager`, run by the maintainer with one authenticator code, does both, approving on npm and then resuming the run.
   #
   # Only `finish` can create a tag. The "Release tags" ruleset refuses tag creation, moves and deletions to everyone, admins and workflow tokens included, except deploy keys; the one deploy key is the `RELEASE_TAG_KEY` secret on `release-approval`, so a tag exists only after the maintainer approved the run.
   workflow_dispatch:
@@ -186,7 +186,7 @@ jobs:
             echo 'Neither version is installable until a maintainer approves it with 2FA. This run is now held on the `release-approval` environment, with no runner, for up to 30 days. It resumes when that deployment is approved, and `finish` then waits for npm to serve both versions before it tags, releases and publishes to JSR.'
             echo
             echo '```'
-            echo "stager approve 'zod@$ZOD_VERSION' '@zod/mini@$MINI_VERSION'   # approve both in the browser, then resume this run"
+            echo "stager   # in your own terminal: a, Enter, then ONE authenticator code approves both versions and resumes this run"
             echo "stager reject 'zod@$ZOD_VERSION' '@zod/mini@$MINI_VERSION'    # drop both staged versions and fail this run"
             echo '```'
             echo
@@ -219,7 +219,7 @@ jobs:
             local label="$1" url="$2" i=0
             until curl -sf "$url" > /dev/null; do
               if [ "$(date +%s)" -ge "$deadline" ]; then
-                echo "::error::$label is still not served after 340 minutes; if it was never approved on npm, approve it with 2FA (stager approve '$label'), then re-run this job"
+                echo "::error::$label is still not served after 340 minutes; if it was never approved on npm, approve it by running stager in a terminal, then re-run this job"
                 exit 1
               fi
               i=$((i + 1))
