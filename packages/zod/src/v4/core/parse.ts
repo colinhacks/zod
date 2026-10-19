@@ -62,6 +62,36 @@ export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => {
 
 export const parseAsync: $ParseAsync = /* @__PURE__*/ _parseAsync(errors.$ZodRealError);
 
+export type $ParseMaybeAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: $ParseParams
+) => util.MaybeAsync<core.output<T>>;
+
+export const _parseMaybeAsync: (_Err: $ZodErrorClass) => $ParseMaybeAsync = (_Err) => {
+  const syncParse = _parse(_Err);
+  const asyncParse = _parseAsync(_Err);
+  const fn: $ParseMaybeAsync = (schema, value, _ctx, _params) => {
+    const params = _params ?? own;
+    // once a schema goes async, skip the sync attempt
+    if (schema._zod.asyncSeen !== true) {
+      // the sync parser keeps the object JIT fastpass engaged
+      try {
+        return syncParse(schema, value, _ctx, params);
+      } catch (e) {
+        if (!(e instanceof core.$ZodAsyncError)) throw e;
+        schema._zod.asyncSeen = true;
+      }
+    }
+    return asyncParse(schema, value, _ctx, params);
+  };
+  const own: $ParseParams = { callee: fn, Err: undefined };
+  return fn;
+};
+
+export const parseMaybeAsync: $ParseMaybeAsync = /* @__PURE__*/ _parseMaybeAsync(errors.$ZodRealError);
+
 export type $SafeParse = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
@@ -117,6 +147,30 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
 };
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);
+
+export type $SafeParseMaybeAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => util.MaybeAsync<util.SafeParseResult<core.output<T>>>;
+
+export const _safeParseMaybeAsync: (_Err: $ZodErrorClass) => $SafeParseMaybeAsync = (_Err) => {
+  const syncSafeParse = _safeParse(_Err);
+  const asyncSafeParse = _safeParseAsync(_Err);
+  return (schema, value, _ctx) => {
+    if (schema._zod.asyncSeen !== true) {
+      try {
+        return syncSafeParse(schema, value, _ctx);
+      } catch (e) {
+        if (!(e instanceof core.$ZodAsyncError)) throw e;
+        schema._zod.asyncSeen = true;
+      }
+    }
+    return asyncSafeParse(schema, value, _ctx);
+  };
+};
+
+export const safeParseMaybeAsync: $SafeParseMaybeAsync = /* @__PURE__*/ _safeParseMaybeAsync(errors.$ZodRealError);
 
 // registry mirrors of the compiler's sentinels, so this module never imports the compiler
 const COMPILE_INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
