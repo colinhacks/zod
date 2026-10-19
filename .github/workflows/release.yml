@@ -233,14 +233,7 @@ jobs:
 
       - uses: actions/checkout@v7
 
-      - name: Set up Nub
-        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
-        with:
-          nub-version: "0.8.3"
-
-      - run: nub install --frozen-lockfile
-
-      # the job token cannot create a tag, so it is pushed with the deploy key the ruleset exempts
+      # the job token cannot create a tag, so it is pushed with the deploy key the ruleset exempts; before the install below, and the key file gone after the push, so no dependency's install script runs while the key is on disk
       - name: Tag the release
         env:
           VERSION: ${{ needs.stage.outputs.zod }}
@@ -255,6 +248,7 @@ jobs:
           echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "$RUNNER_TEMP/known_hosts"
           git tag "v$VERSION" "$GITHUB_SHA"
           GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/release-tag-key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts" git push "git@github.com:$GITHUB_REPOSITORY.git" "refs/tags/v$VERSION"
+          rm "$RUNNER_TEMP/release-tag-key"
 
       # the notes go through env and a file so their text can't break out of the command; a re-dispatch with corrected notes rewrites an existing release's body
       - name: Create release
@@ -274,6 +268,13 @@ jobs:
             --verify-tag \
             --title "v$VERSION" \
             --notes-file "$RUNNER_TEMP/release_notes.md"
+
+      - name: Set up Nub
+        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+
+      - run: nub install --frozen-lockfile
 
       # last so a jsr outage can't cost the tag — and it aborts on a dirty tree, so nothing above it may leave the workspace dirty
       - name: Publish to JSR
