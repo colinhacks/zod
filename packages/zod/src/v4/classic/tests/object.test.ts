@@ -894,6 +894,15 @@ describe("__proto__ as a declared shape key", () => {
     ).toBe(true);
   });
 
+  // a Proxy or a patched global can list a key with no descriptor, which the spread skips like a non-enumerable one
+  test("a shape key with no descriptor is skipped", () => {
+    const blank = () => new Proxy({ name: z.string() }, { getOwnPropertyDescriptor: () => undefined });
+
+    expect(z.object(blank()).parse({ name: "x" })).toEqual({});
+    expect(z.object(blank()).extend({ id: z.number() }).parse({ name: "x", id: 1 })).toEqual({ id: 1 });
+    expect(z.object({ id: z.number() }).extend(blank()).parse({ name: "x", id: 1 })).toEqual({ id: 1 });
+  });
+
   test("shape helpers preserve a declared key", () => {
     const shape = () =>
       Object.fromEntries([
