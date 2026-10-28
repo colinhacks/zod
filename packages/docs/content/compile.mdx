@@ -103,6 +103,8 @@ On invalid input the fallback runs the uncompiled schema, so the error is the un
 - Invalid inputs pay for both the fast path and the fallback, so compilation barely speeds up failures. Nearly all of that cost is the fallback, which is what produces the errors.
 - Refinements and transforms run once on valid input, and at most twice on invalid input.
 
+When you only need a boolean, use [`.validate()`](/basics#handling-errors). It skips the fallback's error-building: it answers from the compiled check where it can, and otherwise stops at the first failure without collecting issues. Compilation doesn't change what `.safeParse()` reports, so a compiled `.safeParse()` still builds one issue per invalid element. Against 10 million invalid array elements, a compiled `.validate()` returns `false` with no measurable heap growth.
+
 ## Unsupported schemas
 
 Some features can't be compiled or don't benefit from compilation. In these cases, `z.compile()` ejects from compilation and returns the original schema unchanged:
