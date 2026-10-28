@@ -2297,6 +2297,14 @@ export class ZodArray<T extends ZodTypeAny, Cardinality extends ArrayCardinality
       }
     }
 
+    // an oversized array fails before any element is parsed
+    if (
+      (def.exactLength !== null && ctx.data.length > def.exactLength.value) ||
+      (def.maxLength !== null && ctx.data.length > def.maxLength.value)
+    ) {
+      return INVALID;
+    }
+
     if (ctx.common.async) {
       return Promise.all(
         ([...ctx.data] as any[]).map((item, i) => {
@@ -3246,7 +3254,9 @@ function mergeValues(a: any, b: any): { valid: true; data: any } | { valid: fals
     return { valid: true, data: a };
   } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
     const bKeys = util.objectKeys(b);
-    const sharedKeys = util.objectKeys(a).filter((key) => bKeys.indexOf(key) !== -1);
+    // a set keeps the lookup linear for wide objects
+    const bKeySet = bKeys.length > 32 ? new Set(bKeys) : null;
+    const sharedKeys = util.objectKeys(a).filter((key) => (bKeySet ? bKeySet.has(key) : bKeys.indexOf(key) !== -1));
 
     const newObj: any = { ...a, ...b };
     if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
@@ -3727,7 +3737,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
           exact: false,
           message: def.maxSize.message,
         });
-        status.dirty();
+        // an oversized set fails before any element is parsed
+        return INVALID;
       }
     }
 
