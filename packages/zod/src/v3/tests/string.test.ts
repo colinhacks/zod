@@ -335,6 +335,18 @@ test("emoji validations", () => {
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
   expect(() => emoji.parse("😀stuff")).toThrow();
   expect(() => emoji.parse("stuff😀")).toThrow();
+  emoji.parse("🦰🦱🦲🦳");
+
+  // a failing match over the overlapping code points used to backtrack exponentially
+  const payload = `${"🦰".repeat(26)} `;
+  expect(emoji.safeParse(payload).success).toBe(false);
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < 3; i++) {
+    const start = performance.now();
+    emoji.safeParse(payload);
+    best = Math.min(best, performance.now() - start);
+  }
+  expect(best).toBeLessThan(100);
 });
 
 test("uuid", () => {
