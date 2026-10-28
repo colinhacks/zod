@@ -3106,16 +3106,14 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
     // sound because rest is non-empty exactly when every fixed index is present, the one case handleTupleResults cannot discard an item's issues
     if (def.rest && !itemAborted) {
-      let i = items.length - 1;
-      const rest = input.slice(items.length);
       let seen = payload.issues.length;
-      for (const el of rest) {
+      // the loop's own `let i` gives each async element its own index
+      for (let i = items.length; i < input.length; i++) {
         if (abortEarly && payload.issues.length !== seen) {
           if (util.aborted(payload, seen)) break;
           seen = payload.issues.length;
         }
-        i++;
-        const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
+        const result = def.rest._zod.run({ value: input[i], issues: [] }, ctx);
         if (result instanceof Promise) {
           proms.push(result.then((r) => handleTupleResult(r, payload, i)));
         } else {
