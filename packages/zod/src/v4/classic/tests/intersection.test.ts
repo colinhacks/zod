@@ -249,6 +249,32 @@ test("a record's key schema governs only its own keys inside an intersection", (
   expect(z.record(z.string().regex(/^S_/), z.string()).safeParse({ S_a: "s", bad: "x" }).success).toBe(false);
 });
 
+test("key reconciliation is linear in the input's key count", () => {
+  const input: Record<string, number> = { a: 1, b: 2 };
+  for (let i = 0; i < 50_000; i++) input[`k${i}`] = i;
+  const record = z.record(z.string(), z.number());
+  const records = z.intersection(record, record);
+  const stricts = z.intersection(z.strictObject({ a: z.number() }), z.strictObject({ b: z.number() }));
+  const mixed = z.intersection(z.strictObject({ a: z.number() }), z.record(z.string().regex(/^S_/), z.number()));
+  expect(records.parse(input)).toEqual(input);
+  expect(stricts.safeParse(input).error!.issues).toMatchObject([
+    { code: "unrecognized_keys", keys: { length: 50_000 } },
+  ]);
+  expect(mixed.safeParse(input).error!.issues).toMatchObject([{ code: "unrecognized_keys", keys: { length: 50_001 } }]);
+
+  const best = (schema: z.ZodType) => {
+    let ms = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < 3; i++) {
+      const start = performance.now();
+      schema.safeParse(input);
+      ms = Math.min(ms, performance.now() - start);
+    }
+    return ms;
+  };
+  // one record over the same input is the linear baseline; matching keys by scanning a key list per key made each ~100x slower
+  for (const schema of [records, stricts, mixed]) expect(best(schema)).toBeLessThan(25 * best(record));
+});
+
 test("partialRecord reports an out-of-set key as unrecognized, not invalid", () => {
   const enumKeys = z.partialRecord(z.enum(["a", "b"]), z.string()).safeParse({ a: "x", zzz: "q" });
   expect(enumKeys.success).toBe(false);
