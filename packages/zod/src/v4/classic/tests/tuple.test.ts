@@ -509,3 +509,12 @@ test("partial rejects a tuple carrying refinements", () => {
   const schema = z.tuple([z.string(), z.number()]).refine(([a]) => a.length > 0);
   expect(() => schema.partial()).toThrow("cannot be used on tuple schemas containing refinements");
 });
+
+test("async rest elements land at their own index", async () => {
+  const schema = z.tuple(
+    [z.string()],
+    z.string().refine(async () => true)
+  );
+  expect(await schema.parseAsync(["a", "b", "c", "d"])).toEqual(["a", "b", "c", "d"]);
+  expect((await schema.safeParseAsync(["a", "b", 1, "d"])).error!.issues).toMatchObject([{ path: [2] }]);
+});
