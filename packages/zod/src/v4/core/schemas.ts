@@ -1875,7 +1875,7 @@ const setSize = (input: unknown): number => (input instanceof Set ? input.size :
 
 function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
-    final.issues.push(...util.prefixIssues(index, result.issues));
+    util.pushPrefixed(final.issues, index, result.issues);
   }
   final.value[index] = result.value;
 }
@@ -2019,7 +2019,7 @@ function handlePropertyResult(
     if (optin !== undefined && isOptionalOut && !isPresent) {
       return;
     }
-    final.issues.push(...util.prefixIssues(key, result.issues));
+    util.pushPrefixed(final.issues, key, result.issues);
   }
 
   if (!isPresent && optin === undefined) {
@@ -3146,7 +3146,7 @@ function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
 
 function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
-    final.issues.push(...util.prefixIssues(index, result.issues));
+    util.pushPrefixed(final.issues, index, result.issues);
   }
   final.value[index] = result.value;
 }
@@ -3172,7 +3172,7 @@ function handleTupleResults(
         final.value.length = i;
         break;
       }
-      final.issues.push(...util.prefixIssues(i, r.issues));
+      util.pushPrefixed(final.issues, i, r.issues);
     }
     final.value[i] = r.value;
   }
@@ -3325,14 +3325,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             proms.push(
               result.then((result) => {
                 if (result.issues.length) {
-                  payload.issues.push(...util.prefixIssues(key, result.issues));
+                  util.pushPrefixed(payload.issues, key, result.issues);
                 }
                 payload.value[outKey] = result.value;
               })
             );
           } else {
             if (result.issues.length) {
-              payload.issues.push(...util.prefixIssues(key, result.issues));
+              util.pushPrefixed(payload.issues, key, result.issues);
             }
             payload.value[outKey] = result.value;
           }
@@ -3417,14 +3417,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           proms.push(
             result.then((result) => {
               if (result.issues.length) {
-                payload.issues.push(...util.prefixIssues(key, result.issues));
+                util.pushPrefixed(payload.issues, key, result.issues);
               }
               payload.value[outKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
-            payload.issues.push(...util.prefixIssues(key, result.issues));
+            util.pushPrefixed(payload.issues, key, result.issues);
           }
           payload.value[outKey] = result.value;
         }
@@ -3533,7 +3533,7 @@ function handleMapResult(
 ): void {
   if (keyResult.issues.length) {
     if (util.propertyKeyTypes.has(typeof key)) {
-      final.issues.push(...util.prefixIssues(key as PropertyKey, keyResult.issues));
+      util.pushPrefixed(final.issues, key as PropertyKey, keyResult.issues);
     } else {
       final.issues.push({
         code: "invalid_key",
@@ -3547,7 +3547,7 @@ function handleMapResult(
   }
   if (valueResult.issues.length) {
     if (util.propertyKeyTypes.has(typeof key)) {
-      final.issues.push(...util.prefixIssues(key as PropertyKey, valueResult.issues));
+      util.pushPrefixed(final.issues, key as PropertyKey, valueResult.issues);
     } else {
       final.issues.push({
         origin: "map",
@@ -3627,7 +3627,7 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
 
 function handleSetResult(result: ParsePayload, final: ParsePayload<Set<any>>) {
   if (result.issues.length) {
-    final.issues.push(...result.issues);
+    for (const iss of result.issues) final.issues.push(iss);
   }
   final.value.add(result.value);
 }

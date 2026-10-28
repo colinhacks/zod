@@ -930,6 +930,16 @@ export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): 
   });
 }
 
+/** Prefixes each issue's path with `path` in place and appends it to `target`. */
+export function pushPrefixed(target: errors.$ZodRawIssue[], path: PropertyKey, issues: errors.$ZodRawIssue[]): void {
+  // a loop, since spreading a long list into push() overflows the stack
+  for (const iss of issues) {
+    (iss as any).path ??= [];
+    (iss as any).path.unshift(path);
+    target.push(iss);
+  }
+}
+
 export function unwrapMessage(message: string | { message: string } | undefined | null): string | undefined {
   return typeof message === "string" ? message : message?.message;
 }
