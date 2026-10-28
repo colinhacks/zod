@@ -309,6 +309,38 @@ test("encodes through a cycle", () => {
   expect(result.self).toBe(result);
 });
 
+test("an encode checks every node below a checked recursive container, as a decode does", async () => {
+  const Node: any = z
+    .object({
+      n: z.number().max(5),
+      get kids() {
+        return z.array(Node);
+      },
+    })
+    .refine((v: any) => v.n !== 3, "three");
+  const paths = (r: any) => r.error?.issues.map((iss: z.core.$ZodIssue) => iss.path);
+
+  const nested = { n: 1, kids: [{ n: 10, kids: [] }] };
+  expect(paths(z.safeEncode(Node, nested))).toEqual([["kids", 0, "n"]]);
+  expect(paths(z.safeDecode(Node, nested))).toEqual([["kids", 0, "n"]]);
+
+  const cyclic: any = { n: 1, kids: [] };
+  cyclic.kids.push({ n: 10, kids: [cyclic] });
+  expect(paths(z.safeEncode(Node, cyclic))).toEqual([["kids", 0, "n"]]);
+
+  // an encode runs a node's own check before parsing it, so the second visit must not repeat the first one's
+  const shared = { n: 3, kids: [{ n: 10, kids: [] }] };
+  const twice = { n: 1, kids: [shared, shared] };
+  const expected = [
+    ["kids", 0],
+    ["kids", 0, "kids", 0, "n"],
+    ["kids", 1],
+    ["kids", 1, "kids", 0, "n"],
+  ];
+  expect(paths(z.safeEncode(Node, twice))).toEqual(expected);
+  expect(paths(await z.safeEncodeAsync(Node, twice))).toEqual(expected);
+});
+
 test("keeps separate parses independent", () => {
   const Node: any = z.object({
     id: z.number(),
