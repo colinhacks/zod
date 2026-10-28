@@ -2870,13 +2870,11 @@ export function mergeValues(
     return { valid: true, data: a };
   }
   if (util.isPlainObject(a) && util.isPlainObject(b)) {
-    const bKeys = Object.keys(b);
-    const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
-
     const newObj: any = { ...a, ...b };
     if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
-    for (const key of sharedKeys) {
-      if (key === "__proto__") continue;
+    for (const key of Object.keys(a)) {
+      // own and enumerable is exactly membership in `Object.keys(b)`, without a scan per key
+      if (key === "__proto__" || !Object.prototype.propertyIsEnumerable.call(b, key)) continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return {
@@ -2918,7 +2916,7 @@ export function mergeValues(
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
   // Track which side(s) reject each key. A key rejection is reported only when BOTH sides reject it, so a key owned by one branch survives the other's key schema. strictObject reports these as unrecognized_keys; a record with an open key schema reports one invalid_key per key.
-  const unrecKeys = new Map<string, { l?: true; r?: true }>();
+  const unrecKeys = new Map<string, { l?: true; r?: true; u?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
   const keyIssues = new Map<string, errors.$ZodRawIssue>();
 
@@ -2935,8 +2933,14 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
       return false;
     }
     for (const k of keys) {
-      if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-      unrecKeys.get(k)![side] = true;
+      let flags = unrecKeys.get(k);
+      if (!flags) {
+        flags = {};
+        unrecKeys.set(k, flags);
+      }
+      flags[side] = true;
+      // `u` marks the keys the reported unrecognized_keys issue lists
+      if (iss === unrecIssue) flags.u = true;
     }
     return true;
   };
@@ -2950,14 +2954,15 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
   }
 
   // Report only keys rejected by BOTH sides
-  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
-  if (bothKeys.length) {
-    const aggregated = unrecIssue ? bothKeys.filter((k) => (unrecIssue!.keys as string[]).includes(k)) : [];
-    if (aggregated.length) result.issues.push({ ...unrecIssue!, keys: aggregated });
-    for (const k of bothKeys) {
-      if (!aggregated.includes(k) && keyIssues.has(k)) result.issues.push(keyIssues.get(k)!);
-    }
+  const aggregated: string[] = [];
+  const rejected: errors.$ZodRawIssue[] = [];
+  for (const [k, f] of unrecKeys) {
+    if (!f.l || !f.r) continue;
+    if (f.u) aggregated.push(k);
+    else if (keyIssues.has(k)) rejected.push(keyIssues.get(k)!);
   }
+  if (aggregated.length) result.issues.push({ ...unrecIssue!, keys: aggregated });
+  for (const iss of rejected) result.issues.push(iss);
 
   const merged = mergeValues(left.value, right.value);
 
