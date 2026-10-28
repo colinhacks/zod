@@ -194,3 +194,13 @@ test("map with object keys", () => {
     ]]
   `);
 });
+
+test("an upper size bound fails before any entry is parsed", () => {
+  const bad = new Map([
+    [1, 1],
+    [2, 2],
+  ]);
+  const capped = z.map(z.string(), z.string()).check(z.maxSize(1));
+  expect(capped.safeParse(bad).error!.issues).toMatchObject([{ code: "too_big" }]);
+  expect(capped.safeParse(new Set([1, 2])).error!.issues[0]).toMatchObject({ code: "invalid_type", expected: "map" });
+});
