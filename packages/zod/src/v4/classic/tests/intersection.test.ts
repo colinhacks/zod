@@ -249,30 +249,38 @@ test("a record's key schema governs only its own keys inside an intersection", (
   expect(z.record(z.string().regex(/^S_/), z.string()).safeParse({ S_a: "s", bad: "x" }).success).toBe(false);
 });
 
-test("key reconciliation is linear in the input's key count", () => {
+test("key reconciliation does not scan a key list per key", () => {
   const input: Record<string, number> = { a: 1, b: 2 };
-  for (let i = 0; i < 50_000; i++) input[`k${i}`] = i;
+  for (let i = 0; i < 2000; i++) input[`k${i}`] = i;
   const record = z.record(z.string(), z.number());
   const records = z.intersection(record, record);
   const stricts = z.intersection(z.strictObject({ a: z.number() }), z.strictObject({ b: z.number() }));
   const mixed = z.intersection(z.strictObject({ a: z.number() }), z.record(z.string().regex(/^S_/), z.number()));
-  expect(records.parse(input)).toEqual(input);
-  expect(stricts.safeParse(input).error!.issues).toMatchObject([
-    { code: "unrecognized_keys", keys: { length: 50_000 } },
-  ]);
-  expect(mixed.safeParse(input).error!.issues).toMatchObject([{ code: "unrecognized_keys", keys: { length: 50_001 } }]);
 
-  const best = (schema: z.ZodType) => {
-    let ms = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < 3; i++) {
-      const start = performance.now();
-      schema.safeParse(input);
-      ms = Math.min(ms, performance.now() - start);
-    }
-    return ms;
+  // counts the elements every indexOf/includes call walks; matching each key against a list of every key walked ~n² of them
+  let walked = 0;
+  const { indexOf, includes } = Array.prototype;
+  Array.prototype.indexOf = function (this: unknown[], ...args: [unknown, number?]) {
+    walked += this.length;
+    return indexOf.apply(this, args);
   };
-  // one record over the same input is the linear baseline; matching keys by scanning a key list per key made each ~100x slower
-  for (const schema of [records, stricts, mixed]) expect(best(schema)).toBeLessThan(25 * best(record));
+  Array.prototype.includes = function (this: unknown[], ...args: [unknown, number?]) {
+    walked += this.length;
+    return includes.apply(this, args);
+  };
+  let results: unknown[];
+  try {
+    results = [records.safeParse(input), stricts.safeParse(input), mixed.safeParse(input)];
+  } finally {
+    Array.prototype.indexOf = indexOf;
+    Array.prototype.includes = includes;
+  }
+  expect(walked).toBeLessThan(20_000);
+  expect(results).toMatchObject([
+    { success: true, data: input },
+    { error: { issues: [{ code: "unrecognized_keys", keys: { length: 2000 } }] } },
+    { error: { issues: [{ code: "unrecognized_keys", keys: { length: 2001 } }] } },
+  ]);
 });
 
 test("partialRecord reports an out-of-set key as unrecognized, not invalid", () => {
