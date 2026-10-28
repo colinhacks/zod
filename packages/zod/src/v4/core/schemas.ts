@@ -4682,6 +4682,8 @@ export interface $ZodTemplateLiteralDef extends $ZodTypeDef {
 export interface $ZodTemplateLiteralInternals<Template extends string = string>
   extends $ZodTypeInternals<Template, Template> {
   pattern: RegExp;
+  /** @internal `pattern` rewritten to match the same strings without polynomial backtracking. */
+  matcher: RegExp;
   def: $ZodTemplateLiteralDef;
   isst: errors.$ZodIssueInvalidType;
 }
@@ -4784,26 +4786,62 @@ function partPattern(schema: $ZodType): string | undefined {
   return leafPattern(schema);
 }
 
+const catchAll = /^\[\\s\\S\](?:\*|\{(\d+),\})$/;
+const loneBackslash = /(?:^|[^\\])(?:\\\\)*\\$/;
+
+// the public source, plus a parse-time one where a catch-all followed by a literal and another catch-all stops at the literal's first occurrence, since the next catch-all absorbs any later split
+function templateSources(parts: $ZodTemplateLiteralPart[]): [string, string] {
+  const regexParts: string[] = [];
+  let fast = "";
+  // escaped literal text after the pending catch-all, whose minimum length is `min` (-1 when none is pending)
+  let lit = "";
+  let min = -1;
+  const flush = () => {
+    if (min >= 0) fast += `[\\s\\S]{${min},}${lit}`;
+    min = -1;
+    lit = "";
+  };
+  for (const part of parts) {
+    let src: string;
+    // undefined for a literal, null for any other non-catch-all part
+    let any: RegExpExecArray | null | undefined;
+    if (typeof part === "object" && part !== null) {
+      // is Zod schema
+      const source = partPattern(part);
+      if (!source) {
+        throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
+      }
+      src = util.cleanRegex(source);
+      any = catchAll.exec(src);
+      // a lone trailing backslash would escape the catch-all's first character
+      if (any && loneBackslash.test(regexParts[regexParts.length - 1]!)) any = null;
+    } else if (part === null || util.primitiveTypes.has(typeof part)) {
+      src = util.escapeRegex(`${part}`);
+    } else {
+      throw new Error(`Invalid template literal part: ${part}`);
+    }
+    if (any) {
+      if (lit) fast += `[\\s\\S]{${min}}(?:(?!${lit})[\\s\\S])*${lit}`;
+      min = (lit || min < 0 ? 0 : min) + (+any[1]! || 0);
+      lit = "";
+    } else if (any === undefined && min >= 0) lit += src;
+    else {
+      flush();
+      fast += src;
+    }
+    regexParts.push(src);
+  }
+  flush();
+  return [regexParts.join(""), fast];
+}
+
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
   "$ZodTemplateLiteral",
   (inst, def) => {
     $ZodType.init(inst, def);
-    const regexParts: string[] = [];
-    for (const part of def.parts) {
-      if (typeof part === "object" && part !== null) {
-        // is Zod schema
-        const source = partPattern(part);
-        if (!source) {
-          throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
-        }
-        regexParts.push(util.cleanRegex(source));
-      } else if (part === null || util.primitiveTypes.has(typeof part)) {
-        regexParts.push(util.escapeRegex(`${part}`));
-      } else {
-        throw new Error(`Invalid template literal part: ${part}`);
-      }
-    }
-    inst._zod.pattern = new RegExp(`^${regexParts.join("")}$`);
+    const [source, fast] = templateSources(def.parts);
+    inst._zod.pattern = new RegExp(`^${source}$`);
+    inst._zod.matcher = fast === source ? inst._zod.pattern : new RegExp(`^${fast}$`);
 
     inst._zod.parse = (payload, _ctx) => {
       if (typeof payload.value !== "string") {
@@ -4816,9 +4854,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
         return payload;
       }
 
-      inst._zod.pattern.lastIndex = 0;
-
-      if (!inst._zod.pattern.test(payload.value)) {
+      if (!inst._zod.matcher.test(payload.value)) {
         payload.issues.push({
           input: payload.value,
           inst,

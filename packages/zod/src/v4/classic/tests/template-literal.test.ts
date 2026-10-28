@@ -810,3 +810,55 @@ test("an embedded email does not constrain the other parts", () => {
   expect(schema.safeParse("a..b@b.cc|xy").success).toBe(false);
   expect(schema.safeParse(".a@b.cc|xy").success).toBe(false);
 });
+
+test("catch-all parts separated by literals match exactly what the public pattern matches", () => {
+  const templates = [
+    z.templateLiteral([z.string(), ".", z.string(), ".com"]),
+    z.templateLiteral([z.string(), "@", z.string(), ".", z.string()]),
+    z.templateLiteral([z.string(), "-", z.string(), "-", z.string(), "!"]),
+    z.templateLiteral([z.string().min(1), "ab", z.string().min(2), "a", z.string()]),
+    z.templateLiteral(["a", z.string(), "", z.string(), "a.", z.string().max(2), z.string(), "@", z.number()]),
+    z.templateLiteral([z.string(), "\\", z.string(), ".", z.string()]),
+    z.templateLiteral([z.string().regex(/a\$/), z.string(), ".", z.string()]),
+    z.templateLiteral([z.templateLiteral([z.string(), "."]), z.string(), "-", z.string()]),
+  ];
+  // the public pattern, and so the JSON Schema `pattern`, is unchanged
+  expect(templates[0]!._zod.pattern.source).toBe("^[\\s\\S]{0,}\\.[\\s\\S]{0,}\\.com$");
+  expect(templates.slice(0, 6).every((t) => t._zod.matcher !== t._zod.pattern)).toBe(true);
+
+  const tokens = ["a", ".", "-", "@", "!", ".com", "ab", "\\"];
+  let inputs = [""];
+  for (let frontier = [""], i = 0; i < 5; i++) {
+    frontier = frontier.flatMap((s) => tokens.map((t) => s + t));
+    inputs = inputs.concat(frontier);
+  }
+  for (const t of templates) {
+    const mismatches = inputs.filter((s) => t.safeParse(s).success !== t._zod.pattern.test(s));
+    expect(mismatches).toEqual([]);
+  }
+  // a later split of the first catch-all still matches
+  expect(templates[0]!.safeParse("a.b.c.com").success).toBe(true);
+  expect(templates[0]!.safeParse("a.com.com").success).toBe(true);
+  expect(templates[0]!.safeParse("a.com").success).toBe(false);
+});
+
+test("catch-all parts separated by literals reject a backtracking payload in linear time", () => {
+  // main backtracked polynomially here: ~4s for the two-part payloads and ~6s for the three-part one
+  const cases: [z.ZodType, string][] = [
+    [z.templateLiteral([z.string(), ".", z.string(), ".com"]), ".".repeat(50_000)],
+    [z.templateLiteral([z.string(), "@", z.string(), ".", z.string().min(1)]), "@".repeat(50_000)],
+    [z.templateLiteral([z.string(), "-", z.string(), "-", z.string(), "!"]), "-".repeat(2_000)],
+  ];
+  for (const [schema, payload] of cases) {
+    // warm up, then best of three
+    expect(schema.safeParse(payload).success).toBe(false);
+    let best = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < 3; i++) {
+      const start = performance.now();
+      schema.safeParse(payload);
+      best = Math.min(best, performance.now() - start);
+    }
+    // the linear match takes well under a millisecond, leaving orders of magnitude of headroom for contention
+    expect(best).toBeLessThan(100);
+  }
+}, 120_000);

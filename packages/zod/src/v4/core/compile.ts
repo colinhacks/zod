@@ -2151,12 +2151,10 @@ function generateFileCheck(doc: Doc, accessor: string): string {
 function generateTemplateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
 
-  // Template literal schemas have a pre-computed pattern in _zod.pattern
-  const pattern = (schema._zod as unknown as { pattern: RegExp }).pattern;
-  if (pattern) {
-    const patternConst = addConstant(ctx, pattern);
-    doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
+  const matcher = (schema._zod as unknown as { matcher: RegExp }).matcher;
+  if (matcher) {
+    const matcherConst = addConstant(ctx, matcher);
+    doc.write(`if (!${matcherConst}.test(${accessor})) return INVALID;`);
   }
   return accessor;
 }
