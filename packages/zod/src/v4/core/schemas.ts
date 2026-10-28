@@ -1852,7 +1852,8 @@ function capSize(inst: $ZodType, size: (input: any) => number): void {
   const parse = inst._zod.parse;
   inst._zod.parse = (payload, ctx) => {
     const n = size(payload.value);
-    if (n > cap && !ctx?.skipChecks && ctx?.direction !== "backward") {
+    // an encode runs checks between a check-free first pass and the real one, so the first pass is where elements are spared
+    if (n > cap && (ctx?.direction === "backward") === !!ctx?.skipChecks) {
       for (const [max, ch] of util.sizeCaps(inst._zod.def.checks)) {
         if (n > max && ch._zod.def.when!(payload)) {
           const start = payload.issues.length;

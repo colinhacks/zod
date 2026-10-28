@@ -935,13 +935,14 @@ export function unwrapMessage(message: string | { message: string } | undefined 
 }
 
 /* A check holds no link back to the schema it is attached to — the same check instance is shared by every clone of that schema — so the owner is stamped onto the issues a check just raised, at the only point where both are in scope. Runs on the failure path only; `start` is the issue count from before the check ran. */
-/** The leading size checks of `defChecks` that set an upper bound, each paired with it. */
+/** The size checks of `defChecks` that set an upper bound ahead of any check that may rewrite the value, each paired with it. */
 export function sizeCaps(defChecks: checks.$ZodCheck<never>[] | undefined): [number, checks.$ZodCheck<never>][] {
   const caps: [number, checks.$ZodCheck<never>][] = [];
   for (const ch of defChecks ?? []) {
     const d = ch._zod.def as any;
-    // a later check may rewrite the value
-    if (!/_(length|size)$|_equals$/.test(d.check)) break;
+    // an overwrite, or a check function without a predicate, may replace the value a later bound reads
+    if (d.check === "overwrite" || (d.check === "custom" && !d.fn)) break;
+    if (!/_(length|size)$|_equals$/.test(d.check)) continue;
     const max = d.maximum ?? d.length ?? d.size;
     if (max >= 0) caps.push([max, ch]);
   }
