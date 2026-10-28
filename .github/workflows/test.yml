@@ -4,18 +4,20 @@ on:
   push:
     branches:
       - "main"
+      - "v3.25.x"
   pull_request:
     branches:
       - main
       - v4
+      - v3.25.x
 
 jobs:
   test-node:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["latest"]
-        typescript: ["5.5", "latest"]
+        node: ["22", "24"]
+        typescript: ["5.5", "5"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["latest"]
+        node: ["22"]
     name: Lint on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
