@@ -102,6 +102,12 @@ test("failing when set is bigger than max() ", () => {
     expect(result.error.issues.length).toEqual(1);
     expect(result.error.issues[0].code).toEqual(ZodIssueCode.too_big);
   }
+  expect(
+    z
+      .set(z.string())
+      .max(1)
+      .safeParse(new Set([1, 2])).error!.issues
+  ).toMatchObject([{ code: "too_big" }]);
 });
 
 test("doesn’t throw when an empty set is given", () => {

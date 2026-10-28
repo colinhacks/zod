@@ -21,6 +21,14 @@ test("object intersection", () => {
   expect(() => z.intersection(BaseTeacher.strict(), HasID).parse({ ...data, extra: 12 })).toThrow();
 });
 
+test("intersection of wide objects", () => {
+  const input = Object.fromEntries(Array.from({ length: 40 }, (_, i) => [`k${i}`, i]));
+  expect(z.intersection(z.record(z.number()), z.record(z.number())).parse(input)).toEqual(input);
+  expect(
+    z.intersection(z.record(z.number()), z.record(z.number().transform((n) => n + 1))).safeParse(input).error!.issues
+  ).toMatchObject([{ code: "invalid_intersection_types" }]);
+});
+
 test("deep intersection", () => {
   const Animal = z.object({
     properties: z.object({
