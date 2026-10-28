@@ -1,0 +1,338 @@
+# .github/workflows/release-v3.yml
+
+name: Release Zod 3 on npm
+run-name: Release zod@${{ inputs.version }} under latest-3
+on:
+  # Dispatch only and main only, as release.yml, and rare: a zod@3.25.N goes out for a vulnerability disclosure, nothing else. `gh workflow run release-v3.yml -f version=3.25.77 -f notes="$(cat notes.md)"`, then approve the npm environment, approve the staged version on npm with 2FA, and approve the `release-approval` deployment.
+  #
+  # The package is zod@3.25.76 with only its Zod 3 API replaced: `scripts/zod3-release.ts` downloads 3.25.76 against a pinned integrity, rebuilds `v3/**` from main's `packages/zod/src/v3` with the toolchain that built 3.25.76 (proven by rebuilding 3.25.76's own source byte for byte first), and refuses any file outside `v3/` and `src/v3/` that is not 3.25.76's, so `zod/v4`, `zod/v4/core`, `zod/v4-mini`, `zod/v4/mini` and the locales stay 3.25.76's exactly.
+  #
+  # `build` makes the tarball with no secrets, `smoke` tests it in a job that cannot touch it, and `stage` runs no install and no build: it checks the artifact is byte for byte the one `build` hashed, re-verifies it, and stages it under `latest-3`. A 3.x version must never take `latest`, which stays 4.x.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to release: 3.25.N, with N above 76 and above the current latest-3"
+        type: string
+        required: true
+      notes:
+        description: 'Release notes in Markdown, the body of the GitHub release. Pass a file with -f notes="$(cat notes.md)".'
+        type: string
+        required: true
+
+permissions: {}
+
+# one 3.x release at a time, never cancelled; a group of its own rather than release.yml's, because a 4.x run can hold that group for up to 30 days and GitHub cancels a second queued run in a group, and a disclosure usually ships a 3.x and a 4.x side by side for one approval session
+concurrency:
+  group: release-v3
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Assemble zod@${{ inputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      integrity: ${{ steps.hash.outputs.integrity }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      # a step, not a job-level `if:`, so a wrong ref fails the run instead of skipping it green
+      - name: Refuse to release from any ref but main
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::release-v3.yml runs from main only, got $GITHUB_REF"; exit 1; }
+
+      - name: Refuse a version outside 3.25.77 and up, or a release without notes
+        env:
+          VERSION: ${{ inputs.version }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          { [[ "$VERSION" =~ ^3\.25\.(0|[1-9][0-9]*)$ ]] && [ "${BASH_REMATCH[1]}" -gt 76 ]; } || { echo "::error::version must be 3.25.N with N > 76, got $VERSION"; exit 1; }
+          [ -n "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ] || { echo "::error::the notes input is empty: gh workflow run release-v3.yml -f version=$VERSION -f notes=\"\$(cat notes.md)\""; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+
+      - run: nub install --frozen-lockfile
+
+      - name: Assemble, verify and pack
+        env:
+          VERSION: ${{ inputs.version }}
+        run: nub scripts/zod3-release.ts build "$VERSION" --out "$RUNNER_TEMP/zod3"
+
+      - name: Hash the tarball
+        id: hash
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "integrity=sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" | base64 -w0)" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/zod3/zod-$VERSION.manifest.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # kept past the 30 days `finish` can be held, since it attaches the tarball to the GitHub release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        id: upload
+        with:
+          name: zod-${{ inputs.version }}
+          path: ${{ runner.temp }}/zod3
+          if-no-files-found: error
+          retention-days: 35
+
+  smoke:
+    name: Smoke-test zod@${{ inputs.version }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ inputs.version }}
+      INTEGRITY: ${{ needs.build.outputs.integrity }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+
+      - run: nub install --frozen-lockfile
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: ${{ runner.temp }}/zod3
+          merge-multiple: true
+
+      - name: Check the artifact is the tarball build hashed
+        run: |
+          got="sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" | base64 -w0)"
+          [ "$got" = "$INTEGRITY" ] || { echo "::error::the artifact is $got, build hashed $INTEGRITY"; exit 1; }
+
+      # main's v3 suite on source, every vitest project, before the same suite runs against the built files
+      - run: nub exec --node vitest run packages/zod/src/v3
+
+      - name: Require, import, test and type-check the tarball
+        run: nub scripts/zod3-release.ts smoke "$RUNNER_TEMP/zod3/zod-$VERSION.tgz"
+
+      # a second runner has to produce the same bytes, so the release can be rebuilt and checked from its tag later
+      - name: Rebuild and compare
+        run: |
+          nub scripts/zod3-release.ts build "$VERSION" --out "$RUNNER_TEMP/rebuild"
+          cmp "$RUNNER_TEMP/rebuild/zod-$VERSION.tgz" "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" || { echo "::error::a rebuild of zod@$VERSION does not reproduce the build's tarball"; exit 1; }
+
+  stage:
+    name: Stage zod@${{ inputs.version }} under latest-3
+    needs: [build, smoke]
+    runs-on: ubuntu-latest
+    # the environment release.yml stages from: a required reviewer approves every run and it only deploys main; the trusted publisher this job uses is bound to release-v3.yml and this environment, stage-only
+    environment: npm
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # the OIDC token npm's trusted publishing and provenance take
+    outputs:
+      latest: ${{ steps.registry.outputs.latest }}
+    env:
+      VERSION: ${{ inputs.version }}
+      INTEGRITY: ${{ needs.build.outputs.integrity }}
+      TAG: latest-3
+    steps:
+      - name: Refuse to release from any ref but main, or a version outside 3.25.77 and up
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::release-v3.yml runs from main only, got $GITHUB_REF"; exit 1; }
+          { [[ "$VERSION" =~ ^3\.25\.(0|[1-9][0-9]*)$ ]] && [ "${BASH_REMATCH[1]}" -gt 76 ]; } || { echo "::error::version must be 3.25.N with N > 76, got $VERSION"; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Nub
+        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
+        with:
+          nub-version: "0.8.3"
+          registry-url: https://registry.npmjs.org/
+
+      # nothing is installed in the job that holds the OIDC token: Node 24's bundled npm has carried `npm stage` since 11.15
+      - name: Check the npm CLI can stage
+        run: |
+          v="$(npm --version)"
+          [ "$(printf '%s\n11.15.0\n' "$v" | sort -V | head -1)" = "11.15.0" ] || { echo "::error::npm $v cannot stage (need >= 11.15)"; exit 1; }
+          echo "npm $v at $(command -v npm)"
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: ${{ runner.temp }}/zod3
+          merge-multiple: true
+
+      - name: Check the artifact is the tarball build hashed
+        run: |
+          got="sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" | base64 -w0)"
+          [ "$got" = "$INTEGRITY" ] || { echo "::error::the artifact is $got, build hashed $INTEGRITY"; exit 1; }
+
+      # plain node and its built-ins, with nothing installed: the file set, every byte outside the Zod 3 API, package.json, and src/v3 against this checkout
+      - name: Verify the tarball against zod@3.25.76
+        run: node scripts/zod3-release.ts verify "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" "$VERSION"
+
+      - name: Check the registry
+        id: registry
+        run: |
+          tags="$(curl -sf https://registry.npmjs.org/-/package/zod/dist-tags)"
+          latest="$(jq -r '.latest' <<< "$tags")"
+          current="$(jq -r '.["latest-3"] // empty' <<< "$tags")"
+          [[ "$latest" =~ ^([4-9]|[1-9][0-9]+)\. ]] || { echo "::error::npm latest is $latest, expected 4.x or later"; exit 1; }
+          if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then echo "::error::zod@$VERSION is already published"; exit 1; fi
+          if [ -n "$current" ] && [ "$(printf '%s\n%s\n' "$current" "$VERSION" | sort -V | tail -1)" != "$VERSION" ]; then
+            echo "::error::latest-3 is $current; $VERSION must be above it"; exit 1
+          fi
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "staging zod@$VERSION under $TAG; latest is $latest${current:+, latest-3 is $current}"
+
+      # run outside the checkout so npm sees no workspace; a version already staged counts as staged only on a re-run of this run, whose tarball it is, while one staged by another run may be another commit's, so it fails (`npm stage list zod`, then reject it or approve it and re-run that run's finish)
+      - name: Stage zod on npm
+        working-directory: ${{ runner.temp }}/zod3
+        run: |
+          [ "$TAG" = "latest-3" ] || { echo "::error::a 3.x version stages under latest-3 only, got $TAG"; exit 1; }
+          out="$(mktemp)"
+          if npm stage publish "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" --tag "$TAG" --provenance --loglevel verbose > "$out" 2>&1; then
+            cat "$out"
+            exit 0
+          fi
+          cat "$out"
+          if [ "$GITHUB_RUN_ATTEMPT" -gt 1 ] && grep -qiE 'already (been )?staged|staged version|E409|EPUBLISHCONFLICT' "$out"; then
+            echo "::notice::zod@$VERSION is already staged by an earlier attempt of this run; finish checks npm serves this tarball"
+            exit 0
+          fi
+          echo "::error::staging zod@$VERSION failed"
+          exit 1
+
+      - name: Say how to approve
+        env:
+          LATEST: ${{ steps.registry.outputs.latest }}
+          NOTES: ${{ inputs.notes }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # shellcheck disable=SC2016  # the backticks below are markdown for the step summary, not command substitution
+          {
+            echo "## Staged on npm under latest-3, waiting for approval"
+            echo
+            echo "- \`zod@$VERSION\`, tag \`$TAG\`, shasum \`$(sha1sum "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" | cut -d' ' -f1)\`, integrity \`$INTEGRITY\`"
+            echo "- \`latest\` is \`$LATEST\` and must stay a 4.x"
+            echo
+            echo "Check the staged entry's tag and shasum with \`npm stage list zod\` before approving. Approve it with \`stager\` in your own terminal, or \`npm stage approve <id>\`, or on npmjs.com. stager cannot resume this run, since the version is an input rather than a package.json on main, so then approve the pending \`release-approval\` deployment on $RUN_URL, or:"
+            echo
+            echo '```'
+            echo "gh api -X POST repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/pending_deployments -F \"environment_ids[]=\$(gh api repos/$GITHUB_REPOSITORY/environments/release-approval --jq .id)\" -f state=approved -f comment='approved on npm'"
+            echo '```'
+            echo
+            echo "## Release notes"
+            echo
+            printf '%s\n' "$NOTES"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  finish:
+    name: Tag and release v${{ inputs.version }}
+    needs: [build, stage]
+    # held by the environment's required reviewer with no runner, as in release.yml; a resume signal only, since a version nobody approved on npm still stops at the registry check
+    environment: release-approval
+    runs-on: ubuntu-latest
+    # 6h is GitHub's hard cap for a hosted runner; the wait takes 340 minutes of it
+    timeout-minutes: 360
+    permissions:
+      contents: write # the GitHub release; the tag goes through the deploy key
+    env:
+      VERSION: ${{ inputs.version }}
+      INTEGRITY: ${{ needs.build.outputs.integrity }}
+      LATEST: ${{ needs.stage.outputs.latest }}
+    steps:
+      - name: Wait for npm to serve the version
+        run: |
+          deadline=$(( $(date +%s) + 340 * 60 ))
+          i=0
+          until curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; do
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::zod@$VERSION is still not served after 340 minutes; if it was never approved on npm, approve it, then re-run this job"
+              exit 1
+            fi
+            i=$((i + 1))
+            if [ $((i % 15)) -eq 0 ]; then echo "zod@$VERSION is not served yet ($i minutes)"; fi
+            sleep 60
+          done
+          echo "zod@$VERSION is live"
+
+      # nothing public describes the version until npm serves this run's exact tarball under latest-3 and latest is still a 4.x; the packument is CDN-cached, so the tags get ten minutes to settle
+      - name: Check npm serves this tarball under latest-3, and latest is untouched
+        run: |
+          served="$(curl -sf "https://registry.npmjs.org/zod/$VERSION" | jq -r .dist.integrity)"
+          [ "$served" = "$INTEGRITY" ] || { echo "::error::npm serves zod@$VERSION as $served, but this run built $INTEGRITY"; exit 1; }
+          for i in $(seq 20); do
+            tags="$(curl -sf https://registry.npmjs.org/-/package/zod/dist-tags)"
+            latest="$(jq -r '.latest' <<< "$tags")"
+            l3="$(jq -r '.["latest-3"] // empty' <<< "$tags")"
+            if [ "$latest" = "$VERSION" ] || ! [[ "$latest" =~ ^([4-9]|[1-9][0-9]+)\. ]]; then
+              echo "::error::npm latest is $latest; restore it with npm dist-tag add zod@$LATEST latest (2FA), then re-run this job"
+              exit 1
+            fi
+            if [ "$l3" = "$VERSION" ]; then break; fi
+            echo "latest-3 is ${l3:-unset}, not yet $VERSION ($i/20)"
+            sleep 30
+          done
+          [ "$l3" = "$VERSION" ] || { echo "::error::latest-3 is ${l3:-unset}, not $VERSION"; exit 1; }
+          if [ "$latest" != "$LATEST" ]; then echo "::notice::latest moved from $LATEST to $latest while this run waited, a 4.x release landing beside it"; fi
+          echo "zod@$VERSION is latest-3 with integrity $served; latest is $latest"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # the job token cannot create a tag, so it is pushed with the deploy key the "Release tags" ruleset exempts, which only release-approval holds; the key file is gone after the push
+      - name: Tag the release
+        env:
+          RELEASE_TAG_KEY: ${{ secrets.RELEASE_TAG_KEY }}
+        run: |
+          if existing="$(git ls-remote --exit-code --tags origin "refs/tags/v$VERSION")"; then
+            [ "${existing%%[[:space:]]*}" = "$GITHUB_SHA" ] || { echo "::error::v$VERSION already names ${existing%%[[:space:]]*}, not $GITHUB_SHA"; exit 1; }
+            echo "v$VERSION is already tagged"
+            exit 0
+          fi
+          printf '%s\n' "$RELEASE_TAG_KEY" > "$RUNNER_TEMP/release-tag-key"
+          chmod 600 "$RUNNER_TEMP/release-tag-key"
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "$RUNNER_TEMP/known_hosts"
+          git tag "v$VERSION" "$GITHUB_SHA"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/release-tag-key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts" git push "git@github.com:$GITHUB_REPOSITORY.git" "refs/tags/v$VERSION"
+          rm "$RUNNER_TEMP/release-tag-key"
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: ${{ runner.temp }}/zod3
+          merge-multiple: true
+
+      # never marked latest, so the repo's latest release stays the 4.x; the notes go through env and a file so their text can't break out of the command
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          dir="$RUNNER_TEMP/zod3"
+          got="sha512-$(openssl dgst -sha512 -binary "$dir/zod-$VERSION.tgz" | base64 -w0)"
+          [ "$got" = "$INTEGRITY" ] || { echo "::error::the artifact is $got, build hashed $INTEGRITY"; exit 1; }
+          { printf '%s\n\n' "$NOTES"; cat "$dir/zod-$VERSION.manifest.md"; } > "$RUNNER_TEMP/release_notes.md"
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release edit "v$VERSION" --repo "$GITHUB_REPOSITORY" --latest=false --notes-file "$RUNNER_TEMP/release_notes.md"
+            echo "v$VERSION was already released; its notes are rewritten from this run"
+            exit 0
+          fi
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --latest=false \
+            --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/release_notes.md" \
+            "$dir/zod-$VERSION.tgz" "$dir/zod-$VERSION.manifest.md"
