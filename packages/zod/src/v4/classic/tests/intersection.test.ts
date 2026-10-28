@@ -40,6 +40,24 @@ test("object intersection: strict", () => {
   expect(result.success).toEqual(false);
 });
 
+test("intersection of wide objects", () => {
+  const input = Object.fromEntries(Array.from({ length: 40 }, (_, i) => [`k${i}`, i]));
+  expect(z.intersection(z.record(z.string(), z.number()), z.record(z.string(), z.number())).parse(input)).toEqual(
+    input
+  );
+  expect(() =>
+    z
+      .intersection(
+        z.record(z.string(), z.number()),
+        z.record(
+          z.string(),
+          z.number().transform((n) => n + 1)
+        )
+      )
+      .parse(input)
+  ).toThrow("Unmergable intersection");
+});
+
 test("deep intersection", () => {
   const Animal = z.object({
     properties: z.object({

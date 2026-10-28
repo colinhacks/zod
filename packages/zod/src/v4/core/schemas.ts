@@ -2197,7 +2197,9 @@ function mergeValues(
   }
   if (util.isPlainObject(a) && util.isPlainObject(b)) {
     const bKeys = Object.keys(b);
-    const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
+    // a set keeps the lookup linear for wide objects
+    const bKeySet = bKeys.length > 32 ? new Set(bKeys) : null;
+    const sharedKeys = Object.keys(a).filter((key) => (bKeySet ? bKeySet.has(key) : bKeys.indexOf(key) !== -1));
 
     const newObj: any = { ...a, ...b };
     for (const key of sharedKeys) {
