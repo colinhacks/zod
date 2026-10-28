@@ -5,7 +5,7 @@ run-name: Release zod@${{ inputs.version }} under latest-3
 on:
   # Dispatch only and main only, as release.yml, and rare: a zod@3.25.N goes out for a vulnerability disclosure, nothing else. `gh workflow run release-v3.yml -f version=3.25.77 -f notes="$(cat notes.md)"`, then approve the npm environment, approve the staged version on npm with 2FA, and approve the `release-approval` deployment.
   #
-  # The package is zod@3.25.76 with only its Zod 3 API replaced: `scripts/zod3-release.ts` downloads 3.25.76 against a pinned integrity, rebuilds `v3/**` from main's `packages/zod/src/v3` with the toolchain that built 3.25.76 (proven by rebuilding 3.25.76's own source byte for byte first), and refuses any file outside `v3/` and `src/v3/` that is not 3.25.76's, so `zod/v4`, `zod/v4/core`, `zod/v4-mini`, `zod/v4/mini` and the locales stay 3.25.76's exactly.
+  # The package is main's own build in zod@3.25.76's layout: `scripts/zod3-release.ts` runs `packages/zod`'s `nub run build`, keeps exactly 3.25.76's `exports` keys and conditions, roots `zod` on main's Zod 3 as 3.25.76 did, serves main's current Zod 4 under `zod/v4*`, and ships nothing only main's other subpaths need. Every export name 3.25.76 had must still be there, save the removals the script names (`scripts/zod3-release.3.25.76.json` holds 3.25.76's).
   #
   # `build` makes the tarball with no secrets, `smoke` tests it in a job that cannot touch it, and `stage` runs no install and no build: it checks the artifact is byte for byte the one `build` hashed, re-verifies it, and stages it under `latest-3`. A 3.x version must never take `latest`, which stays 4.x.
   workflow_dispatch:
@@ -176,8 +176,8 @@ jobs:
           got="sha512-$(openssl dgst -sha512 -binary "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" | base64 -w0)"
           [ "$got" = "$INTEGRITY" ] || { echo "::error::the artifact is $got, build hashed $INTEGRITY"; exit 1; }
 
-      # plain node and its built-ins, with nothing installed: the file set, every byte outside the Zod 3 API, package.json, and src/v3 against this checkout
-      - name: Verify the tarball against zod@3.25.76
+      # plain node and its built-ins, with nothing installed and none of the tarball's code run: package.json and its exports, the layout, the root entry, every import resolving inside the tarball, and src against this checkout
+      - name: Verify the tarball's structure
         run: node scripts/zod3-release.ts verify "$RUNNER_TEMP/zod3/zod-$VERSION.tgz" "$VERSION"
 
       - name: Check the registry

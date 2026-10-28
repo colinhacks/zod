@@ -17,61 +17,44 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { availableParallelism, tmpdir } from "node:os";
-import { dirname, extname, join, relative, resolve, sep } from "node:path";
+import { dirname, join, normalize, relative, resolve, sep } from "node:path";
 import { isDeepStrictEqual, promisify } from "node:util";
-import type TS from "typescript";
 
-// the zod@3.25.N tarball `.github/workflows/release-v3.yml` stages: zod@3.25.76 with only its Zod 3 API (`v3/**`, `src/v3/**`) taken from main, so `zod/v4*` stays 3.25.76's byte for byte
+// the zod@3.25.N tarball `.github/workflows/release-v3.yml` stages: main's own build in zod@3.25.76's layout, with main's Zod 3 at `zod` and `zod/v3`, main's Zod 4 under 3.25.76's `zod/v4*` subpaths, and none of main's other subpaths
 //
-// - `build <version> [--out <dir>]` assembles, verifies and packs, writing `zod-<version>.tgz` and `zod-<version>.manifest.md`
-// - `verify <tarball> <version>` re-checks a packed tarball against zod@3.25.76 and main's `src/v3`, with node built-ins only
-// - `smoke <tarball>` requires and imports every subpath, runs main's v3 suite against the built files, and type-checks consumers on TypeScript 4.5 to 7
-
-const BASE_VERSION = "3.25.76";
-const BASE_INTEGRITY =
-  "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==";
-const BASE_TARBALL = `https://registry.npmjs.org/zod/-/zod-${BASE_VERSION}.tgz`;
+// - `build <version> [--out <dir>]` runs main's build, assembles, checks and packs, writing `zod-<version>.tgz` and `zod-<version>.manifest.md`
+// - `verify <tarball> <version>` re-checks a packed tarball's structure with node built-ins only, executing none of its code
+// - `smoke <tarball>` loads every subpath, requires 3.25.76's export names, runs main's v3 suite against the built files, and type-checks consumers on TypeScript 4.5 to 7
+// - `snapshot <zod-3.25.76.tgz>` regenerates `scripts/zod3-release.3.25.76.json`, the package.json and export names the checks hold the release to
 
 const ROOT = resolve(import.meta.dirname, "..");
-const MAIN_V3 = "packages/zod/src/v3";
-const isZod3 = (file: string) => file.startsWith("v3/") || file.startsWith("src/v3/");
+const ZOD = "packages/zod";
+const SNAPSHOT = join(ROOT, "scripts/zod3-release.3.25.76.json");
+const BASE_INTEGRITY =
+  "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==";
 
-// the root index re-exports v3; main has no such file, so it stays 3.25.76's and the build only proves it unchanged
-const ROOT_INDEX = ["index.cjs", "index.d.cts", "index.d.ts", "index.js"];
-
-// 3.25.76's build options at 50606616 with zshy 0.0.12's overrides, less its es6 `lib` and `customConditions`, which only failed the type check; the rebuild of 3.25.76 proves the emit unchanged
-const TSCONFIG = {
-  target: "es2020",
-  lib: ["es2020", "dom"],
-  module: "NodeNext",
-  moduleResolution: "NodeNext",
-  jsx: "react",
-  strict: true,
-  alwaysStrict: true,
-  noUncheckedIndexedAccess: false,
-  exactOptionalPropertyTypes: true,
-  skipLibCheck: true,
-  forceConsistentCasingInFileNames: true,
-  noUnusedLocals: true,
-  noUnusedParameters: true,
-  noImplicitAny: true,
-  noImplicitReturns: true,
-  noImplicitThis: true,
-  noImplicitOverride: true,
-  noFallthroughCasesInSwitch: true,
-  resolveJsonModule: true,
-  removeComments: false,
-  esModuleInterop: true,
-  emitDecoratorMetadata: true,
-  experimentalDecorators: true,
-  downlevelIteration: true,
-  isolatedModules: true,
-  types: [],
-  declaration: true,
-  noEmit: false,
-  emitDeclarationOnly: false,
-  verbatimModuleSyntax: false,
+// the root entry re-exports v3 exactly as 3.25.76's did
+const ROOT_INDEX = `import * as z from "./v3/external.js";
+export * from "./v3/external.js";
+export { z };
+export default z;
+`;
+const ROOT_TEXT: Record<string, string> = {
+  "src/index.ts": ROOT_INDEX,
+  "index.js": ROOT_INDEX,
+  "index.d.ts": ROOT_INDEX,
+  "index.d.cts": ROOT_INDEX.replaceAll('.js"', '.cjs"'),
 };
+
+// what main's postbuild writes beside every built index.d.cts
+const STUB = { type: "module", main: "./index.cjs", module: "./index.js", types: "./index.d.cts", sideEffects: false };
+
+const BUILT = /\.(d\.cts|d\.ts|cjs|js)$/;
+const FORMS = [".js", ".cjs", ".d.ts", ".d.cts"];
+const stem = (file: string) => file.replace(BUILT, "");
+
+type Surface = Record<string, { import: string[]; require: string[] }>;
+type Snapshot = { version: string; integrity: string; packageJson: Record<string, any>; surface: Surface };
 
 class Failure extends Error {
   details: string[];
@@ -91,8 +74,9 @@ function ok(message: string) {
 
 const sha256 = (data: Buffer | string) => createHash("sha256").update(data).digest("hex");
 const integrity = (data: Buffer) => `sha512-${createHash("sha512").update(data).digest("base64")}`;
+const snapshot = (): Snapshot => JSON.parse(readFileSync(SNAPSHOT, "utf8"));
 
-// `3.25.N` above 76: the 3.x line takes patches only, and its `zod/v4*` must stay 3.25.76's
+// `3.25.N` above 76: the 3.x line takes patches only
 function checkVersion(version: string) {
   const m = /^3\.25\.(0|[1-9]\d*)$/.exec(version ?? "");
   if (!m || Number(m[1]) <= 76) fail(`version must be 3.25.N with N > 76, got ${JSON.stringify(version)}`);
@@ -119,293 +103,209 @@ function unpack(tarball: string, dir: string): string {
   return join(dir, "package");
 }
 
-async function fetchBase(work: string): Promise<string> {
-  const res = await fetch(BASE_TARBALL);
-  if (!res.ok) fail(`${BASE_TARBALL}: HTTP ${res.status}`);
-  const tgz = Buffer.from(await res.arrayBuffer());
-  const got = integrity(tgz);
-  if (got !== BASE_INTEGRITY) fail(`zod@${BASE_VERSION} does not match its pinned integrity`, [`got ${got}`]);
-  ok(`zod@${BASE_VERSION} matches its pinned integrity ${BASE_INTEGRITY.slice(0, 22)}…`);
-  const file = join(work, `zod-${BASE_VERSION}.tgz`);
-  writeFileSync(file, tgz);
-  return unpack(file, join(work, "base"));
-}
-
 function git(...args: string[]): string {
   return execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
 }
 
-// the committed Zod 3 source of the checkout; a dirty src/v3 would ship bytes no commit holds
-function mainSource(): Map<string, Buffer> {
-  const dirty = git("status", "--porcelain", "--", MAIN_V3);
-  if (dirty) fail(`${MAIN_V3} has uncommitted changes`, dirty.split("\n"));
+// the checkout's committed packages/zod; anything uncommitted there would ship bytes no commit holds
+function committed(): Map<string, Buffer> {
+  const dirty = git("status", "--porcelain", "--", ZOD);
+  if (dirty) fail(`${ZOD} has uncommitted changes`, dirty.split("\n"));
   const out = new Map<string, Buffer>();
-  for (const file of git("ls-files", "-z", "--", MAIN_V3).split("\0").filter(Boolean)) {
-    out.set(`src/v3/${file.slice(MAIN_V3.length + 1)}`, readFileSync(join(ROOT, file)));
+  for (const file of git("ls-files", "-z", "--", ZOD).split("\0").filter(Boolean)) {
+    out.set(file.slice(ZOD.length + 1), readFileSync(join(ROOT, file)));
   }
   return out;
 }
 
-// zshy 0.0.12's extension rewrite: `./x.js` and extensionless relative specifiers take the output extension
-function rewriter(ts: typeof TS, ext: string): TS.TransformerFactory<any> {
-  const swap = (text: string) => {
-    if (text.endsWith(".js")) return text.slice(0, -3) + ext;
-    if ((text.startsWith("./") || text.startsWith("../")) && extname(text) === "") return text + ext;
-    return undefined;
-  };
-  return (context) => (sourceFile) => {
-    const visit = (node: TS.Node): TS.Node => {
-      if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-        const text = swap(node.moduleSpecifier.text);
-        if (text !== undefined) {
-          const spec = ts.factory.createStringLiteral(text);
-          return ts.factory.updateImportDeclaration(node, node.modifiers, node.importClause, spec, node.attributes);
-        }
-      }
-      if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        const text = swap(node.moduleSpecifier.text);
-        if (text !== undefined) {
-          const spec = ts.factory.createStringLiteral(text);
-          return ts.factory.updateExportDeclaration(
-            node,
-            node.modifiers,
-            node.isTypeOnly,
-            node.exportClause,
-            spec,
-            node.attributes
-          );
-        }
-      }
-      if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-        const arg = node.arguments[0];
-        const text = arg && ts.isStringLiteral(arg) ? swap(arg.text) : undefined;
-        if (text !== undefined) {
-          const args = [ts.factory.createStringLiteral(text), ...node.arguments.slice(1)];
-          return ts.factory.updateCallExpression(node, node.expression, node.typeArguments, args);
-        }
-      }
-      return ts.visitEachChild(node, visit, context);
-    };
-    return ts.visitNode(sourceFile, visit);
-  };
+// 3.25.76's package.json with the version, plus the nested stub package.json files main's build ships; its `zshy` build config and dev `scripts` describe a build this tarball does not come from, so they go
+function packageJson(version: string): string {
+  const out: Record<string, any> = { ...snapshot().packageJson, version };
+  out.files = [...out.files, "**/package.json"];
+  delete out.zshy;
+  delete out.scripts;
+  return `${JSON.stringify(out, null, 2)}\n`;
 }
 
-// compiles `<src>/index.ts` and `<src>/v3/index.ts` the way zshy 0.0.12 built 3.25.76: one CJS and one ESM program, renamed to .cjs/.d.cts and .js/.d.ts
-async function compile(src: string): Promise<Map<string, string>> {
-  const { default: ts } = await import("typescript");
-  const parsed = ts.convertCompilerOptionsFromJson(TSCONFIG, src);
-  const host0 = { getCanonicalFileName: (f: string) => f, getCurrentDirectory: () => src, getNewLine: () => "\n" };
-  if (parsed.errors.length) fail("the build options do not parse", [ts.formatDiagnostics(parsed.errors, host0)]);
-  const outDir = join(src, "..", "out");
-  const out = new Map<string, string>();
-  const formats = [
-    { module: ts.ModuleKind.CommonJS, moduleResolution: ts.ModuleResolutionKind.Node10, js: ".cjs", dts: ".d.cts" },
-    { module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler, js: ".js", dts: ".d.ts" },
-  ];
-  for (const { module, moduleResolution, js, dts } of formats) {
-    const options = { ...parsed.options, rootDir: src, outDir, module, moduleResolution };
-    const host = ts.createCompilerHost(options);
-    host.writeFile = (name, data) => {
-      const file = relative(outDir, name).split(sep).join("/");
-      out.set(
-        file.endsWith(".d.ts") ? file.slice(0, -5) + dts : file.endsWith(".js") ? file.slice(0, -3) + js : file,
-        data
-      );
-    };
-    const program = ts.createProgram({ rootNames: [join(src, "index.ts"), join(src, "v3/index.ts")], options, host });
-    const outside = program
-      .getSourceFiles()
-      .filter((f) => !f.isDeclarationFile && relative(src, f.fileName).startsWith(".."));
-    if (outside.length) {
-      fail(
-        "the Zod 3 build reaches outside src/v3",
-        outside.map((f) => f.fileName)
-      );
-    }
-    const diagnostics = ts.getPreEmitDiagnostics(program);
-    if (diagnostics.length) fail(`the ${js} build has type errors`, [ts.formatDiagnostics(diagnostics, host0)]);
-    const rewrite = rewriter(ts, js);
-    const emitted = program.emit(undefined, undefined, undefined, undefined, {
-      before: [rewrite],
-      afterDeclarations: [rewrite],
-    });
-    if (emitted.emitSkipped || emitted.diagnostics.length) {
-      fail(`the ${js} emit failed`, [ts.formatDiagnostics(emitted.diagnostics, host0)]);
+// the relative specifiers a built file names, which is every `./` or `../` string literal in zshy's output
+function specifiers(text: string): string[] {
+  return [...text.matchAll(/["'](\.\.?\/[^"'\n]+)["']/g)].map((m) => m[1]);
+}
+
+function target(from: string, spec: string): string {
+  return normalize(join(dirname(from), spec))
+    .split(sep)
+    .join("/");
+}
+
+// the built modules reachable from 3.25.76's exports: every condition's target, and every file under a wildcard
+function reachable(dir: string, built: string[]): Set<string> {
+  const stems = new Set(built.map(stem));
+  const todo: string[] = [];
+  for (const [key, conditions] of Object.entries(snapshot().packageJson.exports)) {
+    if (key === "./package.json") continue;
+    for (const [condition, path] of Object.entries(conditions as Record<string, string>)) {
+      if (condition === "@zod/source") continue;
+      const file = path.slice(2);
+      if (file.includes("*")) {
+        const prefix = file.slice(0, file.indexOf("*"));
+        todo.push(...built.filter((f) => f.startsWith(prefix)).map(stem));
+      } else todo.push(stem(file));
     }
   }
-  return out;
-}
-
-function sourceTree(dir: string, index: Buffer, v3: Map<string, Buffer>): string {
-  for (const [file, data] of [["src/index.ts", index] as const, ...v3]) {
-    mkdirSync(join(dir, file, ".."), { recursive: true });
-    writeFileSync(join(dir, file), data);
+  const seen = new Set<string>();
+  while (todo.length) {
+    const s = todo.pop()!;
+    if (seen.has(s) || !stems.has(s)) continue;
+    seen.add(s);
+    for (const form of FORMS) {
+      const file = s + form;
+      if (!existsSync(join(dir, file))) continue;
+      for (const spec of specifiers(readFileSync(join(dir, file), "utf8"))) todo.push(stem(target(file, spec)));
+    }
   }
-  return join(dir, "src");
+  return seen;
 }
 
-// the version line is the only one that changes, so the file keeps 3.25.76's formatting
-function packageJson(base: string, version: string): string {
-  const parts = base.split(`"version": "${BASE_VERSION}"`);
-  if (parts.length !== 2) fail(`zod@${BASE_VERSION}'s package.json does not carry exactly one version line`);
-  return parts.join(`"version": "${version}"`);
-}
+// the release's invariants on an unpacked tree, with node built-ins and git only
+function verifyTree(pkg: string, version: string, source: Map<string, Buffer>) {
+  const snap = snapshot();
+  const want = packageJson(version);
+  const got = readFileSync(join(pkg, "package.json"), "utf8");
+  if (got !== want) fail("package.json is not 3.25.76's with the release's version", [got, "--- expected", want]);
+  const exportKeys = Object.keys(JSON.parse(got).exports);
+  ok(
+    `package.json is 3.25.76's but for version ${version} and files, with exactly its exports: ${exportKeys.join(" ")}`
+  );
 
-type Report = { identical: number; changed: string[]; unchanged: number };
+  const all = files(pkg);
+  const owned = new Set(
+    Object.values(snap.packageJson.exports as Record<string, string | Record<string, string>>)
+      .flatMap((c) => (typeof c === "string" ? [] : Object.values(c)))
+      .map((p) => p.slice(2).split("/")[0])
+      .filter((d) => d !== "src" && !d.includes("."))
+  );
+  const allowed = (f: string) =>
+    ["package.json", "README.md", "LICENSE", ...Object.keys(ROOT_TEXT), "index.cjs"].includes(f) ||
+    (owned.has(f.split("/")[0]) && (BUILT.test(f) || f.endsWith("/package.json"))) ||
+    (f.startsWith("src/") && owned.has(f.split("/")[1]));
+  const stray = all.filter((f) => !allowed(f));
+  if (stray.length) fail(`files outside 3.25.76's layout (${[...owned].join(", ")}, src, root index)`, stray);
 
-// the release's invariants, on an unpacked tree: 3.25.76's file set, its bytes outside the Zod 3 parts, its package.json but for the version, and main's committed src/v3
-function verifyTree(pkg: string, base: string, version: string, v3: Map<string, Buffer>): Report {
-  const have = files(pkg);
-  const want = files(base);
-  const added = have.filter((f) => !want.includes(f));
-  const removed = want.filter((f) => !have.includes(f));
-  if (added.length || removed.length) {
-    fail(`the file set differs from zod@${BASE_VERSION}'s`, [
-      ...added.map((f) => `+ ${f}`),
-      ...removed.map((f) => `- ${f}`),
+  const wrong = Object.entries(ROOT_TEXT).filter(
+    ([f, text]) => !existsSync(join(pkg, f)) || readFileSync(join(pkg, f), "utf8") !== text
+  );
+  const cjs = existsSync(join(pkg, "index.cjs")) ? specifiers(readFileSync(join(pkg, "index.cjs"), "utf8")) : [];
+  const cjsWrong = !cjs.length || cjs.some((s) => s !== "./v3/external.cjs");
+  if (wrong.length || cjsWrong) {
+    fail("the root entry does not re-export v3 as 3.25.76's did", [
+      ...wrong.map(([f]) => f),
+      ...(cjsWrong ? [`index.cjs requires ${cjs.join(", ") || "nothing"}`] : []),
     ]);
   }
-  ok(`file set is exactly zod@${BASE_VERSION}'s (${have.length} files)`);
+  ok("the root entry re-exports v3 as 3.25.76's did, in src/index.ts, index.js, index.cjs, index.d.ts and index.d.cts");
 
-  const report: Report = { identical: 0, changed: [], unchanged: 0 };
-  const mismatched: string[] = [];
-  for (const file of have) {
-    const data = readFileSync(join(pkg, file));
-    const old = readFileSync(join(base, file));
-    if (isZod3(file)) {
-      if (data.equals(old)) report.unchanged++;
-      else report.changed.push(file);
-    } else if (file === "package.json") {
-      const got = JSON.parse(data.toString("utf8"));
-      const expected = { ...JSON.parse(old.toString("utf8")), version };
-      if (!isDeepStrictEqual(got, expected) || data.toString("utf8") !== packageJson(old.toString("utf8"), version)) {
-        mismatched.push(`${file} (must be ${BASE_VERSION}'s with only "version" changed to ${version})`);
-      }
-    } else if (data.equals(old)) report.identical++;
-    else mismatched.push(file);
-  }
-  if (mismatched.length) fail(`files outside the Zod 3 API differ from zod@${BASE_VERSION}`, mismatched);
-  ok(`${report.identical} files outside the Zod 3 API are byte-identical to zod@${BASE_VERSION}`);
-  ok(`package.json is zod@${BASE_VERSION}'s with only "version" changed to ${version}`);
-
-  const source = have.filter((f) => f.startsWith("src/v3/"));
-  const stray = [
-    ...source.filter((f) => !v3.get(f)?.equals(readFileSync(join(pkg, f)))),
-    ...[...v3.keys()].filter((f) => !source.includes(f)),
-  ];
-  if (stray.length) fail(`src/v3 is not main's committed ${MAIN_V3}`, stray);
-  ok(`src/v3 is main's committed ${MAIN_V3} (${source.length} files)`);
-
-  // the .d.ts and .d.cts twins differ only in their specifiers, so type-checking one graph covers both
-  const twins = have
-    .filter((f) => f.startsWith("v3/") && f.endsWith(".d.ts"))
-    .filter((f) => {
-      const cts = readFileSync(join(pkg, `${f.slice(0, -5)}.d.cts`), "utf8").replaceAll('.cjs"', '.js"');
-      return cts !== readFileSync(join(pkg, f), "utf8");
-    });
-  if (twins.length) fail("v3 .d.cts files differ from their .d.ts twins beyond import specifiers", twins);
-  return report;
-}
-
-async function build(version: string, outDir: string) {
-  checkVersion(version);
-  const work = mkdtempSync(join(tmpdir(), "zod3-build-"));
-  const base = await fetchBase(work);
-  const v3 = mainSource();
-  const commit = git("rev-parse", "HEAD");
-  const { default: ts } = await import("typescript");
-
-  // the toolchain has to rebuild 3.25.76's own source into 3.25.76's own files before it is trusted with main's
-  const index = readFileSync(join(base, "src/index.ts"));
-  const baseV3 = new Map(
-    files(join(base, "src/v3")).map((f) => [`src/v3/${f}`, readFileSync(join(base, "src/v3", f))] as const)
+  const built = all.filter((f) => BUILT.test(f) && !f.startsWith("src/") && !(f in ROOT_TEXT) && f !== "index.cjs");
+  const stems = [...new Set(built.map(stem))];
+  const incomplete = stems.filter((s) => FORMS.some((form) => !all.includes(s + form)) || !all.includes(`src/${s}.ts`));
+  if (incomplete.length) fail("built modules without all four forms or their source", incomplete);
+  const dangling = [...built, "index.cjs", "index.js", "index.d.ts", "index.d.cts"].flatMap((f) =>
+    specifiers(readFileSync(join(pkg, f), "utf8"))
+      .map((s) => target(f, s))
+      .filter((t) => !all.includes(t))
+      .map((t) => `${f} → ${t}`)
   );
-  const oracle = await compile(sourceTree(join(work, "oracle"), index, baseV3));
-  const expected = files(base).filter((f) => f.startsWith("v3/") || ROOT_INDEX.includes(f));
-  const off = [
-    ...expected.filter((f) => oracle.get(f) !== readFileSync(join(base, f), "utf8")),
-    ...[...oracle.keys()].filter((f) => !expected.includes(f)),
-  ];
-  if (off.length) fail(`TypeScript ${ts.version} does not rebuild zod@${BASE_VERSION}'s own v3 files`, off);
-  ok(`TypeScript ${ts.version} rebuilds zod@${BASE_VERSION}'s ${oracle.size} v3 and root index files byte for byte`);
+  if (dangling.length) fail("built files import files the tarball lacks", dangling);
+  const reach = reachable(pkg, built);
+  const extra = stems.filter((s) => !reach.has(s));
+  if (extra.length) fail("built modules no 3.25.76 subpath reaches", extra);
+  ok(
+    `${stems.length} built modules, each in four forms with its source, all reachable from the exports and none importing a missing file`
+  );
 
-  const built = await compile(sourceTree(join(work, "main"), index, v3));
-  const shape = [
-    ...[...oracle.keys()].filter((f) => !built.has(f)).map((f) => `- ${f}`),
-    ...[...built.keys()].filter((f) => !oracle.has(f)).map((f) => `+ ${f}`),
-    ...ROOT_INDEX.filter((f) => built.get(f) !== oracle.get(f)).map((f) => `~ ${f}`),
-  ];
-  if (shape.length) fail(`main's Zod 3 build does not have zod@${BASE_VERSION}'s shape`, shape);
-  ok(`built main's ${MAIN_V3} at ${commit.slice(0, 12)}`);
+  const exportTargets = Object.values(JSON.parse(got).exports as Record<string, string | Record<string, string>>)
+    .flatMap((c) => (typeof c === "string" ? [c] : Object.values(c)))
+    .filter((p) => !p.includes("*"))
+    .map((p) => p.slice(2));
+  const locales = Object.keys(snap.surface)
+    .filter((s) => s.startsWith("zod/v4/locales/"))
+    .flatMap((s) => FORMS.map((form) => `v4/${stem(s.slice("zod/v4/".length))}${form}`));
+  const missing = [...exportTargets, ...locales].filter((f) => !all.includes(f));
+  if (missing.length) fail("export targets or 3.25.76 locale files are missing", missing);
+  ok(`every export target exists, and all ${locales.length / 4} of 3.25.76's locale files`);
 
-  const pkg = join(work, "package");
-  cpSync(base, pkg, { recursive: true });
-  rmSync(join(pkg, "v3"), { recursive: true });
-  rmSync(join(pkg, "src/v3"), { recursive: true });
-  for (const [file, data] of [...[...built].filter(([f]) => f.startsWith("v3/")), ...v3]) {
-    mkdirSync(join(pkg, file, ".."), { recursive: true });
-    writeFileSync(join(pkg, file), data);
+  const stubs = all.filter((f) => f.endsWith("/package.json"));
+  const badStubs = stubs.filter((f) => !isDeepStrictEqual(JSON.parse(readFileSync(join(pkg, f), "utf8")), STUB));
+  const unstubbed = all.filter(
+    (f) => f.endsWith("/index.d.cts") && !stubs.includes(f.replace(/index\.d\.cts$/, "package.json"))
+  );
+  const loose = stubs.filter((f) => !all.includes(f.replace(/package\.json$/, "index.d.cts")));
+  if (badStubs.length || unstubbed.length || loose.length) {
+    fail("nested package.json files are not main's stubs", [
+      ...badStubs,
+      ...unstubbed.map((f) => `no stub beside ${f}`),
+      ...loose,
+    ]);
   }
-  writeFileSync(join(pkg, "package.json"), packageJson(readFileSync(join(base, "package.json"), "utf8"), version));
-  verifyTree(pkg, base, version, v3);
+  ok(`${stubs.length} nested package.json files are main's stubs, one beside each built index`);
 
-  mkdirSync(outDir, { recursive: true });
-  const tarball = join(outDir, `zod-${version}.tgz`);
-  rmSync(tarball, { force: true });
-  execFileSync("npm", ["pack", "--ignore-scripts", "--silent", "--pack-destination", outDir], { cwd: pkg });
-  if (!existsSync(tarball)) fail(`npm pack did not write ${tarball}`);
-
-  // what ships is the tarball, so the checks run again on it, and its bytes must be the tree's
-  console.log(`\nzod-${version}.tgz:`);
-  const packed = unpack(tarball, join(work, "packed"));
-  const report = verifyTree(packed, base, version, v3);
-  const drift = files(pkg).filter((f) => !readFileSync(join(pkg, f)).equals(readFileSync(join(packed, f))));
-  if (drift.length) fail("npm pack changed files", drift);
-  for (const [file, data] of built) {
-    if (file.startsWith("v3/") && readFileSync(join(packed, file), "utf8") !== data) fail(`${file} is not the build's`);
-  }
-
-  const tgz = readFileSync(tarball);
-  const lines = [
-    `## zod@${version}`,
-    "",
-    `- tarball: \`zod-${version}.tgz\`, integrity \`${integrity(tgz)}\`, sha256 \`${sha256(tgz)}\``,
-    `- base: \`zod@${BASE_VERSION}\` (\`${BASE_INTEGRITY}\`)`,
-    `- Zod 3 source: \`${MAIN_V3}\` at colinhacks/zod@${commit}, built with TypeScript ${ts.version} the way zshy 0.0.12 built ${BASE_VERSION}`,
-    `- packed by npm ${execFileSync("npm", ["--version"], { encoding: "utf8" }).trim()} on Node ${process.version}; with that npm, \`nub scripts/zod3-release.ts build ${version}\` at that commit reproduces the tarball`,
-    `- ${report.identical} files outside \`v3/\` and \`src/v3/\` are byte-identical to ${BASE_VERSION}; \`package.json\` changes only \`version\``,
-    "",
-    `### Files that differ from ${BASE_VERSION}`,
-    "",
-    "| file | sha256 |",
-    "| --- | --- |",
-    ...report.changed.map((f) => `| \`${f}\` | \`${sha256(readFileSync(join(packed, f)))}\` |`),
-    `| \`package.json\` | \`${sha256(readFileSync(join(packed, "package.json")))}\` |`,
-    "",
-    "<details><summary>Every file (<code>shasum -a 256 -c</code> inside the unpacked <code>package/</code>)</summary>",
-    "",
-    "```",
-    ...files(packed).map((f) => `${sha256(readFileSync(join(packed, f)))}  ${f}`),
-    "```",
-    "",
-    "</details>",
-    "",
+  const shippedSource = all.filter(
+    (f) => (f.startsWith("src/") && f !== "src/index.ts") || f === "README.md" || f === "LICENSE"
+  );
+  const expectedSource = [...source.keys()].filter(
+    (f) => (f.startsWith("src/") && owned.has(f.split("/")[1])) || f === "README.md" || f === "LICENSE"
+  );
+  const drift = [
+    ...shippedSource.filter((f) => !source.get(f)?.equals(readFileSync(join(pkg, f)))).map((f) => `~ ${f}`),
+    ...expectedSource.filter((f) => !shippedSource.includes(f)).map((f) => `- ${f}`),
   ];
-  const manifest = join(outDir, `zod-${version}.manifest.md`);
-  writeFileSync(manifest, lines.join("\n"));
-  rmSync(work, { recursive: true, force: true });
-  ok(`${report.changed.length} Zod 3 files changed, ${report.unchanged} unchanged`);
-  console.log(`\n📦 ${tarball}\n   ${integrity(tgz)}\n📄 ${manifest}`);
+  if (drift.length) fail(`src, README.md and LICENSE are not the checkout's committed ${ZOD}`, drift);
+  ok(
+    `${shippedSource.length} source, README and LICENSE files are the checkout's committed ${ZOD} (src/${[...owned].join(", src/")})`
+  );
 }
 
-async function verify(tarball: string, version: string) {
-  checkVersion(version);
-  const work = mkdtempSync(join(tmpdir(), "zod3-verify-"));
-  const base = await fetchBase(work);
-  const pkg = unpack(resolve(tarball), join(work, "candidate"));
-  const report = verifyTree(pkg, base, version, mainSource());
-  ok(`${report.changed.length} Zod 3 files changed, ${report.unchanged} unchanged`);
-  rmSync(work, { recursive: true, force: true });
+// main's package as `npm pack` would ship it, and the subset 3.25.76's subpaths need
+function plan(): { ship: string[]; dropped: string[] } {
+  const dir = join(ROOT, ZOD);
+  const [{ files: listed }] = JSON.parse(
+    execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts", "--loglevel=error"], {
+      cwd: dir,
+      encoding: "utf8",
+    })
+  ) as [{ files: { path: string }[] }];
+  const main = listed.map((f) => f.path).sort();
+  const built = main.filter((f) => BUILT.test(f) && !f.startsWith("src/"));
+  const reach = reachable(dir, built);
+  const owned = new Set([...reach].map((s) => s.split("/")[0]));
+  const replaced = new Set(["package.json", "index.js", "index.cjs", "index.d.ts", "index.d.cts", "src/index.ts"]);
+  const keep = (f: string) =>
+    !replaced.has(f) &&
+    (f === "README.md" ||
+      f === "LICENSE" ||
+      (BUILT.test(f) && !f.startsWith("src/") && reach.has(stem(f))) ||
+      (f.endsWith("/package.json") && reach.has(f.replace(/package\.json$/, "index"))) ||
+      (f.startsWith("src/") && owned.has(f.split("/")[1])));
+  return { ship: main.filter(keep), dropped: main.filter((f) => !keep(f) && !replaced.has(f)) };
+}
+
+// the root entry built by main's own zshy config, in a package of its own so main's root (Zod 4) is untouched
+function buildRoot(work: string): Map<string, string> {
+  const dir = join(work, "root");
+  mkdirSync(join(dir, "src"), { recursive: true });
+  cpSync(join(ROOT, ZOD, "src/v3"), join(dir, "src/v3"), { recursive: true });
+  writeFileSync(join(dir, "src/index.ts"), ROOT_INDEX);
+  const { conditions, sealCjsExports } = JSON.parse(readFileSync(join(ROOT, ZOD, "package.json"), "utf8")).zshy;
+  const zshy = { exports: { ".": "./src/index.ts" }, conditions, sealCjsExports };
+  writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "zod", type: "module", zshy }));
+  const compilerOptions = { rootDir: "src", outDir: ".", customConditions: ["@zod/source"] };
+  const tsconfig = { extends: join(ROOT, ".configs/tsconfig.base.json"), compilerOptions };
+  writeFileSync(join(dir, "tsconfig.build.json"), JSON.stringify(tsconfig));
+  const bin = join(ROOT, "node_modules/zshy/dist/index.cjs");
+  execFileSync(process.execPath, [bin, "--project", "tsconfig.build.json"], { cwd: dir, stdio: "pipe" });
+  return new Map(
+    ["index.js", "index.cjs", "index.d.ts", "index.d.cts"].map((f) => [f, readFileSync(join(dir, f), "utf8")])
+  );
 }
 
 // a child `node` with nothing of nub's augmentation, so a probe sees what a consumer's node sees
@@ -470,33 +370,202 @@ check("require zod", require("zod").z);
 check("require zod/v3", require("zod/v3").z);
 check("require zod/v4", require("zod/v4").z);
 check("require zod/v4/mini", require("zod/v4/mini"));
-console.log(JSON.stringify({ specs: specs.length, surface, parses }));
+const { version } = await import("zod/v4/core");
+console.log(JSON.stringify({ surface, parses, v4: version.major + "." + version.minor + "." + version.patch }));
 `;
 
-async function probe(dir: string, pkg: string) {
+type Probe = { surface: Surface; parses: string[][]; v4: string };
+
+async function probe(dir: string, pkg: string): Promise<Probe> {
   consumer(dir, pkg, "module");
   writeFileSync(join(dir, "probe.mjs"), PROBE);
   const { stdout } = await run(process.execPath, ["probe.mjs"], { cwd: dir, env: plainEnv() }).catch((e) =>
     fail(`the runtime probe fails in ${dir}`, [e.stderr ?? String(e)])
   );
-  return JSON.parse(stdout) as { specs: number; surface: Record<string, unknown>; parses: string[][] };
+  return JSON.parse(stdout) as Probe;
 }
 
-async function runtime(work: string, pkg: string, base: string) {
-  const [got, want] = await Promise.all([probe(join(work, "rt-candidate"), pkg), probe(join(work, "rt-base"), base)]);
-  const diff = Object.keys({ ...want.surface, ...got.surface }).filter(
-    (s) => !isDeepStrictEqual(got.surface[s], want.surface[s])
+type Added = { subpath: string; import: string[]; require: string[] };
+
+// 3.25.76 export names main's Zod 4 has since dropped, each one a release decision; any other missing name fails, and so does an entry nothing matches any more
+const REMOVED: { pattern: RegExp; reason: string; detail?: string }[] = [
+  {
+    pattern: /^zod\/v4\/core (import|require) function$/,
+    reason:
+      "`zod/v4/core` no longer exports `function`: core's function schema went in Zod 4.1 (#5130), and `z.function()` from `zod/v4` replaces it",
+  },
+  {
+    pattern: /^zod\/v4\/locales\/(en|eo|tr)\.js (import|require) parsedType$/,
+    reason:
+      "`zod/v4/locales/en.js`, `eo.js` and `tr.js` no longer export their `parsedType` helper, which the locales stopped sharing in Zod 4.3 (#5584)",
+  },
+  {
+    pattern: /^zod\/v4\/locales\/[\w-]+\.js require default$/,
+    reason:
+      "`require()` of a locale's `.cjs` returns the locale function itself, with no `.default`: zshy's CommonJS interop for default-only modules, since Zod 4.0.11 (#4981), and for `en`, `eo` and `tr` since #5584 left them default-only",
+    detail:
+      'In 3.25.76, `require("zod/v4/locales/en.cjs")` returned `{ default: [Function], parsedType: [Function] }`; now it returns the `en` function itself. CommonJS compiled by TypeScript or Babel reads it through `__importDefault` / `_interopRequireDefault` and still gets the function as the default import, and ESM `import en from "zod/v4/locales/en.js"` and `require("zod/v4/locales").en` are unchanged; only a hand-written `require("zod/v4/locales/en.cjs").default` now reads `undefined`, and CommonJS TypeScript that writes `import * as en from "zod/v4/locales/en.cjs"` and calls `en.default()` no longer type-checks.',
+  },
+];
+type Removed = { reason: string; detail?: string; names: string[] };
+
+// every subpath of 3.25.76 must still load and export every name it had; what main adds is release-notes material
+async function runtime(work: string, pkg: string): Promise<{ added: Added[]; removed: Removed[]; v4: string }> {
+  const got = await probe(join(work, "runtime"), pkg);
+  const want = snapshot().surface;
+  const missing: string[] = [];
+  const added: Added[] = [];
+  for (const subpath of Object.keys({ ...want, ...got.surface }).sort()) {
+    const w = want[subpath];
+    const g = got.surface[subpath];
+    if (!g) {
+      missing.push(`${subpath} (the whole subpath)`);
+      continue;
+    }
+    if (w) {
+      for (const via of ["import", "require"] as const) {
+        for (const n of w[via]) if (!g[via].includes(n)) missing.push(`${subpath} ${via} ${n}`);
+      }
+    }
+    const a = {
+      subpath,
+      import: g.import.filter((n) => !w?.import.includes(n)),
+      require: g.require.filter((n) => !w?.require.includes(n)),
+    };
+    if (!w || a.import.length || a.require.length) added.push(a);
+  }
+  const removed = REMOVED.map(({ pattern, ...r }) => ({ ...r, names: missing.filter((m) => pattern.test(m)) }));
+  const unaccepted = missing.filter((m) => !REMOVED.some(({ pattern }) => pattern.test(m)));
+  if (unaccepted.length) fail(`exports zod@${snapshot().version} had are missing`, unaccepted);
+  const stale = removed.filter((r) => !r.names.length);
+  if (stale.length)
+    fail(
+      "accepted removals that are no longer missing; drop them from REMOVED",
+      stale.map((r) => r.reason)
+    );
+  const subpaths = Object.keys(got.surface).length;
+  ok(
+    `import() and require() of all ${subpaths} subpaths keep every export name of 3.25.76's ${Object.keys(want).length}, but for ${missing.length} accepted removals`
   );
-  if (diff.length) fail(`the exports differ from zod@${BASE_VERSION}'s`, diff);
-  ok(`require() and import() of all ${got.specs} subpaths expose zod@${BASE_VERSION}'s exact export names`);
-  const parsed = got.parses.filter((p) => p[1] === '{"name":"a","tags":["x"]}' && /invalid_type/.test(p[2]));
-  if (parsed.length !== got.parses.length || !isDeepStrictEqual(got.parses, want.parses)) {
+  for (const r of removed) console.log(`   ${r.names.length} removed: ${r.reason}`);
+  const bad = got.parses.filter((p) => p[1] !== '{"name":"a","tags":["x"]}' || p[2] !== "invalid_type,too_big");
+  if (bad.length)
     fail(
       "a parse through the built package misbehaves",
       got.parses.map((p) => p.join(" → "))
     );
+  ok("parses through zod, zod/v3, zod/v4 and zod/v4-mini, ESM and CJS, succeed and fail as they should");
+  return { added, removed, v4: got.v4 };
+}
+
+async function build(version: string, outDir: string) {
+  checkVersion(version);
+  committed();
+  const env = { ...process.env };
+  delete env.NODE_COMPAT;
+  execFileSync("nub", ["run", "build"], { cwd: join(ROOT, ZOD), env, stdio: "pipe" });
+  const source = committed();
+  const commit = git("rev-parse", "HEAD");
+  ok(`built ${ZOD} at ${commit.slice(0, 12)} with its own \`nub run build\``);
+
+  const work = mkdtempSync(join(tmpdir(), "zod3-build-"));
+  const pkg = join(work, "package");
+  const { ship, dropped } = plan();
+  for (const file of ship) {
+    mkdirSync(join(pkg, file, ".."), { recursive: true });
+    cpSync(join(ROOT, ZOD, file), join(pkg, file));
   }
-  ok(`parses through zod, zod/v3 and zod/v4 (ESM and CJS) match zod@${BASE_VERSION}`);
+  for (const [file, text] of buildRoot(work)) writeFileSync(join(pkg, file), text);
+  writeFileSync(join(pkg, "src/index.ts"), ROOT_INDEX);
+  writeFileSync(join(pkg, "package.json"), packageJson(version));
+  ok(`took ${ship.length} of main's ${ship.length + dropped.length + 6} packed files; left out ${dropped.length}`);
+  verifyTree(pkg, version, source);
+
+  mkdirSync(outDir, { recursive: true });
+  const tarball = join(outDir, `zod-${version}.tgz`);
+  rmSync(tarball, { force: true });
+  execFileSync("npm", ["pack", "--ignore-scripts", "--silent", "--pack-destination", outDir], {
+    cwd: pkg,
+    stdio: "pipe",
+  });
+  if (!existsSync(tarball)) fail(`npm pack did not write ${tarball}`);
+
+  // what ships is the tarball, so the checks run again on it, and its bytes must be the tree's and main's build's
+  console.log(`\nzod-${version}.tgz:`);
+  const packed = unpack(tarball, join(work, "packed"));
+  verifyTree(packed, version, source);
+  const all = files(packed);
+  const differ = [
+    ...files(pkg).filter((f) => !all.includes(f) || !readFileSync(join(pkg, f)).equals(readFileSync(join(packed, f)))),
+    ...ship.filter((f) => !readFileSync(join(ROOT, ZOD, f)).equals(readFileSync(join(packed, f)))),
+  ];
+  if (differ.length) fail("the tarball's files are not the assembled tree's, or not main's build's", differ);
+  ok(`every file but package.json and the root entry is byte-identical to main's build`);
+  const { added, removed, v4 } = await runtime(work, packed);
+
+  const tgz = readFileSync(tarball);
+  const toolchain = (name: string) =>
+    JSON.parse(readFileSync(join(ROOT, "node_modules", name, "package.json"), "utf8")).version as string;
+  const npm = execFileSync("npm", ["--version"], { encoding: "utf8" }).trim();
+  const names = (list: string[]) => (list.length ? list.map((n) => `\`${n}\``).join(", ") : "none");
+  const lines = [
+    `## zod@${version}`,
+    "",
+    `- tarball: \`zod-${version}.tgz\`, integrity \`${integrity(tgz)}\`, sha256 \`${sha256(tgz)}\``,
+    `- built from colinhacks/zod@${commit} by \`${ZOD}\`'s own \`nub run build\` (zshy ${toolchain("zshy")}, TypeScript ${toolchain("typescript")}), packed by npm ${npm} on Node ${process.version}`,
+    `- \`zod\` and \`zod/v3\`: main's Zod 3 (\`${ZOD}/src/v3\`)`,
+    `- \`zod/v4\`, \`zod/v4/core\`, \`zod/v4-mini\`, \`zod/v4/mini\`, \`zod/v4/locales\`, \`zod/v4/locales/*\`: main's Zod ${v4} (zod@${snapshot().version} carried Zod 4.0.0)`,
+    `- \`exports\` has exactly zod@${snapshot().version}'s keys and conditions; every export name it had is still there but for the removals below`,
+    `- left out of main's package: ${dropped.map((f) => `\`${f}\``).join(", ")}`,
+    "",
+    `### Export names added since ${snapshot().version}`,
+    "",
+    "| subpath | added (import and require) |",
+    "| --- | --- |",
+    ...added
+      .filter((a) => snapshot().surface[a.subpath])
+      .map((a) =>
+        isDeepStrictEqual(a.import, a.require)
+          ? `| \`${a.subpath}\` | ${names(a.import)} |`
+          : `| \`${a.subpath}\` | import: ${names(a.import)}; require: ${names(a.require)} |`
+      ),
+    "",
+    `New subpaths: ${names(added.filter((a) => !snapshot().surface[a.subpath]).map((a) => a.subpath))}`,
+    "",
+    `### Removed since ${snapshot().version}`,
+    "",
+    ...removed.flatMap((r) => [
+      `- ${r.reason}; on ${names([...new Set(r.names.map((n) => n.split(" ")[0]))])}`,
+      ...(r.detail ? [`  ${r.detail}`] : []),
+    ]),
+    "",
+    `### Known differences from ${snapshot().version}`,
+    "",
+    "- every built `.cjs` seals its `exports` (#6564), so a CommonJS module object can no longer be extended or reassigned",
+    "- `v3/locales/en.d.cts` and other default-only declarations are `export =` (zshy's CommonJS interop), so a consumer with both `skipLibCheck` and `esModuleInterop` (or `allowSyntheticDefaultImports`) off gets TS1259; set `skipLibCheck`, as #5160 says",
+    "- Zod 4's declarations name the global `URL` (#6588), so a `zod/v4` consumer with `skipLibCheck` off needs the DOM lib or `@types/node`",
+    "- each built directory carries main's stub `package.json`, so resolvers that ignore `exports` (TypeScript's `node10`, old bundlers) land on the CommonJS build and its `.d.cts`",
+    "",
+    "<details><summary>Every file (<code>shasum -a 256 -c</code> inside the unpacked <code>package/</code>)</summary>",
+    "",
+    "```",
+    ...all.map((f) => `${sha256(readFileSync(join(packed, f)))}  ${f}`),
+    "```",
+    "",
+    "</details>",
+    "",
+  ];
+  const manifest = join(outDir, `zod-${version}.manifest.md`);
+  writeFileSync(manifest, lines.join("\n"));
+  rmSync(work, { recursive: true, force: true });
+  console.log(`\n📦 ${tarball}\n   ${integrity(tgz)}\n📄 ${manifest}`);
+}
+
+async function verify(tarball: string, version: string) {
+  checkVersion(version);
+  const work = mkdtempSync(join(tmpdir(), "zod3-verify-"));
+  verifyTree(unpack(resolve(tarball), join(work, "candidate")), version, committed());
+  rmSync(work, { recursive: true, force: true });
 }
 
 // main's v3 suite, placed beside the built `v3/` so `zod/v3` and the suite's relative imports both land on the shipped JavaScript and declarations
@@ -570,8 +639,11 @@ async function suite(work: string, pkg: string) {
   }
 }
 
-// TypeScript versions from 4.5, the floor the v3 docs name, to 7; each candidate result must equal zod@3.25.76's
+// TypeScript versions from 4.5, the floor the v3 docs name, to 7
 const TYPESCRIPT = ["4.5.5", "4.9.5", "5.0.4", "5.5.4", "5.9.3", "6.0.3", "7.0.2"];
+
+// Zod 4's own floor; below it only the zod and zod/v3 fixture has to type-check
+const V4_FLOOR = "5.5";
 
 const ZOD3_IMPORTS = `import * as z3 from "zod";
 import { z as zNamed } from "zod";
@@ -591,22 +663,20 @@ const fe: { c?: string[] } = C.safeParse({}).error!.flatten().fieldErrors;
 type C = v3.infer<typeof C>;
 export const zod3: [A, B, C, typeof r, typeof m, typeof fe] = null as any;
 `;
-const ALL_IMPORTS = (locale: string) => `import * as v4 from "zod/v4";
+const V4_IMPORTS = `import * as v4 from "zod/v4";
 import * as core from "zod/v4/core";
 import * as mini from "zod/v4-mini";
 import * as mini2 from "zod/v4/mini";
 import * as locales from "zod/v4/locales";
-import en from "zod/v4/locales/${locale}";
 `;
-const ALL_BODY = `const D = v4.z.object({ d: v4.z.string() });
+const V4_BODY = `const D = v4.z.object({ d: v4.z.string() });
 type D = v4.z.infer<typeof D>;
 const E = mini.z.object({ e: mini.z.string() });
 type E = mini.z.infer<typeof E>;
 const F = mini2.object({ f: mini2.string() });
 type F = core.output<typeof F>;
 const loc: () => { localeError: core.$ZodErrorMap } = locales.en;
-const loc2: () => { localeError: core.$ZodErrorMap } = en;
-export const all: [D, E, F, typeof loc, typeof loc2] = null as any;
+export const all: [D, E, F, typeof loc] = null as any;
 `;
 
 type Case = { ts: string; resolution: string; interop: boolean; fixture: "zod3" | "all" };
@@ -629,14 +699,19 @@ function cases(): Case[] {
   return out;
 }
 
-async function typecheck(dir: string, pkg: string, tsc: string, c: Case): Promise<string> {
+// every locale file is imported by name too, so each `zod/v4/locales/*` subpath resolves its types
+async function typecheck(dir: string, pkg: string, tsc: string, c: Case, locales: string[]): Promise<string> {
   const esm = c.resolution === "node16" || c.resolution === "nodenext";
   consumer(dir, pkg, esm || c.resolution === "bundler" ? "module" : "commonjs");
-  const source = (locale: string) =>
-    c.fixture === "zod3" ? ZOD3_IMPORTS + ZOD3_BODY : ZOD3_IMPORTS + ALL_IMPORTS(locale) + ZOD3_BODY + ALL_BODY;
+  const source = (ext: string) => {
+    if (c.fixture === "zod3") return ZOD3_IMPORTS + ZOD3_BODY;
+    const each = locales.map((l, i) => `import locale${i} from "zod/v4/locales/${l}${ext}";\n`).join("");
+    const list = `export const each = [${locales.map((_, i) => `locale${i}()`).join(", ")}];\n`;
+    return ZOD3_IMPORTS + V4_IMPORTS + each + ZOD3_BODY + V4_BODY + list;
+  };
   const sources: Record<string, string> = esm
-    ? { "esm.mts": source("en.js"), "cjs.cts": source("en.cjs") }
-    : { "index.ts": source("en.js") };
+    ? { "esm.mts": source(".js"), "cjs.cts": source(".cjs") }
+    : { "index.ts": source(".js") };
   for (const [file, text] of Object.entries(sources)) writeFileSync(join(dir, file), text);
   const [major] = c.ts.split(".").map(Number);
   const compilerOptions = {
@@ -647,7 +722,6 @@ async function typecheck(dir: string, pkg: string, tsc: string, c: Case): Promis
         : { module: "commonjs", moduleResolution: "node" }),
     ...(major === 6 ? { ignoreDeprecations: "6.0" } : {}),
     target: "es2020",
-    lib: ["es2020"],
     strict: true,
     noEmit: true,
     skipLibCheck: false,
@@ -663,7 +737,11 @@ async function typecheck(dir: string, pkg: string, tsc: string, c: Case): Promis
   return output.replaceAll(dir, "<consumer>").trim();
 }
 
-async function typescript(work: string, pkg: string, base: string) {
+// zshy's `export =` declarations meet a default import only with esModuleInterop, which #5160 declined to work around
+const isKnown = (c: Case, line: string) =>
+  !c.interop && /error TS1259: Module '"[^"]*\/node_modules\/zod\/[^"]*"' can only be default-imported/.test(line);
+
+async function typescript(work: string, pkg: string) {
   const tools = join(work, "typescript");
   mkdirSync(tools, { recursive: true });
   writeFileSync(join(tools, "package.json"), JSON.stringify({ private: true }));
@@ -672,44 +750,67 @@ async function typescript(work: string, pkg: string, base: string) {
     cwd: tools,
     env: plainEnv(),
   });
+  const locales = readdirSync(join(pkg, "v4/locales"))
+    .filter((f) => f.endsWith(".js") && f !== "index.js")
+    .map((f) => f.slice(0, -3))
+    .sort();
   const all = cases();
   const results = await pool(all, async (c, i) => {
-    const tsc = join(tools, `node_modules/ts-${c.ts}/bin/tsc`);
-    const [got, want] = await Promise.all([
-      typecheck(join(work, `ts-${i}-candidate`), pkg, tsc, c),
-      typecheck(join(work, `ts-${i}-base`), base, tsc, c),
-    ]);
-    return { ...c, got, want, errors: (got.match(/error TS\d+/g) ?? []).length };
+    const output = await typecheck(
+      join(work, `ts-${i}`),
+      pkg,
+      join(tools, `node_modules/ts-${c.ts}/bin/tsc`),
+      c,
+      locales
+    );
+    const errors = output.split("\n").filter((l) => /error TS\d+/.test(l));
+    const below = c.ts.localeCompare(V4_FLOOR, undefined, { numeric: true }) < 0;
+    const unsupported = below && c.fixture === "all";
+    return { ...c, output, errors, known: errors.filter((l) => isKnown(c, l)), unsupported };
   });
-  const regressions = results.filter((r) => r.got !== r.want);
   const label = (r: Case) =>
-    `TypeScript ${r.ts} ${r.resolution}${r.interop ? "" : " without esModuleInterop"} (${r.fixture})`;
-  if (regressions.length) {
+    `TypeScript ${r.ts} ${r.resolution}${r.interop ? "" : " without esModuleInterop"} (${r.fixture === "zod3" ? "zod, zod/v3" : "every subpath"})`;
+  const failed = results.filter((r) => !r.unsupported && r.errors.length > r.known.length);
+  if (failed.length) {
     fail(
-      `consumers type-check differently from zod@${BASE_VERSION}`,
-      regressions.map((r) => `${label(r)}:\n--- ${BASE_VERSION}\n${r.want}\n--- candidate\n${r.got}`)
+      "consumers have type errors",
+      failed.map((r) => `${label(r)}:\n${r.errors.filter((l) => !isKnown(r, l)).join("\n")}`)
     );
   }
-  const supported = (r: Case) => r.ts.localeCompare("5.5", undefined, { numeric: true }) >= 0;
-  const broken = results.filter((r) => supported(r) && r.interop && r.errors > 0);
-  if (broken.length) fail("a consumer on TypeScript 5.5 or later has type errors", broken.map(label));
-  const clean = results.filter((r) => r.errors === 0).length;
+  const clean = results.filter((r) => !r.errors.length).length;
+  const known = results.filter((r) => r.known.length && r.known.length === r.errors.length);
+  const unsupported = results.filter((r) => r.unsupported && r.errors.length);
   ok(
-    `${results.length} TypeScript consumer checks (${TYPESCRIPT.join(", ")}; node10, node16, nodenext, bundler; ESM and CJS) match zod@${BASE_VERSION} exactly, ${clean} of them error-free`
+    `${results.length} TypeScript consumer checks (${TYPESCRIPT.join(", ")}; node10, node16, nodenext, bundler; ESM and CJS; ${locales.length} locale subpaths by name): ${clean} error-free, ${known.length} with only the known TS1259, ${unsupported.length} below Zod 4's TypeScript ${V4_FLOOR} floor`
   );
-  for (const r of results.filter((r) => r.errors > 0)) {
-    console.log(`   ${label(r)}: ${r.errors} errors, as in ${BASE_VERSION}`);
-  }
+  for (const r of known) console.log(`   known TS1259: ${label(r)}`);
+  for (const r of unsupported) console.log(`   below ${V4_FLOOR}: ${label(r)}, ${r.errors.length} errors`);
 }
 
 async function smoke(tarball: string) {
   const work = mkdtempSync(join(tmpdir(), "zod3-smoke-"));
-  const base = await fetchBase(work);
   const pkg = unpack(resolve(tarball), join(work, "candidate"));
-  await runtime(work, pkg, base);
+  const { added, v4 } = await runtime(work, pkg);
+  ok(`zod/v4 is Zod ${v4}; ${added.length} subpaths add export names (listed in the manifest)`);
   await suite(work, pkg);
-  await typescript(work, pkg, base);
+  await typescript(work, pkg);
   rmSync(work, { recursive: true, force: true });
+}
+
+// the one time 3.25.76 is downloaded: its package.json and export names, recorded for every later check
+async function recordSnapshot(tarball: string) {
+  const tgz = readFileSync(resolve(tarball));
+  if (integrity(tgz) !== BASE_INTEGRITY) fail(`${tarball} is not zod@3.25.76`, [`got ${integrity(tgz)}`]);
+  const work = mkdtempSync(join(tmpdir(), "zod3-snapshot-"));
+  const pkg = unpack(resolve(tarball), join(work, "base"));
+  const { surface } = await probe(join(work, "probe"), pkg);
+  const packageJson = JSON.parse(readFileSync(join(pkg, "package.json"), "utf8"));
+  const out: Snapshot = { version: packageJson.version, integrity: BASE_INTEGRITY, packageJson, surface };
+  writeFileSync(SNAPSHOT, `${JSON.stringify(out, null, 2)}\n`);
+  rmSync(work, { recursive: true, force: true });
+  ok(
+    `recorded zod@${out.version}'s package.json and ${Object.keys(surface).length} subpaths in ${relative(ROOT, SNAPSHOT)}`
+  );
 }
 
 const [command, ...args] = process.argv.slice(2);
@@ -724,9 +825,10 @@ try {
     await build(args[0], out);
   } else if (command === "verify") await verify(args[0], args[1]);
   else if (command === "smoke") await smoke(args[0]);
+  else if (command === "snapshot") await recordSnapshot(args[0]);
   else {
     fail(
-      "usage: nub scripts/zod3-release.ts build <version> [--out <dir>] | verify <tarball> <version> | smoke <tarball>"
+      "usage: nub scripts/zod3-release.ts build <version> [--out <dir>] | verify <tarball> <version> | smoke <tarball> | snapshot <zod-3.25.76.tgz>"
     );
   }
 } catch (e) {
