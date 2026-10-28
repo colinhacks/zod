@@ -1,108 +1,81 @@
-# .github/release.yml
+# .github/workflows/release.yml on v3.25.x
 
-name: Release on npm
+name: Release 3.25.x on npm
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "packages/zod/package.json"
-      - "packages/zod/src/**"
-      - ".github/workflows/release.yml"
+  # dispatch only: `gh workflow run release.yml --ref v3.25.x`, then the npm environment's reviewer approves the run and the staged version is approved on npm with 2FA
+  workflow_dispatch:
+
+# shares main's group, so a 3.x and a 4.x release never stage side by side
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  build_and_publish:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-      id-token: write
+    name: Test before staging
     steps:
+      - name: Refuse to release from any ref but v3.25.x
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/v3.25.x" ] || { echo "::error::this release.yml runs from v3.25.x only, got $GITHUB_REF"; exit 1; }
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-      
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        
-      - run: pnpm install
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
-      
-      - id: publish
-        name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
-          provenance: true
-          package: ./packages/zod
 
-      - name: Post-publish
-        if: ${{ steps.publish.outputs.type }}
+  stage:
+    needs: test
+    runs-on: ubuntu-latest
+    # the npm trusted publisher is bound to this environment and to a workflow named release.yml; the environment's required reviewer approves the run, and npm's 2FA approval of the staged version is the second gate
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Refuse to release from any ref but v3.25.x
         run: |
-          echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
+          [ "$GITHUB_REF" = "refs/heads/v3.25.x" ] || { echo "::error::this release.yml runs from v3.25.x only, got $GITHUB_REF"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+      - uses: pnpm/action-setup@v4
 
-      - name: Set canary version
-        if: ${{ !steps.publish.outputs.type }}
+      # `npm stage publish` needs npm 11.15 or later
+      - name: Install an npm CLI that can stage
+        run: |
+          npm install -g npm@11
+          v="$(npm --version)"
+          [ "$(printf '%s\n11.15.0\n' "$v" | sort -V | head -1)" = "11.15.0" ] || { echo "::error::npm $v cannot stage (need >= 11.15)"; exit 1; }
+          echo "npm $v at $(command -v npm)"
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      # a 3.x version must never reach `latest`, so the tag is explicit and the run stops if `latest` has left 4.x or the version is not a 3.25 patch
+      - name: Refuse a version or registry state this release does not expect
+        run: |
+          version="$(node -p "require('./packages/zod/package.json').version")"
+          case "$version" in 3.25.*) ;; *) echo "::error::v3.25.x releases 3.25.x only, got $version"; exit 1 ;; esac
+          latest="$(npm view zod dist-tags.latest)"
+          case "$latest" in 4.*) ;; *) echo "::error::npm latest is $latest, expected a 4.x"; exit 1 ;; esac
+          if curl -sf "https://registry.npmjs.org/zod/$version" > /dev/null; then echo "::error::zod@$version is already published"; exit 1; fi
+          echo "staging zod@$version under latest-3; latest stays $latest"
+
+      - name: Stage zod on npm under latest-3
         working-directory: ./packages/zod
+        run: npm stage publish --provenance --tag latest-3 --loglevel verbose
+
+      - name: Say how to approve
         run: |
-          npm --no-git-tag-version version minor
-          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
-
-      - name: Publish canary
-        if: ${{ !steps.publish.outputs.type }}
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
-          provenance: true
-          tag: canary
-          package: ./packages/zod
-      
-      - name: Done with canary
-        if: ${{ !steps.publish.outputs.type }}
-        run: |
-          echo "Canary published."
-          exit 0
-     
-      - name: Configure changelog
-        if: ${{ steps.publish.outputs.type }}
-        run: |
-          echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
-          cat changelog_config.json
-          echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-          echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
-      - name: Generate changelog
-        if: ${{ steps.publish.outputs.type }}
-        id: github_release
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          fromTag: "${{ env.last_tag }}"
-          toTag: ${{ github.ref }}
-          commitMode: true
-          configuration: changelog_config.json
-
-      - name: Create release
-        if: ${{ steps.publish.outputs.type }}
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.publish.outputs.version }}
-          release_name: v${{ steps.publish.outputs.version }}
-          commitish: ${{ github.ref }}
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: false
-          prerelease: false
-
+          {
+            echo "## Staged on npm, waiting for approval"
+            echo
+            echo "zod@$(node -p "require('./packages/zod/package.json').version") is staged under \`latest-3\`. Check the tag with \`npm stage list zod\` before approving."
+          } >> "$GITHUB_STEP_SUMMARY"
