@@ -205,6 +205,16 @@ test("an upper size bound after a refinement, or on encode, fails before any ele
   ).toEqual([1, 2]);
 });
 
+test("forwarding more issues than fit in a call's arguments does not throw", async () => {
+  // past ~125k, spreading a child's issues into push() overflowed the stack
+  const bad = Array(200_000).fill(0);
+  const inner = z.array(z.string());
+  expect(z.array(inner).safeParse([bad]).error!.issues).toHaveLength(200_000);
+  expect(z.record(z.string(), inner).safeParse({ a: bad }).error!.issues[199_999].path).toEqual(["a", 199_999]);
+  expect(z.set(inner).safeParse(new Set([bad])).error!.issues).toHaveLength(200_000);
+  expect((await z.object({ a: inner }).safeParseAsync({ a: bad })).error!.issues).toHaveLength(200_000);
+});
+
 test("parse should fail given sparse array", () => {
   const schema = z.array(z.string()).nonempty().min(1).max(3);
   const result = schema.safeParse(new Array(3));

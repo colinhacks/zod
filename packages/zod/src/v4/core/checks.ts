@@ -1003,7 +1003,7 @@ function handleCheckPropertyResult(
   property: string | symbol
 ) {
   if (result.issues.length) {
-    payload.issues.push(...util.prefixIssues(property, result.issues));
+    util.pushPrefixed(payload.issues, property, result.issues);
   }
 }
 export interface $ZodCheckPropertyDef extends $ZodCheckDef {
