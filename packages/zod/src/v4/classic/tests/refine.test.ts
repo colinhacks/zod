@@ -402,6 +402,17 @@ describe("superRefine functionality", () => {
     expect(paths(z.object({ tags }).safeParse({ tags: ["x"] }))).toEqual(expected);
     expect(paths(z.object({ tags }).safeParse({ tags: ["x"] }, { jitless: true }))).toEqual(expected);
     expect(paths(z.record(z.string(), tags).safeParse({ tags: ["x"] }))).toEqual(expected);
+
+    // a raw issue pushed with a constant path keeps that path across parses
+    const PATH = ["k"];
+    const pushed = z.object({
+      a: z
+        .object({ k: z.string() })
+        .check((ctx) => void ctx.issues.push({ code: "custom", message: "m", input: ctx.value, path: PATH })),
+    });
+    pushed.safeParse({ a: { k: "x" } });
+    expect(paths(pushed.safeParse({ a: { k: "x" } }))).toEqual([["a", "k"]]);
+    expect(PATH).toEqual(["k"]);
   });
 
   test("should surface an explicit undefined input to the error map", () => {
