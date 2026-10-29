@@ -1069,7 +1069,8 @@ export function issue(...args: [string | errors.$ZodRawIssue, any?, any?]): erro
     };
   }
 
-  return { ...iss };
+  // a fresh path, since receivers prefix it in place and the caller may reuse the array
+  return iss.path ? { ...iss, path: [...iss.path] } : { ...iss };
 }
 
 export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
