@@ -961,7 +961,10 @@ export function sizeCaps(defChecks: checks.$ZodCheck<never>[] | undefined): [num
 
 export function attachSchema(issues: errors.$ZodRawIssue[], start: number, inst: schemas.$ZodType): void {
   for (let i = start; i < issues.length; i++) {
-    (issues[i] as any).schema ??= inst;
+    const iss = issues[i] as any;
+    iss.schema ??= inst;
+    // a check may push a path it reuses across parses, and receivers prefix it in place
+    if (iss.path) iss.path = iss.path.slice();
   }
 }
 
@@ -1069,7 +1072,8 @@ export function issue(...args: [string | errors.$ZodRawIssue, any?, any?]): erro
     };
   }
 
-  return { ...iss };
+  // a fresh path, since receivers prefix it in place and the caller may reuse the array
+  return iss.path ? { ...iss, path: [...iss.path] } : { ...iss };
 }
 
 export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {

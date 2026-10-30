@@ -2293,7 +2293,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           let ${id}_ab = false;
           for (let i = 0; i < ${id}.issues.length; i++) {
             const iss = ${id}.issues[i];
-            iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
+            if (iss.path) iss.path.unshift(${k});
+            else iss.path = [${k}];
             payload.issues.push(iss);
             if (iss.continue !== true) ${id}_ab = true;
           }

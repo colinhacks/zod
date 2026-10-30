@@ -388,6 +388,33 @@ describe("superRefine functionality", () => {
     }
   });
 
+  test("a path array reused across addIssue calls is prefixed once per issue", () => {
+    const tags = z.array(z.string()).superRefine((_val, ctx) => {
+      const path = [0];
+      ctx.addIssue({ code: "custom", message: "a", path });
+      ctx.addIssue({ code: "custom", message: "b", path });
+    });
+    const paths = (r: z.ZodSafeParseResult<unknown>) => r.error!.issues.map((iss) => iss.path);
+    const expected = [
+      ["tags", 0],
+      ["tags", 0],
+    ];
+    expect(paths(z.object({ tags }).safeParse({ tags: ["x"] }))).toEqual(expected);
+    expect(paths(z.object({ tags }).safeParse({ tags: ["x"] }, { jitless: true }))).toEqual(expected);
+    expect(paths(z.record(z.string(), tags).safeParse({ tags: ["x"] }))).toEqual(expected);
+
+    // a raw issue pushed with a constant path keeps that path across parses
+    const PATH = ["k"];
+    const pushed = z.object({
+      a: z
+        .object({ k: z.string() })
+        .check((ctx) => void ctx.issues.push({ code: "custom", message: "m", input: ctx.value, path: PATH })),
+    });
+    pushed.safeParse({ a: { k: "x" } });
+    expect(paths(pushed.safeParse({ a: { k: "x" } }))).toEqual([["a", "k"]]);
+    expect(PATH).toEqual(["k"]);
+  });
+
   test("should surface an explicit undefined input to the error map", () => {
     const schema = z.object({ a: z.string().optional() }).superRefine((val, ctx) => {
       if (!val.a) ctx.addIssue({ code: "custom", path: ["a"], input: val.a });
