@@ -1,6 +1,128 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/mini";
 
+test("pipe bounds reject incompatible targets", () => {
+  function invalid() {
+    // @ts-expect-error the target does not accept the source output
+    z.pipe(z.number(), z.string());
+  }
+  void invalid;
+});
+
+test("declared generic values remain bidirectional", () => {
+  function decode<O, I>(schema: z.ZodMiniType<O, I>, value: I): O {
+    return z.decode(schema, value);
+  }
+  function encode<O, I>(schema: z.ZodMiniType<O, I>, value: O): I {
+    return z.encode(schema, value);
+  }
+  function decodeArray<O, I>(schema: z.ZodMiniType<O, I>, value: I[]): O[] {
+    return z.decode(z.array(schema), value);
+  }
+  function encodeArray<O, I>(schema: z.ZodMiniType<O, I>, value: O[]): I[] {
+    return z.encode(z.array(schema), value);
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  expectTypeOf(decode(codec, "12")).toEqualTypeOf<number>();
+  expectTypeOf(encode(codec, 12)).toEqualTypeOf<string>();
+  expect(decodeArray(codec, ["12"])).toEqual([12]);
+  expect(encodeArray(codec, [12])).toEqual(["12"]);
+});
+
+test("generic arrays preserve input and output contracts", () => {
+  function parse<T extends z.ZodMiniType>(schema: T, value: unknown): z.output<T>[] {
+    return z.array(schema).parse(value);
+  }
+  function encode<T extends z.ZodMiniType>(schema: T, value: z.output<T>[]): z.input<T>[] {
+    return z.encode(z.array(schema), value);
+  }
+  function decode<T extends z.ZodMiniType>(schema: T, value: z.input<T>[]): z.output<T>[] {
+    return z.decode(z.array(schema), value);
+  }
+  const codec = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+  expect(parse(codec, ["12"])).toEqual([12]);
+  expect(encode(codec, [12])).toEqual(["12"]);
+  expect(decode(codec, ["12"])).toEqual([12]);
+  expect(() => parse(codec, [12])).toThrow();
+});
+
+test("demand-driven metadata preserves factories and generic builders", () => {
+  function template<const T extends z.core.$ZodTemplateLiteralPart[]>(parts: T) {
+    return z.templateLiteral(parts);
+  }
+  function discriminated<T extends readonly [z.core.$ZodTypeDiscriminable, ...z.core.$ZodTypeDiscriminable[]]>(
+    options: T
+  ) {
+    return z.discriminatedUnion("kind", options);
+  }
+  const option = z.object({ kind: z.literal("a") });
+  const plain = discriminated([option]);
+  const union = z.discriminatedUnion("kind", [z.lazy(() => z.readonly(option))]);
+  const literal = z.templateLiteral(["a", z.optional(z.lazy(() => z.literal("b")))]);
+  const generic = template(["a", z.string()]);
+  const tuple = z.tuple([z.number(), z.readonly(z.optional(z.string()))]);
+  expectTypeOf<z.output<typeof plain>>().toEqualTypeOf<{ kind: "a" }>();
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<Readonly<{ kind: "a" }>>();
+  expectTypeOf<z.output<typeof literal>>().toEqualTypeOf<"a" | "ab">();
+  expectTypeOf<z.output<typeof generic>>().toEqualTypeOf<`a${string}`>();
+  expectTypeOf<z.output<typeof tuple>>().toEqualTypeOf<[number, (string | undefined)?]>();
+  expect(union.parse({ kind: "a" })).toEqual({ kind: "a" });
+  expect(literal.parse("a")).toBe("a");
+  expect(literal.safeParse("ac").success).toBe(false);
+  expect(tuple.parse([1])).toEqual([1]);
+});
+
+test("recursive native containers preserve brands", () => {
+  type Field = z.ZodMiniString<string> | z.ZodMiniArray<Field>;
+  const field: z.ZodMiniArray<Field> = z.array(z.string());
+  const branded = field.brand<"array", "inout">();
+  const nested = z.array(branded);
+  expectTypeOf<z.input<typeof nested>[number]>().toEqualTypeOf<z.input<typeof branded>>();
+  expectTypeOf<z.output<typeof nested>[number]>().toEqualTypeOf<z.output<typeof branded>>();
+  // @ts-expect-error recursive output retains its brand
+  const invalid: z.output<typeof nested> = [["unbranded"]];
+  void invalid;
+  expect(nested.parse([["leaf"]])).toEqual([["leaf"]]);
+});
+
+test("generic optional values and wrapped capabilities", () => {
+  function optional<T extends z.ZodMiniType>(schema: T, value: unknown): z.output<T> | undefined {
+    return z.optional(schema).parse(value);
+  }
+  function pattern<T extends z.ZodMiniString<string>>(schema: T) {
+    return z.templateLiteral(["prefix", z.optional(schema)]);
+  }
+  function discriminated<T extends z.core.$ZodTypeDiscriminable>(schema: T) {
+    return z.discriminatedUnion("kind", [z.readonly(z.lazy(() => schema))]);
+  }
+  const template = pattern(z.string());
+  const union = discriminated(z.object({ kind: z.literal("a") }));
+  expectTypeOf<z.output<typeof template>>().toEqualTypeOf<`prefix${string}`>();
+  expectTypeOf<z.output<typeof union>>().toEqualTypeOf<Readonly<{ kind: "a" }>>();
+  expect(optional(z.string(), undefined)).toBeUndefined();
+  expect(optional(z.string(), "leaf")).toBe("leaf");
+  expect(template.parse("prefixleaf")).toBe("prefixleaf");
+  expect(union.parse({ kind: "a" })).toEqual({ kind: "a" });
+  expect(() => union.parse({ kind: "b" })).toThrow();
+});
+
+test("recursive array and tuple schema views", () => {
+  type ArrayField = z.ZodMiniString<string> | z.ZodMiniArray<ArrayField>;
+  type ArrayValue = string | ArrayValue[];
+  type TupleField = z.ZodMiniString<string> | z.ZodMiniTuple<[TupleField], null>;
+  type TupleValue = string | [TupleValue];
+  type UnionField = z.ZodMiniUnion<[z.ZodMiniString<string>, UnionField]>;
+  expectTypeOf<z.output<ArrayField>>().toEqualTypeOf<ArrayValue>();
+  expectTypeOf<z.input<ArrayField>>().toEqualTypeOf<ArrayValue>();
+  expectTypeOf<z.output<TupleField>>().toEqualTypeOf<TupleValue>();
+  expectTypeOf<UnionField["_zod"]["def"]["options"][0]>().toEqualTypeOf<z.ZodMiniString<string>>();
+  const schema: ArrayField = z.array(z.string());
+  expect(schema.parse(["leaf"])).toEqual(["leaf"]);
+  // @ts-expect-error recursive array inference rejects numeric leaves
+  const invalid: z.output<ArrayField> = [[123]];
+  void invalid;
+});
+
 test("recursive object schema type aliases", () => {
   type ObjectField = z.ZodMiniObject<{ [k: string]: ObjectField }>;
   type Field = z.ZodMiniString<string> | z.ZodMiniObject<{ [k: string]: Field }>;
