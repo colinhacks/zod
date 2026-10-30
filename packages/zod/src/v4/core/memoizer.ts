@@ -170,6 +170,7 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
     case "any":
     case "unknown":
     case "date":
+    case "temporal":
     case "nan":
     case "enum":
     case "literal":
