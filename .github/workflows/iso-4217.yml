@@ -20,11 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: printf 'latest\n' > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
           nub-version: "0.8.3"
-          node-version: "latest"
       - run: nub install --frozen-lockfile
       - id: list
         run: nub run update:iso4217
