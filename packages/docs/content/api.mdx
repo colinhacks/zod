@@ -1278,7 +1278,7 @@ DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
 const DogWithStrings = z.catchall(
   z.object({
     name: z.string(),
-    age: z.number().optional(),
+    age: z.optional(z.number()),
   }),
   z.string()
 );
@@ -1415,7 +1415,7 @@ const Base = z.object({
 
 // Extended inherits the refinements of Base
 const Extended = z.safeExtend(Base, {
-  a: z.string().min(10)
+  a: z.string().check(z.minLength(10))
 });
 ```
 </Tab>
@@ -2724,7 +2724,7 @@ schema.parse({
 ```ts
 const schema = z
   .object({
-    password: z.string().min(8),
+    password: z.string().check(z.minLength(8)),
     confirmPassword: z.string(),
     anotherField: z.string(),
   })
