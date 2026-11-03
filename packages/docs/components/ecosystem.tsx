@@ -339,6 +339,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "Zod & TS-first approach to building Universal Expo + Next.js apps using schemas as single source of truth",
     slug: "FullProduct-dev/green-stack-starter-demo",
   },
+  {
+    name: "MongoZod",
+    url: "https://mongozod.dev",
+    description: "MongoDB with a Zod schema as the single source of truth: it validates every write, types every query and defines what each endpoint accepts.",
+    slug: "tserdeiro/mongozod",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
