@@ -63,17 +63,12 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: ["latest"]
-    name: Lint on Node ${{ matrix.node }}
+    name: Lint
     steps:
       - uses: actions/checkout@v7
-      - run: printf '%s\n' "${{ matrix.node }}" > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
           nub-version: "0.8.3"
-          node-version: ${{ matrix.node }}
       - run: nub install --frozen-lockfile
       - run: nub run format:check
       - run: nub run lint:check
@@ -83,11 +78,9 @@ jobs:
     name: Check for circular dependencies
     steps:
       - uses: actions/checkout@v7
-      - run: printf 'latest\n' > .nvmrc
       - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d # v0
         with:
           nub-version: "0.8.3"
-          node-version: "latest"
       - run: nub install --frozen-lockfile
       - run: nub run check:circular
 
