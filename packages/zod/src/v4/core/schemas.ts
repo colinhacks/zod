@@ -2489,6 +2489,68 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
   return final;
 }
 
+interface UnionVisit {
+  value: unknown;
+  /** each issue beside its path length when it was recorded, since receivers only ever prepend */
+  issues: unknown[];
+  aborted: boolean | undefined;
+}
+
+const UNION_MEMO = "~union";
+const UNION_MEMO_UNCHECKED = "~union-unchecked";
+
+// without the memoizer a recursive union reaches the same subtree once per option above it, so a nested visit replays the first
+function memoUnion(
+  inst: $ZodType,
+  parse: (payload: ParsePayload, ctx: ParseContextInternal) => util.MaybeAsync<ParsePayload>
+): (payload: ParsePayload, ctx: ParseContextInternal) => util.MaybeAsync<ParsePayload> {
+  if (core.globalConfig.memoizer) return parse;
+  let active = 0;
+  return (payload, ctx) => {
+    const input = payload.value;
+    let seen: WeakMap<object, UnionVisit> | undefined;
+    if (active && typeof input === "object" && input !== null && !payload.issues.length) {
+      // an encode's check-free first pass shares the context through a spread, so it keeps a cache of its own
+      const key = ctx.skipChecks ? UNION_MEMO_UNCHECKED : UNION_MEMO;
+      (ctx as any)[key] ??= new WeakMap();
+      const all: WeakMap<$ZodType, WeakMap<object, UnionVisit>> = (ctx as any)[key];
+      seen = all.get(inst);
+      if (!seen) {
+        seen = new WeakMap();
+        all.set(inst, seen);
+      }
+      const hit = seen.get(input);
+      if (hit) {
+        payload.value = hit.value;
+        for (let i = 0; i < hit.issues.length; i += 2) {
+          const iss = hit.issues[i] as errors.$ZodRawIssue;
+          const len = hit.issues[i + 1] as number;
+          payload.issues.push({ ...iss, path: iss.path ? iss.path.slice(iss.path.length - len) : [] });
+        }
+        if (hit.aborted) payload.aborted = true;
+        return payload;
+      }
+    }
+    active++;
+    let result: util.MaybeAsync<ParsePayload>;
+    try {
+      result = parse(payload, ctx);
+    } finally {
+      active--;
+    }
+    if (seen) {
+      const record = (r: ParsePayload) => {
+        const issues: unknown[] = [];
+        for (const iss of r.issues) issues.push(iss, iss.path?.length ?? 0);
+        seen!.set(input as object, { value: r.value, issues, aborted: r.aborted });
+        return r;
+      };
+      return result instanceof Promise ? result.then(record) : record(result);
+    }
+    return result;
+  };
+}
+
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
 
@@ -2521,7 +2583,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
 
   const first = def.options.length === 1 ? def.options[0]._zod.run : null;
 
-  inst._zod.parse = (payload, ctx) => {
+  inst._zod.parse = memoUnion(inst, (payload, ctx) => {
     if (first) {
       return first(payload, ctx);
     }
@@ -2549,7 +2611,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return Promise.all(results).then((results) => {
       return handleUnionResults(results as ParsePayload[], payload, inst, ctx);
     });
-  };
+  });
 });
 
 function handleExclusiveUnionResults(
@@ -2604,7 +2666,7 @@ export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$construct
 
   const first = def.options.length === 1 ? def.options[0]._zod.run : null;
 
-  inst._zod.parse = (payload, ctx) => {
+  inst._zod.parse = memoUnion(inst, (payload, ctx) => {
     if (first) {
       return first(payload, ctx);
     }
@@ -2631,7 +2693,7 @@ export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$construct
     return Promise.all(results).then((results) => {
       return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
     });
-  };
+  });
 });
 
 //////////////////////////////////////////////////////

@@ -339,3 +339,46 @@ test("shape stays writeable through object/strictObject/looseObject/extend with 
     sub: z.ZodMiniArray<typeof Extended>;
   }>();
 });
+
+test("a recursive union parses each node once", () => {
+  let parsed = 0;
+  const make = () => {
+    const option = (type: string): any =>
+      z.object({
+        type: z.literal(type),
+        n: z.number().check(
+          z.refine(() => ++parsed > 0),
+          z.maximum(5)
+        ),
+        get child() {
+          return z.optional(Node);
+        },
+      });
+    const Node: any = z.union([option("a"), option("b")]).check(z.refine(() => true));
+    return Node;
+  };
+  const chain = (depth: number, leaf: object) => {
+    let value: any = leaf;
+    for (let i = 0; i < depth; i++) value = { type: "b", n: 1, child: value };
+    return value;
+  };
+  const Node = make();
+
+  // each option reads `n` once per node; re-parsing the subtree under every option doubled the work per level
+  const valid = chain(20, { type: "b", n: 1 });
+  expect(Node.parse(valid)).toEqual(valid);
+  expect(parsed).toBeLessThan(100);
+
+  // an encode's check-free first pass must not hand its results to the checked pass
+  expect(z.safeEncode(Node, chain(3, { type: "b", n: 10 })).success).toBe(false);
+
+  // the memoizer, when configured, does the caching instead, with the same issues
+  const bad = chain(4, { type: "c", n: 1 });
+  const issues = Node.safeParse(bad).error!.issues;
+  z.config({ memoizer: z.memoizer() });
+  try {
+    expect(make().safeParse(bad).error!.issues).toEqual(issues);
+  } finally {
+    delete z.config().memoizer;
+  }
+});
