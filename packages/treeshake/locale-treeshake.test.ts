@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import resolve from "@rollup/plugin-node-resolve";
-import { type Plugin, rollup } from "rollup";
+import { type Plugin, rollup, type WarningHandlerWithDefault } from "rollup";
 import { beforeAll, describe, expect, it } from "vitest";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -40,12 +40,12 @@ function entry(code: string): Plugin {
   };
 }
 
-async function bundle(code: string): Promise<string> {
+async function bundle(code: string, onwarn: WarningHandlerWithDefault = () => {}): Promise<string> {
   const build = await rollup({
     input: "ignored",
     plugins: [entry(code), resolve()],
     treeshake: { preset: "smallest", annotations: true },
-    onwarn: () => {},
+    onwarn,
   });
   const { output } = await build.generate({ format: "esm" });
   await build.close();
@@ -78,4 +78,13 @@ describe("locale tree-shaking", () => {
       expect(code).not.toContain(JAPANESE);
     });
   }
+});
+
+// a comment naming an annotation token where none can apply makes every consumer's rollup build warn (#6712)
+it("ships no comment that Rollup reads as a misplaced annotation", async () => {
+  const flagged: string[] = [];
+  await bundle(`import * as z from "zod";\nimport * as m from "zod/mini";\nconsole.log(z, m);`, (w) => {
+    if (w.code === "INVALID_ANNOTATION") flagged.push(path.relative(__dirname, w.id ?? ""));
+  });
+  expect(flagged).toEqual([]);
 });
