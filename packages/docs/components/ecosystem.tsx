@@ -102,6 +102,12 @@ const formIntegrations: ZodResource[] = [
     slug: "causaly/zod-validation-error",
   },
   {
+    name: "zod-i18n-map",
+    url: "https://github.com/aiji42/zod-i18n",
+    description: "Translate Zod error messages with i18next, including per-request languages and field names.",
+    slug: "aiji42/zod-i18n",
+  },
+  {
     name: "svelte-jsonschema-form",
     url: "https://x0k.dev/svelte-jsonschema-form/validators/zod4/",
     description: "Svelte 5 library for creating forms based on JSON schema.",
@@ -270,6 +276,12 @@ const mockingLibraries: ZodResource[] = [
       "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
     slug: "traversable/schema",
   },
+  {
+    name: "Mimlet",
+    url: "https://jeffreynijs.github.io/mimlet/",
+    description: "Typed fixture builders for Zod 4 with schema-driven input generation and native validation.",
+    slug: "JeffreyNijs/mimlet",
+  },
 ];
 
 const poweredByZodProjects: ZodResource[] = [
@@ -413,6 +425,12 @@ const zodUtilities: ZodResource[] = [
     url: "https://shorn.dev",
     description: "Compact binary serialization that uses your Zod schema as the wire format. No IDL or codegen.",
     slug: "ChiChuRita/shorn",
+  },
+  {
+    name: "zod-india",
+    url: "https://github.com/Krrishkumar125/zod-india",
+    description: "Zod schemas for Indian identifiers (GSTIN, PAN, IFSC, UPI, Aadhaar, PIN) with GSTIN and Aadhaar checksum validation.",
+    slug: "Krrishkumar125/zod-india",
   },
 ];
 
