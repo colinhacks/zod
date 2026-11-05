@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "chrome-devtools": {
-      "command": "nub",
-      "args": ["dlx", "chrome-devtools-mcp@latest"],
-      "env": {
-        "NODE_COMPAT": "1"
-      }
+      "command": "node",
+      "args": ["scripts/chrome-devtools-mcp.mjs"]
     }
   }
 }
