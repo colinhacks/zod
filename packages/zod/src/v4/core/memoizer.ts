@@ -11,8 +11,17 @@ export class $ZodCyclicError extends Error {
 
 interface Entry {
   value: unknown;
-  /** `null` until the node's children are parsed, then what `record` returns. */
-  issues: unknown[] | null;
+  /** `null` during the visit's synchronous part, so a hit then is an ancestor; a `Link` while async work is left; then what `record` returns. */
+  issues: unknown[] | Link | null;
+}
+
+/** A visit in an async parse, carried on the context because a continuation keeps the one it was given. */
+interface Link {
+  up: Link | undefined;
+  /** Settles once the entry has its issues. */
+  done: Promise<unknown> | undefined;
+  /** The parents of the visits waiting on this one. */
+  waiters: Set<Link> | undefined;
 }
 
 interface State {
@@ -26,7 +35,7 @@ interface State {
 
 /** Keyed off the context object every schema in one parse call already shares. */
 const STATE = "~memo";
-type WithState = { [STATE]?: State };
+type WithState = { [STATE]?: State; "~link"?: Link };
 
 const NO_ISSUES: unknown[] = [];
 
@@ -52,6 +61,34 @@ function replay(rec: unknown[], into: errors.$ZodRawIssue[]): void {
     const iss = rec[i] as errors.$ZodRawIssue;
     into.push(iss.path ? { ...iss, path: iss.path.slice(iss.path.length - (rec[i + 1] as number)) } : { ...iss });
   }
+}
+
+// whether `target` can't finish until `from` does: it is above `from`, or above a visit waiting on something that is
+function blockedOn(from: Link | undefined, target: Link): boolean {
+  // a wait this visit already has adds no edge, so it can't close a loop
+  if (from && target.waiters?.has(from)) return false;
+  const seen = new Set<Link>();
+  const pending = [from];
+  while (pending.length) {
+    for (let link = pending.pop(); link && !seen.has(link); link = link.up) {
+      if (link === target) return true;
+      seen.add(link);
+      if (link.waiters) for (const waiter of link.waiters) pending.push(waiter);
+    }
+  }
+  return false;
+}
+
+// out of line so the sync path captures nothing more
+function waitFor(hit: Entry, link: Link, up: Link | undefined, payload: ParsePayload): Promise<ParsePayload> {
+  if (up) {
+    link.waiters ??= new Set();
+    link.waiters.add(up);
+  }
+  return link.done!.then(() => {
+    replay(hit.issues as unknown[], payload.issues);
+    return payload;
+  });
 }
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
@@ -215,13 +252,7 @@ export function isRecursiveSchema(inst: $ZodType): boolean {
   return isRecursive(inst, new Set(), true) !== NONE;
 }
 
-function bucketFor(state: State, inst: $ZodType, ctx: ParseContextInternal): WeakMap<object, Entry> {
-  let buckets = state.buckets;
-  // an encode's check-free first pass shares the state through its spread context, so it keeps buckets of its own
-  if (ctx.skipChecks) {
-    state.unchecked ??= new WeakMap();
-    buckets = state.unchecked;
-  }
+function bucketFor(buckets: State["buckets"], inst: $ZodType): WeakMap<object, Entry> {
   let bucket = buckets.get(inst);
   if (!bucket) {
     bucket = new WeakMap();
@@ -264,8 +295,8 @@ const memo: $ZodMemoizer = {
   attach(inst) {
     let isRecursiveInst: boolean | undefined;
     let rechecked = false;
-    // a recursive schema is re-entered many times per parse and its bucket never changes
-    let lastCtx: object | undefined;
+    // a recursive schema is re-entered many times per pass and its bucket never changes
+    let lastBuckets: State["buckets"] | undefined;
     let lastBucket: WeakMap<object, Entry> | undefined;
 
     // Wraps `parse` in a deferred so it sees the container's final parse. Core's own deferred copies `parse` into `run` when there are no checks, and it ran first, so `run` is patched to match; with checks, `run` reads `parse` dynamically.
@@ -296,27 +327,39 @@ const memo: $ZodMemoizer = {
           (ctx as WithState)[STATE] = state;
         }
 
-        let bucket: WeakMap<object, Entry>;
-        if (lastCtx === ctx) {
-          bucket = lastBucket!;
-        } else {
-          bucket = bucketFor(state, inst, ctx);
-          lastCtx = ctx;
-          lastBucket = bucket;
+        // an encode's check-free first pass shares the state through its spread context, so it keeps buckets of its own
+        if (ctx.skipChecks) state.unchecked ??= new WeakMap();
+        const buckets = ctx.skipChecks ? state.unchecked! : state.buckets;
+        // keyed on the pass, since an async visit hands its children a context of their own that must not outlive the parse
+        if (lastBuckets !== buckets) {
+          lastBuckets = buckets;
+          lastBucket = bucketFor(buckets, inst);
         }
+        const bucket = lastBucket!;
 
         const hit = bucket.get(input);
         if (hit) {
           payload.value = hit.value;
-          if (hit.issues) {
-            replay(hit.issues, payload.issues);
+          const issues = hit.issues;
+          if (Array.isArray(issues)) {
+            replay(issues, payload.issues);
+          } else if (issues && !blockedOn((ctx as WithState)["~link"], issues)) {
+            // a concurrent visit holds the entry and may discard its issues, so reuse them only once it finishes
+            return waitFor(hit, issues, (ctx as WithState)["~link"], payload);
           } else {
-            // Still being parsed: its own checks cover it, so skip them here.
+            // still being parsed by a visit that needs this one: its own checks cover it, so skip them here
             payload.memo = true;
             state.backEdges ??= new WeakSet();
             state.backEdges.add(hit.value as object);
           }
           return payload;
+        }
+
+        let link: Link | undefined;
+        if (ctx.async) {
+          link = { up: (ctx as WithState)["~link"], done: undefined, waiters: undefined };
+          // a literal key, since a computed one here cost 3x
+          ctx = { ...ctx, "~link": link } as ParseContextInternal;
         }
 
         handoff = bucket;
@@ -329,10 +372,15 @@ const memo: $ZodMemoizer = {
 
         // Both paths written out so the sync one allocates no closure. It runs once per node, and capturing here cost more than everything else combined.
         if (result instanceof Promise) {
-          return result.then((r) => {
+          const done = result.then((r) => {
             if (entry) entry.issues = record(r.issues, start);
             return r;
           });
+          if (entry && link) {
+            link.done = done;
+            entry.issues = link;
+          }
+          return done;
         }
         if (entry) entry.issues = record(result.issues, start);
         return result;

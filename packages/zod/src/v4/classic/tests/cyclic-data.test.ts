@@ -383,6 +383,129 @@ test("parses a cycle asynchronously", async () => {
   expect((await Node.safeParseAsync(bad)).success).toBe(false);
 });
 
+const Slow: any = z.object({
+  id: z.number(),
+  slow: z.string().refine(async (s) => s === "ok"),
+  kids: z.array(z.lazy(() => Slow)),
+});
+const Either = (shape: any) => z.union([z.object(shape), z.object({ ...shape, extra: z.number().optional() })]);
+
+test("a union option does not swallow the issues of a node its sibling is still parsing", async () => {
+  const U = Either({ child: Slow });
+
+  expect((await U.safeParseAsync({ child: { id: "nope", slow: "ok", kids: [] } })).success).toBe(false);
+  expect((await U.safeParseAsync({ child: { id: 1, slow: "x", kids: [] } })).success).toBe(false);
+  expect((await U.safeParseAsync({ child: { id: 1, slow: "ok", kids: [] } })).success).toBe(true);
+
+  const cyclic: any = { id: 1, slow: "ok", kids: [] };
+  cyclic.kids.push(cyclic);
+  const out: any = await U.parseAsync({ child: cyclic });
+  expect(out.child.kids[0]).toBe(out.child);
+});
+
+test("a .catch() that takes a shared node's issues leaves them for the other reference", async () => {
+  const Pair = z.object({ a: Slow.catch({ id: 0, slow: "ok", kids: [] }), b: Slow });
+  const x = { id: "nope", slow: "ok", kids: [] };
+  const r = await Pair.safeParseAsync({ a: x, b: x });
+  expect(r.error?.issues.map((iss) => iss.path)).toEqual([["b", "id"]]);
+});
+
+test("a concurrent reference reports issues and runs checks and transforms as a sync parse does", async () => {
+  const build = (slow: any) => {
+    const Node: any = z
+      .object({
+        id: z.number(),
+        slow,
+        kids: z.array(z.lazy(() => Node)),
+      })
+      .refine((n: any) => n.id !== 0, { path: ["refined"] });
+    return z.object({ a: Node, b: Node, c: Node.transform((n: any) => n.id) });
+  };
+  const paths = (r: any) => r.error.issues.map((iss: any) => iss.path);
+  const bad = { id: 0, slow: "ok", kids: [{ id: "nope", slow: "ok", kids: [] }] };
+  const input = { a: bad, b: bad, c: bad };
+
+  const sync = build(z.string()).safeParse(input);
+  const asynced = await build(z.string().refine(async () => true)).safeParseAsync(input);
+  expect(paths(asynced)).toEqual(paths(sync));
+  expect(paths(asynced)).toContainEqual(["b", "kids", 0, "id"]);
+
+  const good = { id: 1, slow: "ok", kids: [] };
+  const out: any = await build(z.string().refine(async () => true)).parseAsync({ a: good, b: good, c: good });
+  expect(out.a).toBe(out.b);
+  expect(out.c).toBe(1);
+});
+
+// every edge is reached only after an await, so nothing about the call stack marks a cycle
+const AfterAwait: any = z.object({
+  id: z.number(),
+  next: z.preprocess(async (v) => v, z.array(z.lazy(() => AfterAwait))),
+});
+const graph = (edges: number[][]) => {
+  const nodes: any[] = edges.map((_, id) => ({ id }));
+  for (const [i, to] of edges.entries()) nodes[i].next = to.map((j) => nodes[j]);
+  return nodes;
+};
+
+test("a cycle that closes after an await is a back-edge, not a wait", async () => {
+  const [x] = graph([[0]]);
+  const out: any = await AfterAwait.parseAsync(x);
+  expect(out.next[0]).toBe(out);
+
+  // the sibling option has to wait while the ancestor must not
+  x.id = "nope";
+  expect((await Either({ child: AfterAwait }).safeParseAsync({ child: x })).success).toBe(false);
+});
+
+test.each([
+  ["each waits on the other", [[1], [0]]],
+  ["around a ring", [[1], [2], [0]]],
+  ["a node waited on twice, the first closing the loop", [[2], [2], [0]]],
+  ["a node waiting twice, the first closing the loop", [[1, 2], [0], []]],
+])("visits that would wait on each other resolve: %s", async (_, edges) => {
+  const out: any = await z.array(AfterAwait).parseAsync(graph(edges));
+  for (const [i, to] of edges.entries()) for (const [k, j] of to.entries()) expect(out[i].next[k]).toBe(out[j]);
+
+  const bad = graph(edges);
+  bad[0].id = "nope";
+  expect((await Either({ all: z.array(AfterAwait) }).safeParseAsync({ all: bad })).success).toBe(false);
+});
+
+test("repeat references to a node a visit already waits on don't re-walk what waits above it", async () => {
+  const n = 500;
+  const y = { id: 0, next: [] };
+  const x = { id: 1, next: Array(n).fill(y) };
+  const wrappers = Array.from({ length: n }, () => ({ id: 2, next: [x] }));
+
+  // counts Set.add, which the wait-cycle walk calls per visit; re-walking per reference reaches ~n²
+  let added = 0;
+  const { add } = Set.prototype;
+  Set.prototype.add = function (this: Set<unknown>, value: unknown) {
+    added++;
+    return add.call(this, value);
+  };
+  try {
+    expect((await z.array(AfterAwait).safeParseAsync([y, ...wrappers, x])).success).toBe(true);
+  } finally {
+    Set.prototype.add = add;
+  }
+  expect(added).toBeLessThan(n * 40);
+});
+
+test("an async encode does not swallow the issues of a shared node", async () => {
+  const Codec = z.codec(z.string(), z.string(), { decode: async (s) => s, encode: async (s) => s });
+  const Node: any = z.object({ id: z.number(), slow: Codec, kids: z.array(z.lazy(() => Node)) });
+  const U = Either({ child: Node });
+
+  expect((await z.safeEncodeAsync(U, { child: { id: "nope", slow: "x", kids: [] } } as any)).success).toBe(false);
+  expect((await z.safeEncodeAsync(U, { child: { id: 1, slow: "x", kids: [] } } as any)).success).toBe(true);
+
+  const cyclic: any = { id: 1, slow: "x", kids: [] };
+  cyclic.kids.push(cyclic);
+  const out: any = await z.encodeAsync(U, { child: cyclic } as any);
+  expect(out.child.kids[0]).toBe(out.child);
+});
+
 test("a non-recursive schema still copies a shared reference twice", () => {
   const Leaf = z.object({ v: z.number() });
   const Pair = z.object({ a: Leaf, b: Leaf });
@@ -986,7 +1109,10 @@ test("parses a factory-built recursive schema through z.lazy", () => {
   expect(out.root.child.id).toBe(2);
 });
 
-test("a finished parse pins nothing on the schema", async () => {
+test.each([
+  ["parse", z.number()],
+  ["parseAsync", z.number().refine(async () => true)],
+])("a finished %s pins nothing on the schema", async (method, id) => {
   // es2020 is the target, and its lib predates WeakRef
   type Weak<T extends object> = { deref(): T | undefined };
   const { WeakRef: Weak } = globalThis as unknown as { WeakRef: new <T extends object>(target: T) => Weak<T> };
@@ -995,25 +1121,24 @@ test("a finished parse pins nothing on the schema", async () => {
   const gc = vm.runInNewContext("gc") as () => void;
 
   const Node: any = z.object({
-    id: z.number(),
+    id,
     get next() {
       return z.optional(Node);
     },
   });
 
-  const ref = ((): Weak<object> => {
+  const refs = await (async (): Promise<Weak<object>[]> => {
     const input = { id: 1, next: { id: 2, next: undefined } };
-    Node.parse(input);
-    return new Weak(input);
+    return [new Weak(input), new Weak(await Node[method](input))];
   })();
 
-  for (let attempt = 0; attempt < 10 && ref.deref(); attempt++) {
+  for (let attempt = 0; attempt < 10 && refs.some((ref) => ref.deref()); attempt++) {
     // the input stays on the stack until a macrotask boundary
     await new Promise((resolve) => setTimeout(resolve, 0));
     gc();
   }
 
-  expect(ref.deref()).toBeUndefined();
+  expect(refs.map((ref) => ref.deref())).toEqual([undefined, undefined]);
 });
 
 test("a repeat visit reports the first visit's issues at its own path", async () => {
