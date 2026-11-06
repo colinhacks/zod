@@ -1,0 +1,4 @@
+Contact: https://github.com/colinhacks/zod/security/advisories/new
+Contact: mailto:security@zod.dev
+Policy: https://github.com/colinhacks/zod/blob/main/SECURITY.md
+Expires: 2027-11-06T00:00:00Z
