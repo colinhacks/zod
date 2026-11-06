@@ -280,10 +280,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
         // abort if the canary is aborted
-        if (util.aborted(canary)) {
-          canary.aborted = true;
-          return canary;
-        }
+        if (util.aborted(canary)) return canary;
 
         // run checks first, then
         const checkResult = runChecks(payload, checks, ctx);
