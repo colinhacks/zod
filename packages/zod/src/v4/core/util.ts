@@ -345,7 +345,13 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
       }
       if (value === undefined) {
         value = EVALUATING;
-        value = getter();
+        try {
+          value = getter();
+        } catch (err) {
+          // memoize nothing, so a later read runs the getter again
+          value = undefined;
+          throw err;
+        }
       }
       return value;
     },
@@ -1286,7 +1292,7 @@ export function installLazyProp(inst: object, key: string, make: (self: any) => 
       // Shadowed before computing, so a re-entrant read from a self-referential shape resolves to undefined instead of running the getter again. A data property rather than an accessor: an own accessor is the dictionary-mode transition this exists to avoid.
       const desc = { configurable: true, writable: true, enumerable, value: undefined as unknown };
       Object.defineProperty(this, key, desc);
-      // a compute that throws leaves the shadow behind, so later reads answer undefined instead of re-throwing; `defineLazy` did the same, and `defineLazyInternal`'s delete-on-catch would cost bytes in every bundle for a case only a throwing user getter reaches
+      // a compute that throws leaves the shadow behind, so later reads answer undefined instead of re-throwing; `defineLazyInternal`'s delete-on-catch would cost bytes in every bundle for a case only a throwing user getter reaches
       desc.value = make(this);
       Object.defineProperty(this, key, desc);
       return desc.value;
