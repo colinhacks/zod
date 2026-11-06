@@ -44,6 +44,19 @@ test("the opt-in reaches every core container", () => {
   expect(out[0]).toBe(out);
 });
 
+test("a union option does not swallow the issues of a node its sibling is still parsing", async () => {
+  z.config({ memoizer: z.memoizer() });
+  const Node: any = z.object({
+    id: z.number(),
+    slow: z.string().check(z.refine(async () => true)),
+    kids: z.array(z.lazy(() => Node)),
+  });
+  const U = z.union([z.object({ child: Node }), z.object({ child: Node, extra: z.optional(z.number()) })]);
+
+  expect((await z.safeParseAsync(U, { child: { id: "nope", slow: "x", kids: [] } })).success).toBe(false);
+  expect((await z.safeParseAsync(U, { child: { id: 1, slow: "x", kids: [] } })).success).toBe(true);
+});
+
 test("rejects a cycle that closes through a transform", () => {
   z.config({ memoizer: z.memoizer() });
   const Inner: any = z.object({
