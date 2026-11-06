@@ -830,6 +830,18 @@ test("lazy recursive schemas are refused, and still parse through the runtime", 
   expect(() => nodeSchema.parse(cyclic)).not.toThrow();
 });
 
+test("compiling before a lazy's target is declared leaves the schema parsing", () => {
+  const parent = z.object({ child: z.lazy(() => child) });
+  const refused = compile(parent);
+  const child = z.object({ name: z.string() });
+
+  const input = { child: { name: "a" } };
+  expect(refused).toBe(parent);
+  expect(parent.parse(input)).toEqual(input);
+  // the refusal latches nothing, so compiling once the target exists gets the fast path
+  expect(compile(parent)).not.toBe(parent);
+});
+
 test("matches Zod: lazy", () => {
   const schema = z.lazy(() => z.string());
   expectMatch(schema, "hello");

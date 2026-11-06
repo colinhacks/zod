@@ -260,3 +260,17 @@ test("a throwing lazy internal throws on every read", () => {
     expect(() => schema._zod.propValues).toThrow();
   }
 });
+
+test("a throwing getter throws the same error on every read until it resolves", () => {
+  let ready = false;
+  const boom = new Error("boom");
+  const schema = z.lazy(() => {
+    if (!ready) throw boom;
+    return z.string();
+  });
+  for (let i = 0; i < 3; i++) {
+    expect(() => schema.parse("a")).toThrow(boom);
+  }
+  ready = true;
+  expect(schema.parse("a")).toEqual("a");
+});
