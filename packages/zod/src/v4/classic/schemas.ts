@@ -2275,14 +2275,17 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         }
       };
 
+      const start = payload.issues.length;
       const output = def.transform(payload.value, payload);
       if (output instanceof Promise) {
         return output.then((output) => {
           payload.value = output;
+          if (payload.issues.length !== start) util.ownPaths(payload.issues, start);
           return payload;
         });
       }
       payload.value = output;
+      if (payload.issues.length !== start) util.ownPaths(payload.issues, start);
       return payload;
     };
   }
