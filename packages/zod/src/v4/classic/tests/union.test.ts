@@ -191,6 +191,43 @@ test("surface an option a check stopped when none can continue", () => {
   expect(both.safeParse(["a", "b", "c"]).error!.issues).toMatchObject([{ code: "invalid_union" }]);
 });
 
+test("surface an option a size cap stopped on encode", () => {
+  const over = ["a", "b", "c"];
+  const tooBig = [{ code: "too_big", path: [] }];
+  const encode = (option: z.ZodType, input: unknown) =>
+    z.safeEncode(z.union([option, z.string()]), input as any).error!.issues;
+
+  expect(encode(z.array(z.string()).max(2), over)).toMatchObject(tooBig);
+  expect(
+    encode(
+      z
+        .array(z.string())
+        .refine(() => true)
+        .max(2),
+      over
+    )
+  ).toMatchObject(tooBig);
+  expect(encode(z.set(z.string()).max(2), new Set(over))).toMatchObject(tooBig);
+  expect(encode(z.map(z.string(), z.string()).max(0), new Map([["a", "b"]]))).toMatchObject(tooBig);
+  // a container check runs its own first pass around the cap below it
+  expect(
+    encode(
+      z.object({ l: z.array(z.string()).max(2) }).refine(() => true),
+      { l: over }
+    )
+  ).toMatchObject([{ code: "too_big", path: ["l"] }]);
+
+  // a type failure beside the cap, or a second capped option, still gives invalid_union
+  expect(
+    encode(
+      z.object({ a: z.string(), l: z.array(z.string()).max(2) }).refine(() => true),
+      { a: 1, l: over }
+    )
+  ).toMatchObject([{ code: "invalid_union" }]);
+  const both = z.union([z.array(z.string()).max(2), z.array(z.number()).max(1)]);
+  expect(z.safeEncode(both, over).error!.issues).toMatchObject([{ code: "invalid_union" }]);
+});
+
 // z.xor() tests
 test("z.xor() - exactly one match succeeds", () => {
   const schema = z.xor([z.string(), z.number()]);
