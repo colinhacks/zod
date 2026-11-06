@@ -352,9 +352,12 @@ expectTypeOf(tree).toEqualTypeOf<{
     };
     favoriteNumbers?: {
       errors: string[];
-      items?: {
-        errors: string[];
-      }[];
+      items?: Array<
+        | {
+            errors: string[];
+          }
+        | undefined
+      >;
     };
     nesting?: {
       errors: string[];
