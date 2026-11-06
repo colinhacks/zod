@@ -82,7 +82,9 @@ function isRecursive(inst: $ZodType, stack: Set<object>, resolve: boolean): Answ
   const shape = (sh: object, spread: boolean): Answer => {
     let answer: Answer = NONE;
     for (const key of Reflect.ownKeys(sh)) {
-      const desc = Object.getOwnPropertyDescriptor(sh, key)!;
+      const desc = Object.getOwnPropertyDescriptor(sh, key);
+      // a Proxy can list a key it has no descriptor for, which nothing can parse
+      if (!desc) continue;
       // an object resolves its shape by spread, so a key it does not enumerate is never parsed; `z.properties` reads every own key and so keeps them all
       if (spread && !desc.enumerable) continue;
       // resolving runs user code, and a factory mints a fresh subtree per read, so an edge the walk can't follow counts as a cycle
