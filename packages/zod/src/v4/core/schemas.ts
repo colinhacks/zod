@@ -3882,11 +3882,13 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
 
+      const start = payload.issues.length;
       const _out = def.transform(payload.value, payload);
       if (ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
+          if (payload.issues.length !== start) util.ownPaths(payload.issues, start);
           return payload;
         });
       }
@@ -3896,6 +3898,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
+      if (payload.issues.length !== start) util.ownPaths(payload.issues, start);
       return payload;
     };
   }
@@ -4571,6 +4574,7 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
   // Check if transform added any issues
   if (left.issues.length) {
     left.aborted = true;
+    util.ownPaths(left.issues, 0);
     return left;
   }
 

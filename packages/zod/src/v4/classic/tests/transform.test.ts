@@ -376,3 +376,39 @@ test("transform context should have addIssue", () => {
     expect(result.error.issues[0].message).toBe("Not valid");
   }
 });
+
+test("a path reused across parses isn't prefixed in place", async () => {
+  const P = ["k"];
+  const fn = (v: string, ctx: z.core.ParsePayload) => {
+    ctx.issues.push({ code: "custom", path: P, input: v, message: "x" });
+    return v;
+  };
+  const asyncFn = async (v: string, ctx: z.core.ParsePayload) => {
+    await 0;
+    return fn(v, ctx);
+  };
+  const data = { a: "v" };
+  const sync = [
+    z.object({ a: z.string().transform(fn) }),
+    z.object({ a: z.preprocess(fn, z.string()) }),
+    z.object({ a: z.codec(z.string(), z.string(), { decode: fn, encode: (v) => v }) }),
+  ];
+  const codecAsync = z.codec(z.string(), z.string(), { decode: asyncFn, encode: asyncFn });
+  const cases: (() => z.ZodSafeParseResult<unknown> | Promise<z.ZodSafeParseResult<unknown>>)[] = [
+    ...sync.flatMap((s) => [
+      () => s.safeParse(data),
+      () => s.safeParse(data, { jitless: true }),
+      () => z.compile(s).safeParse(data),
+      () => s.safeDecode(data as never),
+      () => s.safeParseAsync(data),
+    ]),
+    () => z.object({ a: z.string().transform(asyncFn) }).safeParseAsync(data),
+    () => z.object({ a: codecAsync }).safeParseAsync(data),
+    () => z.object({ a: codecAsync }).safeEncodeAsync(data),
+    () => z.object({ a: z.codec(z.string(), z.string(), { decode: (v) => v, encode: fn }) }).safeEncode(data),
+  ];
+  for (const run of cases) {
+    for (let i = 0; i < 2; i++) expect((await run()).error!.issues[0].path).toEqual(["a", "k"]);
+    expect(P).toEqual(["k"]);
+  }
+});

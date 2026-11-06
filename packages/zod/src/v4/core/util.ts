@@ -968,6 +968,14 @@ export function attachSchema(issues: errors.$ZodRawIssue[], start: number, inst:
   }
 }
 
+/** Gives each issue from `start` on its own path, since receivers prefix a path in place. */
+export function ownPaths(issues: errors.$ZodRawIssue[], start: number): void {
+  for (let i = start; i < issues.length; i++) {
+    const iss = issues[i] as any;
+    if (iss.path) iss.path = iss.path.slice();
+  }
+}
+
 export function finalizeIssue(
   iss: errors.$ZodRawIssue,
   ctx: schemas.ParseContextInternal | undefined,

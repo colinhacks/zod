@@ -1144,3 +1144,32 @@ test("z.partial on a tuple", () => {
   const refined = z.tuple([z.string(), z.number()]).check(z.refine(([a]) => a.length > 0));
   expect(() => z.partial(refined)).toThrow("cannot be used on tuple schemas containing refinements");
 });
+
+test("a path reused across parses isn't prefixed in place", async () => {
+  const P = ["k"];
+  const fn = (v: string, ctx: z.core.ParsePayload) => {
+    ctx.issues.push({ code: "custom", path: P, input: v, message: "x" });
+    return v;
+  };
+  const data = { a: "v" };
+  const transform = z.object({ a: z.pipe(z.string(), z.transform(fn)) });
+  const codec = z.object({ a: z.codec(z.string(), z.string(), { decode: fn, encode: (v) => v }) });
+  for (const run of [
+    () => z.safeParse(transform, data),
+    () => z.safeParse(codec, data),
+    () => z.safeParseAsync(transform, data),
+    () =>
+      z.safeParseAsync(
+        z.object({
+          a: z.pipe(
+            z.string(),
+            z.transform(async (v: string, ctx) => fn(v, ctx))
+          ),
+        }),
+        data
+      ),
+  ]) {
+    for (let i = 0; i < 2; i++) expect((await run()).error!.issues[0].path).toEqual(["a", "k"]);
+    expect(P).toEqual(["k"]);
+  }
+});
