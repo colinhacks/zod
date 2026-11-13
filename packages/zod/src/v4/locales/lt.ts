@@ -210,7 +210,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (sizing?.verb)
           return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.maximum.toString()} ${sizing.unit ?? "elementų"}`;
         const adj = issue.inclusive ? "ne didesnis kaip" : "mažesnis kaip";
-        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.maximum.toString()} ${sizing?.unit}`;
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.maximum.toString()}`;
       }
       case "too_small": {
         const origin = TypeDictionary[issue.origin] ?? issue.origin;
@@ -223,7 +223,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (sizing?.verb)
           return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.minimum.toString()} ${sizing.unit ?? "elementų"}`;
         const adj = issue.inclusive ? "ne mažesnis kaip" : "didesnis kaip";
-        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.minimum.toString()} ${sizing?.unit}`;
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.minimum.toString()}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;

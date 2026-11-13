@@ -122,7 +122,7 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_value":
         if (issue.values.length === 1)
-          return `Սխալ մուտքագրում․ սպասվում էր ${util.stringifyPrimitive(issue.values[1])}`;
+          return `Սխալ մուտքագրում․ սպասվում էր ${util.stringifyPrimitive(issue.values[0])}`;
         return `Սխալ տարբերակ․ սպասվում էր հետևյալներից մեկը՝ ${util.joinValues(issue.values, "|")}`;
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";

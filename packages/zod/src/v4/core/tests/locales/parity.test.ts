@@ -49,3 +49,19 @@ test("every locale sizes each origin en sizes", () => {
 
   expect(gaps).toEqual([]);
 });
+
+test("no locale leaks undefined into a size message for an unsized origin", () => {
+  const leaks = names.flatMap((n) => {
+    const map = locales[n]!().localeError as (iss: unknown) => string | undefined;
+    return ["number", "bigint", "date"].flatMap((origin) =>
+      [
+        { code: "too_big", origin, maximum: 5, inclusive: true },
+        { code: "too_small", origin, minimum: 5, inclusive: false },
+      ]
+        .filter((iss) => String(map({ ...iss, input: 9, path: [] })).includes("undefined"))
+        .map((iss) => `${n}.${iss.code}.${origin}`)
+    );
+  });
+
+  expect(leaks).toEqual([]);
+});
