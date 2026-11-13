@@ -810,6 +810,12 @@ test("z.json", () => {
   const a = z.json();
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<util.JSONType>();
+  expectTypeOf<z.input<typeof a>>().toEqualTypeOf<util.JSONType>();
+  const record = z.record(z.string(), a);
+  expectTypeOf<z.input<typeof record>>().toEqualTypeOf<Record<string, util.JSONType>>();
+  expectTypeOf<z.output<typeof record>>().toEqualTypeOf<Record<string, util.JSONType>>();
+  expect(record.parse({ value: [null, true] })).toEqual({ value: [null, true] });
+  expect(record.safeParse({ value: undefined }).success).toBe(false);
 
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(z.parse(a, 123)).toEqual(123);
