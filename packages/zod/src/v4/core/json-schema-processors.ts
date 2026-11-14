@@ -319,6 +319,8 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
     // do nothing (an undefined literal was stripped)
   } else if (vals.length === 1) {
     const val = vals[0]!;
+    // OpenAPI 3.0 has no null type
+    if (val === null && ctx.target === "openapi-3.0") return nullProcessor(schema as any, ctx, json, params);
     json.type = val === null ? ("null" as const) : (typeof val as any);
     if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
       json.enum = [val];
@@ -722,10 +724,19 @@ export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, 
   const seen = ctx.seen.get(schema)!;
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
-    json.nullable = true;
+    seen.inherit = openapiNullable;
   } else {
     json.anyOf = [inner, { type: "null" }];
   }
+};
+
+// `nullable` widens only an explicit `type`, so an `enum` must list null and a `$ref` or combinator needs a null branch
+const openapiNullable = (inner: JSONSchema.BaseSchema): JSONSchema.BaseSchema => {
+  if (inner.$ref || inner.allOf || inner.anyOf || inner.oneOf || inner.not)
+    return { anyOf: [inner, { type: "string", nullable: true, enum: [null] }] };
+  const json: JSONSchema.BaseSchema = { nullable: true, ...inner };
+  if (inner.enum && !inner.enum.includes(null)) json.enum = [...inner.enum, null];
+  return json;
 };
 
 export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema, ctx, _json, params) => {

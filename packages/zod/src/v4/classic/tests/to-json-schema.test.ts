@@ -28,6 +28,24 @@ const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): 
   return true;
 };
 
+// null under OpenAPI 3.0.3: `nullable` widens only an explicit `type`, every other keyword still applies
+const openAPI30AdmitsNull = (s: any, root: any): boolean => {
+  if (s.$ref)
+    return openAPI30AdmitsNull(
+      s.$ref
+        .split("/")
+        .slice(1)
+        .reduce((o: any, k: string) => o[k], root),
+      root
+    );
+  if (s.type !== undefined && !s.nullable) return false;
+  if (s.enum && !s.enum.includes(null)) return false;
+  if (s.allOf && !s.allOf.every((m: any) => openAPI30AdmitsNull(m, root))) return false;
+  if (s.anyOf && !s.anyOf.some((m: any) => openAPI30AdmitsNull(m, root))) return false;
+  if (s.oneOf && s.oneOf.filter((m: any) => openAPI30AdmitsNull(m, root)).length !== 1) return false;
+  return !(s.not && openAPI30AdmitsNull(s.not, root));
+};
+
 describe("toJSONSchema", () => {
   test("primitive types", () => {
     expect(z.toJSONSchema(z.string())).toMatchInlineSnapshot(`
@@ -915,6 +933,68 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+  });
+
+  test("nullable openapi-3.0 admits null beside a ref, an enum or a combinator", () => {
+    const User = z.object({ name: z.string() }).meta({ id: "User" });
+    const Node: z.ZodType = z.lazy(() => z.object({ next: Node.nullable() }));
+    const cases = {
+      ref: User.nullable(),
+      optionalRef: User.nullable().optional(),
+      recursive: Node,
+      enum: z.enum(["active", "banned"]).nullable(),
+      literal: z.literal("a").nullable(),
+      literals: z.literal(["a", 1]).nullable(),
+      nullLiteral: z.literal(null),
+      union: z.union([z.string(), z.number()]).nullable(),
+      patterns: z.string().regex(/a/).regex(/b/).nullable(),
+      never: z.never().nullable(),
+      unknown: z.unknown().nullable(),
+      nested: z.enum(["a"]).nullable().nullable(),
+      null: z.null().nullable(),
+    };
+    for (const [key, schema] of Object.entries(cases)) {
+      const json = z.toJSONSchema(schema, { target: "openapi-3.0" });
+      // a component cannot carry `definitions`, so only the inline outputs are checked as documents
+      if (!json.definitions) validateOpenAPI30Schema(json);
+      const nullable = key === "recursive" ? (json as any).properties.next : json;
+      expect([key, openAPI30AdmitsNull(nullable, json)]).toEqual([key, true]);
+    }
+
+    const Team = z.object({ manager: User.nullable(), status: z.enum(["active", "banned"]).nullable() });
+    expect(z.toJSONSchema(Team, { target: "openapi-3.0" }).properties).toMatchInlineSnapshot(`
+      {
+        "manager": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/User",
+            },
+            {
+              "enum": [
+                null,
+              ],
+              "nullable": true,
+              "type": "string",
+            },
+          ],
+        },
+        "status": {
+          "enum": [
+            "active",
+            "banned",
+            null,
+          ],
+          "nullable": true,
+          "type": "string",
+        },
+      }
+    `);
+    expect(z.toJSONSchema(z.literal(null), { target: "openapi-3.0" })).toEqual({
+      type: "string",
+      nullable: true,
+      enum: [null],
+    });
+    expect(z.toJSONSchema(z.unknown().nullable(), { target: "openapi-3.0" })).toEqual({ nullable: true });
   });
 
   test("union with null openapi-3.0", () => {
