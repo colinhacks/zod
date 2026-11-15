@@ -103,6 +103,8 @@ export interface Seen {
   isParent?: boolean | undefined;
   /** Schema to inherit JSON Schema properties from (set by processor for wrappers) */
   ref?: schemas.$ZodType | null;
+  /** Maps the flattened `ref` schema to what this schema inherits in its place */
+  inherit?: ((ref: JSONSchema.BaseSchema) => JSONSchema.BaseSchema) | undefined;
   /** JSON Schema property path for this schema */
   path?: (string | number)[] | undefined;
 }
@@ -590,14 +592,15 @@ export function finalize<T extends schemas.$ZodType>(
 
       const refSeen = ctx.seen.get(ref)!;
       const refSchema = refSeen.schema;
+      const inherited = seen.inherit ? seen.inherit(refSchema) : refSchema;
 
       // merge referenced schema into current
-      if (refSchema.$ref && (ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0")) {
+      if (inherited.$ref && (ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0")) {
         // older drafts can't combine $ref with other properties
         schema.allOf = schema.allOf ?? [];
-        schema.allOf.push(refSchema);
+        schema.allOf.push(inherited);
       } else {
-        assignProps(schema, refSchema);
+        assignProps(schema, inherited);
       }
       // restore child's own properties (child wins)
       assignProps(schema, _cached);

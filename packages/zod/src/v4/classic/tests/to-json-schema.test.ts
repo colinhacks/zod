@@ -28,6 +28,24 @@ const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): 
   return true;
 };
 
+// null under OpenAPI 3.0.3: `nullable` widens only an explicit `type`, every other keyword still applies
+const openAPI30AdmitsNull = (s: any, root: any): boolean => {
+  if (s.$ref)
+    return openAPI30AdmitsNull(
+      s.$ref
+        .split("/")
+        .slice(1)
+        .reduce((o: any, k: string) => o[k], root),
+      root
+    );
+  if (s.type !== undefined && !s.nullable) return false;
+  if (s.enum && !s.enum.includes(null)) return false;
+  if (s.allOf && !s.allOf.every((m: any) => openAPI30AdmitsNull(m, root))) return false;
+  if (s.anyOf && !s.anyOf.some((m: any) => openAPI30AdmitsNull(m, root))) return false;
+  if (s.oneOf && s.oneOf.filter((m: any) => openAPI30AdmitsNull(m, root)).length !== 1) return false;
+  return !(s.not && openAPI30AdmitsNull(s.not, root));
+};
+
 describe("toJSONSchema", () => {
   test("primitive types", () => {
     expect(z.toJSONSchema(z.string())).toMatchInlineSnapshot(`
@@ -952,6 +970,53 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+  });
+
+  test("nullable openapi-3.0 enums and null literals admit null", () => {
+    const cases = {
+      enum: z.enum(["active", "banned"]).nullable(),
+      describedEnum: z.enum(["a"]).describe("d").nullable(),
+      literal: z.literal("a").nullable(),
+      literals: z.literal(["a", 1]).nullable(),
+      nullLiteral: z.literal(null),
+      nested: z.enum(["a"]).nullable().nullable(),
+      null: z.null().nullable(),
+    };
+    for (const [key, schema] of Object.entries(cases)) {
+      const json = z.toJSONSchema(schema, { target: "openapi-3.0" });
+      validateOpenAPI30Schema(json);
+      expect([key, openAPI30AdmitsNull(json, json)]).toEqual([key, true]);
+    }
+
+    // a nullable ref keeps the `allOf` + `nullable` shape client generators read as a nullable ref
+    const User = z.object({ name: z.string() }).meta({ id: "User" });
+    const Team = z.object({ manager: User.nullable(), status: z.enum(["active", "banned"]).nullable() });
+    expect(z.toJSONSchema(Team, { target: "openapi-3.0" }).properties).toMatchInlineSnapshot(`
+      {
+        "manager": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/User",
+            },
+          ],
+          "nullable": true,
+        },
+        "status": {
+          "enum": [
+            "active",
+            "banned",
+            null,
+          ],
+          "nullable": true,
+          "type": "string",
+        },
+      }
+    `);
+    expect(z.toJSONSchema(z.literal(null), { target: "openapi-3.0" })).toEqual({
+      type: "string",
+      nullable: true,
+      enum: [null],
+    });
   });
 
   test("union with null openapi-3.0", () => {
