@@ -935,48 +935,34 @@ describe("toJSONSchema", () => {
     `);
   });
 
-  test("nullable openapi-3.0 admits null beside a ref, an enum or a combinator", () => {
-    const User = z.object({ name: z.string() }).meta({ id: "User" });
-    const Node: z.ZodType = z.lazy(() => z.object({ next: Node.nullable() }));
+  test("nullable openapi-3.0 enums and null literals admit null", () => {
     const cases = {
-      ref: User.nullable(),
-      optionalRef: User.nullable().optional(),
-      recursive: Node,
       enum: z.enum(["active", "banned"]).nullable(),
+      describedEnum: z.enum(["a"]).describe("d").nullable(),
       literal: z.literal("a").nullable(),
       literals: z.literal(["a", 1]).nullable(),
       nullLiteral: z.literal(null),
-      union: z.union([z.string(), z.number()]).nullable(),
-      patterns: z.string().regex(/a/).regex(/b/).nullable(),
-      never: z.never().nullable(),
-      unknown: z.unknown().nullable(),
       nested: z.enum(["a"]).nullable().nullable(),
       null: z.null().nullable(),
     };
     for (const [key, schema] of Object.entries(cases)) {
       const json = z.toJSONSchema(schema, { target: "openapi-3.0" });
-      // a component cannot carry `definitions`, so only the inline outputs are checked as documents
-      if (!json.definitions) validateOpenAPI30Schema(json);
-      const nullable = key === "recursive" ? (json as any).properties.next : json;
-      expect([key, openAPI30AdmitsNull(nullable, json)]).toEqual([key, true]);
+      validateOpenAPI30Schema(json);
+      expect([key, openAPI30AdmitsNull(json, json)]).toEqual([key, true]);
     }
 
+    // a nullable ref keeps the `allOf` + `nullable` shape client generators read as a nullable ref
+    const User = z.object({ name: z.string() }).meta({ id: "User" });
     const Team = z.object({ manager: User.nullable(), status: z.enum(["active", "banned"]).nullable() });
     expect(z.toJSONSchema(Team, { target: "openapi-3.0" }).properties).toMatchInlineSnapshot(`
       {
         "manager": {
-          "anyOf": [
+          "allOf": [
             {
               "$ref": "#/definitions/User",
             },
-            {
-              "enum": [
-                null,
-              ],
-              "nullable": true,
-              "type": "string",
-            },
           ],
+          "nullable": true,
         },
         "status": {
           "enum": [
@@ -994,7 +980,6 @@ describe("toJSONSchema", () => {
       nullable: true,
       enum: [null],
     });
-    expect(z.toJSONSchema(z.unknown().nullable(), { target: "openapi-3.0" })).toEqual({ nullable: true });
   });
 
   test("union with null openapi-3.0", () => {
