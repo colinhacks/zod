@@ -1980,7 +1980,14 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       const valueVar = newVar(ctx);
       doc.write(`const ${valueVar} = ${accessor}[${literalPropertyKey(ctx, inputKey)}];`);
       const valOutput = compileChild(doc, ctx, def.valueType, valueVar);
-      doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
+      if (outKey === keyConst) {
+        doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
+      } else {
+        // a transformed key can come out as __proto__, as the runtime skips it
+        const outKeyVar = newVar(ctx);
+        doc.write(`const ${outKeyVar} = ${addConstant(ctx, util.toPropertyKey)}(${outKey});`);
+        doc.write(`if (${outKeyVar} !== "__proto__") ${outputVar}[${outKeyVar}] = ${valOutput};`);
+      }
     }
 
     // `mode: "loose"` changes only what happens to unrecognized keys, so it belongs here rather than the per-present-key scan. Passing them through matches the runtime, which skips `__proto__`.
@@ -2034,6 +2041,9 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       } else {
         d.write(`if (${outKeyVar} === INVALID) return INVALID;`);
       }
+      d.write(
+        `if (typeof ${outKeyVar} === "object" || typeof ${outKeyVar} === "function") ${outKeyVar} = ${addConstant(ctx, util.toPropertyKey)}(${outKeyVar});`
+      );
       // never write an input __proto__, even renamed, nor a key normalized into __proto__
       d.write(`if (${kVar} === "__proto__" || ${outKeyVar} === "__proto__") continue;`);
       // Read once: the raw expression would be evaluated again by the output write below, so an accessor could return an unvalidated second value.

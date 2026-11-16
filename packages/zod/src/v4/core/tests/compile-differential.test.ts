@@ -729,6 +729,21 @@ test("loose record with an enumerated key set", () => {
   ]);
 });
 
+test("a record key transformed into __proto__ is skipped", () => {
+  const data = JSON.parse('{"p":{"x":1},"q":2}');
+  differential(
+    z.record(
+      z.enum(["p", "q"]).transform((k) => (k === "p" ? "__proto__" : k)),
+      z.unknown()
+    ),
+    [data]
+  );
+  differential(
+    z.record(z.string().transform((k) => (k === "p" ? { toString: () => "__proto__" } : k)) as any, z.unknown()),
+    [data]
+  );
+});
+
 test("a catch callback is refused however it declares its arity", () => {
   // Function.length reports 0 for rest and defaulted parameters alike, so arity cannot separate a user callback from the thunk `.catch(value)` synthesises. Provenance can.
   const rest = z.catch(z.string().min(5), ((...a: any[]) => `e:${a[0].error.issues.length}`) as never);

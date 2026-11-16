@@ -141,8 +141,13 @@ export class ParseStatus {
       if (key.status === "dirty") status.dirty();
       if (value.status === "dirty") status.dirty();
 
-      if (key.value !== "__proto__" && (typeof value.value !== "undefined" || pair.alwaysSet)) {
-        finalObject[key.value] = value.value;
+      // convert once, so an object key whose `toString` answers `__proto__` cannot pass the guard and then hit the setter
+      const k =
+        typeof key.value === "object" || typeof key.value === "function"
+          ? Reflect.ownKeys({ [key.value]: 0 })[0]!
+          : key.value;
+      if (k !== "__proto__" && (typeof value.value !== "undefined" || pair.alwaysSet)) {
+        finalObject[k] = value.value;
       }
     }
 

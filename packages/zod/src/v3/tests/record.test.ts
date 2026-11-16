@@ -162,6 +162,15 @@ test("is not vulnerable to prototype pollution", async () => {
   }
 });
 
+test("a key schema returning an object cannot write __proto__", async () => {
+  const data = JSON.parse('{"__PROTO__":{"a":"evil"}}');
+  const rec = z.record(z.string().transform((s) => [s.toLowerCase()]) as any, z.object({ a: z.string() }));
+  for (const result of [rec.parse(data), await rec.parseAsync(data)]) {
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(result.a).toBeUndefined();
+  }
+});
+
 test("dont parse undefined values", () => {
   const result1 = z.record(z.any()).parse({ foo: undefined });
 
