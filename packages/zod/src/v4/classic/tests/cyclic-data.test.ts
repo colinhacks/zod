@@ -1246,3 +1246,59 @@ test("a deep failure holds memory in proportion to its issues, not its depth", (
   const small = measure(25);
   expect(measure(200) / small).toBeLessThan(16);
 });
+
+test("a nested parse that throws inside a check leaves the outer parse's entries intact", () => {
+  const Boom: any = z.object({
+    s: z.string().transform((s) => JSON.parse(s)),
+    get kids() {
+      return z.array(Boom);
+    },
+  });
+  const Node: any = z.object({
+    id: z.number(),
+    probe: z.any().refine(() => {
+      try {
+        Boom.parse({ s: "{", kids: [] });
+      } catch {}
+      return true;
+    }),
+    get kids() {
+      return z.array(Node);
+    },
+  });
+  // the catch drops a's issues, so only b's reuse of the shared node can report them
+  const shared = { id: "nope", probe: 1, kids: [] };
+  expect(
+    z.object({ a: Node.catch({ id: 0, probe: 1, kids: [] }), b: Node }).safeParse({ a: shared, b: shared }).success
+  ).toBe(false);
+});
+
+test("a parse that throws retains nothing it built", async () => {
+  // es2020 is the target, and its lib predates WeakRef
+  const { WeakRef: Weak } = globalThis as unknown as {
+    WeakRef: new <T extends object>(target: T) => { deref(): T | undefined };
+  };
+  v8.setFlagsFromString("--expose-gc");
+  const gc = vm.runInNewContext("gc") as () => void;
+  let ref: { deref(): object | undefined } | undefined;
+  const Node: any = z.object({
+    token: z.any().transform(() => {
+      const token = {};
+      ref = new Weak(token);
+      return token;
+    }),
+    bad: z.any().transform(() => {
+      throw new Error("boom");
+    }),
+    get kids() {
+      return z.array(Node);
+    },
+  });
+  expect(() => Node.parse({ token: 1, bad: 1, kids: [] })).toThrow("boom");
+  for (let attempt = 0; attempt < 10 && ref!.deref(); attempt++) {
+    // a weak target survives until the job that created it ends
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    gc();
+  }
+  expect(ref!.deref()).toBeUndefined();
+});

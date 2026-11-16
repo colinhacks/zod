@@ -365,8 +365,16 @@ const memo: $ZodMemoizer = {
         handoff = bucket;
         const depth = open.length;
         const start = payload.issues.length;
-        const result = base(payload, ctx);
-        handoff = undefined;
+        let result: util.MaybeAsync<ParsePayload>;
+        try {
+          result = base(payload, ctx);
+        } catch (e) {
+          // a throw below skips every pop, and a check that catches it would leave this visit popping a stranger's entry
+          open.length = depth;
+          throw e;
+        } finally {
+          handoff = undefined;
+        }
         // A container that rejected its input outright allocated nothing.
         const entry = open.length > depth ? open.pop()! : undefined;
 
