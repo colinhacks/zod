@@ -447,6 +447,51 @@ test("local $ref resolution", () => {
   expect(() => schema.parse({})).toThrow();
 });
 
+test("local $ref resolution walks the whole JSON Pointer", () => {
+  const defs: Record<string, any> = {
+    Envelope: {
+      type: "object",
+      properties: { payload: { type: "object", properties: { ok: { const: true } }, required: ["ok"] } },
+    },
+    Never: false,
+  };
+  for (const [$schema, key] of [
+    ["https://json-schema.org/draft/2020-12/schema", "$defs"],
+    ["http://json-schema.org/draft-07/schema#", "definitions"],
+  ] as const) {
+    const nested = fromJSONSchema({ $schema, [key]: defs, $ref: `#/${key}/Envelope/properties/payload` });
+    expect(nested.safeParse({ ok: true }).success).toBe(true);
+    expect(nested.safeParse({ ok: false }).success).toBe(false);
+    expect(nested.safeParse({}).success).toBe(false);
+
+    // a reference to a false schema rejects everything rather than reading as missing
+    const never = fromJSONSchema({
+      $schema,
+      [key]: defs,
+      type: "object",
+      properties: { a: { $ref: `#/${key}/Never` } },
+    });
+    expect(never.safeParse({}).success).toBe(true);
+    expect(never.safeParse({ a: 1 }).success).toBe(false);
+  }
+
+  expect(
+    fromJSONSchema({ type: "object", properties: { a: { type: "string" }, b: { $ref: "#/properties/a" } } }).safeParse({
+      b: 1,
+    }).success
+  ).toBe(false);
+
+  // a missing segment, an inherited name, a non-schema target and an anchor all stay unresolved
+  for (const $ref of [
+    "#/$defs/Envelope/properties/missing",
+    "#/$defs/constructor",
+    "#/$defs/Envelope/type",
+    "#Envelope",
+  ]) {
+    expect(() => fromJSONSchema({ $defs: defs, $ref })).toThrow("Reference not found");
+  }
+});
+
 test("local $ref resolution unescapes JSON Pointer tokens", () => {
   // `~1` must be decoded before `~0`, so the id "a~1b" survives as itself and not as "a/b".
   for (const id of ["Shared/User", "My~Model", "a~b/c", "a~1b"]) {
