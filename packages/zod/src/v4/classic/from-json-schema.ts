@@ -22,7 +22,6 @@ interface FromJSONSchemaParams {
 
 interface ConversionContext {
   version: JSONSchemaVersion;
-  defs: Record<string, JSONSchema.JSONSchema>;
   refs: Map<string, ZodType>;
   processing: Set<string>;
   rootSchema: JSONSchema.JSONSchema;
@@ -129,28 +128,30 @@ function decodeJSONPointerSegment(segment: string): string {
   return segment.replace(/~1/g, "/").replace(/~0/g, "~");
 }
 
-function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema {
+function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema | boolean {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
 
-  const path = ref.slice(1).split("/").filter(Boolean);
-
-  // Handle root reference "#"
-  if (path.length === 0) {
-    return ctx.rootSchema;
+  const pointer = ref.slice(1);
+  // a plain-name fragment ("#foo") is an anchor, not a JSON Pointer
+  if (pointer !== "" && !pointer.startsWith("/")) {
+    throw new Error(`Reference not found: ${ref}`);
   }
 
-  const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-
-  if (path[0] === defsKey) {
-    const key = path[1] === undefined ? undefined : decodeJSONPointerSegment(path[1]);
-    if (!key || !ctx.defs[key]) {
+  // walk every segment, so a pointer into a definition reaches the subschema it names rather than the definition
+  let target: unknown = ctx.rootSchema;
+  for (const segment of pointer.split("/").filter(Boolean)) {
+    const key = decodeJSONPointerSegment(segment);
+    if (typeof target !== "object" || target === null || !Object.prototype.hasOwnProperty.call(target, key)) {
       throw new Error(`Reference not found: ${ref}`);
     }
-    return ctx.defs[key]!;
+    target = (target as Record<string, unknown>)[key];
   }
 
+  if (typeof target === "boolean" || (typeof target === "object" && target !== null && !Array.isArray(target))) {
+    return target as JSONSchema.JSONSchema | boolean;
+  }
   throw new Error(`Reference not found: ${ref}`);
 }
 
@@ -929,11 +930,9 @@ export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?:
   }
 
   const version = detectVersion(normalized, params?.defaultTarget);
-  const defs = (normalized.$defs || normalized.definitions || {}) as Record<string, JSONSchema.JSONSchema>;
 
   const ctx: ConversionContext = {
     version,
-    defs,
     refs: new Map(),
     processing: new Set(),
     rootSchema: normalized,
