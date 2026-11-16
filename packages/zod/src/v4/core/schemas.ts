@@ -2857,60 +2857,48 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
 export function mergeValues(
   a: any,
-  b: any
+  b: any,
+  // the pairs open above and their outputs as triples up to `depth`, made once a shared key holds objects
+  open?: unknown[],
+  depth = 0
 ): { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } {
-  // const aType = parse.t(a);
-  // const bType = parse.t(b);
-
   if (a === b) {
     return { valid: true, data: a };
   }
   if (a instanceof Date && b instanceof Date && +a === +b) {
     return { valid: true, data: a };
   }
-  if (util.isPlainObject(a) && util.isPlainObject(b)) {
-    const newObj: any = { ...a, ...b };
-    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
-    for (const key of Object.keys(a)) {
-      // own and enumerable is exactly membership in `Object.keys(b)`, without a scan per key
-      if (key === "__proto__" || !Object.prototype.propertyIsEnumerable.call(b, key)) continue;
-      const sharedValue = mergeValues(a[key], b[key]);
-      if (!sharedValue.valid) {
-        return {
-          valid: false,
-          mergeErrorPath: [key, ...sharedValue.mergeErrorPath],
-        };
-      }
-      newObj[key] = sharedValue.data;
-    }
-
-    return { valid: true, data: newObj };
+  const isObj = util.isPlainObject(a) && util.isPlainObject(b);
+  if (!isObj && (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length)) {
+    return { valid: false, mergeErrorPath: [] };
   }
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) {
-      return { valid: false, mergeErrorPath: [] };
-    }
-
-    const newArray: unknown[] = [];
-    for (let index = 0; index < a.length; index++) {
-      const itemA = a[index];
-      const itemB = b[index];
-      const sharedValue = mergeValues(itemA, itemB);
-
-      if (!sharedValue.valid) {
-        return {
-          valid: false,
-          mergeErrorPath: [index, ...sharedValue.mergeErrorPath],
-        };
-      }
-
-      newArray.push(sharedValue.data);
-    }
-
-    return { valid: true, data: newArray };
+  // a pair already open is a cycle, closed by its output in progress
+  if (open)
+    for (let i = 0; i < depth; i += 3)
+      if (open[i] === a && open[i + 1] === b) return { valid: true, data: open[i + 2] };
+  const merged: any = isObj ? { ...a, ...b } : [];
+  if (open) {
+    open[depth] = a;
+    open[depth + 1] = b;
+    open[depth + 2] = merged;
   }
+  if (isObj && Object.prototype.hasOwnProperty.call(merged, "__proto__")) delete merged.__proto__;
 
-  return { valid: false, mergeErrorPath: [] };
+  for (const key of (isObj ? Object.keys(a) : (a as any[]).keys()) as Iterable<any>) {
+    // own and enumerable is exactly membership in `Object.keys(b)`, without a scan per key
+    if (isObj && (key === "__proto__" || !Object.prototype.propertyIsEnumerable.call(b, key))) continue;
+    const x = a[key];
+    if (!open && x !== b[key] && x !== null && typeof x === "object") open = [a, b, merged];
+    const sharedValue = mergeValues(x, b[key], open, depth + 3);
+    if (!sharedValue.valid) {
+      return {
+        valid: false,
+        mergeErrorPath: [key, ...sharedValue.mergeErrorPath],
+      };
+    }
+    merged[key] = sharedValue.data;
+  }
+  return { valid: true, data: merged };
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {

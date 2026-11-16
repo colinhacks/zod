@@ -593,6 +593,58 @@ test("a cycle through z.intersection validates but does not mirror the graph", (
   expect(Node.safeParse(bad).success).toBe(false);
 });
 
+test("z.intersection merges two different cyclic outputs into a cycle", async () => {
+  const make = (): any => {
+    const S: any = z.object({
+      id: z.number(),
+      get next() {
+        return S.optional();
+      },
+    });
+    return S;
+  };
+  const I = z.intersection(make(), make());
+
+  const loop: any = { id: 1 };
+  loop.next = loop;
+  const ring: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }];
+  for (let i = 0; i < 3; i++) ring[i].next = ring[(i + 1) % 3];
+
+  for (const parse of [(x: unknown) => I.parse(x), (x: unknown) => I.parseAsync(x)]) {
+    const l: any = await parse(loop);
+    expect(l).toEqual({ id: 1, next: l });
+    expect(l.next).toBe(l);
+    let r: any = await parse(ring[0]);
+    const first = r;
+    for (let i = 0; i < 3; i++, r = r.next) expect(r.id).toBe(i);
+    expect(r).toBe(first);
+  }
+
+  // one left node meets a different right node on each lap, so the merge must key on the pair
+  const A: any = z.object({
+    get next() {
+      return A;
+    },
+  });
+  const B1: any = z.object({
+    get next() {
+      return B2;
+    },
+  });
+  const B2: any = z.object({
+    get next() {
+      return B1;
+    },
+  });
+  const out: any = z.intersection(A, B1).parse(loop);
+  expect(out.next).not.toBe(out);
+  expect(out.next.next).toBe(out);
+
+  const bad: any = { id: 1, next: { id: "x" } };
+  bad.next.next = bad;
+  expect(I.safeParse(bad).success).toBe(false);
+});
+
 test("keeps two cycles and a shared node distinct in one input", () => {
   const Node: any = z.object({
     id: z.number(),
