@@ -461,6 +461,60 @@ test("intersection deep merge", () => {
   );
 });
 
+test("an intersection's rejection is handed back, not read as a miss", () => {
+  // the interpreter drops a key issue only one side raises, so this strips extra keys rather than rejecting them
+  const stripped = () => z.intersection(z.strictObject({ id: z.string(), role: z.literal("user") }), z.object({}));
+  const extra = { id: "u", role: "user", isAdmin: true };
+  const union = z.union([stripped(), z.looseObject({ id: z.string() })]);
+  differential(union, [{ id: "u", role: "user" }, 1]);
+  differential(union, [extra, { id: "u" }], { fallbackOk: true });
+  differential(z.union([z.number(), stripped()]), [{ id: "u", role: "user" }]);
+  differential(
+    z.union([
+      z.intersection(z.strictObject({ b: z.number().transform(Math.floor) }), z.object({})),
+      z.looseObject({ b: z.number() }),
+    ]),
+    [{ b: 1.9, extra: 1 }],
+    { fallbackOk: true }
+  );
+  // unmergeable: the interpreter throws, so a later option must not answer
+  differential(
+    z.union([
+      z.intersection(z.object({ v: z.string().transform((s) => s.toUpperCase()) }), z.object({ v: z.string() })),
+      z.object({ v: z.string() }).transform(() => "later"),
+    ]),
+    [{ v: "hello" }, { v: 1 }]
+  );
+
+  const prefaulted = () =>
+    stripped()
+      .prefault(extra as never)
+      .optional();
+  differential(z.object({ p: prefaulted() }), [{}, { p: { id: "u", role: "user" } }], { fallbackOk: true });
+  differential(z.tuple([z.string(), prefaulted()]), [["x"], ["x", { id: "u", role: "user" }]], { fallbackOk: true });
+
+  const upper = z.intersection(
+    z.string(),
+    z.string().transform((s) => s.toUpperCase())
+  );
+  differential(z.looseRecord(upper, z.number()), [{ A: 1 }, { a: 1 }]);
+  const suffixed = z.intersection(
+    z.union([z.string(), z.number()]),
+    z.union([z.string().transform((s) => `${s}!`), z.number()])
+  );
+  differential(z.record(suffixed, z.number()), [{ 1: 1 }]);
+});
+
+test("unions of refine, transform and catch options keep compiling and keep their fast path", () => {
+  const schema = z.union([
+    z.string().refine((s) => s.length > 1),
+    z.number().transform((n) => n * 2),
+    z.boolean().catch(false),
+  ]);
+  expect(() => compile(schema, { strict: true })).not.toThrow();
+  differential(schema, ["ab", 2, true, "a", null]);
+});
+
 // --- string formats & checks ---
 
 test("string length checks", () => {
