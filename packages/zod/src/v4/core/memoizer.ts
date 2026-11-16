@@ -46,9 +46,15 @@ function isRef(value: unknown): value is object {
 
 // the issues from `start` on (an encode runs a node's own checks first), each by reference beside its path length since receivers only prepend, or copied while pathless
 function record(issues: errors.$ZodRawIssue[], start: number): unknown[] {
-  if (issues.length <= start) return NO_ISSUES;
+  let end = issues.length;
+  if (end <= start) return NO_ISSUES;
+  // past 100 one issue stands in, else shared nodes compound per level; an aborting one if any, so a parent still skips its checks
+  if (end - start > 100) {
+    for (let i = end; --i > start; ) if (issues[i]!.continue !== true) start = i;
+    end = start + 1;
+  }
   const out: unknown[] = [];
-  for (let i = start; i < issues.length; i++) {
+  for (let i = start; i < end; i++) {
     const iss = issues[i]!;
     out.push(iss.path ? iss : { ...iss }, iss.path?.length);
   }
