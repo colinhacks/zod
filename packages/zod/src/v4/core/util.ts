@@ -366,6 +366,13 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
   });
 }
 
+// the key an assignment would write, converted once so a `__proto__` guard and the write see the same key
+export function toPropertyKey(key: unknown): PropertyKey {
+  return typeof key === "object" || typeof key === "function"
+    ? Reflect.ownKeys({ [key as any]: 0 })[0]!
+    : (key as PropertyKey);
+}
+
 export function objectClone(obj: object) {
   return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
 }

@@ -3315,7 +3315,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             });
             continue;
           }
-          const outKey = keyResult.value as PropertyKey;
+          const outKey = util.toPropertyKey(keyResult.value);
           if (outKey === "__proto__") continue;
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
@@ -3406,7 +3406,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         }
 
         // never write an input __proto__, even renamed, nor a key normalized into __proto__
-        const outKey = keyResult.value as PropertyKey;
+        const outKey = util.toPropertyKey(keyResult.value);
         if (key === "__proto__" || outKey === "__proto__") continue;
 
         const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);

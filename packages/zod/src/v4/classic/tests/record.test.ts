@@ -449,6 +449,9 @@ test("key schema cannot normalize an input key into __proto__", async () => {
       ),
       wire("x:__proto__"),
     ],
+    // a key schema returning an object converts it to a string only at the write
+    [z.record(z.string().transform((s) => ({ toString: () => s.slice(2) })) as any, value), wire("x:__proto__")],
+    [z.record(z.enum(["k"]).transform(() => ["__proto__"]) as any, value), wire("k")],
   ] as const;
 
   for (const [schema, data] of cases) {
