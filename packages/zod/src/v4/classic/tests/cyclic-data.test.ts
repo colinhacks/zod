@@ -410,6 +410,116 @@ test("a .catch() that takes a shared node's issues leaves them for the other ref
   expect(r.error?.issues.map((iss) => iss.path)).toEqual([["b", "id"]]);
 });
 
+// y's parse reaches x while x is still being parsed, so y finishes clean though x is invalid
+const pair = () => {
+  const x: any = { id: "nope" };
+  const y: any = { id: 2, next: x };
+  x.next = y;
+  return { a: x, b: y };
+};
+
+test("a node whose cycle closed through an unfinished node is parsed again once that node fails", async () => {
+  const Getter: any = z.object({
+    id: z.number(),
+    get next() {
+      return Getter;
+    },
+  });
+  const Pre: any = z.object({
+    id: z.number(),
+    next: z.preprocess(
+      (v) => v,
+      z.lazy(() => Pre)
+    ),
+  });
+  // the same node failing its own check instead of a field: the check runs after the node's entry is recorded
+  const Checked: any = z
+    .object({
+      id: z.any(),
+      get next() {
+        return Checked;
+      },
+    })
+    .refine((v) => typeof v.id === "number");
+  for (const N of [Getter, Pre, Checked]) {
+    const caught = z.object({ a: N.catch({ id: 0 }), b: N });
+    const subset = z.union([z.object({ a: N, b: N }), z.object({ b: N })]);
+    // nothing here suspends, so an async parse tracks it the same way
+    const results = [
+      caught.safeParse(pair()),
+      subset.safeParse(pair()),
+      await caught.safeParseAsync(pair()),
+      await subset.safeParseAsync(pair()),
+    ];
+    for (const r of results) expect(r.success).toBe(false);
+    expect(results[0]!.error!.issues.map((iss) => iss.path)).toEqual([
+      N === Checked ? ["b", "next"] : ["b", "next", "id"],
+    ]);
+  }
+});
+
+test("a union inside the cycle can't keep a node clean after a node it skipped fails", () => {
+  const Node: any = z.object({
+    id: z.number(),
+    get next() {
+      return Node.optional();
+    },
+    get up() {
+      return Node.optional();
+    },
+    get u() {
+      return z.union([z.object({ p: Node, q: Node }), z.object({ q: Node })]).optional();
+    },
+  });
+  // x and y close their cycle through the root, which is still being parsed when the union picks an option
+  const { a: x, b: y } = pair();
+  const root = { id: 1, u: { p: x, q: y } };
+  x.up = root;
+  expect(Node.safeParse(root).success).toBe(false);
+});
+
+test("parsing nodes again stays linear when shared nodes each skip a failing parent", () => {
+  let checks = 0;
+  const Node: any = z
+    .object({
+      id: z.number(),
+      get up() {
+        return Node.optional();
+      },
+      get parent() {
+        return Node.optional();
+      },
+      get kids() {
+        return z.array(Node);
+      },
+      get caught() {
+        return z.array(Node).catch([]);
+      },
+    })
+    .refine(() => ++checks > 0);
+  // each level shares one node between a failing parent and a valid one, and every node points back up
+  const root: any = { id: 0, kids: [], caught: [] };
+  let cur = root;
+  for (let i = 1; i <= 40; i++) {
+    const shared: any = { id: i, kids: [], caught: [] };
+    const a = { id: "nope", parent: cur, kids: [shared], caught: [] };
+    shared.up = a;
+    cur.caught.push(a, { id: i, parent: cur, kids: [shared], caught: [] });
+    cur = shared;
+  }
+  expect(Node.safeParse(root).success).toBe(true);
+  expect(checks).toBeLessThan(40 * 10);
+
+  // a failure only drops what skipped the failed node: these siblings fail, but the chain they share skipped the root alone
+  const chain: any[] = Array.from({ length: 40 }, (_, id) => ({ id, parent: root, kids: [], caught: [] }));
+  for (let i = 0; i + 1 < chain.length; i++) chain[i].kids.push(chain[i + 1]);
+  const top: any = { id: 0, kids: [], caught: chain.map(() => ({ id: "nope", kids: [chain[0]], caught: [] })) };
+  for (const node of chain) node.parent = top;
+  checks = 0;
+  expect(Node.safeParse(top).success).toBe(true);
+  expect(checks).toBeLessThan(40 * 3);
+});
+
 test("a concurrent reference reports issues and runs checks and transforms as a sync parse does", async () => {
   const build = (slow: any) => {
     const Node: any = z
