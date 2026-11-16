@@ -39,6 +39,8 @@ type CompiledFn<T> = ((input: unknown) => T | INVALID) & {
   code?: string | undefined;
   /** False when this function's INVALID does not strictly mean "the runtime would reject". */
   definite?: boolean | undefined;
+  /** True when this function's INVALID can be a bail-out for input the runtime accepts or throws on. */
+  bails?: boolean | undefined;
 };
 
 /** Raised when the schema contains async refinements or transforms. Surfaces only under `compile(schema, { strict: true })`. */
@@ -72,6 +74,8 @@ interface CompileContext {
   varCounter: number;
   /** Cleared when a construct can return INVALID for something the interpreter throws on, so `validate` keeps its fallback. */
   definite: boolean;
+  /** Set once the subtree can return INVALID for input the interpreter accepts or throws on, which a construct reading INVALID as a miss must pass up instead. */
+  bails: boolean;
 }
 
 // Union of all check types we support in AOT compilation
@@ -249,6 +253,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     constantCounter: 0,
     varCounter: 0,
     definite: true,
+    bails: false,
   };
 
   const doc = new Doc(["input"]);
@@ -281,6 +286,7 @@ export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOpti
     fn.code = fullCode;
   }
   fn.definite = ctx.definite;
+  if (ctx.bails) fn.bails = true;
   return fn;
 }
 
@@ -302,6 +308,16 @@ function addUserConstant(ctx: CompileContext, fn: unknown): string {
 
 function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
+}
+
+/** Runs `gen` with `bails` cleared and reports whether that subtree set it, folding the answer back in since a consumer that passes the rejection up bails too. */
+function trackBails(ctx: CompileContext, gen: () => void): boolean {
+  const outer = ctx.bails;
+  ctx.bails = false;
+  gen();
+  const bails = ctx.bails;
+  ctx.bails = outer || bails;
+  return bails;
 }
 
 // Runs a child schema as a black box: its value, or INVALID for a failure or an async run.
@@ -340,6 +356,7 @@ function compileChild(
   const constantCount = ctx.constants.size;
   const constantCounter = ctx.constantCounter;
   const varCounter = ctx.varCounter;
+  const bails = ctx.bails;
   try {
     return generateCheck(doc, ctx, schema, accessor, needsValue);
   } catch (err) {
@@ -351,6 +368,8 @@ function compileChild(
     }
     ctx.constantCounter = constantCounter;
     ctx.varCounter = varCounter;
+    // an island answers exactly, so the abandoned attempt's bail-out no longer applies
+    ctx.bails = bails;
     return emitRuntimeIsland(doc, ctx, schema, accessor);
   }
 }
@@ -1230,13 +1249,16 @@ function generateObjectCheck(
       // Any optin rung means the key may be omitted. The runtime runs the property anyway and ignores issues only when the key is genuinely absent, which is what makes exactOptional compositional.
       const outputVar = newVar(ctx);
       doc.write(`let ${outputVar} = (() => {`);
-      doc.indented((d) => {
-        const outputAccessor = compileChild(d, ctx, propSchema, inputVar);
-        d.write(`return ${outputAccessor};`);
-      });
+      const bails = trackBails(ctx, () =>
+        doc.indented((d) => {
+          const outputAccessor = compileChild(d, ctx, propSchema, inputVar);
+          d.write(`return ${outputAccessor};`);
+        })
+      );
       doc.write(`})();`);
 
-      if (propSchema._zod.optout === "optional") {
+      // the runtime ignores an absent key's issues, not a bail-out
+      if (propSchema._zod.optout === "optional" && !bails) {
         doc.write(`if (${outputVar} === INVALID) {`);
         doc.indented((d) => {
           d.write(`if (${kx} in ${accessor}) return INVALID;`);
@@ -1363,12 +1385,19 @@ function generateOptionalCheck(
     doc.write(`if (${accessor} === undefined) {`);
     doc.indented((d) => {
       d.write(`const ${branchVar} = (() => {`);
-      d.indented((d2) => {
-        const innerOutput = generateCheck(d2, ctx, def.innerType, accessor);
-        d2.write(`return ${innerOutput};`);
-      });
+      const bails = trackBails(ctx, () =>
+        d.indented((d2) => {
+          const innerOutput = generateCheck(d2, ctx, def.innerType, accessor);
+          d2.write(`return ${innerOutput};`);
+        })
+      );
       d.write(`})();`);
-      d.write(`if (${branchVar} !== INVALID) ${outputVar} = ${branchVar};`);
+      // a bail-out is not the failure the runtime turns into undefined
+      d.write(
+        bails
+          ? `if (${branchVar} === INVALID) return INVALID; ${outputVar} = ${branchVar};`
+          : `if (${branchVar} !== INVALID) ${outputVar} = ${branchVar};`
+      );
     });
     doc.write(`} else {`);
     doc.indented((d) => {
@@ -1749,11 +1778,15 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
           const branchVar = newVar(ctx);
           d2.write(`const ${elemVar} = undefined;`);
           d2.write(`const ${branchVar} = (() => {`);
-          d2.indented((d3) => {
-            const elemOutput = compileChild(d3, ctx, itemSchema, elemVar);
-            d3.write(`return ${elemOutput};`);
-          });
+          const bails = trackBails(ctx, () =>
+            d2.indented((d3) => {
+              const elemOutput = compileChild(d3, ctx, itemSchema, elemVar);
+              d3.write(`return ${elemOutput};`);
+            })
+          );
           d2.write(`})();`);
+          // a bail-out is not the failure an absent slot truncates on
+          if (bails) d2.write(`if (${branchVar} === INVALID) return INVALID;`);
           d2.write(`if (${branchVar} === INVALID || ${branchVar} === undefined) ${outputVar}.length = ${i};`);
           d2.write(`else ${outputVar}[${i}] = ${branchVar};`);
         });
@@ -1849,12 +1882,16 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
       doc.write(`if (${outputVar} === INVALID) ${outputVar} = (() => {`);
     }
 
-    doc.indented((d) => {
-      // Generate check inside IIFE - returns INVALID on failure
-      const branchOutput = generateCheck(d, ctx, opt, accessor);
-      d.write(`return ${branchOutput};`);
-    });
+    const bails = trackBails(ctx, () =>
+      doc.indented((d) => {
+        // Generate check inside IIFE - returns INVALID on failure
+        const branchOutput = generateCheck(d, ctx, opt, accessor);
+        d.write(`return ${branchOutput};`);
+      })
+    );
     doc.write(`})();`);
+    // a later option must not answer for one the interpreter may have accepted
+    if (bails && i < options.length - 1) doc.write(`if (${outputVar} === INVALID) return INVALID;`);
   }
 
   doc.write(`if (${outputVar} === INVALID) return INVALID;`);
@@ -1931,8 +1968,9 @@ function literalEquality(ctx: CompileContext, accessor: string, value: unknown):
 
 function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
-  // An unmergeable merge, and a child failing before the merge is even reached, both return INVALID for a case the interpreter answers with a throw.
+  // the interpreter drops a key issue only one side raises and throws on an unmergeable merge, so INVALID here can be a bail-out
   ctx.definite = false;
+  ctx.bails = true;
   const leftOutput = compileChild(doc, ctx, def.left, accessor);
   const rightOutput = compileChild(doc, ctx, def.right, accessor);
 
@@ -2022,6 +2060,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     // the key compiles in its own context, so carry its verdict out: a key schema that can answer INVALID undecidably makes this validator undecidable too
     const keyFn = compileFn(def.keyType);
     if (keyFn.definite === false) ctx.definite = false;
+    if (keyFn.bails) ctx.bails = true;
     const keyFast = addConstant(ctx, keyFn);
     const numericConst = addConstant(ctx, regexes.number);
     const outKeyVar = newVar(ctx);
@@ -2029,11 +2068,14 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     // the body runs once per string key and once per symbol key, since a key schema can accept symbols
     emitOwnKeys(doc, ctx, accessor, kVar, (d) => {
       d.write(`let ${outKeyVar} = ${keyFast}(${kVar});`);
-      // Numeric-string retry, mirroring the runtime: a key the schema rejects as a string is tried again as a number, so z.record(z.number(), …) matches the numeric keys JavaScript stringified on the way in.
-      d.write(
-        `if (${outKeyVar} === INVALID && typeof ${kVar} === "string" && ${numericConst}.test(${kVar})) ${outKeyVar} = ${keyFast}(Number(${kVar}));`
-      );
-      if (isLoose) {
+      // the numeric retry and the loose pass-through both read INVALID as a miss, which a bail-out is not
+      if (!keyFn.bails) {
+        // Numeric-string retry, mirroring the runtime: a key the schema rejects as a string is tried again as a number, so z.record(z.number(), …) matches the numeric keys JavaScript stringified on the way in.
+        d.write(
+          `if (${outKeyVar} === INVALID && typeof ${kVar} === "string" && ${numericConst}.test(${kVar})) ${outKeyVar} = ${keyFast}(Number(${kVar}));`
+        );
+      }
+      if (isLoose && !keyFn.bails) {
         // A loose record keeps a key its schema rejects, copying the value across unvalidated rather than failing the parse, except __proto__, which would replace the output prototype.
         d.write(
           `if (${outKeyVar} === INVALID) { if (${kVar} !== "__proto__") ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`
@@ -2283,12 +2325,15 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   }
 
   const outputVar = newVar(ctx);
+  // runtimeCatch re-runs a rejected inner on the interpreter, so a bail-out never escapes it
+  const outerBails = ctx.bails;
   doc.write(`let ${outputVar} = (() => {`);
   doc.indented((d) => {
     const innerOut = compileChild(d, ctx, def.innerType, accessor);
     d.write(`return ${innerOut};`);
   });
   doc.write(`})();`);
+  ctx.bails = outerBails;
 
   const innerConst = addConstant(ctx, def.innerType);
   const catchConst = addUserConstant(ctx, def.catchValue);
