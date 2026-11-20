@@ -1270,9 +1270,12 @@ test("union options that re-run one child report its issues as the first run did
     { code: "custom", path: ["child", "x"], message: "short" },
   ]);
 
-  const [{ errors }] = U.safeParse({ kind: "a", x: "q", child: { kind: "b", y: "no" } }).error!.issues as any;
-  expect(errors[1].at(-1)).toEqual(errors[0].at(-1));
-  expect(errors[0].at(-1).errors.map((o: any) => o.map((iss: any) => iss.path))).toEqual([[["kind"], ["x"]], [["y"]]]);
+  // both options report the re-run child the same way, so it is reported once beside the union
+  const [own, child] = U.safeParse({ kind: "a", x: "q", child: { kind: "b", y: "no" } }).error!.issues as any;
+  const paths = (iss: any) => iss.errors.map((o: any) => o.map((i: any) => i.path));
+  expect(paths(own)).toEqual([[["x"]], [["kind"], ["y"]]]);
+  expect(child.path).toEqual(["child"]);
+  expect(paths(child)).toEqual([[["kind"], ["x"]], [["y"]]]);
 
   // an issue with no path yet stays without one, though the first visit's copy has gained one since
   const X: any = z.strictObject({

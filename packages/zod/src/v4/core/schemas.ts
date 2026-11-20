@@ -2475,14 +2475,43 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
     return matched[0];
   }
 
-  final.issues.push({
-    code: "invalid_union",
+  return pushUnionIssues(results, final, inst, ctx);
+}
 
-    input: final.value,
-    inst,
-    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+// structural equality, capped in depth since an issue can carry its input
+function sameIssue(x: any, y: any, depth = 16): boolean {
+  if (x === y) return true;
+  if (!depth || !x || !y || typeof x !== "object" || typeof y !== "object") return false;
+  const keys = Object.keys(x);
+  if (keys.length !== Object.keys(y).length) return false;
+  for (const k of keys) if (!sameIssue(x[k], y[k], depth - 1)) return false;
+  return true;
+}
+
+// an issue every option reports is reported once, beside the union, so options sharing a child don't each carry its errors; if an option is left with nothing else, it is the closest match and the shared issues alone explain the failure
+function pushUnionIssues(
+  results: ParsePayload[],
+  final: ParsePayload,
+  inst: $ZodUnion,
+  ctx?: ParseContext
+): ParsePayload {
+  const lists = results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+  // bucketed by last path segment, so a long list isn't scanned once per issue
+  const last = (iss: errors.$ZodIssue) => String(iss.path[iss.path.length - 1]);
+  const buckets = lists.map((list) => {
+    const map: Record<string, errors.$ZodIssue[]> = Object.create(null);
+    for (const iss of list) (map[last(iss)] ??= []).push(iss);
+    return map;
   });
-
+  const isShared = (iss: errors.$ZodIssue) =>
+    buckets.every((map) => map[last(iss)]?.some((other) => sameIssue(other, iss)));
+  const own = lists.map((list) => list.filter((iss) => !isShared(iss)));
+  if (own.every((list) => list.length))
+    final.issues.push({ code: "invalid_union", input: final.value, inst, errors: own });
+  // already finalized, so an error map runs once per issue; the abort flag still has to reach the parent
+  lists[0]?.forEach((iss, i) => {
+    if (isShared(iss)) final.issues.push({ ...iss, continue: results[0]!.issues[i]!.continue } as errors.$ZodRawIssue);
+  });
   return final;
 }
 
@@ -2567,12 +2596,7 @@ function handleExclusiveUnionResults(
 
   if (matches.length === 0) {
     // No matches - same as regular union
-    final.issues.push({
-      code: "invalid_union",
-      input: final.value,
-      inst,
-      errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
-    });
+    pushUnionIssues(results, final, inst, ctx);
   } else {
     // Multiple matches - exclusive union failure
     final.issues.push({

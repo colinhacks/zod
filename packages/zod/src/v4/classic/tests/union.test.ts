@@ -356,3 +356,57 @@ test("z.discriminatedUnion with empty options constructs and rejects", () => {
     expect((obj.error.issues[0] as any).options).toEqual([]);
   }
 });
+
+test("an issue every option reports is reported once, beside the union", () => {
+  const schema = z.union([
+    z.object({ a: z.string(), t: z.literal("x") }),
+    z.object({ a: z.string(), t: z.literal("y") }),
+    z.object({ a: z.string({ error: "own message" }), t: z.literal("z") }),
+  ]);
+  const paths = (r: any) =>
+    r.error.issues.map((iss: any) => [iss.path, iss.errors?.map((o: any) => o.map((i: any) => i.path))]);
+
+  // the third option words its `a` issue differently, so only `t` is left per option
+  expect(paths(schema.safeParse({ a: 1, t: "w" }))).toEqual([
+    [
+      [],
+      [
+        [["a"], ["t"]],
+        [["a"], ["t"]],
+        [["a"], ["t"]],
+      ],
+    ],
+  ]);
+  expect(paths(z.union(schema.options.slice(0, 2)).safeParse({ a: 1, t: "w" }))).toEqual([
+    [[], [[["t"]], [["t"]]]],
+    [["a"], undefined],
+  ]);
+
+  // an option failing on nothing else is the closest match, so the shared issue alone is reported
+  expect(z.union(schema.options.slice(0, 2)).safeParse({ a: 1, t: "x" }).error!.issues).toMatchObject([
+    { code: "invalid_type", path: ["a"] },
+  ]);
+});
+
+test("a recursive union reports a failing chain in linear size", () => {
+  const U: any = z.union([
+    z.object({
+      kind: z.literal("a"),
+      get child() {
+        return U.optional();
+      },
+    }),
+    z.object({
+      kind: z.literal("b"),
+      get child() {
+        return U.optional();
+      },
+    }),
+  ]);
+  let input: any = { kind: "c" };
+  for (let i = 0; i < 40; i++) input = { kind: "c", child: input };
+  const { error } = U.safeParse(input);
+  expect(error.issues.length).toBe(41);
+  expect(error.issues[40].path.length).toBe(40);
+  expect(error.message.length).toBeLessThan(100_000);
+});
