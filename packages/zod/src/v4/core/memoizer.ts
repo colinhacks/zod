@@ -11,8 +11,12 @@ export class $ZodCyclicError extends Error {
 
 interface Entry {
   value: unknown;
-  /** `null` during the visit's synchronous part, so a hit then is an ancestor; a `Link` while async work is left; then what `record` returns. */
-  issues: unknown[] | Link | null;
+  /** Its depth in `open` during the visit's synchronous part, so a hit then is an ancestor; a `Link` while async work is left; then what `record` returns. */
+  issues: unknown[] | Link | number;
+  /** The deepest unfinished visit it skipped, set only once it skips one. */
+  dep?: Entry | undefined;
+  /** Its schema, set once something skips it and only if that has checks of its own. */
+  inst?: $ZodType;
 }
 
 /** A visit in an async parse, carried on the context because a continuation keeps the one it was given. */
@@ -44,10 +48,10 @@ function isRef(value: unknown): value is object {
   return value !== null && typeof value === "object";
 }
 
-// the issues from `start` on (an encode runs a node's own checks first), each by reference beside its path length since receivers only prepend, or copied while pathless
-function record(issues: errors.$ZodRawIssue[], start: number): unknown[] {
+// the issues from `start` on (an encode runs a node's own checks first), each by reference beside its path length since receivers only prepend, or copied while pathless; with none and `live` set, the payload's own list, which its checks fill later
+function record(issues: errors.$ZodRawIssue[], start: number, live: unknown): unknown[] {
   let end = issues.length;
-  if (end <= start) return NO_ISSUES;
+  if (end <= start) return live ? issues : NO_ISSUES;
   // past 100 one issue stands in, else shared nodes compound per level; an aborting one if any, so a parent still skips its checks
   if (end - start > 100) {
     for (let i = end; --i > start; ) if (issues[i]!.continue !== true) start = i;
@@ -56,14 +60,14 @@ function record(issues: errors.$ZodRawIssue[], start: number): unknown[] {
   const out: unknown[] = [];
   for (let i = start; i < end; i++) {
     const iss = issues[i]!;
-    out.push(iss.path ? iss : { ...iss }, iss.path?.length);
+    out.push(iss.path ? iss : { ...iss }, iss.path ? iss.path.length : 0);
   }
   return out;
 }
 
-// a fresh copy per hand-out, its path cut back to the recorded length
+// a fresh copy per hand-out, its path cut back to the recorded length; a live list hands out nothing, since its checks run again
 function replay(rec: unknown[], into: errors.$ZodRawIssue[]): void {
-  for (let i = 0; i < rec.length; i += 2) {
+  for (let i = 0; i < rec.length && typeof rec[i + 1] === "number"; i += 2) {
     const iss = rec[i] as errors.$ZodRawIssue;
     into.push(iss.path ? { ...iss, path: iss.path.slice(iss.path.length - (rec[i + 1] as number)) } : { ...iss });
   }
@@ -95,6 +99,45 @@ function waitFor(hit: Entry, link: Link, up: Link | undefined, payload: ParsePay
     replay(hit.issues as unknown[], payload.issues);
     return payload;
   });
+}
+
+// per depth of `open`, the deepest and shallowest visits that sync visit skipped so far; every visit in between skipped them too
+const deps: (number | undefined)[] = [];
+const lows: (number | undefined)[] = [];
+
+// every sync visit above depth `to` skipped it
+function skip(to: number): void {
+  for (let i = open.length - 1; i > to; ) {
+    const d = deps[i];
+    const lo = lows[i];
+    if (d === to || lo === to) return;
+    if (lo! > to) {
+      lows[i] = to;
+      i = lo!;
+    } else if (d! > to) i = d!;
+    else {
+      deps[i] = to;
+      lows[i] ??= to;
+      i--;
+    }
+  }
+}
+
+// a finished visit failed in its parse (issues beside path lengths) or in its own checks (a live list led by an issue under its schema)
+function failed(issues: unknown[], inst: $ZodType | undefined): boolean {
+  return issues.length > 0 && (typeof issues[1] === "number" || (issues[0] as errors.$ZodRawIssue).schema === inst);
+}
+
+// the nearest unfinished visit a clean entry skipped, nothing once all finished clean, or `null` once one failed; each visit on the chain skipped whatever else the entry did
+function rest(entry: Entry): Entry | undefined | null {
+  let d = entry.dep;
+  while (d && Array.isArray(d.issues)) {
+    if (failed(d.issues, d.inst)) return null;
+    entry.dep = d.dep;
+    entry = d;
+    d = d.dep;
+  }
+  return d;
 }
 
 const recursive: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
@@ -278,7 +321,7 @@ const memo: $ZodMemoizer = {
     const bucket = handoff;
     if (!bucket) return empty;
     handoff = undefined;
-    const entry: Entry = { value: empty, issues: null };
+    const entry: Entry = { value: empty, issues: open.length };
     bucket.set(payload.value as object, entry);
     open.push(entry);
     return empty;
@@ -345,20 +388,29 @@ const memo: $ZodMemoizer = {
 
         const hit = bucket.get(input);
         if (hit) {
-          payload.value = hit.value;
           const issues = hit.issues;
-          if (Array.isArray(issues)) {
-            replay(issues, payload.issues);
-          } else if (issues && !blockedOn((ctx as WithState)["~link"], issues)) {
-            // a concurrent visit holds the entry and may discard its issues, so reuse them only once it finishes
-            return waitFor(hit, issues, (ctx as WithState)["~link"], payload);
-          } else {
-            // still being parsed by a visit that needs this one: its own checks cover it, so skip them here
-            payload.memo = true;
-            state.backEdges ??= new WeakSet();
-            state.backEdges.add(hit.value as object);
+          // the unfinished visit the hit rests on: itself, or the nearest one a clean entry skipped; a failed entry is final, so it rests on nothing
+          const on = !Array.isArray(issues) ? hit : failed(issues, inst) ? undefined : rest(hit);
+          // `null`: a visit it skipped has failed since, so it is parsed again
+          if (on !== null) {
+            payload.value = hit.value;
+            // reused inside that visit, so every visit in between shares its fate
+            if (typeof on?.issues === "number") skip(on.issues);
+            if (on !== hit) {
+              replay(issues as unknown[], payload.issues);
+            } else if (typeof issues !== "number" && !blockedOn((ctx as WithState)["~link"], issues as Link)) {
+              // a concurrent visit holds the entry and may discard its issues, so reuse them only once it finishes
+              return waitFor(hit, issues as Link, (ctx as WithState)["~link"], payload);
+            } else {
+              // still being parsed by a visit that needs this one: its own checks cover it, so skip them here
+              payload.memo = true;
+              state.backEdges ??= new WeakSet();
+              state.backEdges.add(hit.value as object);
+              // `run` is this wrapper unless the schema has checks of its own
+              if (inst._zod.run !== wrapped) hit.inst = inst;
+            }
+            return payload;
           }
-          return payload;
         }
 
         let link: Link | undefined;
@@ -375,11 +427,16 @@ const memo: $ZodMemoizer = {
         handoff = undefined;
         // A container that rejected its input outright allocated nothing.
         const entry = open.length > depth ? open.pop()! : undefined;
+        const d = deps[depth];
+        if (d !== undefined) {
+          deps[depth] = lows[depth] = undefined;
+          if (entry) entry.dep = open[d];
+        }
 
         // Both paths written out so the sync one allocates no closure. It runs once per node, and capturing here cost more than everything else combined.
         if (result instanceof Promise) {
           const done = result.then((r) => {
-            if (entry) entry.issues = record(r.issues, start);
+            if (entry) entry.issues = record(r.issues, start, (entry.dep || entry.inst) && inst._zod.run !== wrapped);
             return r;
           });
           if (entry && link) {
@@ -388,7 +445,8 @@ const memo: $ZodMemoizer = {
           }
           return done;
         }
-        if (entry) entry.issues = record(result.issues, start);
+        // only an entry in a cycle needs to know how its checks went
+        if (entry) entry.issues = record(result.issues, start, (entry.dep || entry.inst) && inst._zod.run !== wrapped);
         return result;
       };
 
