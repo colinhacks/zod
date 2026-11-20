@@ -107,6 +107,9 @@ export interface _$ZodTypeInternals {
 
   /** Schema definition. */
   def: $ZodTypeDef;
+
+  /** @internal Set once `parseMaybeAsync` sees this schema go async. */
+  asyncSeen?: true;
   // types: Types;
 
   /** @internal Randomly generated ID for this schema. */
