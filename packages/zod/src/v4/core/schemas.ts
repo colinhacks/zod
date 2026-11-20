@@ -2482,10 +2482,25 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 function sameIssue(x: any, y: any, depth = 16): boolean {
   if (x === y) return true;
   if (!depth || !x || !y || typeof x !== "object" || typeof y !== "object") return false;
+  if (Array.isArray(x)) {
+    if (!Array.isArray(y) || x.length !== y.length) return false;
+    for (let i = 0; i < x.length; i++) if (!sameIssue(x[i], y[i], depth - 1)) return false;
+    return true;
+  }
   const keys = Object.keys(x);
   if (keys.length !== Object.keys(y).length) return false;
   for (const k of keys) if (!sameIssue(x[k], y[k], depth - 1)) return false;
   return true;
+}
+
+type IssueBucket = errors.$ZodIssue[] | Record<string, errors.$ZodIssue[]>;
+
+const pathKey = (iss: errors.$ZodIssue): string => iss.path.map(String).join("\0");
+
+function findIssue(bucket: IssueBucket, iss: errors.$ZodIssue): errors.$ZodIssue | undefined {
+  const list = Array.isArray(bucket) ? bucket : bucket[pathKey(iss)];
+  if (list) for (const other of list) if (other.message === iss.message && sameIssue(other, iss)) return other;
+  return undefined;
 }
 
 // an issue every option reports is reported once, beside the union, so options sharing a child don't each carry its errors; if an option is left with nothing else, it is the closest match and the shared issues alone explain the failure
@@ -2496,22 +2511,33 @@ function pushUnionIssues(
   ctx?: ParseContext
 ): ParsePayload {
   const lists = results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-  // bucketed by last path segment, so a long list isn't scanned once per issue
-  const last = (iss: errors.$ZodIssue) => String(iss.path[iss.path.length - 1]);
-  const buckets = lists.map((list) => {
-    const map: Record<string, errors.$ZodIssue[]> = Object.create(null);
-    for (const iss of list) (map[last(iss)] ??= []).push(iss);
-    return map;
+  // a long list is bucketed by path, so it isn't scanned once per issue
+  const buckets: IssueBucket[] = lists.some((list) => list.length > 15)
+    ? lists.map((list) => {
+        const map: Record<string, errors.$ZodIssue[]> = Object.create(null);
+        for (const iss of list) {
+          const key = pathKey(iss);
+          if (map[key]) map[key].push(iss);
+          else map[key] = [iss];
+        }
+        return map;
+      })
+    : lists;
+  const shared: errors.$ZodRawIssue[] = [];
+  let matched: Set<errors.$ZodIssue> | undefined;
+  // a shared issue is necessarily among the first option's
+  lists[0]?.forEach((iss, i) => {
+    for (let o = 1; o < buckets.length; o++) if (!findIssue(buckets[o]!, iss)) return;
+    matched ??= new Set();
+    for (let o = 1; o < buckets.length; o++) matched.add(findIssue(buckets[o]!, iss)!);
+    matched.add(iss);
+    // already finalized, so an error map runs once per issue; the abort flag still has to reach the parent
+    shared.push({ ...iss, continue: results[0]!.issues[i]!.continue } as errors.$ZodRawIssue);
   });
-  const isShared = (iss: errors.$ZodIssue) =>
-    buckets.every((map) => map[last(iss)]?.some((other) => sameIssue(other, iss)));
-  const own = lists.map((list) => list.filter((iss) => !isShared(iss)));
+  const own = matched ? lists.map((list) => list.filter((iss) => !matched!.has(iss))) : lists;
   if (own.every((list) => list.length))
     final.issues.push({ code: "invalid_union", input: final.value, inst, errors: own });
-  // already finalized, so an error map runs once per issue; the abort flag still has to reach the parent
-  lists[0]?.forEach((iss, i) => {
-    if (isShared(iss)) final.issues.push({ ...iss, continue: results[0]!.issues[i]!.continue } as errors.$ZodRawIssue);
-  });
+  final.issues.push(...shared);
   return final;
 }
 
