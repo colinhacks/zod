@@ -1169,6 +1169,33 @@ test("a repeat visit reports the first visit's issues at its own path", async ()
   }
 });
 
+test("a repeat visit of a node with over 100 issues reports one, an aborting one if any", () => {
+  const Node: any = z.object({
+    tags: z.array(z.string().refine(() => false, "bad tag")),
+    id: z.number(),
+    get kids() {
+      return z.array(Node);
+    },
+  });
+  const shared = { tags: Array(101).fill("t"), id: "x", kids: [] };
+  const issues = Node.safeParse({ tags: [], id: 0, kids: [shared, shared] }).error!.issues;
+  expect(issues.length).toBe(103);
+  expect(issues[102]).toMatchObject({ code: "invalid_type", path: ["kids", 1, "id"] });
+
+  // levels of nodes reached twice each grow the count by one past the limit instead of doubling it
+  let node: any = { tags: [], id: "x", kids: [] };
+  for (let i = 0; i < 30; i++)
+    node = {
+      tags: [],
+      id: i,
+      kids: [
+        { tags: [], id: i, kids: [node] },
+        { tags: [], id: i, kids: [node] },
+      ],
+    };
+  expect(Node.safeParse(node).error!.issues.length).toBe(151);
+});
+
 test("union options that re-run one child report its issues as the first run did", () => {
   const U: any = z.union([
     z.object({
