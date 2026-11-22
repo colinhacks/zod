@@ -1645,6 +1645,8 @@ result.subcategories[0] === result; // true
 </Tab>
 </Tabs>
 
+Register the memoizer in Zod Mini for a recursive `z.union()` as well, or use `z.discriminatedUnion()`. Otherwise every option parses the same children again, so parse time doubles with each level.
+
 You can also represent *mutually recursive types*:
 
 ```ts
