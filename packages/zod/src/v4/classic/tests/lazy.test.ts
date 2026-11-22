@@ -172,12 +172,31 @@ test("mutual recursion with lazy", () => {
   expect(() => Alazy.parse({ val: "asdf" })).toThrow();
 });
 
-// TODO
 test("mutual recursion with cyclical data", () => {
+  const Alazy: z.ZodType<A> = z.lazy(() =>
+    z.object({
+      val: z.number(),
+      b: Blazy,
+    })
+  );
+
+  const Blazy: z.ZodType<B> = z.lazy(() =>
+    z.object({
+      val: z.number(),
+      a: Alazy.optional(),
+    })
+  );
+
   const a: any = { val: 1 };
   const b: any = { val: 2 };
   a.b = b;
   b.a = a;
+
+  const parsedA = Alazy.parse(a, { jitless: true });
+  expect(parsedA.b.a).toBe(parsedA);
+
+  const parsedB = Blazy.parse(b, { jitless: true });
+  expect(parsedB.a?.b).toBe(parsedB);
 });
 
 test("complicated self-recursion", () => {
