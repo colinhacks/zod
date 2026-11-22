@@ -19,7 +19,7 @@ export default defineConfig({
     projects: ["packages/*", "./vitest.compile.config.ts"],
     watch: false,
     isolate: true,
-    setupFiles: [resolve(__dirname, "scripts/fail-on-console.ts")],
+    setupFiles: ["temporal-polyfill/global", resolve(__dirname, "scripts/fail-on-console.ts")],
     typecheck: {
       include: ["**/*.test.ts"],
       enabled: true,
